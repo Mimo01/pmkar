@@ -98,51 +98,51 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONN-01 | — | Pending |
-| CONN-02 | — | Pending |
-| CONN-03 | — | Pending |
-| CONN-04 | — | Pending |
-| CONN-05 | — | Pending |
-| CONN-06 | — | Pending |
-| FETCH-01 | — | Pending |
-| FETCH-02 | — | Pending |
-| FETCH-03 | — | Pending |
-| FETCH-04 | — | Pending |
-| FETCH-05 | — | Pending |
-| FETCH-06 | — | Pending |
-| FETCH-07 | — | Pending |
-| FETCH-08 | — | Pending |
-| FETCH-09 | — | Pending |
-| FETCH-10 | — | Pending |
-| FETCH-11 | — | Pending |
-| FETCH-12 | — | Pending |
-| COPY-01 | — | Pending |
-| COPY-02 | — | Pending |
-| COPY-03 | — | Pending |
-| COPY-04 | — | Pending |
-| COPY-05 | — | Pending |
-| COPY-06 | — | Pending |
-| COPY-07 | — | Pending |
-| COPY-08 | — | Pending |
-| COPY-09 | — | Pending |
-| TRIA-01 | — | Pending |
-| TRIA-02 | — | Pending |
-| TRIA-03 | — | Pending |
-| AUDIT-01 | — | Pending |
-| AUDIT-02 | — | Pending |
-| AUDIT-03 | — | Pending |
-| I18N-01 | — | Pending |
-| I18N-02 | — | Pending |
-| I18N-03 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
+| CONN-01 | Phase 2 | Pending |
+| CONN-02 | Phase 2 | Pending |
+| CONN-03 | Phase 1 | Pending |
+| CONN-04 | Phase 2 | Pending |
+| CONN-05 | Phase 2 | Pending |
+| CONN-06 | Phase 2 | Pending |
+| FETCH-01 | Phase 3 | Pending |
+| FETCH-02 | Phase 3 | Pending |
+| FETCH-03 | Phase 3 | Pending |
+| FETCH-04 | Phase 3 | Pending |
+| FETCH-05 | Phase 3 | Pending |
+| FETCH-06 | Phase 3 | Pending |
+| FETCH-07 | Phase 3 | Pending |
+| FETCH-08 | Phase 3 | Pending |
+| FETCH-09 | Phase 3 | Pending |
+| FETCH-10 | Phase 3 | Pending |
+| FETCH-11 | Phase 3 | Pending |
+| FETCH-12 | Phase 3 | Pending |
+| COPY-01 | Phase 4 | Pending |
+| COPY-02 | Phase 5 | Pending |
+| COPY-03 | Phase 5 | Pending |
+| COPY-04 | Phase 5 | Pending |
+| COPY-05 | Phase 5 | Pending |
+| COPY-06 | Phase 5 | Pending |
+| COPY-07 | Phase 4 | Pending |
+| COPY-08 | Phase 4 | Pending |
+| COPY-09 | Phase 4 | Pending |
+| TRIA-01 | Phase 6 | Pending |
+| TRIA-02 | Phase 6 | Pending |
+| TRIA-03 | Phase 6 | Pending |
+| AUDIT-01 | Phase 1 | Pending |
+| AUDIT-02 | Phase 6 | Pending |
+| AUDIT-03 | Phase 1 | Pending |
+| I18N-01 | Phase 7 | Pending |
+| I18N-02 | Phase 7 | Pending |
+| I18N-03 | Phase 7 | Pending |
+| TEST-01 | Phase 1 | Pending |
+| TEST-02 | Phase 1 | Pending |
+| TEST-03 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 0
-- Unmapped: 39 ⚠️
+- Mapped to phases: 39
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-19*
-*Last updated: 2026-03-19 after initial definition*
+*Last updated: 2026-03-19 after roadmap creation — all 39 requirements mapped*
