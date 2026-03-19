@@ -1,0 +1,71 @@
+# Pmkar
+
+## What This Is
+
+Pmkar is a cross-platform desktop app (Tauri) that bridges two Jira systems — a customer's legacy self-hosted Jira and the user's company's cloud Jira. It automates the process of discovering relevant tickets from the customer's system and selectively copying them in full detail to the company's Jira, replacing a manual workflow that's tedious and error-prone.
+
+## Core Value
+
+Surface relevant tickets from the customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
+
+## Requirements
+
+### Validated
+
+(None yet — ship to validate)
+
+### Active
+
+- [ ] Setup wizard for configuring two Jira connections (cloud + self-hosted) via REST API with Personal Access Tokens
+- [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
+- [ ] Configure watched users beyond just myself
+- [ ] Present candidate tickets in full detail (links, images, assignees, work log, history, comments, attachments, sub-tasks)
+- [ ] Two actions per ticket: "Ignore" (move to ignored list) or "Copy to my Jira"
+- [ ] Full mirror copy: summary, description, attachments, comments, work log, sub-tasks, linked issues
+- [ ] Track origin — remember source ticket link, but no ongoing sync
+- [ ] Ignored tickets list — reviewable, not permanently hidden
+- [ ] Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
+- [ ] All REST API calls logged with full request/response for audit and verification
+- [ ] Mock Jira server for development and testing without real PATs
+- [ ] Excel export capability (scope to be defined in later milestones)
+- [ ] Extensible architecture for future additions
+
+### Out of Scope
+
+- Two-way sync between Jira systems — complexity not justified, one-time copy with origin tracking is sufficient
+- Real-time notifications — batch review workflow, not a monitoring dashboard
+- OAuth/SSO authentication — PATs are the access method for both systems
+- Mobile app — desktop-only for this workflow
+- Video/rich media embedding — links and images yes, but not a full Jira renderer
+
+## Context
+
+- Customer Jira: Self-hosted (older version), accessed via REST API + PAT
+- Company Jira: Cloud (new), accessed via REST API + PAT
+- Two different Jira API versions may need to be handled (Server vs Cloud REST API differences)
+- Small batch workflow: 5-20 tickets per review session, daily cadence
+- Cross-platform requirement: macOS, Windows, Linux
+- Tauri for desktop shell — Rust backend handles credential security and API calls, web frontend for UI
+- No test PATs available — must have mock server layer from day one
+- Watched users: same copy workflow applies to their tickets too (review + optionally copy)
+
+## Constraints
+
+- **Security**: Credentials stored in OS keychain only — never in plaintext, config files, or environment variables
+- **Auditability**: Every REST call logged with timestamp, endpoint, method, status code, and response body
+- **Testability**: Full mock Jira server that simulates both cloud and self-hosted APIs — development must not require real credentials
+- **API compatibility**: Must handle differences between Jira Server REST API and Jira Cloud REST API
+- **Cross-platform**: Must build and run on macOS, Windows, and Linux
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | — Pending |
+| OS keychain for credentials | Most secure option, native to each platform | — Pending |
+| One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | — Pending |
+| Mock server for testing | No test PATs available, need development independence | — Pending |
+| Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
+
+---
+*Last updated: 2026-03-19 after initialization*
