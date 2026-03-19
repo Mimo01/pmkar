@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **CONN-01**: User can configure connection to customer's self-hosted Jira Server via base URL and PAT
 - [ ] **CONN-02**: User can configure connection to company's Jira Cloud via base URL, email, and API token
-- [ ] **CONN-03**: User credentials are stored in OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
+- [x] **CONN-03**: User credentials are stored in OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
 - [ ] **CONN-04**: User can test each connection and see clear success/failure feedback
 - [ ] **CONN-05**: App displays meaningful error messages for auth failures (401), permission errors (403), rate limits (429), and server errors (5xx)
 - [ ] **CONN-06**: Setup wizard guides user through configuring both connections step-by-step
@@ -51,9 +51,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Audit & Logging
 
-- [ ] **AUDIT-01**: All REST API calls are logged with timestamp, method, URL, status code, and response
+- [x] **AUDIT-01**: All REST API calls are logged with timestamp, method, URL, status code, and response
 - [ ] **AUDIT-02**: User can view the audit log within the app
-- [ ] **AUDIT-03**: Audit log redacts credentials and sensitive auth headers
+- [x] **AUDIT-03**: Audit log redacts credentials and sensitive auth headers
 
 ### Internationalization
 
@@ -100,7 +100,7 @@ Deferred to future release. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | CONN-01 | Phase 2 | Pending |
 | CONN-02 | Phase 2 | Pending |
-| CONN-03 | Phase 1 | Pending |
+| CONN-03 | Phase 1 | Complete |
 | CONN-04 | Phase 2 | Pending |
 | CONN-05 | Phase 2 | Pending |
 | CONN-06 | Phase 2 | Pending |
@@ -128,9 +128,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | TRIA-01 | Phase 6 | Pending |
 | TRIA-02 | Phase 6 | Pending |
 | TRIA-03 | Phase 6 | Pending |
-| AUDIT-01 | Phase 1 | Pending |
+| AUDIT-01 | Phase 1 | Complete |
 | AUDIT-02 | Phase 6 | Pending |
-| AUDIT-03 | Phase 1 | Pending |
+| AUDIT-03 | Phase 1 | Complete |
 | I18N-01 | Phase 7 | Pending |
 | I18N-02 | Phase 7 | Pending |
 | I18N-03 | Phase 7 | Pending |
