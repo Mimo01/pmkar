@@ -18,8 +18,9 @@ tauri-build = { version = "2.0", features = [] }
 axum = "0.8"
 keyring = { version = "3.6", features = ["apple-native", "windows-native", "linux-native-sync-persistent"] }
 rusqlite = { version = "0.39", features = ["bundled"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.13", features = ["json"] }
 reqwest-middleware = "0.5"
+http = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
