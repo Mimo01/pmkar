@@ -1,0 +1,427 @@
+use axum::{
+    extract::{Path, Query, State},
+    http::{HeaderMap, Request, StatusCode},
+    middleware::{self, Next},
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
+use serde::Deserialize;
+use serde_json::{json, Value};
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use crate::error::AppResult;
+use crate::fixtures::{AdfDoc, JiraIssue, SharedFixtures};
+
+/// Auth middleware: accepts any non-empty Authorization header, returns 401 otherwise.
+async fn require_auth(
+    headers: HeaderMap,
+    request: Request<axum::body::Body>,
+    next: Next,
+) -> Result<impl IntoResponse, StatusCode> {
+    match headers.get("authorization") {
+        Some(value) if !value.is_empty() => Ok(next.run(request).await),
+        _ => Err(StatusCode::UNAUTHORIZED),
+    }
+}
+
+// --- Query params ---
+
+#[derive(Debug, Deserialize)]
+pub struct SearchQuery {
+    pub jql: Option<String>,
+}
+
+// --- Search response helpers ---
+
+fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
+    let total = issues.len() as u64;
+    let issues_json: Vec<Value> = issues
+        .into_iter()
+        .map(|i| {
+            json!({
+                "id": i.id,
+                "key": i.key,
+                "fields": i.fields
+            })
+        })
+        .collect();
+    json!({
+        "startAt": 0,
+        "maxResults": 50,
+        "total": total,
+        "issues": issues_json
+    })
+}
+
+/// Filter issues by simple JQL: if jql contains `assignee=X`, filter by assignee name/accountId.
+fn filter_issues<'a>(issues: &'a HashMap<String, JiraIssue>, jql: &Option<String>) -> Vec<&'a JiraIssue> {
+    let mut result: Vec<&JiraIssue> = issues.values().collect();
+
+    if let Some(jql_str) = jql {
+        // Simple assignee filter: assignee=jdoe or assignee = jdoe
+        if let Some(assignee_val) = extract_jql_assignee(jql_str) {
+            result.retain(|issue| {
+                let assignee = &issue.fields["assignee"];
+                // v2: name field, v3: accountId field
+                let name = assignee["name"].as_str().unwrap_or("");
+                let account_id = assignee["accountId"].as_str().unwrap_or("");
+                name == assignee_val || account_id == assignee_val
+            });
+        }
+    }
+
+    // Sort by key for deterministic ordering
+    result.sort_by(|a, b| a.key.cmp(&b.key));
+    result
+}
+
+fn extract_jql_assignee(jql: &str) -> Option<&str> {
+    // Match patterns like: assignee=jdoe, assignee = jdoe, assignee="jdoe"
+    let lower = jql.to_lowercase();
+    if let Some(pos) = lower.find("assignee") {
+        let rest = &jql[pos + "assignee".len()..];
+        let rest = rest.trim_start();
+        if rest.starts_with('=') {
+            let val = rest[1..].trim().trim_matches('"').trim_matches('\'');
+            let end = val.find(|c: char| c.is_whitespace() || c == ' ').unwrap_or(val.len());
+            let extracted = &val[..end];
+            if !extracted.is_empty() {
+                // Return reference to the original jql slice
+                let start_in_orig = jql.find(extracted)?;
+                return Some(&jql[start_in_orig..start_in_orig + extracted.len()]);
+            }
+        }
+    }
+    None
+}
+
+// --- Server v2 handlers ---
+
+mod v2 {
+    use super::*;
+
+    pub async fn get_issue(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        match state.server_v2_issues.get(&key) {
+            Some(issue) => {
+                let body = json!({
+                    "id": issue.id,
+                    "key": issue.key,
+                    "fields": issue.fields
+                });
+                (StatusCode::OK, Json(body)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn search_issues(
+        State(fixtures): State<SharedFixtures>,
+        Query(params): Query<SearchQuery>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        let filtered = filter_issues(&state.server_v2_issues, &params.jql);
+        let response = make_search_response(filtered);
+        (StatusCode::OK, Json(response)).into_response()
+    }
+
+    pub async fn create_issue(
+        State(fixtures): State<SharedFixtures>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        let id = state.next_issue_id;
+        state.next_issue_id += 1;
+        let key = format!("PROJ-{}", id - 10000);
+        let issue_id = id.to_string();
+
+        let summary = body["fields"]["summary"]
+            .as_str()
+            .unwrap_or("Untitled")
+            .to_string();
+        let description = body["fields"]["description"].clone();
+
+        let new_issue = JiraIssue {
+            id: issue_id.clone(),
+            key: key.clone(),
+            fields: json!({
+                "summary": summary,
+                "status": { "name": "Open", "id": "1" },
+                "priority": body["fields"]["priority"].clone(),
+                "description": description,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": []
+            }),
+        };
+
+        state.server_v2_issues.insert(key.clone(), new_issue);
+
+        let response = json!({ "id": issue_id, "key": key });
+        (StatusCode::CREATED, Json(response)).into_response()
+    }
+
+    pub async fn update_issue(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        match state.server_v2_issues.get_mut(&key) {
+            Some(issue) => {
+                // Merge fields from update body
+                if let Some(fields) = body["fields"].as_object() {
+                    for (k, v) in fields {
+                        issue.fields[k] = v.clone();
+                    }
+                }
+                StatusCode::NO_CONTENT.into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn add_comment(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        match state.server_v2_issues.get_mut(&key) {
+            Some(issue) => {
+                let comment_id = format!("c{}", uuid::Uuid::new_v4());
+                let new_comment = json!({
+                    "id": comment_id,
+                    "author": { "name": "api-user", "displayName": "API User" },
+                    "body": body["body"].clone(),
+                    "created": chrono::Utc::now().to_rfc3339()
+                });
+                issue.fields["comment"]["comments"]
+                    .as_array_mut()
+                    .map(|arr| arr.push(new_comment.clone()));
+                (StatusCode::CREATED, Json(new_comment)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn add_attachment(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        if state.server_v2_issues.contains_key(&key) {
+            let mock_attachment = json!([{
+                "id": "mock-attachment-id",
+                "filename": "uploaded-file.bin",
+                "size": 0,
+                "mimeType": "application/octet-stream",
+                "content": format!("http://localhost:8080/secure/attachment/mock-attachment-id/uploaded-file.bin")
+            }]);
+            (StatusCode::OK, Json(mock_attachment)).into_response()
+        } else {
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
+}
+
+// --- Cloud v3 handlers ---
+
+mod v3 {
+    use super::*;
+
+    pub async fn get_issue(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        match state.cloud_v3_issues.get(&key) {
+            Some(issue) => {
+                let body = json!({
+                    "id": issue.id,
+                    "key": issue.key,
+                    "fields": issue.fields
+                });
+                (StatusCode::OK, Json(body)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn search_issues(
+        State(fixtures): State<SharedFixtures>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        let jql = body["jql"].as_str().map(|s| s.to_string());
+        let filtered = filter_issues(&state.cloud_v3_issues, &jql);
+        let response = make_search_response(filtered);
+        (StatusCode::OK, Json(response)).into_response()
+    }
+
+    pub async fn create_issue(
+        State(fixtures): State<SharedFixtures>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        let id = state.next_issue_id;
+        state.next_issue_id += 1;
+        let key = format!("PROJ-{}", id - 10000);
+        let issue_id = id.to_string();
+
+        let summary = body["fields"]["summary"]
+            .as_str()
+            .unwrap_or("Untitled")
+            .to_string();
+        let description = if body["fields"]["description"].is_object() {
+            body["fields"]["description"].clone()
+        } else {
+            serde_json::to_value(AdfDoc::paragraph("")).unwrap()
+        };
+
+        let new_issue = JiraIssue {
+            id: issue_id.clone(),
+            key: key.clone(),
+            fields: json!({
+                "summary": summary,
+                "status": { "name": "Open", "statusCategory": { "key": "new" } },
+                "priority": body["fields"]["priority"].clone(),
+                "description": description,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": []
+            }),
+        };
+
+        state.cloud_v3_issues.insert(key.clone(), new_issue);
+
+        let response = json!({ "id": issue_id, "key": key });
+        (StatusCode::CREATED, Json(response)).into_response()
+    }
+
+    pub async fn update_issue(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        match state.cloud_v3_issues.get_mut(&key) {
+            Some(issue) => {
+                if let Some(fields) = body["fields"].as_object() {
+                    for (k, v) in fields {
+                        issue.fields[k] = v.clone();
+                    }
+                }
+                StatusCode::NO_CONTENT.into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn add_comment(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+        Json(body): Json<Value>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        match state.cloud_v3_issues.get_mut(&key) {
+            Some(issue) => {
+                let comment_id = format!("c{}", uuid::Uuid::new_v4());
+                let adf_body = if body["body"].is_object() {
+                    body["body"].clone()
+                } else {
+                    serde_json::to_value(AdfDoc::paragraph(
+                        body["body"].as_str().unwrap_or(""),
+                    ))
+                    .unwrap()
+                };
+                let new_comment = json!({
+                    "id": comment_id,
+                    "author": { "accountId": "api-user", "displayName": "API User" },
+                    "body": adf_body,
+                    "created": chrono::Utc::now().to_rfc3339()
+                });
+                issue.fields["comment"]["comments"]
+                    .as_array_mut()
+                    .map(|arr| arr.push(new_comment.clone()));
+                (StatusCode::CREATED, Json(new_comment)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn add_attachment(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        if state.cloud_v3_issues.contains_key(&key) {
+            let mock_attachment = json!([{
+                "id": "mock-attachment-id",
+                "filename": "uploaded-file.bin",
+                "size": 0,
+                "mimeType": "application/octet-stream",
+                "content": "http://localhost:8081/secure/attachment/mock-attachment-id/uploaded-file.bin"
+            }]);
+            (StatusCode::OK, Json(mock_attachment)).into_response()
+        } else {
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
+}
+
+// --- Router construction ---
+
+pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
+    Router::new()
+        .route("/rest/api/2/issue/{key}", get(v2::get_issue).put(v2::update_issue))
+        .route("/rest/api/2/issue", post(v2::create_issue))
+        .route("/rest/api/2/search", get(v2::search_issues))
+        .route("/rest/api/2/issue/{key}/comment", post(v2::add_comment))
+        .route("/rest/api/2/issue/{key}/attachments", post(v2::add_attachment))
+        .layer(middleware::from_fn(require_auth))
+        .with_state(fixtures)
+}
+
+pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
+    Router::new()
+        .route("/rest/api/3/issue/{key}", get(v3::get_issue).put(v3::update_issue))
+        .route("/rest/api/3/issue", post(v3::create_issue))
+        .route("/rest/api/3/search/jql", post(v3::search_issues))
+        .route("/rest/api/3/issue/{key}/comment", post(v3::add_comment))
+        .route("/rest/api/3/issue/{key}/attachments", post(v3::add_attachment))
+        .layer(middleware::from_fn(require_auth))
+        .with_state(fixtures)
+}
+
+/// Start both mock servers as background tokio tasks.
+/// Server v2 binds to 127.0.0.1:8080, Cloud v3 binds to 127.0.0.1:8081.
+pub async fn start_mock_servers(fixtures: SharedFixtures) -> AppResult<()> {
+    let v2_router = build_v2_router(Arc::clone(&fixtures));
+    let v3_router = build_v3_router(Arc::clone(&fixtures));
+
+    let v2_listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
+        .await
+        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8080: {}", e)))?;
+
+    let v3_listener = tokio::net::TcpListener::bind("127.0.0.1:8081")
+        .await
+        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8081: {}", e)))?;
+
+    tokio::spawn(async move {
+        axum::serve(v2_listener, v2_router).await.ok();
+    });
+
+    tokio::spawn(async move {
+        axum::serve(v3_listener, v3_router).await.ok();
+    });
+
+    Ok(())
+}
