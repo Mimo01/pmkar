@@ -64,11 +64,11 @@ System font stack: `font-family: ui-sans-serif, system-ui, -apple-system, BlinkM
 | Role | Size | Weight | Line Height | Tailwind Class |
 |------|------|--------|-------------|----------------|
 | Body | 14px | 400 (regular) | 1.5 | `text-sm font-normal leading-normal` |
-| Label | 12px | 500 (medium) | 1.4 | `text-xs font-medium leading-snug` |
+| Label | 12px | 600 (semibold) | 1.4 | `text-xs font-semibold leading-snug` |
 | Heading | 20px | 600 (semibold) | 1.2 | `text-xl font-semibold leading-tight` |
 | Display | 28px | 600 (semibold) | 1.2 | `text-2xl font-semibold leading-tight` |
 
-Weights used: 400 (regular) and 600 (semibold). 500 (medium) used only for labels — not a third general weight.
+Weights used: 400 (regular) and 600 (semibold). Labels use semibold at 12px — the smaller size provides sufficient visual differentiation from 14px body text without requiring a third weight.
 
 ---
 
@@ -207,7 +207,7 @@ Secondary text:           text-slate-500 dark:text-slate-400
 Disabled text:            text-slate-200 dark:text-slate-600
 
 Body text:                text-sm font-normal leading-normal        (14px / 400 / 1.5)
-Label:                    text-xs font-medium leading-snug          (12px / 500 / 1.4)
+Label:                    text-xs font-semibold leading-snug        (12px / 600 / 1.4)
 Heading:                  text-xl font-semibold leading-tight       (20px / 600 / 1.2)
 Display:                  text-2xl font-semibold leading-tight      (28px / 600 / 1.2)
 
