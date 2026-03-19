@@ -32,7 +32,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The mock Jira server starts and responds to both Jira Server v2 and Jira Cloud v3 API endpoint shapes with realistic fixture data
   4. The app can be run entirely against the mock server without any real PAT or Jira instance
   5. Every REST call logged by the audit system has the Authorization header value replaced with [REDACTED]
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Tauri project with all dependencies, error types, and test infrastructure
+- [ ] 01-02-PLAN.md — OS keychain credential store and audit logging with SQLite + credential redaction
+- [ ] 01-03-PLAN.md — Mock Jira server (dual port) with realistic fixture data
+- [ ] 01-04-PLAN.md — Tauri command wiring, dev status UI, and end-to-end integration verification
 
 ### Phase 2: Connection Setup
 **Goal**: Users can configure both Jira connections through a guided wizard, validate them, and receive meaningful feedback on failures
@@ -107,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/4 | Planning complete | - |
 | 2. Connection Setup | 0/TBD | Not started | - |
 | 3. Ticket Fetch and Review | 0/TBD | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
