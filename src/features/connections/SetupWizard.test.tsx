@@ -18,14 +18,6 @@ const serverSuccessResult = {
   retryAfterSecs: null,
 };
 
-const cloudSuccessResult = {
-  success: true,
-  username: 'jane.doe',
-  serverVersion: '1001.0.0',
-  errorKind: null,
-  retryAfterSecs: null,
-};
-
 function fillServerForm() {
   const urlInput = screen.getByLabelText('Base URL');
   fireEvent.change(urlInput, { target: { value: 'https://jira.example.com' } });
@@ -33,18 +25,6 @@ function fillServerForm() {
 
   const patInput = screen.getByLabelText('Personal Access Token');
   fireEvent.change(patInput, { target: { value: 'my-pat-token' } });
-}
-
-function fillCloudForm() {
-  const urlInput = screen.getByLabelText('Base URL');
-  fireEvent.change(urlInput, { target: { value: 'https://company.atlassian.net' } });
-  fireEvent.blur(urlInput);
-
-  const emailInput = screen.getByLabelText('Email');
-  fireEvent.change(emailInput, { target: { value: 'user@company.com' } });
-
-  const apiTokenInput = screen.getByLabelText('API Token');
-  fireEvent.change(apiTokenInput, { target: { value: 'my-api-token' } });
 }
 
 describe('SetupWizard', () => {
