@@ -63,8 +63,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Testing Infrastructure
 
-- [ ] **TEST-01**: Mock Jira server simulates Jira Server v2 API responses
-- [ ] **TEST-02**: Mock Jira server simulates Jira Cloud v3 API responses
+- [x] **TEST-01**: Mock Jira server simulates Jira Server v2 API responses
+- [x] **TEST-02**: Mock Jira server simulates Jira Cloud v3 API responses
 - [x] **TEST-03**: App can run fully against mock server without real PATs
 
 ## v2 Requirements
@@ -134,8 +134,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | I18N-01 | Phase 7 | Pending |
 | I18N-02 | Phase 7 | Pending |
 | I18N-03 | Phase 7 | Pending |
-| TEST-01 | Phase 1 | Pending |
-| TEST-02 | Phase 1 | Pending |
+| TEST-01 | Phase 1 | Complete |
+| TEST-02 | Phase 1 | Complete |
 | TEST-03 | Phase 1 | Complete |
 
 **Coverage:**

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-03-19T23:59:20.139Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-03-20T00:00:15.739Z"
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -48,6 +48,7 @@ Plan: 2 of 4
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 7 | 2 tasks | 18 files |
 | Phase 01-foundation P02 | 6 | 2 tasks | 6 files |
+| Phase 01-foundation P03 | 7 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,9 @@ Recent decisions affecting current work:
 - [Phase 01-02]: http = 1 added as explicit dep — http::Extensions required by reqwest_middleware::Middleware trait, not re-exported by reqwest-middleware
 - [Phase 01-02]: Audit failure is silent (let _ = db.insert) — audit subsystem must never break production HTTP calls
 - [Phase 01-02]: Authorization header redacted via header map clone before next.run() — credentials structurally unreachable in log
+- [Phase 01-03]: std::sync::Once + dedicated std::thread for test server ensures servers persist across per-test tokio runtimes
+- [Phase 01-03]: AdfDoc.version: u8 = 1 enforced via struct — ADF version field cannot be omitted by accident
+- [Phase 01-03]: SharedFixtures shared between v2 and v3 routers via Arc::clone — single source of truth for created issues
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T23:59:20.135Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-03-20T00:00:15.736Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
