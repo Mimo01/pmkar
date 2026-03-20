@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-20T09:09:26.911Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-20T09:15:16.188Z"
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 1 of 3
 | Phase 01-foundation P03 | 7 | 2 tasks | 4 files |
 | Phase 01-foundation P04 | 3 | 3 tasks | 10 files |
 | Phase 02-connection-setup P01 | 2 | 2 tasks | 4 files |
+| Phase 02-connection-setup P02 | 4 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: State type changed from Mutex<AuditDb> to Arc<Mutex<AuditDb>> — build_audited_client requires Arc; Tauri State inner() returns &T not Arc
 - [Phase 02-01]: fetch_server_version non-fatal: /myself confirms auth, serverInfo version is best-effort
 - [Phase 02-01]: base64 = 0.22 added as explicit dep for Cloud Basic auth base64 encoding
+- [Phase 02-02]: SetupWizard owns store_credential and Zustand store update on test success; ConnectionForm only owns test invoke calls for reusability
+- [Phase 02-02]: App.tsx wizard branch uses no AppShell wrapper — wizard provides its own full-page centered layout
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:09:26.907Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-20T09:15:16.184Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

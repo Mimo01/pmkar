@@ -49,7 +49,7 @@ Plans:
   2. User can enter base URL, email, and API token for the company Jira Cloud connection
   3. User can click "Test Connection" for each and see a clear success message or a specific failure reason (auth failure, permission error, rate limit, server error)
   4. Configured credentials persist across app restarts via the OS keychain (no plaintext storage)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 02-01-PLAN.md — Mock server /myself + /serverInfo endpoints and Rust test_jira_*_connection commands
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
-| 2. Connection Setup | 1/3 | In Progress|  |
+| 2. Connection Setup | 2/3 | In Progress|  |
 | 3. Ticket Fetch and Review | 0/TBD | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
