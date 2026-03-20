@@ -34,7 +34,7 @@ Declared values (multiples of 4 only):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon-to-label gaps (`gap-1`), triage indicator dot margins |
-| sm | 8px | Inline element spacing (`gap-2`), badge padding (`px-2 py-1.5`) |
+| sm | 8px | Inline element spacing (`gap-2`), badge padding (`px-2 py-1`) |
 | md | 16px | Default element spacing (`gap-4`), form field spacing (`space-y-4`) |
 | lg | 24px | Section padding (`px-6`), content regions |
 | xl | 32px | Layout horizontal padding (`py-8`) |
@@ -42,10 +42,16 @@ Declared values (multiples of 4 only):
 | 3xl | 64px | Page-level vertical spacing |
 
 Exceptions:
-- `py-2.5` (10px) on primary buttons — matches existing button pattern in ConnectionForm.tsx; kept for touch target consistency
 - `py-16` (64px) on empty state — matches existing SettingsPage empty state pattern
 - Table row height: `py-3 px-4` per row (12px / 16px) — dense scan layout for ticket list
 - Touch target minimum: 36px × 36px for icon-only buttons (established in AppShell: `w-9 h-9`)
+
+Non-conforming values removed:
+- `py-2.5` (10px) on primary buttons — replaced with `py-3` (12px) for touch target compliance
+- `py-0.5` (2px) on badges and inline code — replaced with `py-1` (4px)
+- `mb-0.5` (2px) on field labels — replaced with `mb-1` (4px)
+- `mr-5` (20px) on tab buttons — replaced with `mr-4` (16px)
+- `mt-5` (20px) on watched users label — replaced with `mt-4` (16px)
 
 ---
 
@@ -53,17 +59,30 @@ Exceptions:
 
 | Role | Size | Weight | Line Height | Tailwind | Usage |
 |------|------|--------|-------------|----------|-------|
-| Body | 14px | 400 (normal) | 1.5 | `text-sm` | Table cells, description text, tab content |
-| Label | 12px | 500 (medium) | 1.4 | `text-xs font-medium` | Meta fields, timestamps, attachment sizes, triage badges |
+| Body | 14px | 400 (normal) | 1.5 | `text-sm` | Table cells, description text, tab content, inactive tabs |
+| Label | 12px | 600 (semibold) | 1.4 | `text-xs font-semibold` | Meta fields, timestamps, attachment sizes, triage badges, column headers, active tab |
 | Heading | 18px | 600 (semibold) | 1.2 | `text-lg font-semibold` | Panel section heading ("Ticket Detail"), settings section headers |
 | Display | 20px | 600 (semibold) | 1.2 | `text-xl font-semibold` | Ticket summary (large, prominent in detail panel header) |
 
 Rules:
+- Exactly 2 weights in use: 400 (normal) and 600 (semibold). Weight 500 (medium) is NOT used anywhere in Phase 3.
 - Body line-height 1.5 (prose content in description, comments, work log)
 - Heading and display line-height 1.2 (single-line labels and titles)
-- Column headers in table: `text-xs font-medium text-slate-500` (12px / 500)
-- Ticket key (e.g. PROJ-123): `text-xs font-medium text-slate-400` — monospace-adjacent, not italic
+- Column headers in table: `text-xs font-semibold text-slate-500` (12px / 600)
+- Ticket key (e.g. PROJ-123): `text-xs font-semibold text-slate-400` — monospace-adjacent, not italic
 - Sortable column header active state: `text-slate-300` (lightened from `text-slate-500`)
+- Active tab: `text-slate-200 font-semibold border-b-2 border-blue-500` — weight 600
+- Inactive tab: `text-slate-500 font-normal` — weight 400
+- Badge text: `text-xs font-semibold` — weight 600 for all pill badges
+- Field labels in OverviewTab: `text-xs font-semibold text-slate-500` — weight 600
+
+Weight mapping (all former `font-medium` replaced):
+- `text-xs font-medium text-slate-500` (column headers) → `text-xs font-semibold text-slate-500`
+- `text-xs font-medium text-slate-400` (ticket key) → `text-xs font-semibold text-slate-400`
+- `text-xs font-medium` (label role / field labels) → `text-xs font-semibold`
+- `font-medium` on active tab → `font-semibold`
+- `font-medium` on badges → `font-semibold`
+- `text-sm font-medium` on JQL preset label and watched users label → `text-sm font-semibold`
 
 ---
 
@@ -142,6 +161,8 @@ Panel border: `border-slate-800` (consistent with existing cards). Panel backgro
 └──────────────────────────┴──────────────────────────────┘
 ```
 
+Focal point declaration: The Summary column is the primary visual anchor of the ticket list — it spans `flex-1` width, uses `text-sm text-slate-200`, and draws the eye across each scan row due to contrast against the muted slate-700 metadata columns. The selected row `border-l-2 border-l-blue-500` is the secondary visual anchor — the 2px blue left border immediately communicates which ticket is open in the detail panel.
+
 - Outer container: `flex h-screen overflow-hidden` (fills viewport below header)
 - Ticket list pane: `flex-1 flex flex-col overflow-hidden` (takes remaining width)
 - Detail panel: `w-[45%] border-l border-slate-800 bg-slate-900 flex flex-col` — fixed width when open, `hidden` (or `w-0 overflow-hidden`) when closed
@@ -157,7 +178,7 @@ Panel border: `border-slate-800` (consistent with existing cards). Panel backgro
 ```
 
 - Container: `flex items-center gap-4 px-6 py-4 border-b border-slate-800/60`
-- "Fetch Tickets" button: primary button style (`bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg px-4 py-2 text-sm`)
+- "Fetch Tickets" button: primary button style (`bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-4 py-3 text-sm`)
 - Loading state: spinner icon inline-left of label (same SpinnerIcon pattern from ConnectionForm)
 - "Last fetched" text: `text-xs text-slate-500` with relative time (`3 min ago`)
 - Summary text: `text-xs text-slate-400` — "12 candidates, 3 new" (new count in `text-blue-400` if > 0)
@@ -169,7 +190,7 @@ Columns (left to right):
 | Column | Width | Alignment | Content |
 |--------|-------|-----------|---------|
 | (triage dot) | 24px | center | `TriageIndicator` |
-| Key | 96px | left | `text-xs font-medium text-slate-400` — e.g. PROJ-123 |
+| Key | 96px | left | `text-xs font-semibold text-slate-400` — e.g. PROJ-123 |
 | Summary | flex-1 | left | `text-sm text-slate-200 truncate` |
 | Status | 96px | left | Status text in `text-xs text-slate-300` |
 | Priority | 72px | left | Priority text `text-xs text-slate-400` |
@@ -177,7 +198,7 @@ Columns (left to right):
 | Updated | 96px | right | Relative time `text-xs text-slate-500` |
 
 - Table header row: `bg-slate-900/40 border-b border-slate-800` — sticky, `sticky top-0 z-10`
-- Header cells: `text-xs font-medium text-slate-500 px-4 py-2 cursor-pointer select-none hover:text-slate-300 transition-colors duration-150`
+- Header cells: `text-xs font-semibold text-slate-500 px-4 py-2 cursor-pointer select-none hover:text-slate-300 transition-colors duration-150`
 - Active sort column: header text `text-slate-300` + sort direction chevron icon (12px, inline)
 - Data rows: `border-b border-slate-800/40 hover:bg-slate-800/30 cursor-pointer transition-colors duration-150`
 - Selected row: `bg-slate-800/60 border-l-2 border-l-blue-500`
@@ -200,28 +221,28 @@ Columns (left to right):
 
 - Panel header: `px-5 py-4 border-b border-slate-800`
 - Close button: `w-8 h-8 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg` (matches SettingsPage back button)
-- Ticket key: `text-xs font-medium text-slate-500 mb-1`
+- Ticket key: `text-xs font-semibold text-slate-500 mb-1`
 - Ticket summary: `text-xl font-semibold text-slate-100 leading-tight` — max 2 lines with `line-clamp-2`
-- Status + Priority: displayed as small pill badges below summary — `text-xs font-medium px-2 py-0.5 rounded-full bg-slate-800 text-slate-300`
+- Status + Priority: displayed as small pill badges below summary — `text-xs font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-300`
 
 ### Tab Bar (within Detail Panel)
 
 - Container: `flex border-b border-slate-800 px-5`
-- Tab button: `text-sm text-slate-500 hover:text-slate-300 py-2.5 mr-5 border-b-2 border-transparent transition-colors duration-150`
-- Active tab: `text-slate-200 border-b-2 border-blue-500`
+- Tab button (inactive): `text-sm font-normal text-slate-500 hover:text-slate-300 py-2 mr-4 border-b-2 border-transparent transition-colors duration-150`
+- Active tab: `text-slate-200 font-semibold border-b-2 border-blue-500`
 - Comment/attachment count badge: `ml-1 text-xs text-slate-600` — e.g. "Comments (3)"
-- Tabs do NOT use `font-medium` — weight 400 (normal) for inactive, weight 500 (medium) for active tab only
+- Weight rule: inactive tabs use weight 400 (normal); active tab uses weight 600 (semibold). No weight 500 instances.
 
 ### OverviewTab Field Grid
 
 Two-column grid for metadata fields:
 
 - Container: `grid grid-cols-2 gap-x-6 gap-y-3 px-5 py-4`
-- Field label: `text-xs font-medium text-slate-500 mb-0.5`
+- Field label: `text-xs font-semibold text-slate-500 mb-1`
 - Field value: `text-sm text-slate-300`
 - Description section: full-width below the grid, `px-5 py-4 border-t border-slate-800/60`
-- Description heading: `text-xs font-medium text-slate-500 mb-3`
-- Rendered description: scoped prose styling — `text-sm text-slate-300 leading-relaxed` with child overrides for headings (`text-slate-200 font-semibold`), links (`text-blue-400 hover:underline`), code (`bg-slate-800 px-1 py-0.5 rounded text-xs font-mono text-emerald-300`), blockquote (`border-l-2 border-slate-600 pl-3 text-slate-400`)
+- Description heading: `text-xs font-semibold text-slate-500 mb-3`
+- Rendered description: scoped prose styling — `text-sm text-slate-300 leading-relaxed` with child overrides for headings (`text-slate-200 font-semibold`), links (`text-blue-400 hover:underline`), code (`bg-slate-800 px-1 py-1 rounded text-xs font-mono text-emerald-300`), blockquote (`border-l-2 border-slate-600 pl-3 text-slate-400`)
 
 ### FetchConfigSection (Settings Page Addition)
 
@@ -229,12 +250,12 @@ Appended below existing Connection cards with a section divider:
 
 - Section divider: `border-t border-slate-800/60 mt-6 pt-6`
 - Section heading: `text-base font-semibold text-slate-200 mb-4`
-- JQL preset label: `text-sm font-medium text-slate-300 mb-2`
+- JQL preset label: `text-sm font-semibold text-slate-300 mb-2`
 - Preset select: `w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2 text-sm` (matches input style from ConnectionForm)
 - Advanced toggle: `text-xs text-blue-400 hover:text-blue-300 cursor-pointer mt-2 inline-block`
 - Advanced textarea: same input class, `resize-none h-20 font-mono text-xs`
 - Reset to default link: `text-xs text-slate-500 hover:text-slate-300 mt-1 inline-block`
-- Watched users label: `text-sm font-medium text-slate-300 mb-1 mt-5`
+- Watched users label: `text-sm font-semibold text-slate-300 mb-1 mt-4`
 - Watched users helper: `text-xs text-slate-500 mb-2` — "One username per line"
 - Watched users textarea: same input class, `resize-none h-20`
 
@@ -247,7 +268,7 @@ Appended below existing Connection cards with a section divider:
 | Fetch button | `bg-blue-600` | `bg-blue-500` | `bg-blue-700` | spinner + "Fetching..." | `opacity-40 cursor-not-allowed` | — |
 | Table row | `bg-transparent` | `bg-slate-800/30` | `bg-slate-800/60 border-l-2 border-l-blue-500` | skeleton pulse | — | — |
 | Sort column header | `text-slate-500` | `text-slate-300` | `text-slate-300` + chevron | — | — | — |
-| Tab button | `text-slate-500 border-transparent` | `text-slate-300` | `text-slate-200 border-blue-500` | — | — | — |
+| Tab button | `text-slate-500 border-transparent` | `text-slate-300` | `text-slate-200 font-semibold border-blue-500` | — | — | — |
 | Settings select | standard | — | standard | — | `opacity-40` | `border-red-500/50` |
 | Settings textarea | standard | — | focused | — | — | — |
 
@@ -264,14 +285,14 @@ When `fetchStatus === 'error'`:
 - Inline below FetchBar, NOT a modal
 - Container: `mx-6 mt-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3`
 - Error text: `text-sm text-red-400`
-- Sub-text: `text-xs text-slate-500 mt-0.5`
+- Sub-text: `text-xs text-slate-500 mt-1`
 - No retry button in the error banner — the "Fetch Tickets" button itself is the retry (re-enabled after error)
 
 ### Empty State — No Tickets Returned
 
 When fetch succeeds but returns 0 results:
 - Centered in the table area: `flex flex-col items-center justify-center flex-1 py-16`
-- Heading: `text-sm font-medium text-slate-400 mb-1`
+- Heading: `text-sm font-semibold text-slate-400 mb-1`
 - Body: `text-xs text-slate-600`
 
 ### Lazy Loading (Work Log / History Tabs)
@@ -396,5 +417,11 @@ No third-party shadcn registries declared. Registry safety gate: not applicable.
 | Inline SVG icons (no icon library) | Detected from AppShell.tsx, ConnectionForm.tsx |
 | System font stack | Detected from index.css (only `@import "tailwindcss"`) |
 | text-sm / text-xs typography sizes | Detected from ConnectionForm.tsx, ConnectionCard.tsx, SettingsPage.tsx |
-| font-medium / font-semibold weights | Detected throughout existing components |
+| 2 weights: 400 (normal) + 600 (semibold) only | Revision fix — checker block Dimension 4; all font-medium (500) instances replaced |
+| py-3 on primary buttons (not py-2.5) | Revision fix — checker block Dimension 5; 10px → 12px |
+| py-1 on badges/inline code (not py-0.5) | Revision fix — checker block Dimension 5; 2px → 4px |
+| mb-1 on field labels (not mb-0.5) | Revision fix — checker block Dimension 5; 2px → 4px |
+| mr-4 on tab buttons (not mr-5) | Revision fix — checker block Dimension 5; 20px → 16px |
+| mt-4 on watched users label (not mt-5) | Revision fix — checker block Dimension 5; 20px → 16px |
+| Focal point declaration for TicketListPage | Revision fix — checker flag Dimension 2 |
 | rounded-xl / rounded-lg borders | Detected from ConnectionCard.tsx, ConnectionForm.tsx |
