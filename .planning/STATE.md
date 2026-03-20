@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-20T00:00:15.739Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-03-20T00:07:04.835Z"
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 2 of 4
 | Phase 01-foundation P01 | 7 | 2 tasks | 18 files |
 | Phase 01-foundation P02 | 6 | 2 tasks | 6 files |
 | Phase 01-foundation P03 | 7 | 2 tasks | 4 files |
+| Phase 01-foundation P04 | 3 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01-03]: std::sync::Once + dedicated std::thread for test server ensures servers persist across per-test tokio runtimes
 - [Phase 01-03]: AdfDoc.version: u8 = 1 enforced via struct — ADF version field cannot be omitted by accident
 - [Phase 01-03]: SharedFixtures shared between v2 and v3 routers via Arc::clone — single source of truth for created issues
+- [Phase 01-foundation]: use tauri::Manager must be imported explicitly — path() and manage() methods are not in scope by default in Tauri 2.x setup closures
+- [Phase 01-foundation]: setup() closure in Tauri Builder must use 'move' keyword — captured state must satisfy 'static lifetime
+- [Phase 01-foundation]: ping_mock_servers uses POST for v3 search/jql (not GET) — matches axum route definition in mock_server.rs
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T00:00:15.736Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-20T00:07:04.831Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None

@@ -12,7 +12,7 @@ Pmkar delivers a cross-platform desktop tool that bridges two Jira instances. Th
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Tauri scaffold, OS keychain credential store, mock Jira server (both API shapes), and security architecture (credential redaction, error boundaries)
+- [x] **Phase 1: Foundation** - Tauri scaffold, OS keychain credential store, mock Jira server (both API shapes), and security architecture (credential redaction, error boundaries) (completed 2026-03-20)
 - [ ] **Phase 2: Connection Setup** - Setup wizard UI for dual-connection configuration with OS keychain write, connection validation against mock, and error handling
 - [ ] **Phase 3: Ticket Fetch and Review** - Dual Jira adapter pair, JQL fetch with pagination, full ticket detail view, and persistent triage state schema
 - [ ] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting
@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The mock Jira server starts and responds to both Jira Server v2 and Jira Cloud v3 API endpoint shapes with realistic fixture data
   4. The app can be run entirely against the mock server without any real PAT or Jira instance
   5. Every REST call logged by the audit system has the Authorization header value replaced with [REDACTED]
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [ ] 01-01-PLAN.md — Scaffold Tauri project with all dependencies, error types, and test infrastructure
@@ -113,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/4 | In Progress|  |
+| 1. Foundation | 4/4 | Complete   | 2026-03-20 |
 | 2. Connection Setup | 0/TBD | Not started | - |
 | 3. Ticket Fetch and Review | 0/TBD | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
