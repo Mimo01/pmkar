@@ -141,3 +141,17 @@ None - no external service configuration required.
 ---
 *Phase: 02-connection-setup*
 *Completed: 2026-03-20*
+
+## Self-Check: PASSED
+
+- src/components/ui/AppShell.tsx: FOUND
+- src/features/connections/ConnectionCard.tsx: FOUND
+- src/features/connections/SettingsPage.tsx: FOUND
+- src/features/connections/ConnectionForm.test.tsx: FOUND
+- src/features/connections/TestResult.test.tsx: FOUND
+- src/features/connections/SetupWizard.test.tsx: FOUND
+- src/features/connections/SecretInput.test.tsx: FOUND
+- Commit 4ce56ae: FOUND (feat(02-03): gear icon, SettingsPage, ConnectionCard)
+- Commit 93563e0: FOUND (test(02-03): frontend tests)
+- Commit 53e4ce0: FOUND (fix: unused variables)
+- npm test -- src/features/connections: 26/26 PASSED
