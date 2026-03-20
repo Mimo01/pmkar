@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-20T09:15:16.188Z"
+stopped_at: "Checkpoint: Task 3 visual verification of complete wizard flow"
+last_updated: "2026-03-20T09:42:08.780Z"
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 
 ## Current Position
 
-Phase: 02 (connection-setup) — EXECUTING
-Plan: 1 of 3
+Phase: 02 (connection-setup) — COMPLETE (awaiting checkpoint visual verification)
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: 1 of 3
 | Phase 01-foundation P04 | 3 | 3 tasks | 10 files |
 | Phase 02-connection-setup P01 | 2 | 2 tasks | 4 files |
 | Phase 02-connection-setup P02 | 4 | 2 tasks | 10 files |
+| Phase 02-connection-setup P03 | 90 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 02-01]: base64 = 0.22 added as explicit dep for Cloud Basic auth base64 encoding
 - [Phase 02-02]: SetupWizard owns store_credential and Zustand store update on test success; ConnectionForm only owns test invoke calls for reusability
 - [Phase 02-02]: App.tsx wizard branch uses no AppShell wrapper — wizard provides its own full-page centered layout
+- [Phase 02-03]: currentCredentialsRef useRef in ConnectionForm prevents stale-closure race in setTimeout invalidation callbacks
+- [Phase 02-03]: SetupWizard multi-step tests use initialStep=3 with pre-populated store for determinism in React 19 async environment
+- [Phase 02-03]: App.tsx three-branch conditional: !hasSetup||editStep shows wizard, showSettings shows SettingsPage, otherwise DevStatusPanel
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:15:16.184Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-03-20T09:42:08.775Z
+Stopped at: Checkpoint: Task 3 visual verification of complete wizard flow
 Resume file: None
