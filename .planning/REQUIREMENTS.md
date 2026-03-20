@@ -9,11 +9,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Connection & Security
 
-- [ ] **CONN-01**: User can configure connection to customer's self-hosted Jira Server via base URL and PAT
-- [ ] **CONN-02**: User can configure connection to company's Jira Cloud via base URL, email, and API token
+- [x] **CONN-01**: User can configure connection to customer's self-hosted Jira Server via base URL and PAT
+- [x] **CONN-02**: User can configure connection to company's Jira Cloud via base URL, email, and API token
 - [x] **CONN-03**: User credentials are stored in OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
-- [ ] **CONN-04**: User can test each connection and see clear success/failure feedback
-- [ ] **CONN-05**: App displays meaningful error messages for auth failures (401), permission errors (403), rate limits (429), and server errors (5xx)
+- [x] **CONN-04**: User can test each connection and see clear success/failure feedback
+- [x] **CONN-05**: App displays meaningful error messages for auth failures (401), permission errors (403), rate limits (429), and server errors (5xx)
 - [ ] **CONN-06**: Setup wizard guides user through configuring both connections step-by-step
 
 ### Ticket Fetch & Review
@@ -98,11 +98,11 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONN-01 | Phase 2 | Pending |
-| CONN-02 | Phase 2 | Pending |
+| CONN-01 | Phase 2 | Complete |
+| CONN-02 | Phase 2 | Complete |
 | CONN-03 | Phase 1 | Complete |
-| CONN-04 | Phase 2 | Pending |
-| CONN-05 | Phase 2 | Pending |
+| CONN-04 | Phase 2 | Complete |
+| CONN-05 | Phase 2 | Complete |
 | CONN-06 | Phase 2 | Pending |
 | FETCH-01 | Phase 3 | Pending |
 | FETCH-02 | Phase 3 | Pending |
