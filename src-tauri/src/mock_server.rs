@@ -102,6 +102,26 @@ fn extract_jql_assignee(jql: &str) -> Option<&str> {
 mod v2 {
     use super::*;
 
+    pub async fn get_myself() -> impl IntoResponse {
+        Json(json!({
+            "name": "jdoe",
+            "displayName": "John Doe",
+            "emailAddress": "jdoe@example.com",
+            "active": true,
+            "self": "http://127.0.0.1:8080/rest/api/2/user?username=jdoe"
+        }))
+    }
+
+    pub async fn get_server_info() -> impl IntoResponse {
+        Json(json!({
+            "version": "8.20.0",
+            "buildNumber": 802000,
+            "buildDate": "2022-01-01T00:00:00.000+0000",
+            "serverTitle": "Mock Jira Server",
+            "baseUrl": "http://127.0.0.1:8080"
+        }))
+    }
+
     pub async fn get_issue(
         State(fixtures): State<SharedFixtures>,
         Path(key): Path<String>,
@@ -235,6 +255,26 @@ mod v2 {
 
 mod v3 {
     use super::*;
+
+    pub async fn get_myself() -> impl IntoResponse {
+        Json(json!({
+            "accountId": "5b10a2844c20165700ede21g",
+            "displayName": "John Doe",
+            "emailAddress": "jdoe@example.com",
+            "active": true,
+            "accountType": "atlassian"
+        }))
+    }
+
+    pub async fn get_server_info() -> impl IntoResponse {
+        Json(json!({
+            "version": "1001.0.0",
+            "buildNumber": 100229,
+            "serverTitle": "Mock Jira Cloud",
+            "baseUrl": "http://127.0.0.1:8081",
+            "deploymentType": "Cloud"
+        }))
+    }
 
     pub async fn get_issue(
         State(fixtures): State<SharedFixtures>,
@@ -381,6 +421,8 @@ mod v3 {
 
 pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
     Router::new()
+        .route("/rest/api/2/myself", get(v2::get_myself))
+        .route("/rest/api/2/serverInfo", get(v2::get_server_info))
         .route("/rest/api/2/issue/{key}", get(v2::get_issue).put(v2::update_issue))
         .route("/rest/api/2/issue", post(v2::create_issue))
         .route("/rest/api/2/search", get(v2::search_issues))
@@ -392,6 +434,8 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
 
 pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
     Router::new()
+        .route("/rest/api/3/myself", get(v3::get_myself))
+        .route("/rest/api/3/serverInfo", get(v3::get_server_info))
         .route("/rest/api/3/issue/{key}", get(v3::get_issue).put(v3::update_issue))
         .route("/rest/api/3/issue", post(v3::create_issue))
         .route("/rest/api/3/search/jql", post(v3::search_issues))
