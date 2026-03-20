@@ -15,10 +15,9 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] Secure credential storage via OS keychain — Validated in Phase 1: Foundation
 - [x] All REST API calls logged with full request/response for audit and verification — Validated in Phase 1: Foundation
 - [x] Mock Jira server for development and testing without real PATs — Validated in Phase 1: Foundation
+- [x] Setup wizard for configuring two Jira connections (cloud + self-hosted) via REST API with Personal Access Tokens — Validated in Phase 2: Connection Setup
 
 ### Active
-
-- [ ] Setup wizard for configuring two Jira connections (cloud + self-hosted) via REST API with Personal Access Tokens
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
 - [ ] Configure watched users beyond just myself
 - [ ] Present candidate tickets in full detail (links, images, assignees, work log, history, comments, attachments, sub-tasks)
