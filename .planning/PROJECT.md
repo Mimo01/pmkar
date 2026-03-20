@@ -12,7 +12,9 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Secure credential storage via OS keychain — Validated in Phase 1: Foundation
+- [x] All REST API calls logged with full request/response for audit and verification — Validated in Phase 1: Foundation
+- [x] Mock Jira server for development and testing without real PATs — Validated in Phase 1: Foundation
 
 ### Active
 
@@ -61,11 +63,11 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | — Pending |
-| OS keychain for credentials | Most secure option, native to each platform | — Pending |
+| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Validated Phase 1 |
+| OS keychain for credentials | Most secure option, native to each platform | ✓ Validated Phase 1 |
 | One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | — Pending |
-| Mock server for testing | No test PATs available, need development independence | — Pending |
+| Mock server for testing | No test PATs available, need development independence | ✓ Validated Phase 1 |
 | Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-19 after initialization*
+*Last updated: 2026-03-20 — Phase 1 (Foundation) complete*
