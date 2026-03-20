@@ -49,7 +49,12 @@ Plans:
   2. User can enter base URL, email, and API token for the company Jira Cloud connection
   3. User can click "Test Connection" for each and see a clear success message or a specific failure reason (auth failure, permission error, rate limit, server error)
   4. Configured credentials persist across app restarts via the OS keychain (no plaintext storage)
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Mock server /myself + /serverInfo endpoints and Rust test_jira_*_connection commands
+- [ ] 02-02-PLAN.md — Zustand connection store, wizard React components, and App.tsx routing
+- [ ] 02-03-PLAN.md — Settings page, AppShell gear icon, frontend tests, and visual verification
 
 ### Phase 3: Ticket Fetch and Review
 **Goal**: Users can fetch candidate tickets from the customer Jira and see their full detail before taking any action
@@ -114,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
-| 2. Connection Setup | 0/TBD | Not started | - |
+| 2. Connection Setup | 0/3 | Not started | - |
 | 3. Ticket Fetch and Review | 0/TBD | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
