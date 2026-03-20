@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: "Checkpoint: Task 3 visual verification of complete wizard flow"
-last_updated: "2026-03-20T09:42:08.780Z"
+stopped_at: Completed 02-03-PLAN.md (plan 3 of 3, phase 02 complete)
+last_updated: "2026-03-20T17:20:14.351Z"
 progress:
   total_phases: 7
   completed_phases: 2
@@ -53,6 +53,7 @@ Plan: 3 of 3
 | Phase 02-connection-setup P01 | 2 | 2 tasks | 4 files |
 | Phase 02-connection-setup P02 | 4 | 2 tasks | 10 files |
 | Phase 02-connection-setup P03 | 90 | 2 tasks | 10 files |
+| Phase 02-connection-setup P03 | 90 | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 02-03]: currentCredentialsRef useRef in ConnectionForm prevents stale-closure race in setTimeout invalidation callbacks
 - [Phase 02-03]: SetupWizard multi-step tests use initialStep=3 with pre-populated store for determinism in React 19 async environment
 - [Phase 02-03]: App.tsx three-branch conditional: !hasSetup||editStep shows wizard, showSettings shows SettingsPage, otherwise DevStatusPanel
+- [Phase 02-03]: http:// URL allowed for localhost in dev — connection test URL validator accepts http:// for 127.0.0.1/localhost so mock servers work without TLS
+- [Phase 02-03]: open_external_url Tauri command required for external links — <a target=_blank> is silently swallowed in webviews; invoke-based opener added to SecretInput help links
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-20T09:42:08.775Z
-Stopped at: Checkpoint: Task 3 visual verification of complete wizard flow
+Last session: 2026-03-20T17:20:14.346Z
+Stopped at: Completed 02-03-PLAN.md (plan 3 of 3, phase 02 complete)
 Resume file: None

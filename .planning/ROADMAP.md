@@ -13,7 +13,7 @@ Pmkar delivers a cross-platform desktop tool that bridges two Jira instances. Th
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Tauri scaffold, OS keychain credential store, mock Jira server (both API shapes), and security architecture (credential redaction, error boundaries) (completed 2026-03-20)
-- [ ] **Phase 2: Connection Setup** - Setup wizard UI for dual-connection configuration with OS keychain write, connection validation against mock, and error handling
+- [x] **Phase 2: Connection Setup** - Setup wizard UI for dual-connection configuration with OS keychain write, connection validation against mock, and error handling (completed 2026-03-20)
 - [ ] **Phase 3: Ticket Fetch and Review** - Dual Jira adapter pair, JQL fetch with pagination, full ticket detail view, and persistent triage state schema
 - [ ] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting
 - [ ] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy
@@ -49,7 +49,7 @@ Plans:
   2. User can enter base URL, email, and API token for the company Jira Cloud connection
   3. User can click "Test Connection" for each and see a clear success message or a specific failure reason (auth failure, permission error, rate limit, server error)
   4. Configured credentials persist across app restarts via the OS keychain (no plaintext storage)
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 02-01-PLAN.md — Mock server /myself + /serverInfo endpoints and Rust test_jira_*_connection commands
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
-| 2. Connection Setup | 2/3 | In Progress|  |
+| 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
 | 3. Ticket Fetch and Review | 0/TBD | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
