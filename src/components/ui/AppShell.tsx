@@ -9,8 +9,8 @@ function GearIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
+      width="18"
+      height="18"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -27,15 +27,15 @@ function GearIcon() {
 
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-950 dark:text-slate-50">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-slate-200 dark:border-slate-700">
-        <span className="text-lg font-semibold">Pmkar</span>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-slate-800/80">
+        <span className="text-base font-semibold tracking-tight text-slate-200">pmkar</span>
         {onGearClick && (
           <button
             type="button"
             onClick={onGearClick}
             aria-label="Settings"
-            className="flex items-center justify-center w-11 h-11 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 rounded-md"
+            className="flex items-center justify-center w-9 h-9 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
           >
             <GearIcon />
           </button>

@@ -61,7 +61,7 @@ describe('SecretInput', () => {
     );
   });
 
-  it('renders help link with correct href', () => {
+  it('renders help button with correct label', () => {
     const helpUrl = 'https://confluence.atlassian.com/help';
     render(
       <SecretInput
@@ -72,9 +72,8 @@ describe('SecretInput', () => {
         helpUrl={helpUrl}
       />,
     );
-    const link = screen.getByRole('link', { name: 'Where do I find this?' });
-    expect(link).toHaveAttribute('href', helpUrl);
-    expect(link).toHaveAttribute('target', '_blank');
+    const helpBtn = screen.getByRole('button', { name: 'Where do I find this?' });
+    expect(helpBtn).toBeInTheDocument();
   });
 
   it('disabled state applies to input', () => {

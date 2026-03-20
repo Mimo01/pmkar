@@ -246,6 +246,36 @@ pub async fn test_jira_cloud_connection(
 }
 
 #[tauri::command]
+pub fn open_external_url(url: String) -> Result<(), AppError> {
+    // Only allow http/https URLs
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(AppError::Internal("Only http/https URLs allowed".into()));
+    }
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+    }
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/C", "start", &url])
+            .spawn()
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+    }
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(&url)
+            .spawn()
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn ping_keychain() -> Result<bool, AppError> {
     // Try to store and immediately delete a test value
     let test_type = "pmkar-health-check";

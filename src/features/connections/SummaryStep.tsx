@@ -2,21 +2,23 @@ import type { ConnectionMeta } from './types';
 
 function CheckIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="text-green-600 dark:text-green-400 flex-shrink-0"
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
+    <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-emerald-400"
+        aria-hidden="true"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </div>
   );
 }
 
@@ -27,16 +29,16 @@ interface ConnectionSummaryCardProps {
 
 function ConnectionSummaryCard({ label, connection }: ConnectionSummaryCardProps) {
   return (
-    <div className="flex items-start gap-3 bg-white dark:bg-slate-900 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+    <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
       <CheckIcon />
-      <div>
-        <p className="text-sm font-semibold leading-normal text-slate-950 dark:text-slate-50">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-200">
           {label}
         </p>
-        <p className="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-slate-500 truncate">
           {connection.baseUrl}
         </p>
-        <p className="text-sm font-normal leading-normal text-slate-950 dark:text-slate-50">
+        <p className="text-xs text-slate-400">
           {connection.username}
         </p>
       </div>
@@ -52,8 +54,8 @@ interface SummaryStepProps {
 
 export function SummaryStep({ serverConnection, cloudConnection, onDone }: SummaryStepProps) {
   return (
-    <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-6 space-y-4">
-      <p className="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400">
+    <div className="space-y-4">
+      <p className="text-sm text-slate-400">
         Both connections are configured and verified.
       </p>
 
@@ -72,7 +74,7 @@ export function SummaryStep({ serverConnection, cloudConnection, onDone }: Summa
         <button
           type="button"
           onClick={onDone}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md py-2 px-6 focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2"
+          className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-6 text-sm transition-all duration-200"
         >
           Done
         </button>

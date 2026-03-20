@@ -93,21 +93,34 @@ export function ConnectionForm({
     return JSON.stringify(current) === JSON.stringify(tested);
   }
 
+  function isLocalhost(url: string): boolean {
+    try {
+      const u = new URL(url);
+      return u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+    } catch {
+      return false;
+    }
+  }
+
   function handleUrlBlur() {
     let trimmed = baseUrl.trimEnd().replace(/\/+$/, '');
     setBaseUrl(trimmed);
-    if (trimmed && !trimmed.startsWith('https://')) {
-      setUrlError('URL must start with https://');
-    } else {
+    if (!trimmed) {
       setUrlError('');
+    } else if (trimmed.startsWith('https://')) {
+      setUrlError('');
+    } else if (trimmed.startsWith('http://') && isLocalhost(trimmed)) {
+      setUrlError('');
+    } else if (trimmed.startsWith('http://')) {
+      setUrlError('HTTPS required for non-local URLs');
+    } else {
+      setUrlError('URL must start with https://');
     }
   }
 
   function handleFieldChange(setter: (v: string) => void) {
     return (value: string) => {
       setter(value);
-      // After changing any field, check if it matches tested values; if not, invalidate
-      // We schedule this check via setTimeout to let state update first
       setTimeout(() => {
         if (testedValuesRef.current !== null && !credentialsMatchTested()) {
           testedValuesRef.current = null;
@@ -120,7 +133,6 @@ export function ConnectionForm({
 
   function handleBaseUrlChange(value: string) {
     setBaseUrl(value);
-    // Clear URL error when user starts typing again
     if (urlError) setUrlError('');
     setTimeout(() => {
       if (testedValuesRef.current !== null && !credentialsMatchTested()) {
@@ -131,7 +143,8 @@ export function ConnectionForm({
     }, 0);
   }
 
-  const canTest = !urlError && baseUrl.startsWith('https://') && !testing;
+  const hasValidUrl = !urlError && (baseUrl.startsWith('https://') || (baseUrl.startsWith('http://') && isLocalhost(baseUrl)));
+  const canTest = hasValidUrl && !testing;
 
   async function handleTest() {
     if (!canTest) return;
@@ -176,13 +189,22 @@ export function ConnectionForm({
     }
   }
 
+  const inputClass = [
+    'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
+    'text-slate-100 placeholder-slate-500',
+    'px-3 py-2.5 text-sm',
+    'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50',
+    'transition-all duration-200',
+    testing ? 'opacity-40 cursor-not-allowed' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-6 space-y-4">
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 backdrop-blur-sm">
       {/* Base URL field */}
-      <div className="space-y-1">
+      <div className="space-y-2">
         <label
           htmlFor="base-url"
-          className="text-sm font-normal leading-normal text-slate-950 dark:text-slate-50"
+          className="text-sm font-medium text-slate-300"
         >
           Base URL
         </label>
@@ -194,18 +216,10 @@ export function ConnectionForm({
           onBlur={handleUrlBlur}
           disabled={testing}
           placeholder="https://jira.example.com"
-          className={[
-            'w-full rounded-md border border-slate-200 dark:border-slate-700',
-            'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-50',
-            'px-3 py-2 text-base font-normal leading-normal',
-            'focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2',
-            testing ? 'opacity-50 cursor-not-allowed' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
+          className={inputClass}
         />
         {urlError && (
-          <p className="text-sm text-red-600 dark:text-red-400">{urlError}</p>
+          <p className="text-xs text-red-400">{urlError}</p>
         )}
       </div>
 
@@ -224,10 +238,10 @@ export function ConnectionForm({
       {/* Cloud: Email + API Token fields */}
       {connectionType === 'cloud' && (
         <>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label
               htmlFor="email"
-              className="text-sm font-normal leading-normal text-slate-950 dark:text-slate-50"
+              className="text-sm font-medium text-slate-300"
             >
               Email
             </label>
@@ -238,15 +252,7 @@ export function ConnectionForm({
               onChange={(e) => handleFieldChange(setEmail)(e.target.value)}
               disabled={testing}
               placeholder="you@company.com"
-              className={[
-                'w-full rounded-md border border-slate-200 dark:border-slate-700',
-                'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-50',
-                'px-3 py-2 text-base font-normal leading-normal',
-                'focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2',
-                testing ? 'opacity-50 cursor-not-allowed' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              className={inputClass}
             />
           </div>
           <SecretInput
@@ -268,9 +274,9 @@ export function ConnectionForm({
         aria-busy={testing}
         className={[
           'w-full flex items-center justify-center gap-2',
-          'bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md py-2',
-          'focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2',
-          !canTest ? 'opacity-50 cursor-not-allowed' : '',
+          'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium rounded-lg py-2.5 text-sm',
+          'transition-all duration-200',
+          !canTest ? 'opacity-40 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
           .join(' ')}

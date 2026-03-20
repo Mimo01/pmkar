@@ -35,12 +35,12 @@ export function DevStatusPanel() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-full max-w-[480px] p-6 bg-slate-100 dark:bg-slate-800 rounded-lg">
-        <h1 className="text-2xl font-semibold leading-tight text-slate-950 dark:text-slate-50 mb-1">
+    <div className="flex items-center justify-center min-h-[calc(100vh-49px)]">
+      <div className="w-full max-w-[440px] p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+        <h1 className="text-xl font-semibold tracking-tight text-slate-100 mb-1">
           pmkar
         </h1>
-        <p className="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400 mb-6">
+        <p className="text-sm text-slate-500 mb-6">
           Development scaffold
         </p>
         <div className="space-y-1">

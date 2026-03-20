@@ -38,7 +38,6 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
     const username = result.username ?? '';
     const serverVersion = result.serverVersion ?? '';
 
-    // Store credential in OS keychain
     try {
       await invoke('store_credential', {
         connectionType: 'jira-server',
@@ -49,7 +48,6 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       console.error('Failed to store server credential:', err);
     }
 
-    // Update Zustand store with non-secret metadata
     const meta: ConnectionMeta = {
       baseUrl,
       username,
@@ -69,7 +67,6 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
     const username = result.username ?? '';
     const serverVersion = result.serverVersion ?? '';
 
-    // Store credential in OS keychain (use email as the keychain username for Cloud)
     try {
       await invoke('store_credential', {
         connectionType: 'jira-cloud',
@@ -80,7 +77,6 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       console.error('Failed to store cloud credential:', err);
     }
 
-    // Update Zustand store with non-secret metadata
     const meta: ConnectionMeta = {
       baseUrl,
       username,
@@ -102,16 +98,17 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
   }
 
   function handleDone() {
-    // hasCompletedSetup() returns true — App.tsx will re-render the main app
-    // Call onComplete if provided (e.g. when editing an existing connection)
     if (onComplete) {
       onComplete();
     }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
-      <div className="max-w-[480px] w-full px-4 py-8">
+    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+      {/* Subtle gradient background */}
+      <div className="fixed inset-0 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 pointer-events-none" />
+
+      <div className="relative max-w-[440px] w-full px-6 py-10">
         <StepProgress currentStep={currentStep} />
 
         {currentStep === 1 && (
@@ -126,13 +123,16 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
               />
             </WizardStep>
             {testPassed && (
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-5">
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md py-2 px-6 focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2"
+                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-slate-700/50"
                 >
                   Next
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
             )}
@@ -151,13 +151,16 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
               />
             </WizardStep>
             {testPassed && (
-              <div className="flex justify-end mt-4">
+              <div className="flex justify-end mt-5">
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md py-2 px-6 focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2"
+                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-slate-700/50"
                 >
                   Next
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
             )}

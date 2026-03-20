@@ -7,15 +7,15 @@ interface ConnectionCardProps {
 }
 
 function getStatusDotClass(connection: ConnectionMeta | null): string {
-  if (connection === null) return 'bg-slate-400 dark:bg-slate-500';
+  if (connection === null) return 'bg-slate-600';
   switch (connection.status) {
     case 'ok':
-      return 'bg-green-600 dark:bg-green-400';
+      return 'bg-emerald-400';
     case 'error':
-      return 'bg-red-600 dark:bg-red-400';
+      return 'bg-red-400';
     case 'unconfigured':
     default:
-      return 'bg-slate-400 dark:bg-slate-500';
+      return 'bg-slate-600';
   }
 }
 
@@ -29,15 +29,15 @@ function formatRelativeTime(isoTimestamp: string): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffDays >= 1) {
-    return `Last tested: ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    return `Last tested ${diffDays}d ago`;
   }
   if (diffHours >= 1) {
-    return `Last tested: ${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    return `Last tested ${diffHours}h ago`;
   }
   if (diffMins >= 1) {
-    return `Last tested: ${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
+    return `Last tested ${diffMins}m ago`;
   }
-  return 'Last tested: just now';
+  return 'Last tested just now';
 }
 
 export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProps) {
@@ -47,30 +47,28 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
     : 'Not yet tested';
 
   return (
-    <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-4">
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 mb-3 hover:border-slate-700/80 transition-colors duration-200">
       <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center mb-1">
-            <span
-              className={`w-2 h-2 rounded-full inline-block mr-2 flex-shrink-0 ${dotClass}`}
-            />
-            <span className="text-base font-semibold text-slate-950 dark:text-slate-50">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
+            <span className="text-sm font-medium text-slate-200">
               {label}
             </span>
           </div>
           {connection?.baseUrl && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 ml-4 mb-1">
+            <p className="text-xs text-slate-500 ml-4 truncate">
               {connection.baseUrl}
             </p>
           )}
-          <p className="text-sm text-slate-400 dark:text-slate-500 ml-4">
+          <p className="text-xs text-slate-600 ml-4 mt-0.5">
             {lastTestedText}
           </p>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 font-semibold focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 ml-4"
+          className="text-xs text-slate-500 hover:text-blue-400 font-medium transition-colors duration-200 ml-4"
         >
           Edit
         </button>

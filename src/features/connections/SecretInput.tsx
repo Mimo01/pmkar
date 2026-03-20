@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 
 interface SecretInputProps {
   id: string;
@@ -21,23 +22,29 @@ export function SecretInput({
 }: SecretInputProps) {
   const [revealed, setRevealed] = useState(false);
 
+  function handleHelpClick(e: React.MouseEvent) {
+    e.preventDefault();
+    invoke('open_external_url', { url: helpUrl }).catch((err) =>
+      console.error('Failed to open help URL:', err),
+    );
+  }
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="text-sm font-normal leading-normal text-slate-950 dark:text-slate-50"
+          className="text-sm font-medium text-slate-300"
         >
           {label}
         </label>
-        <a
-          href={helpUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-slate-500 hover:text-blue-600 underline"
+        <button
+          type="button"
+          onClick={handleHelpClick}
+          className="text-xs text-slate-500 hover:text-blue-400 transition-colors cursor-pointer"
         >
           {helpLabel}
-        </a>
+        </button>
       </div>
       <div className="relative flex items-center">
         <input
@@ -47,11 +54,12 @@ export function SecretInput({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           className={[
-            'w-full rounded-md border border-slate-200 dark:border-slate-700',
-            'bg-white dark:bg-slate-900 text-slate-950 dark:text-slate-50',
-            'px-3 py-2 pr-11 text-base font-normal leading-normal',
-            'focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2',
-            disabled ? 'opacity-50 cursor-not-allowed' : '',
+            'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
+            'text-slate-100 placeholder-slate-500',
+            'px-3 py-2.5 pr-11 text-sm',
+            'focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50',
+            'transition-all duration-200',
+            disabled ? 'opacity-40 cursor-not-allowed' : '',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -64,20 +72,18 @@ export function SecretInput({
           aria-pressed={revealed}
           className={[
             'absolute right-0 flex items-center justify-center w-11 h-11',
-            'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300',
-            'focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2',
-            'rounded-md',
-            disabled ? 'opacity-50 cursor-not-allowed' : '',
+            'text-slate-500 hover:text-slate-300',
+            'transition-colors duration-200 rounded-lg',
+            disabled ? 'opacity-40 cursor-not-allowed' : '',
           ]
             .filter(Boolean)
             .join(' ')}
         >
           {revealed ? (
-            /* eye-off SVG — field is revealed */
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -91,11 +97,10 @@ export function SecretInput({
               <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
           ) : (
-            /* eye-open SVG — field is masked */
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

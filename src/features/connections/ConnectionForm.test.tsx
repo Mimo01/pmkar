@@ -52,7 +52,7 @@ describe('ConnectionForm', () => {
     const urlInput = screen.getByLabelText('Base URL');
     fireEvent.change(urlInput, { target: { value: 'http://example.com' } });
     fireEvent.blur(urlInput);
-    expect(screen.getByText('URL must start with https://')).toBeInTheDocument();
+    expect(screen.getByText('HTTPS required for non-local URLs')).toBeInTheDocument();
   });
 
   it('strips trailing slash on blur', () => {

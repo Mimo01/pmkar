@@ -20,24 +20,26 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const hasNoConnections = serverConn === null && cloudConn === null;
 
   return (
-    <div className="max-w-[640px] mx-auto px-6 py-8">
-      <div className="flex items-center mb-6">
+    <div className="max-w-[540px] mx-auto px-6 py-8">
+      <div className="flex items-center gap-3 mb-6">
         <button
           type="button"
           onClick={onClose}
-          className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 font-semibold focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 mr-4"
+          className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
         >
-          &larr; Back
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
         </button>
-        <h1 className="text-2xl font-semibold text-slate-950 dark:text-slate-50">Connections</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-slate-200">Connections</h1>
       </div>
 
       {hasNoConnections ? (
-        <div className="text-center py-12">
-          <p className="text-slate-500 dark:text-slate-400 text-base font-semibold mb-2">
+        <div className="text-center py-16">
+          <p className="text-slate-400 text-sm font-medium mb-1">
             No connections configured
           </p>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
+          <p className="text-slate-600 text-xs">
             Run setup to configure your Jira connections.
           </p>
         </div>

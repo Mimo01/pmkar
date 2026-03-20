@@ -48,6 +48,7 @@ fn main() {
             commands::ping_keychain,
             commands::test_jira_server_connection,
             commands::test_jira_cloud_connection,
+            commands::open_external_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
