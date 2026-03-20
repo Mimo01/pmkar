@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { SecretInput } from './SecretInput';
 import { TestResult } from './TestResult';
@@ -69,11 +69,21 @@ export function ConnectionForm({
   // Snapshot of values at last successful test
   const testedValuesRef = useRef<Credentials | null>(null);
 
-  function getCurrentCredentials(): Credentials {
+  // Always-current credentials ref — updated via useEffect to avoid stale closures in timeouts
+  const currentCredentialsRef = useRef<Credentials>(
+    connectionType === 'server' ? { baseUrl, pat } : { baseUrl, email, apiToken },
+  );
+
+  useEffect(() => {
     if (connectionType === 'server') {
-      return { baseUrl, pat };
+      currentCredentialsRef.current = { baseUrl, pat };
+    } else {
+      currentCredentialsRef.current = { baseUrl, email, apiToken };
     }
-    return { baseUrl, email, apiToken };
+  });
+
+  function getCurrentCredentials(): Credentials {
+    return currentCredentialsRef.current;
   }
 
   function credentialsMatchTested(): boolean {
