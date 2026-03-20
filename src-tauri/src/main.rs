@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::Manager;
 use pmkar_lib::{
     audit::AuditDb,
@@ -21,7 +21,7 @@ fn main() {
             let audit_db = AuditDb::open(&db_path)
                 .expect("Failed to open audit database");
 
-            app.manage(Mutex::new(audit_db));
+            app.manage(Arc::new(Mutex::new(audit_db)));
             app.manage(fixtures.clone());
 
             // Start mock servers in dev mode
@@ -46,6 +46,8 @@ fn main() {
             commands::clear_audit_logs,
             commands::ping_mock_servers,
             commands::ping_keychain,
+            commands::test_jira_server_connection,
+            commands::test_jira_cloud_connection,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
