@@ -1,8 +1,15 @@
+import { AppShell } from './components/ui/AppShell';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { DevStatusPanel } from './features/dev/DevStatusPanel';
+
 function App() {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-950 dark:text-slate-50">
-      <p className="text-sm p-4">pmkar scaffold</p>
-    </div>
+    <ErrorBoundary>
+      <AppShell>
+        <DevStatusPanel />
+      </AppShell>
+    </ErrorBoundary>
   );
 }
+
 export default App;
