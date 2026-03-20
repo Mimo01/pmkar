@@ -18,8 +18,13 @@ interface CloudCredentials {
   apiToken: string;
 }
 
-export function SetupWizard() {
-  const [currentStep, setCurrentStep] = useState(1);
+interface SetupWizardProps {
+  initialStep?: number;
+  onComplete?: () => void;
+}
+
+export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [testPassed, setTestPassed] = useState(false);
 
   const { setServerConnection, setCloudConnection, serverConnection, cloudConnection } =
@@ -98,7 +103,10 @@ export function SetupWizard() {
 
   function handleDone() {
     // hasCompletedSetup() returns true — App.tsx will re-render the main app
-    // No explicit action needed here; the store is already updated
+    // Call onComplete if provided (e.g. when editing an existing connection)
+    if (onComplete) {
+      onComplete();
+    }
   }
 
   return (

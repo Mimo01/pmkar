@@ -3,37 +3,48 @@ import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { DevStatusPanel } from './features/dev/DevStatusPanel';
 import { SetupWizard } from './features/connections/SetupWizard';
+import { SettingsPage } from './features/connections/SettingsPage';
 import { useConnectionStore } from './features/connections/connectionStore';
+import type { ConnectionType } from './features/connections/types';
 
 function App() {
   const hasSetup = useConnectionStore((s) => s.hasCompletedSetup());
   const [showSettings, setShowSettings] = useState(false);
+  const [editStep, setEditStep] = useState<ConnectionType | null>(null);
 
-  if (!hasSetup) {
+  // Show wizard if not set up OR if user clicked Edit on a connection
+  if (!hasSetup || editStep !== null) {
+    const initialStep = editStep === 'cloud' ? 2 : 1;
     return (
       <ErrorBoundary>
-        <SetupWizard />
+        <SetupWizard
+          initialStep={initialStep}
+          onComplete={() => setEditStep(null)}
+        />
+      </ErrorBoundary>
+    );
+  }
+
+  if (showSettings) {
+    return (
+      <ErrorBoundary>
+        <AppShell onGearClick={() => setShowSettings(true)}>
+          <SettingsPage
+            onClose={() => setShowSettings(false)}
+            onEdit={(connectionType) => {
+              setShowSettings(false);
+              setEditStep(connectionType);
+            }}
+          />
+        </AppShell>
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
-      <AppShell>
-        {showSettings ? (
-          // Settings page will be implemented in Plan 03
-          <div className="flex items-center justify-center min-h-screen">
-            <button
-              type="button"
-              onClick={() => setShowSettings(false)}
-              className="text-sm text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2"
-            >
-              Back to app
-            </button>
-          </div>
-        ) : (
-          <DevStatusPanel />
-        )}
+      <AppShell onGearClick={() => setShowSettings(true)}>
+        <DevStatusPanel />
       </AppShell>
     </ErrorBoundary>
   );
