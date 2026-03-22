@@ -33,6 +33,12 @@ pub struct SearchQuery {
     pub jql: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct IssueQuery {
+    pub expand: Option<String>,
+    pub fields: Option<String>,
+}
+
 // --- Search response helpers ---
 
 fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
@@ -125,16 +131,75 @@ mod v2 {
     pub async fn get_issue(
         State(fixtures): State<SharedFixtures>,
         Path(key): Path<String>,
+        Query(params): Query<IssueQuery>,
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
         match state.server_v2_issues.get(&key) {
             Some(issue) => {
-                let body = json!({
+                let mut body = json!({
                     "id": issue.id,
                     "key": issue.key,
                     "fields": issue.fields
                 });
+
+                let expand = params.expand.unwrap_or_default();
+
+                // Support expand=renderedFields
+                if expand.contains("renderedFields") {
+                    let desc = issue.fields["description"]
+                        .as_str()
+                        .unwrap_or("");
+                    body["renderedFields"] = json!({
+                        "description": format!("<p>{}</p>", desc)
+                    });
+                }
+
+                // Support expand=changelog
+                if expand.contains("changelog") {
+                    body["changelog"] = json!({
+                        "histories": [
+                            {
+                                "id": "50001",
+                                "created": "2026-01-14T12:00:00.000+0000",
+                                "author": {"name": "jdoe", "displayName": "Jane Doe"},
+                                "items": [{
+                                    "field": "status",
+                                    "fromString": "Open",
+                                    "toString": "In Progress"
+                                }]
+                            },
+                            {
+                                "id": "50002",
+                                "created": "2026-01-15T08:00:00.000+0000",
+                                "author": {"name": "csmith", "displayName": "Chris Smith"},
+                                "items": [{
+                                    "field": "priority",
+                                    "fromString": "Medium",
+                                    "toString": "High"
+                                }]
+                            }
+                        ]
+                    });
+                }
+
                 (StatusCode::OK, Json(body)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn get_worklog(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        match state.server_v2_issues.get(&key) {
+            Some(issue) => {
+                let worklogs = issue.fields.get("worklog")
+                    .and_then(|w| w.get("worklogs"))
+                    .cloned()
+                    .unwrap_or(json!([]));
+                (StatusCode::OK, Json(json!({ "worklogs": worklogs }))).into_response()
             }
             None => StatusCode::NOT_FOUND.into_response(),
         }
@@ -279,16 +344,78 @@ mod v3 {
     pub async fn get_issue(
         State(fixtures): State<SharedFixtures>,
         Path(key): Path<String>,
+        Query(params): Query<IssueQuery>,
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
         match state.cloud_v3_issues.get(&key) {
             Some(issue) => {
-                let body = json!({
+                let mut body = json!({
                     "id": issue.id,
                     "key": issue.key,
                     "fields": issue.fields
                 });
+
+                let expand = params.expand.unwrap_or_default();
+
+                if expand.contains("renderedFields") {
+                    // For v3, description is ADF; render the text content of the first paragraph
+                    let desc_text = issue.fields["description"]["content"]
+                        .as_array()
+                        .and_then(|arr| arr.first())
+                        .and_then(|p| p["content"].as_array())
+                        .and_then(|arr| arr.first())
+                        .and_then(|t| t["text"].as_str())
+                        .unwrap_or("");
+                    body["renderedFields"] = json!({
+                        "description": format!("<p>{}</p>", desc_text)
+                    });
+                }
+
+                if expand.contains("changelog") {
+                    body["changelog"] = json!({
+                        "histories": [
+                            {
+                                "id": "50001",
+                                "created": "2026-01-14T12:00:00.000+0000",
+                                "author": {"accountId": "acc-jdoe", "displayName": "Jane Doe"},
+                                "items": [{
+                                    "field": "status",
+                                    "fromString": "Open",
+                                    "toString": "In Progress"
+                                }]
+                            },
+                            {
+                                "id": "50002",
+                                "created": "2026-01-15T08:00:00.000+0000",
+                                "author": {"accountId": "acc-csmith", "displayName": "Chris Smith"},
+                                "items": [{
+                                    "field": "priority",
+                                    "fromString": "Medium",
+                                    "toString": "High"
+                                }]
+                            }
+                        ]
+                    });
+                }
+
                 (StatusCode::OK, Json(body)).into_response()
+            }
+            None => StatusCode::NOT_FOUND.into_response(),
+        }
+    }
+
+    pub async fn get_worklog(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        match state.cloud_v3_issues.get(&key) {
+            Some(issue) => {
+                let worklogs = issue.fields.get("worklog")
+                    .and_then(|w| w.get("worklogs"))
+                    .cloned()
+                    .unwrap_or(json!([]));
+                (StatusCode::OK, Json(json!({ "worklogs": worklogs }))).into_response()
             }
             None => StatusCode::NOT_FOUND.into_response(),
         }
@@ -427,6 +554,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/2/issue", post(v2::create_issue))
         .route("/rest/api/2/search", get(v2::search_issues))
         .route("/rest/api/2/issue/{key}/comment", post(v2::add_comment))
+        .route("/rest/api/2/issue/{key}/worklog", get(v2::get_worklog))
         .route("/rest/api/2/issue/{key}/attachments", post(v2::add_attachment))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
@@ -440,6 +568,7 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/3/issue", post(v3::create_issue))
         .route("/rest/api/3/search/jql", post(v3::search_issues))
         .route("/rest/api/3/issue/{key}/comment", post(v3::add_comment))
+        .route("/rest/api/3/issue/{key}/worklog", get(v3::get_worklog))
         .route("/rest/api/3/issue/{key}/attachments", post(v3::add_attachment))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)

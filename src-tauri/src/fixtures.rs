@@ -265,7 +265,14 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": attachment,
                 "subtasks": subtasks,
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-28T10:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40001", "author": {"name":"jdoe","displayName":"Jane Doe"}, "comment": "Investigated session config", "started": "2026-01-15T10:00:00.000+0000", "timeSpent": "2h", "timeSpentSeconds": 7200 }
+                ]}
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -281,7 +288,14 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": attachment_v3,
                 "subtasks": subtasks_v3,
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-28T10:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40001", "author": {"accountId":"acc-jdoe","displayName":"Jane Doe"}, "comment": "Investigated session config", "started": "2026-01-15T10:00:00.000+0000", "timeSpent": "2h", "timeSpentSeconds": 7200 }
+                ]}
             }),
         });
     }
@@ -340,7 +354,14 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": issuelinks
+                "issuelinks": issuelinks,
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-27T09:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40002", "author": {"name":"bwilson","displayName":"Bob Wilson"}, "comment": "Profiled connection pool under load", "started": "2026-02-01T09:00:00.000+0000", "timeSpent": "3h", "timeSpentSeconds": 10800 }
+                ]}
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -356,7 +377,14 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": issuelinks_v3
+                "issuelinks": issuelinks_v3,
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-27T09:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40002", "author": {"accountId":"acc-bwilson","displayName":"Bob Wilson"}, "comment": "Profiled connection pool under load", "started": "2026-02-01T09:00:00.000+0000", "timeSpent": "3h", "timeSpentSeconds": 10800 }
+                ]}
             }),
         });
     }
@@ -404,7 +432,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": issuelinks
+                "issuelinks": issuelinks,
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-26T08:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -420,7 +452,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": issuelinks_v3
+                "issuelinks": issuelinks_v3,
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [{"name": "4.3.0"}],
+                "updated": "2026-02-26T08:00:00.000+0000"
             }),
         });
     }
@@ -467,7 +503,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": attachment,
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [{"name": "4.2.1"}],
+                "updated": "2026-01-20T16:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -483,7 +523,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": attachment_v3,
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [{"name": "4.2.1"}],
+                "updated": "2026-01-20T16:00:00.000+0000"
             }),
         });
     }
@@ -515,7 +559,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [{"name": "4.2.1"}],
+                "updated": "2026-01-02T10:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -531,7 +579,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [{"name": "4.2.1"}],
+                "updated": "2026-01-02T10:00:00.000+0000"
             }),
         });
     }
@@ -580,7 +632,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": attachment,
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-15T17:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -596,7 +652,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": attachment_v3,
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-15T17:00:00.000+0000"
             }),
         });
     }
@@ -628,7 +688,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": [],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "updated": "2026-01-16T09:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -644,7 +708,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": [],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "updated": "2026-01-16T09:00:00.000+0000"
             }),
         });
     }
@@ -669,7 +737,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [],
+                "updated": "2026-01-15T08:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -685,7 +757,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [],
+                "updated": "2026-01-15T08:00:00.000+0000"
             }),
         });
     }
@@ -726,7 +802,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": subtasks_v2,
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-25T10:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -742,7 +822,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": subtasks_v3,
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-25T10:00:00.000+0000"
             }),
         });
     }
@@ -776,7 +860,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "updated": "2026-02-23T09:30:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -792,7 +880,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "updated": "2026-02-23T09:30:00.000+0000"
             }),
         });
     }
@@ -817,7 +909,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-20T08:00:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -833,7 +929,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "updated": "2026-02-20T08:00:00.000+0000"
             }),
         });
     }
@@ -867,7 +967,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v2 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [],
+                "updated": "2026-01-29T16:30:00.000+0000"
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -883,7 +987,11 @@ pub fn build_fixtures() -> SharedFixtures {
                 "comment": { "comments": comments_v3 },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [],
+                "fixVersions": [],
+                "updated": "2026-01-29T16:30:00.000+0000"
             }),
         });
     }
