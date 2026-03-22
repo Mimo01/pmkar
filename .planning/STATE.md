@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-copy-core-fields-02-PLAN.md
-last_updated: "2026-03-22T19:45:45.507Z"
+stopped_at: Completed 04-copy-core-fields-01-PLAN.md
+last_updated: "2026-03-22T19:46:33.305Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 17
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 04 (copy-core-fields) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: 2 of 5
 | Phase 03 P02 | 2min | 2 tasks | 2 files |
 | Phase 03 P01 | 7 | 2 tasks | 8 files |
 | Phase 04-copy-core-fields P02 | 12 | 2 tasks | 4 files |
+| Phase 04-copy-core-fields P01 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Image proxy validates URL origin to prevent SSRF
 - [Phase 04-copy-core-fields]: Jira Cloud v3 does not support setting status at issue creation — status field in copy preview is informational only
 - [Phase 04-copy-core-fields]: Wave 0 test scaffolding pattern: create it.todo stubs tagged with requirement IDs before component exists
+- [Phase 04-copy-core-fields]: triage_db internal get_all_triage returns raw tuples to keep DB layer decoupled from DTO types
+- [Phase 04-copy-core-fields]: FetchTicketsResult.triage_map updated to TriageEntryResponse for single consistent shape sent to frontend
 
 ### Pending Todos
 
@@ -113,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T19:45:45.502Z
-Stopped at: Completed 04-copy-core-fields-02-PLAN.md
+Last session: 2026-03-22T19:46:33.299Z
+Stopped at: Completed 04-copy-core-fields-01-PLAN.md
 Resume file: None

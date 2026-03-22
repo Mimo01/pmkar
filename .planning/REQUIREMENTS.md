@@ -39,9 +39,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **COPY-04**: User can copy ticket work log entries with author attribution
 - [ ] **COPY-05**: User can copy sub-tasks as child issues under the newly created parent ticket
 - [ ] **COPY-06**: User can copy linked issue references as annotations or remote links
-- [ ] **COPY-07**: Copied ticket includes a remote link back to the source ticket for origin tracking
+- [x] **COPY-07**: Copied ticket includes a remote link back to the source ticket for origin tracking
 - [x] **COPY-08**: User sees a diff/preview of what will be created before confirming the copy
-- [ ] **COPY-09**: Description and comment content is correctly translated between wiki markup (Server) and ADF (Cloud)
+- [x] **COPY-09**: Description and comment content is correctly translated between wiki markup (Server) and ADF (Cloud)
 
 ### Triage
 
@@ -122,9 +122,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | COPY-04 | Phase 5 | Pending |
 | COPY-05 | Phase 5 | Pending |
 | COPY-06 | Phase 5 | Pending |
-| COPY-07 | Phase 4 | Pending |
+| COPY-07 | Phase 4 | Complete |
 | COPY-08 | Phase 4 | Complete |
-| COPY-09 | Phase 4 | Pending |
+| COPY-09 | Phase 4 | Complete |
 | TRIA-01 | Phase 6 | Pending |
 | TRIA-02 | Phase 6 | Pending |
 | TRIA-03 | Phase 6 | Pending |
