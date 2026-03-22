@@ -1158,7 +1158,7 @@ pub async fn copy_ticket(
     // Step 6: Build ADF description
     // If user provided edited description, wrap as plain text ADF.
     // Otherwise, rewrite HTML image URLs and convert via htmltoadf pipeline.
-    let adf_value: serde_json::Value = match target_description {
+    let mut adf_value: serde_json::Value = match target_description {
         Some(ref edited) if !edited.is_empty() => {
             // User-edited description — wrap as plain text ADF
             serde_json::json!({
@@ -1182,6 +1182,88 @@ pub async fn copy_ticket(
             })?
         }
     };
+
+    // Append sub-tasks footer to ADF description (per D-09, D-10)
+    let subtasks = source_body["fields"]["subtasks"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    if !subtasks.is_empty() {
+        if let Some(content) = adf_value["content"].as_array_mut() {
+            content.push(serde_json::json!({
+                "type": "heading",
+                "attrs": { "level": 3 },
+                "content": [{ "type": "text", "text": "Sub-tasks" }]
+            }));
+            let items: Vec<serde_json::Value> = subtasks.iter().map(|st| {
+                let key = st["key"].as_str().unwrap_or("?");
+                let summary = st["fields"]["summary"].as_str().unwrap_or("?");
+                serde_json::json!({
+                    "type": "listItem",
+                    "content": [{
+                        "type": "paragraph",
+                        "content": [{ "type": "text", "text": format!("{}: {}", key, summary) }]
+                    }]
+                })
+            }).collect();
+            content.push(serde_json::json!({
+                "type": "bulletList",
+                "content": items
+            }));
+        }
+    }
+
+    // Append linked issues footer to ADF description (per D-11, D-12)
+    let issuelinks = source_body["fields"]["issuelinks"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    if !issuelinks.is_empty() {
+        if let Some(content) = adf_value["content"].as_array_mut() {
+            content.push(serde_json::json!({
+                "type": "heading",
+                "attrs": { "level": 3 },
+                "content": [{ "type": "text", "text": "Linked Issues" }]
+            }));
+            let items: Vec<serde_json::Value> = issuelinks.iter().filter_map(|link| {
+                if let Some(outward) = link["outwardIssue"].as_object() {
+                    let link_type = link["type"]["outward"].as_str().unwrap_or("relates to");
+                    let key = outward.get("key").and_then(|k| k.as_str()).unwrap_or("?");
+                    let summary = outward.get("fields")
+                        .and_then(|f| f["summary"].as_str())
+                        .unwrap_or("?");
+                    Some(serde_json::json!({
+                        "type": "listItem",
+                        "content": [{
+                            "type": "paragraph",
+                            "content": [{ "type": "text", "text": format!("{}: {} \u{2014} {}", link_type, key, summary) }]
+                        }]
+                    }))
+                } else if let Some(inward) = link["inwardIssue"].as_object() {
+                    let link_type = link["type"]["inward"].as_str().unwrap_or("relates to");
+                    let key = inward.get("key").and_then(|k| k.as_str()).unwrap_or("?");
+                    let summary = inward.get("fields")
+                        .and_then(|f| f["summary"].as_str())
+                        .unwrap_or("?");
+                    Some(serde_json::json!({
+                        "type": "listItem",
+                        "content": [{
+                            "type": "paragraph",
+                            "content": [{ "type": "text", "text": format!("{}: {} \u{2014} {}", link_type, key, summary) }]
+                        }]
+                    }))
+                } else {
+                    None
+                }
+            }).collect();
+            if !items.is_empty() {
+                content.push(serde_json::json!({
+                    "type": "bulletList",
+                    "content": items
+                }));
+            }
+        }
+    }
 
     steps.push(CopyStepResult {
         step: "convert_description".to_string(),
@@ -1261,6 +1343,311 @@ pub async fn copy_ticket(
             ))
         },
     });
+
+    // Attachment copy loop (per D-05, D-06)
+    let attachments = source_body["fields"]["attachment"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+
+    for att in &attachments {
+        let download_url = att["content"].as_str().unwrap_or("");
+        let filename = att["filename"].as_str().unwrap_or("file").to_string();
+        let mime = att["mimeType"].as_str().unwrap_or("application/octet-stream").to_string();
+
+        if download_url.is_empty() {
+            steps.push(CopyStepResult {
+                step: format!("attach:{}", filename),
+                success: false,
+                detail: Some("No download URL".to_string()),
+            });
+            continue;
+        }
+
+        // Download from source
+        let dl_resp = client
+            .get(download_url)
+            .header("Authorization", format!("Bearer {}", server_pat))
+            .send()
+            .await;
+
+        match dl_resp {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(file_bytes) => {
+                        let plain_client = reqwest::Client::new();
+                        let part = reqwest::multipart::Part::bytes(file_bytes.to_vec())
+                            .file_name(filename.clone())
+                            .mime_str(&mime)
+                            .unwrap_or_else(|_| {
+                                reqwest::multipart::Part::bytes(file_bytes.to_vec())
+                                    .file_name(filename.clone())
+                            });
+                        let form = reqwest::multipart::Form::new().part("file", part);
+
+                        let up_resp = plain_client
+                            .post(format!(
+                                "{}/rest/api/3/issue/{}/attachments",
+                                trimmed_target, target_key
+                            ))
+                            .header("Authorization", &cloud_auth)
+                            .header("X-Atlassian-Token", "no-check")
+                            .multipart(form)
+                            .send()
+                            .await;
+
+                        match up_resp {
+                            Ok(r) if r.status().is_success() => {
+                                steps.push(CopyStepResult {
+                                    step: format!("attach:{}", filename),
+                                    success: true,
+                                    detail: None,
+                                });
+                            }
+                            Ok(r) => {
+                                let status = r.status().as_u16();
+                                steps.push(CopyStepResult {
+                                    step: format!("attach:{}", filename),
+                                    success: false,
+                                    detail: Some(format!("{} upload error", status)),
+                                });
+                            }
+                            Err(_) => {
+                                steps.push(CopyStepResult {
+                                    step: format!("attach:{}", filename),
+                                    success: false,
+                                    detail: Some("Network error during upload".to_string()),
+                                });
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        steps.push(CopyStepResult {
+                            step: format!("attach:{}", filename),
+                            success: false,
+                            detail: Some("Failed to read attachment bytes".to_string()),
+                        });
+                    }
+                }
+            }
+            Ok(resp) => {
+                let status = resp.status().as_u16();
+                let detail = if status == 302 {
+                    "Failed to download attachment (server may require Jira Server 8.17+)".to_string()
+                } else {
+                    format!("Download returned status {}", status)
+                };
+                steps.push(CopyStepResult {
+                    step: format!("attach:{}", filename),
+                    success: false,
+                    detail: Some(detail),
+                });
+            }
+            Err(_) => {
+                steps.push(CopyStepResult {
+                    step: format!("attach:{}", filename),
+                    success: false,
+                    detail: Some("Failed to download attachment".to_string()),
+                });
+            }
+        }
+    }
+
+    // Comment copy loop (per D-01 through D-04)
+    let rendered_comments = source_body["renderedFields"]["comment"]["comments"]
+        .as_array()
+        .cloned();
+    let raw_comments = source_body["fields"]["comment"]["comments"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+
+    let mut comments_to_copy: Vec<&serde_json::Value> = raw_comments.iter().collect();
+    // Sort by created field (ISO 8601 — lexicographic = chronological per D-04)
+    comments_to_copy.sort_by(|a, b| {
+        let a_date = a["created"].as_str().unwrap_or("");
+        let b_date = b["created"].as_str().unwrap_or("");
+        a_date.cmp(b_date)
+    });
+
+    for (idx, raw_comment) in comments_to_copy.iter().enumerate() {
+        let author_name = raw_comment["author"]["displayName"]
+            .as_str()
+            .unwrap_or("Unknown");
+        let created = raw_comment["created"].as_str().unwrap_or("");
+        // Format: take YYYY-MM-DDTHH:MM -> YYYY-MM-DD HH:MM
+        let date_formatted = if created.len() >= 16 {
+            format!("{} {}", &created[..10], &created[11..16])
+        } else {
+            created.to_string()
+        };
+        let attribution = format!("{} \u{2014} {}", author_name, date_formatted);
+
+        // Get HTML body from renderedFields if available, otherwise use raw body as text
+        let comment_id = raw_comment["id"].as_str().unwrap_or("");
+        let html_body: Option<String> = rendered_comments.as_ref().and_then(|rendered| {
+            rendered.iter().find(|rc| rc["id"].as_str() == Some(comment_id))
+                .and_then(|rc| rc["body"].as_str().map(|s| s.to_string()))
+        });
+
+        let mut adf_doc: serde_json::Value = if let Some(html) = html_body {
+            let adf_str = htmltoadf::convert_html_str_to_adf_str(html);
+            serde_json::from_str(&adf_str).unwrap_or(serde_json::json!({
+                "version": 1, "type": "doc", "content": []
+            }))
+        } else {
+            // Fallback: wrap raw text as plain ADF paragraph
+            let body_text = raw_comment["body"].as_str().unwrap_or("");
+            serde_json::json!({
+                "version": 1,
+                "type": "doc",
+                "content": [{
+                    "type": "paragraph",
+                    "content": [{ "type": "text", "text": body_text }]
+                }]
+            })
+        };
+
+        // Prepend attribution paragraph with bold mark
+        let attribution_node = serde_json::json!({
+            "type": "paragraph",
+            "content": [{
+                "type": "text",
+                "text": attribution,
+                "marks": [{ "type": "strong" }]
+            }]
+        });
+        if let Some(content) = adf_doc["content"].as_array_mut() {
+            content.insert(0, attribution_node);
+        }
+
+        // POST comment to Cloud
+        let comment_body_str = serde_json::json!({ "body": adf_doc }).to_string();
+        let comment_resp = client
+            .post(format!(
+                "{}/rest/api/3/issue/{}/comment",
+                trimmed_target, target_key
+            ))
+            .header("Authorization", &cloud_auth)
+            .header("Content-Type", "application/json")
+            .body(comment_body_str)
+            .send()
+            .await;
+
+        match comment_resp {
+            Ok(r) if r.status().is_success() => {
+                steps.push(CopyStepResult {
+                    step: format!("comment:{}", idx + 1),
+                    success: true,
+                    detail: None,
+                });
+            }
+            Ok(r) => {
+                let status = r.status().as_u16();
+                steps.push(CopyStepResult {
+                    step: format!("comment:{}", idx + 1),
+                    success: false,
+                    detail: Some(format!("Comment POST returned {}", status)),
+                });
+            }
+            Err(_) => {
+                steps.push(CopyStepResult {
+                    step: format!("comment:{}", idx + 1),
+                    success: false,
+                    detail: Some("Network error posting comment".to_string()),
+                });
+            }
+        }
+    }
+
+    // Work log copy (per D-07, D-08)
+    let worklog_url = format!(
+        "{}/rest/api/2/issue/{}/worklog",
+        trimmed_source, source_key
+    );
+    let wl_resp = client
+        .get(&worklog_url)
+        .header("Authorization", format!("Bearer {}", server_pat))
+        .send()
+        .await;
+
+    if let Ok(wl_response) = wl_resp {
+        if wl_response.status().is_success() {
+            if let Ok(wl_body) = wl_response.json::<serde_json::Value>().await {
+                let worklogs = wl_body["worklogs"]
+                    .as_array()
+                    .cloned()
+                    .unwrap_or_default();
+
+                for (idx, wl) in worklogs.iter().enumerate() {
+                    let author_name = wl["author"]["displayName"]
+                        .as_str()
+                        .unwrap_or("Unknown");
+                    let started = wl["started"].as_str().unwrap_or("");
+                    let started_date = if started.len() >= 10 { &started[..10] } else { started };
+                    let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
+                    let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
+
+                    let attribution = format!("{} \u{2014} {} ({})", author_name, started_date, time_spent);
+
+                    let wl_comment_adf = serde_json::json!({
+                        "version": 1,
+                        "type": "doc",
+                        "content": [{
+                            "type": "paragraph",
+                            "content": [{
+                                "type": "text",
+                                "text": attribution,
+                                "marks": [{ "type": "strong" }]
+                            }]
+                        }]
+                    });
+
+                    let wl_post_body = serde_json::json!({
+                        "timeSpentSeconds": time_spent_seconds,
+                        "started": started,
+                        "comment": wl_comment_adf
+                    });
+
+                    let wl_post_resp = client
+                        .post(format!(
+                            "{}/rest/api/3/issue/{}/worklog",
+                            trimmed_target, target_key
+                        ))
+                        .header("Authorization", &cloud_auth)
+                        .header("Content-Type", "application/json")
+                        .body(wl_post_body.to_string())
+                        .send()
+                        .await;
+
+                    match wl_post_resp {
+                        Ok(r) if r.status().is_success() => {
+                            steps.push(CopyStepResult {
+                                step: format!("worklog:{}", idx + 1),
+                                success: true,
+                                detail: None,
+                            });
+                        }
+                        Ok(r) => {
+                            let status = r.status().as_u16();
+                            steps.push(CopyStepResult {
+                                step: format!("worklog:{}", idx + 1),
+                                success: false,
+                                detail: Some(format!("Worklog POST returned {}", status)),
+                            });
+                        }
+                        Err(_) => {
+                            steps.push(CopyStepResult {
+                                step: format!("worklog:{}", idx + 1),
+                                success: false,
+                                detail: Some("Network error posting worklog".to_string()),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Step 9: Update triage state to copied
     {
