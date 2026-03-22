@@ -9,6 +9,7 @@ import { HistoryTab } from './tabs/HistoryTab';
 import { useCopyStore } from './copyStore';
 import { useConnectionStore } from '../connections/connectionStore';
 import { CopyPreviewModal } from './CopyPreviewModal';
+import { CopyResultModal } from './CopyResultModal';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
 
@@ -256,6 +257,8 @@ export function TicketDetailPanel({
 
       {/* Copy preview modal — overlays when copy phase is active */}
       <CopyPreviewModal />
+      {/* Copy result modal — overlays after copy completes (z-[60] > z-50 preview) */}
+      <CopyResultModal />
     </div>
   );
 }
