@@ -310,6 +310,7 @@ pub fn ping_keychain() -> Result<bool, AppError> {
 // --- Ticket fetch commands ---
 
 #[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct FetchTicketsResult {
     pub issues: Vec<serde_json::Value>,
     pub total: u64,

@@ -83,15 +83,24 @@ export function TicketListPage() {
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
 
-  // Hydrate triage map and fetch config on mount
+  // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
   useEffect(() => {
-    invoke<Record<string, string>>('get_triage_state')
-      .then((map) => useTicketStore.getState().hydrateTriageMap(map as Record<string, import('./types').TriageState>))
-      .catch(() => {/* triage hydration is best-effort */});
-
-    invoke<import('./types').FetchConfig>('get_fetch_config')
-      .then((config) => useTicketStore.getState().hydrateFetchConfig(config))
-      .catch(() => {/* config hydration is best-effort */});
+    Promise.all([
+      invoke<Record<string, string>>('get_triage_state')
+        .then((map) => useTicketStore.getState().hydrateTriageMap(map as Record<string, import('./types').TriageState>))
+        .catch(() => {}),
+      invoke<import('./types').FetchConfig>('get_fetch_config')
+        .then((config) => {
+          useTicketStore.getState().hydrateFetchConfig(config);
+          return config;
+        })
+        .catch(() => null),
+    ]).then(([, config]) => {
+      // Auto-refetch if user has previously fetched (tickets are in-memory only)
+      if (config && config.lastFetchedAt) {
+        handleFetch();
+      }
+    });
   }, []);
 
   async function handleFetch() {
