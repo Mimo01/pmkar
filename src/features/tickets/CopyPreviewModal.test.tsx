@@ -278,6 +278,7 @@ describe('CopyPreviewModal', () => {
       },
     });
     render(<CopyPreviewModal />);
+    expect(screen.getByText(/created as child issues/)).toBeInTheDocument();
     expect(screen.getByText(/CUST-101: Fix login timeout/)).toBeInTheDocument();
     expect(screen.getByText(/CUST-102: Add retry logic/)).toBeInTheDocument();
   });

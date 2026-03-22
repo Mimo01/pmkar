@@ -184,6 +184,36 @@ describe('CopyResultModal', () => {
     expect(screen.getByText('Work log entry 1 copied')).toBeInTheDocument();
   });
 
+  it('shows subtask step label with source key on success (COPY-05)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'subtask:CUST-101', success: true, detail: 'Created as PROJ-43' },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText(/Sub-task CUST-101/)).toBeInTheDocument();
+    expect(screen.getByText(/Created as PROJ-43/)).toBeInTheDocument();
+  });
+
+  it('shows subtask step label with failure detail (COPY-05)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'subtask:CUST-102', success: false, detail: 'Sub-task creation returned 400' },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText(/Sub-task CUST-102/)).toBeInTheDocument();
+    expect(screen.getAllByText(/400/).length).toBeGreaterThan(0);
+  });
+
   it('shows partial failure title when attachment fails but create_issue succeeds (COPY-02)', () => {
     mockStoreState({
       result: {

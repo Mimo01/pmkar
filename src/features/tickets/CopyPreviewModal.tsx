@@ -183,7 +183,7 @@ export function CopyPreviewModal() {
             {sourceTicket.fields.subtasks.length > 0 && (
               <SourceFieldRow
                 label="Sub-tasks"
-                value={sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}
+                value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}`}
               />
             )}
             {sourceTicket.fields.issuelinks.length > 0 && (

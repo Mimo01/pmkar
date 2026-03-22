@@ -36,6 +36,12 @@ function stepLabel(step: CopyStepResult): string {
       ? `Work log entry ${n} copied`
       : `Work log ${n} \u2014 ${step.detail || 'failed'}`;
   }
+  if (step.step.startsWith('subtask:')) {
+    const sourceKey = step.step.slice('subtask:'.length);
+    return step.success
+      ? `Sub-task ${sourceKey} \u2014 ${step.detail || 'created'}`
+      : `Sub-task ${sourceKey} \u2014 ${step.detail || 'creation failed'}`;
+  }
   return step.step;
 }
 

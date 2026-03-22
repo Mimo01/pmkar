@@ -1649,6 +1649,59 @@ pub async fn copy_ticket(
         }
     }
 
+    // Sub-task child issue creation (COPY-05)
+    // Note: subtasks variable already defined above for description footer
+    for st in &subtasks {
+        let st_summary = st["fields"]["summary"].as_str().unwrap_or("Sub-task");
+        let st_source_key = st["key"].as_str().unwrap_or("?");
+
+        let st_create_body = serde_json::json!({
+            "fields": {
+                "project": { "key": "MYPROJ" },
+                "issuetype": { "name": "Sub-task" },
+                "summary": st_summary,
+                "parent": { "key": target_key }
+            }
+        });
+
+        let st_create_resp = client
+            .post(format!("{}/rest/api/3/issue", trimmed_target))
+            .header("Authorization", &cloud_auth)
+            .header("Content-Type", "application/json")
+            .body(serde_json::to_string(&st_create_body).unwrap_or_default())
+            .send()
+            .await;
+
+        match st_create_resp {
+            Ok(r) if r.status().is_success() => {
+                let resp_text = r.text().await.unwrap_or_default();
+                let resp_json: serde_json::Value = serde_json::from_str(&resp_text)
+                    .unwrap_or(serde_json::json!({}));
+                let child_key = resp_json["key"].as_str().unwrap_or("?");
+                steps.push(CopyStepResult {
+                    step: format!("subtask:{}", st_source_key),
+                    success: true,
+                    detail: Some(format!("Created as {}", child_key)),
+                });
+            }
+            Ok(r) => {
+                let status = r.status().as_u16();
+                steps.push(CopyStepResult {
+                    step: format!("subtask:{}", st_source_key),
+                    success: false,
+                    detail: Some(format!("Sub-task creation returned {}", status)),
+                });
+            }
+            Err(_) => {
+                steps.push(CopyStepResult {
+                    step: format!("subtask:{}", st_source_key),
+                    success: false,
+                    detail: Some("Network error creating sub-task".to_string()),
+                });
+            }
+        }
+    }
+
     // Step 9: Update triage state to copied
     {
         let db = triage_db
