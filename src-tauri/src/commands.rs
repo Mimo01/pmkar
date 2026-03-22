@@ -617,6 +617,45 @@ pub fn set_fetch_config(
     db.set_fetch_config(&config)
 }
 
+// --- User search command ---
+
+#[tauri::command]
+pub async fn search_jira_users(
+    base_url: String,
+    query: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<serde_json::Value>, AppError> {
+    let pat = get_server_pat(triage_db.inner())?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let encoded_query = urlencoding::encode(&query);
+    let url = format!(
+        "{}/rest/api/2/user/search?username={}",
+        trimmed_url, encoded_query
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to search users".into()))?;
+
+    if !resp.status().is_success() {
+        return Ok(vec![]);
+    }
+
+    let users: Vec<serde_json::Value> = resp
+        .json()
+        .await
+        .unwrap_or_default();
+
+    Ok(users)
+}
+
 // --- Connection meta commands ---
 
 #[tauri::command]

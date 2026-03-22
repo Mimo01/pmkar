@@ -29,6 +29,11 @@ async fn require_auth(
 // --- Query params ---
 
 #[derive(Debug, Deserialize)]
+pub struct UserSearchQuery {
+    pub username: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SearchQuery {
     pub jql: Option<String>,
 }
@@ -83,20 +88,30 @@ fn filter_issues<'a>(issues: &'a HashMap<String, JiraIssue>, jql: &Option<String
     result
 }
 
-fn extract_jql_assignee(jql: &str) -> Option<&str> {
+fn extract_jql_assignee(jql: &str) -> Option<String> {
     // Match patterns like: assignee=jdoe, assignee = jdoe, assignee="jdoe"
     let lower = jql.to_lowercase();
     if let Some(pos) = lower.find("assignee") {
         let rest = &jql[pos + "assignee".len()..];
         let rest = rest.trim_start();
         if rest.starts_with('=') {
-            let val = rest[1..].trim().trim_matches('"').trim_matches('\'');
-            let end = val.find(|c: char| c.is_whitespace() || c == ' ').unwrap_or(val.len());
-            let extracted = &val[..end];
-            if !extracted.is_empty() {
-                // Return reference to the original jql slice
-                let start_in_orig = jql.find(extracted)?;
-                return Some(&jql[start_in_orig..start_in_orig + extracted.len()]);
+            let after_eq = rest[1..].trim_start();
+            // Handle quoted value: assignee = "jdoe"
+            if after_eq.starts_with('"') {
+                let inner = &after_eq[1..];
+                if let Some(end_quote) = inner.find('"') {
+                    let val = &inner[..end_quote];
+                    if !val.is_empty() {
+                        return Some(val.to_string());
+                    }
+                }
+            } else {
+                // Unquoted value — take until whitespace
+                let end = after_eq.find(|c: char| c.is_whitespace()).unwrap_or(after_eq.len());
+                let val = &after_eq[..end];
+                if !val.is_empty() {
+                    return Some(val.to_string());
+                }
             }
         }
     }
@@ -203,6 +218,28 @@ mod v2 {
             }
             None => StatusCode::NOT_FOUND.into_response(),
         }
+    }
+
+    pub async fn search_users(
+        Query(params): Query<UserSearchQuery>,
+    ) -> impl IntoResponse {
+        let mock_users = vec![
+            json!({"name": "jdoe", "displayName": "Jane Doe", "emailAddress": "jdoe@example.com", "active": true}),
+            json!({"name": "csmith", "displayName": "Chris Smith", "emailAddress": "csmith@example.com", "active": true}),
+            json!({"name": "bwilson", "displayName": "Bob Wilson", "emailAddress": "bwilson@example.com", "active": true}),
+            json!({"name": "admin", "displayName": "Admin User", "emailAddress": "admin@example.com", "active": true}),
+        ];
+        let query = params.username.unwrap_or_default().to_lowercase();
+        let filtered: Vec<Value> = if query.is_empty() {
+            mock_users
+        } else {
+            mock_users.into_iter().filter(|u| {
+                let name = u["name"].as_str().unwrap_or("").to_lowercase();
+                let display = u["displayName"].as_str().unwrap_or("").to_lowercase();
+                name.contains(&query) || display.contains(&query)
+            }).collect()
+        };
+        (StatusCode::OK, Json(filtered)).into_response()
     }
 
     pub async fn search_issues(
@@ -553,6 +590,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/2/issue/{key}", get(v2::get_issue).put(v2::update_issue))
         .route("/rest/api/2/issue", post(v2::create_issue))
         .route("/rest/api/2/search", get(v2::search_issues))
+        .route("/rest/api/2/user/search", get(v2::search_users))
         .route("/rest/api/2/issue/{key}/comment", post(v2::add_comment))
         .route("/rest/api/2/issue/{key}/worklog", get(v2::get_worklog))
         .route("/rest/api/2/issue/{key}/attachments", post(v2::add_attachment))

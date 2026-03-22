@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from './connectionStore';
 import { ConnectionCard } from './ConnectionCard';
@@ -9,6 +9,12 @@ import type { JqlPreset, FetchConfig } from '../tickets/types';
 interface SettingsPageProps {
   onClose: () => void;
   onEdit?: (connectionType: ConnectionType) => void;
+}
+
+interface JiraUser {
+  name: string;
+  displayName: string;
+  emailAddress?: string;
 }
 
 const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
@@ -26,13 +32,39 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
   const watchedUsers = useTicketStore((s) => s.watchedUsers);
   const safeWatchedUsers = Array.isArray(watchedUsers) ? watchedUsers : [];
-  const [watchedUsersText, setWatchedUsersText] = useState(safeWatchedUsers.join('\n'));
-  const [newUser, setNewUser] = useState('');
+
+  const [userQuery, setUserQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<JiraUser[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIdx, setSelectedIdx] = useState(-1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const safe = Array.isArray(watchedUsers) ? watchedUsers : [];
-    setWatchedUsersText(safe.join('\n'));
-  }, [watchedUsers]);
+    if (!userQuery.trim() || !serverConn) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      invoke<JiraUser[]>('search_jira_users', {
+        baseUrl: serverConn.baseUrl,
+        query: userQuery.trim(),
+      })
+        .then((users) => {
+          const filtered = users.filter(u => !safeWatchedUsers.includes(u.name));
+          setSuggestions(filtered);
+          setShowSuggestions(filtered.length > 0);
+          setSelectedIdx(-1);
+        })
+        .catch(() => {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        });
+    }, 250);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [userQuery, serverConn, safeWatchedUsers]);
 
   function handlePresetChange(preset: JqlPreset) {
     useTicketStore.getState().setJqlPreset(preset);
@@ -50,15 +82,14 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
     persistFetchConfig();
   }
 
-  function handleAddUser() {
-    const trimmed = newUser.trim();
-    if (!trimmed || safeWatchedUsers.includes(trimmed)) {
-      setNewUser('');
-      return;
-    }
-    const updated = [...safeWatchedUsers, trimmed];
+  function handleAddUser(username: string) {
+    if (!username || safeWatchedUsers.includes(username)) return;
+    const updated = [...safeWatchedUsers, username];
     useTicketStore.getState().setWatchedUsers(updated);
-    setNewUser('');
+    setUserQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+    inputRef.current?.focus();
     persistFetchConfigWith(updated);
   }
 
@@ -69,9 +100,19 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') {
+    if (e.key === 'ArrowDown') {
       e.preventDefault();
-      handleAddUser();
+      setSelectedIdx(i => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIdx(i => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIdx >= 0 && suggestions[selectedIdx]) {
+        handleAddUser(suggestions[selectedIdx].name);
+      }
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
     }
   }
 
@@ -98,7 +139,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   }
 
   const hasNoConnections = serverConn === null && cloudConn === null;
-  const selectedPreset = PRESET_OPTIONS.find(o => o.value === jqlPreset);
 
   return (
     <div className="max-w-[540px] mx-auto px-6 py-8">
@@ -147,7 +187,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           <section>
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">What to fetch</h2>
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-              {/* Preset selector — radio-style list */}
               {PRESET_OPTIONS.map((opt, i) => (
                 <button
                   key={opt.value}
@@ -161,11 +200,8 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                       : 'hover:bg-slate-800/40'
                   }`}
                 >
-                  {/* Radio dot */}
                   <span className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
-                    jqlPreset === opt.value
-                      ? 'border-blue-500'
-                      : 'border-slate-600'
+                    jqlPreset === opt.value ? 'border-blue-500' : 'border-slate-600'
                   }`}>
                     {jqlPreset === opt.value && (
                       <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -181,7 +217,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               ))}
             </div>
 
-            {/* Custom JQL editor — only when custom is selected */}
             {jqlPreset === 'custom' && (
               <div className="mt-3">
                 <textarea
@@ -202,13 +237,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 </div>
               </div>
             )}
-
-            {/* Active query preview for non-custom */}
-            {jqlPreset !== 'custom' && selectedPreset && (
-              <p className="text-xs text-slate-600 mt-2 px-1">
-                Active query: <span className="font-mono text-slate-500">{selectedPreset.jql}</span>
-              </p>
-            )}
           </section>
 
           {/* Watched Users Section */}
@@ -224,30 +252,48 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             </p>
 
             <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
-              {/* Add user input */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 flex-shrink-0" aria-hidden="true">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="8.5" cy="7" r="4" />
-                  <line x1="20" y1="8" x2="20" y2="14" />
-                  <line x1="23" y1="11" x2="17" y2="11" />
-                </svg>
-                <input
-                  type="text"
-                  value={newUser}
-                  onChange={(e) => setNewUser(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
-                  placeholder="Add username..."
-                />
-                {newUser.trim() && (
-                  <button
-                    type="button"
-                    onClick={handleAddUser}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-150"
-                  >
-                    Add
-                  </button>
+              {/* Autocomplete input */}
+              <div className="relative">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 flex-shrink-0" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                    placeholder="Search Jira users..."
+                  />
+                </div>
+
+                {/* Dropdown suggestions */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-10 border border-slate-700 rounded-lg bg-slate-900 shadow-xl overflow-hidden">
+                    {suggestions.map((user, i) => (
+                      <button
+                        key={user.name}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
+                        className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors duration-100 ${
+                          i > 0 ? 'border-t border-slate-800/40' : ''
+                        } ${i === selectedIdx ? 'bg-blue-500/15' : 'hover:bg-slate-800/60'}`}
+                      >
+                        <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400 flex-shrink-0">
+                          {user.displayName.charAt(0).toUpperCase()}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-slate-200 block">{user.displayName}</span>
+                          <span className="text-xs text-slate-500 block">{user.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
