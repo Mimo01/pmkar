@@ -70,6 +70,22 @@ export function ConnectionForm({
   const [email, setEmail] = useState(connectionType === 'cloud' ? (initialValues?.username ?? '') : '');
   const [apiToken, setApiToken] = useState('');
 
+  // Pre-fill secret from keychain when editing
+  useEffect(() => {
+    if (!initialValues?.username) return;
+    const keychainType = connectionType === 'server' ? 'jira-server' : 'jira-cloud';
+    const keychainUser = connectionType === 'cloud' ? (initialValues.username ?? '') : (initialValues.username ?? '');
+    invoke<string>('get_credential', { connectionType: keychainType, username: keychainUser })
+      .then((secret) => {
+        if (connectionType === 'server') {
+          setPat(secret);
+        } else {
+          setApiToken(secret);
+        }
+      })
+      .catch(() => { /* credential not found — leave empty */ });
+  }, []);
+
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
