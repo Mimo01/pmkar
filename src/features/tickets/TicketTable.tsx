@@ -135,10 +135,10 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
   return (
     <div className="overflow-y-auto flex-1" role="table" aria-label="Ticket list">
       <table className="w-full table-fixed">
-        <thead className="bg-brand-surface-raised border-b border-brand-border sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+        <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
           <tr>
             {/* Triage dot column */}
-            <th className="w-6 px-2 py-2" aria-label="Triage status">
+            <th className="w-6 px-2 py-2.5" aria-label="Triage status">
               <span className="sr-only">Triage</span>
             </th>
             {COLUMNS.map((c) => (
@@ -147,7 +147,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                 role="columnheader"
                 aria-sort={ariaSortValue(c.key)}
                 aria-label={`Sort ${c.label} ${ariaSortValue(c.key) === 'ascending' ? 'descending' : 'ascending'}`}
-                className={`${c.width === 'flex-1' ? '' : c.width} text-[11px] font-semibold uppercase tracking-wider ${
+                className={`${c.width === 'flex-1' ? '' : c.width} text-[10px] font-semibold uppercase tracking-[0.08em] ${
                   sort.col === c.key ? 'text-brand-text-secondary' : 'text-brand-muted'
                 } px-4 py-2.5 cursor-pointer select-none hover:text-brand-text transition-colors duration-150 ${
                   c.align ?? 'text-left'
@@ -171,8 +171,8 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   key={ticket.key}
                   role="row"
                   aria-selected={isSelected}
-                  className={`border-b border-brand-border-subtle hover:bg-brand-surface-hover cursor-pointer transition-colors duration-150 border-l-2 ${
-                    isSelected ? 'bg-brand-surface-hover border-l-brand' : 'border-l-transparent'
+                  className={`border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-100 border-l-2 ${
+                    isSelected ? 'bg-brand-surface border-l-brand' : 'border-l-transparent'
                   }`}
                   onClick={() => onSelectTicket(ticket.key)}
                 >

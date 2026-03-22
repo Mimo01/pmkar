@@ -9,8 +9,8 @@ function GearIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
+      width="15"
+      height="15"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -28,19 +28,13 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <header className="flex items-center justify-between px-6 py-2.5 border-b border-brand-border bg-brand-bg">
-        <div className="flex items-center gap-3">
-          {/* Red dot brand mark */}
-          <span className="w-2.5 h-2.5 rounded-full bg-brand flex-shrink-0" />
-          <span className="text-[13px] font-semibold tracking-tight text-brand-text">pmkar</span>
-          <span className="text-[11px] text-brand-muted font-normal">Ticket Bridge</span>
-        </div>
+      <header className="flex items-center justify-end px-4 py-2 border-b border-brand-border">
         {onGearClick && (
           <button
             type="button"
             onClick={onGearClick}
             aria-label="Settings"
-            className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded transition-all duration-200"
+            className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
           >
             <GearIcon />
           </button>

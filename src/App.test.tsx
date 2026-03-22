@@ -48,11 +48,11 @@ describe('App', () => {
     });
   });
 
-  it('renders app name in header when setup is complete', async () => {
+  it('renders main view when setup is complete', async () => {
     setupConnections();
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('pmkar')).toBeInTheDocument();
+      expect(screen.getByText('Fetch Tickets')).toBeInTheDocument();
     });
   });
 
@@ -69,7 +69,7 @@ describe('App', () => {
     setupConnections();
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('pmkar')).toBeInTheDocument();
+      expect(screen.getByText('Fetch Tickets')).toBeInTheDocument();
     });
     expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
   });
