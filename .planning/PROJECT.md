@@ -16,14 +16,15 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] All REST API calls logged with full request/response for audit and verification — Validated in Phase 1: Foundation
 - [x] Mock Jira server for development and testing without real PATs — Validated in Phase 1: Foundation
 - [x] Setup wizard for configuring two Jira connections (cloud + self-hosted) via REST API with Personal Access Tokens — Validated in Phase 2: Connection Setup
+- [x] Copy ticket core fields (summary, description, status, priority, labels) with ADF translation and diff preview — Validated in Phase 4: Copy Core Fields
+- [x] Track origin — remote link back to source ticket, copiedKey in triage state — Validated in Phase 4: Copy Core Fields
 
 ### Active
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
 - [ ] Configure watched users beyond just myself
 - [ ] Present candidate tickets in full detail (links, images, assignees, work log, history, comments, attachments, sub-tasks)
 - [ ] Two actions per ticket: "Ignore" (move to ignored list) or "Copy to my Jira"
-- [ ] Full mirror copy: summary, description, attachments, comments, work log, sub-tasks, linked issues
-- [ ] Track origin — remember source ticket link, but no ongoing sync
+- [ ] Full mirror copy: attachments, comments, work log, sub-tasks, linked issues
 - [ ] Ignored tickets list — reviewable, not permanently hidden
 - [ ] Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
 - [ ] All REST API calls logged with full request/response for audit and verification
@@ -64,9 +65,9 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 |----------|-----------|---------|
 | Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Validated Phase 1 |
 | OS keychain for credentials | Most secure option, native to each platform | ✓ Validated Phase 1 |
-| One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | — Pending |
+| One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | ✓ Validated Phase 4 |
 | Mock server for testing | No test PATs available, need development independence | ✓ Validated Phase 1 |
 | Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-20 — Phase 1 (Foundation) complete*
+*Last updated: 2026-03-22 — Phase 4 (Copy Core Fields) complete*
