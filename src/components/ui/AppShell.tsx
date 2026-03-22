@@ -28,26 +28,24 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
-      <header className="flex items-center border-b border-brand-border">
-        {/* Brand accent — vertical red bar on left */}
-        <div className="w-1 self-stretch bg-brand flex-shrink-0" />
+      <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface">
+        <span className="text-[13px] font-semibold text-brand-text tracking-tight">
+          pm<span className="text-brand">k</span>ar
+        </span>
 
-        <div className="flex items-center justify-between flex-1 px-5 py-2">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold tracking-tight text-brand-text">pmkar</span>
-          </div>
+        {onGearClick && (
+          <button
+            type="button"
+            onClick={onGearClick}
+            aria-label="Settings"
+            className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
+          >
+            <GearIcon />
+          </button>
+        )}
 
-          {onGearClick && (
-            <button
-              type="button"
-              onClick={onGearClick}
-              aria-label="Settings"
-              className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
-            >
-              <GearIcon />
-            </button>
-          )}
-        </div>
+        {/* Brand accent underline */}
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand via-brand/60 to-transparent" />
       </header>
       <div className="flex-1 flex flex-col overflow-hidden">
         {children}
