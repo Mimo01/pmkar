@@ -164,8 +164,23 @@ mod v2 {
                     let desc = issue.fields["description"]
                         .as_str()
                         .unwrap_or("");
+                    let rendered_comments: Vec<Value> = issue.fields["comment"]["comments"]
+                        .as_array()
+                        .cloned()
+                        .unwrap_or_default()
+                        .iter()
+                        .map(|c| {
+                            let body_str = c["body"].as_str().unwrap_or("");
+                            let mut rendered = c.clone();
+                            rendered["body"] = json!(format!("<p>{}</p>", body_str));
+                            rendered
+                        })
+                        .collect();
                     body["renderedFields"] = json!({
-                        "description": format!("<p>{}</p>", desc)
+                        "description": format!("<p>{}</p>", desc),
+                        "comment": {
+                            "comments": rendered_comments
+                        }
                     });
                 }
 
@@ -458,6 +473,29 @@ mod v3 {
         }
     }
 
+    pub async fn add_worklog(
+        State(fixtures): State<SharedFixtures>,
+        Path(key): Path<String>,
+        Json(_body): Json<Value>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        if state.cloud_v3_issues.contains_key(&key) {
+            let nanos = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .subsec_nanos();
+            let mock_worklog = json!({
+                "id": format!("wl-{}", nanos),
+                "timeSpent": "2h",
+                "timeSpentSeconds": 7200,
+                "started": "2026-01-15T10:00:00.000+0000"
+            });
+            (StatusCode::CREATED, Json(mock_worklog)).into_response()
+        } else {
+            StatusCode::NOT_FOUND.into_response()
+        }
+    }
+
     pub async fn search_issues(
         State(fixtures): State<SharedFixtures>,
         Json(body): Json<Value>,
@@ -636,7 +674,7 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/3/issue", post(v3::create_issue))
         .route("/rest/api/3/search/jql", post(v3::search_issues))
         .route("/rest/api/3/issue/{key}/comment", post(v3::add_comment))
-        .route("/rest/api/3/issue/{key}/worklog", get(v3::get_worklog))
+        .route("/rest/api/3/issue/{key}/worklog", get(v3::get_worklog).post(v3::add_worklog))
         .route("/rest/api/3/issue/{key}/attachments", post(v3::add_attachment))
         .route("/rest/api/3/issue/{key}/remotelink", post(v3::create_remotelink))
         .route("/rest/api/3/priority", get(v3::get_priorities))
