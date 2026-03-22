@@ -25,6 +25,174 @@ fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> 
     ))
 }
 
+/// Retrieve Cloud credentials (base_url, email, api_token) from connection_meta and keychain.
+fn get_cloud_credentials(
+    triage_db: &Arc<Mutex<TriageDb>>,
+) -> Result<(String, String, String), AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    let metas = db.get_all_connection_meta()?;
+    let cloud_meta = metas.iter().find(|m| m.connection_type == "cloud");
+    if let Some(meta) = cloud_meta {
+        let base_url = meta.base_url.trim_end_matches('/').to_string();
+        let email = meta.username.clone();
+        let api_token = keychain::get_credential("jira-cloud", &email)?;
+        return Ok((base_url, email, api_token));
+    }
+    Err(AppError::Keychain(
+        "No cloud credential found. Please re-run the setup wizard.".into(),
+    ))
+}
+
+// --- Cloud meta structs ---
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudMeta {
+    pub available_statuses: Vec<StatusOption>,
+    pub available_priorities: Vec<PriorityOption>,
+    pub current_account_id: String,
+    pub cloud_base_url: String,
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+pub struct StatusOption {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+pub struct PriorityOption {
+    pub id: String,
+    pub name: String,
+}
+
+// --- Copy ticket structs ---
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyStepResult {
+    pub step: String,
+    pub success: bool,
+    pub detail: Option<String>,
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyTicketResult {
+    pub target_key: Option<String>,
+    pub target_url: Option<String>,
+    pub steps: Vec<CopyStepResult>,
+}
+
+// --- Cloud meta command ---
+
+#[tauri::command]
+pub async fn fetch_cloud_meta(
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<CloudMeta, AppError> {
+    let (base_url, email, api_token) = get_cloud_credentials(triage_db.inner())?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+
+    let auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", email, api_token))
+    );
+
+    // Fetch current user accountId
+    let myself_resp = client
+        .get(format!("{}/rest/api/3/myself", base_url))
+        .header("Authorization", &auth)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch /myself from Cloud Jira".into()))?;
+    if !myself_resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Cloud /myself returned status {}",
+            myself_resp.status().as_u16()
+        )));
+    }
+    let myself_body: serde_json::Value = myself_resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse /myself response".into()))?;
+    let account_id = myself_body["accountId"]
+        .as_str()
+        .unwrap_or("")
+        .to_string();
+
+    // Fetch priorities
+    let prio_resp = client
+        .get(format!("{}/rest/api/3/priority", base_url))
+        .header("Authorization", &auth)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch /priority from Cloud Jira".into()))?;
+    if !prio_resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Cloud /priority returned status {}",
+            prio_resp.status().as_u16()
+        )));
+    }
+    let prio_body: serde_json::Value = prio_resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse /priority response".into()))?;
+    let priorities: Vec<PriorityOption> = prio_body
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .filter_map(|p| {
+            Some(PriorityOption {
+                id: p["id"].as_str()?.to_string(),
+                name: p["name"].as_str()?.to_string(),
+            })
+        })
+        .collect();
+
+    // Fetch project statuses — use hardcoded project key for now
+    // (cloud_project_key not yet in settings; mock server responds to any key)
+    let status_resp = client
+        .get(format!("{}/rest/api/3/project/MYPROJ/statuses", base_url))
+        .header("Authorization", &auth)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch project statuses from Cloud Jira".into()))?;
+    if !status_resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Cloud /project/statuses returned status {}",
+            status_resp.status().as_u16()
+        )));
+    }
+    let status_body: serde_json::Value = status_resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse project statuses response".into()))?;
+    let statuses: Vec<StatusOption> = status_body
+        .as_array()
+        .and_then(|arr| arr.first())
+        .and_then(|first| first["statuses"].as_array())
+        .unwrap_or(&vec![])
+        .iter()
+        .filter_map(|s| {
+            Some(StatusOption {
+                id: s["id"].as_str()?.to_string(),
+                name: s["name"].as_str()?.to_string(),
+            })
+        })
+        .collect();
+
+    Ok(CloudMeta {
+        available_statuses: statuses,
+        available_priorities: priorities,
+        current_account_id: account_id,
+        cloud_base_url: base_url,
+    })
+}
+
 // --- Credential commands ---
 
 #[tauri::command]
