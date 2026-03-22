@@ -30,7 +30,7 @@ export function AppShell({ children, onGearClick }: AppShellProps) {
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
       <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface">
         <span className="text-[13px] font-semibold text-brand-text tracking-tight">
-          pm<span className="text-brand">k</span>ar
+          <span className="text-brand">pm</span>kar
         </span>
 
         {onGearClick && (
