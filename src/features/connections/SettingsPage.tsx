@@ -11,11 +11,11 @@ interface SettingsPageProps {
   onEdit?: (connectionType: ConnectionType) => void;
 }
 
-const PRESET_OPTIONS: { value: JqlPreset; label: string; description: string }[] = [
-  { value: 'assigned', label: 'Assigned to me', description: 'Tickets where you are the assignee' },
-  { value: 'mentioned', label: 'Mentioned me', description: 'Tickets where you are mentioned' },
-  { value: 'all_watched', label: 'All watched', description: 'Includes tickets from watched users' },
-  { value: 'custom', label: 'Custom JQL', description: 'Write your own query' },
+const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
+  { value: 'assigned', label: 'Assigned to me', jql: 'assignee = currentUser() ORDER BY updated DESC' },
+  { value: 'mentioned', label: 'Mentioned', jql: 'text ~ currentUser() ORDER BY updated DESC' },
+  { value: 'all_watched', label: 'All watched users', jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC' },
+  { value: 'custom', label: 'Custom query', jql: 'You write the JQL' },
 ];
 
 export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
@@ -25,9 +25,9 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const jqlPreset = useTicketStore((s) => s.jqlPreset);
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
   const watchedUsers = useTicketStore((s) => s.watchedUsers);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const safeWatchedUsers = Array.isArray(watchedUsers) ? watchedUsers : [];
   const [watchedUsersText, setWatchedUsersText] = useState(safeWatchedUsers.join('\n'));
+  const [newUser, setNewUser] = useState('');
 
   useEffect(() => {
     const safe = Array.isArray(watchedUsers) ? watchedUsers : [];
@@ -36,9 +36,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
   function handlePresetChange(preset: JqlPreset) {
     useTicketStore.getState().setJqlPreset(preset);
-    if (preset !== 'custom') {
-      setShowAdvanced(false);
-    }
     persistFetchConfig();
   }
 
@@ -50,23 +47,45 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   function handleResetJql() {
     useTicketStore.getState().setJqlCustom(null);
     useTicketStore.getState().setJqlPreset('assigned');
-    setShowAdvanced(false);
     persistFetchConfig();
   }
 
-  function handleWatchedUsersChange(text: string) {
-    setWatchedUsersText(text);
-    const users = text.split('\n').map(u => u.trim()).filter(Boolean);
-    useTicketStore.getState().setWatchedUsers(users);
-    persistFetchConfig();
+  function handleAddUser() {
+    const trimmed = newUser.trim();
+    if (!trimmed || safeWatchedUsers.includes(trimmed)) {
+      setNewUser('');
+      return;
+    }
+    const updated = [...safeWatchedUsers, trimmed];
+    useTicketStore.getState().setWatchedUsers(updated);
+    setNewUser('');
+    persistFetchConfigWith(updated);
+  }
+
+  function handleRemoveUser(username: string) {
+    const updated = safeWatchedUsers.filter(u => u !== username);
+    useTicketStore.getState().setWatchedUsers(updated);
+    persistFetchConfigWith(updated);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddUser();
+    }
   }
 
   function persistFetchConfig() {
     const state = useTicketStore.getState();
+    persistFetchConfigWith(state.watchedUsers);
+  }
+
+  function persistFetchConfigWith(users: string[]) {
+    const state = useTicketStore.getState();
     const config: FetchConfig = {
       jqlPreset: state.jqlPreset,
       jqlCustom: state.jqlCustom,
-      watchedUsers: state.watchedUsers,
+      watchedUsers: Array.isArray(users) ? users : [],
       lastFetchedAt: state.lastFetchedAt,
     };
     invoke('set_fetch_config', { config }).catch(() => {});
@@ -79,7 +98,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   }
 
   const hasNoConnections = serverConn === null && cloudConn === null;
-  const watchedCount = safeWatchedUsers.length;
+  const selectedPreset = PRESET_OPTIONS.find(o => o.value === jqlPreset);
 
   return (
     <div className="max-w-[540px] mx-auto px-6 py-8">
@@ -111,13 +130,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         <div className="space-y-8">
           {/* Connections Section */}
           <section>
-            <div className="flex items-center gap-2 mb-3">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-              </svg>
-              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Connections</h2>
-            </div>
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Connections</h2>
             <ConnectionCard
               label="Source (Customer Jira)"
               connection={serverConn}
@@ -130,98 +143,147 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             />
           </section>
 
-          {/* Fetch Configuration Section */}
+          {/* What to Fetch Section */}
           <section>
-            <div className="flex items-center gap-2 mb-4">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Fetch Configuration</h2>
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">What to fetch</h2>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+              {/* Preset selector — radio-style list */}
+              {PRESET_OPTIONS.map((opt, i) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handlePresetChange(opt.value)}
+                  className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors duration-150 ${
+                    i > 0 ? 'border-t border-slate-800/60' : ''
+                  } ${
+                    jqlPreset === opt.value
+                      ? 'bg-blue-500/8'
+                      : 'hover:bg-slate-800/40'
+                  }`}
+                >
+                  {/* Radio dot */}
+                  <span className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
+                    jqlPreset === opt.value
+                      ? 'border-blue-500'
+                      : 'border-slate-600'
+                  }`}>
+                    {jqlPreset === opt.value && (
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-sm block ${
+                      jqlPreset === opt.value ? 'text-slate-200 font-semibold' : 'text-slate-400'
+                    }`}>{opt.label}</span>
+                    <span className="text-xs text-slate-600 block truncate font-mono">{opt.jql}</span>
+                  </div>
+                </button>
+              ))}
             </div>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-5">
-              {/* JQL Preset */}
-              <div>
-                <label className="text-sm font-semibold text-slate-300 mb-1.5 block">Query preset</label>
-                <p className="text-xs text-slate-500 mb-2.5">Choose which tickets appear in your candidate list.</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PRESET_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => handlePresetChange(opt.value)}
-                      className={`text-left rounded-lg border px-3 py-2.5 transition-all duration-200 ${
-                        jqlPreset === opt.value
-                          ? 'border-blue-500/50 bg-blue-500/10 text-slate-200'
-                          : 'border-slate-700/50 bg-slate-800/30 text-slate-400 hover:border-slate-600 hover:text-slate-300'
-                      }`}
-                    >
-                      <span className="text-sm font-semibold block">{opt.label}</span>
-                      <span className="text-xs text-slate-500 block mt-0.5">{opt.description}</span>
-                    </button>
-                  ))}
+            {/* Custom JQL editor — only when custom is selected */}
+            {jqlPreset === 'custom' && (
+              <div className="mt-3">
+                <textarea
+                  value={jqlCustom ?? ''}
+                  onChange={(e) => handleJqlCustomChange(e.target.value)}
+                  className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
+                  placeholder="assignee = currentUser() ORDER BY updated DESC"
+                  autoFocus
+                />
+                <div className="flex justify-end mt-1.5">
+                  <button
+                    type="button"
+                    onClick={handleResetJql}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                  >
+                    Reset to default
+                  </button>
                 </div>
               </div>
+            )}
 
-              {/* Advanced JQL */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors duration-200"
-                >
-                  <svg
-                    width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className={`transition-transform duration-200 ${showAdvanced || jqlPreset === 'custom' ? 'rotate-90' : ''}`}
-                    aria-hidden="true"
+            {/* Active query preview for non-custom */}
+            {jqlPreset !== 'custom' && selectedPreset && (
+              <p className="text-xs text-slate-600 mt-2 px-1">
+                Active query: <span className="font-mono text-slate-500">{selectedPreset.jql}</span>
+              </p>
+            )}
+          </section>
+
+          {/* Watched Users Section */}
+          <section>
+            <div className="flex items-baseline justify-between mb-3">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Watched users</h2>
+              {safeWatchedUsers.length > 0 && (
+                <span className="text-xs text-slate-600">{safeWatchedUsers.length}</span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Tickets assigned to these users appear in "All watched users" results.
+            </p>
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+              {/* Add user input */}
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 flex-shrink-0" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="8.5" cy="7" r="4" />
+                  <line x1="20" y1="8" x2="20" y2="14" />
+                  <line x1="23" y1="11" x2="17" y2="11" />
+                </svg>
+                <input
+                  type="text"
+                  value={newUser}
+                  onChange={(e) => setNewUser(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                  placeholder="Add username..."
+                />
+                {newUser.trim() && (
+                  <button
+                    type="button"
+                    onClick={handleAddUser}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-150"
                   >
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                  {showAdvanced || jqlPreset === 'custom' ? 'Hide JQL editor' : 'Edit JQL manually'}
-                </button>
-
-                {(showAdvanced || jqlPreset === 'custom') && (
-                  <div className="mt-2.5">
-                    <textarea
-                      value={jqlCustom ?? ''}
-                      onChange={(e) => handleJqlCustomChange(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
-                      placeholder="assignee = currentUser() ORDER BY updated DESC"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleResetJql}
-                      className="text-xs text-slate-500 hover:text-slate-300 mt-1.5 transition-colors duration-200"
-                    >
-                      Reset to default
-                    </button>
-                  </div>
+                    Add
+                  </button>
                 )}
               </div>
 
-              {/* Divider */}
-              <div className="border-t border-slate-800/60" />
-
-              {/* Watched Users */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-sm font-semibold text-slate-300">Watched users</label>
-                  {watchedCount > 0 && (
-                    <span className="text-xs text-slate-500">{watchedCount} user{watchedCount !== 1 ? 's' : ''}</span>
-                  )}
+              {/* User list */}
+              {safeWatchedUsers.length === 0 ? (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-xs text-slate-600">No watched users yet</p>
                 </div>
-                <p className="text-xs text-slate-500 mb-2.5">
-                  One username per line. Tickets assigned to these users will be included in "All watched" results.
-                </p>
-                <textarea
-                  value={watchedUsersText}
-                  onChange={(e) => handleWatchedUsersChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
-                  placeholder={"jdoe\ncsmith"}
-                />
-              </div>
+              ) : (
+                safeWatchedUsers.map((user, i) => (
+                  <div
+                    key={user}
+                    className={`flex items-center justify-between px-4 py-2.5 group ${
+                      i > 0 ? 'border-t border-slate-800/40' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400">
+                        {user.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="text-sm text-slate-300">{user}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveUser(user)}
+                      className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      aria-label={`Remove ${user}`}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         </div>

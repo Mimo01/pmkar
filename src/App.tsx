@@ -66,7 +66,7 @@ function App() {
   if (showSettings) {
     return (
       <ErrorBoundary>
-        <AppShell onGearClick={() => setShowSettings(true)}>
+        <AppShell>
           <SettingsPage
             onClose={() => setShowSettings(false)}
             onEdit={(connectionType) => {

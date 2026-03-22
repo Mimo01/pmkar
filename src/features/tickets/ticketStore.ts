@@ -57,10 +57,11 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   // Actions
   setTickets: (tickets, triageMap, total) => {
-    const newCount = Object.values(triageMap).filter((s) => s === 'new').length;
+    const safeMap = triageMap ?? {};
+    const newCount = Object.values(safeMap).filter((s) => s === 'new').length;
     set({
       tickets,
-      triageMap,
+      triageMap: safeMap,
       totalCount: total,
       newCount,
       fetchStatus: 'idle',
@@ -85,8 +86,9 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   setLastFetchedAt: (timestamp) => set({ lastFetchedAt: timestamp }),
 
   hydrateTriageMap: (map) => {
-    const newCount = Object.values(map).filter((s) => s === 'new').length;
-    set({ triageMap: map, newCount });
+    const safeMap = map ?? {};
+    const newCount = Object.values(safeMap).filter((s) => s === 'new').length;
+    set({ triageMap: safeMap, newCount });
   },
 
   setJqlPreset: (preset) => set({ jqlPreset: preset }),
