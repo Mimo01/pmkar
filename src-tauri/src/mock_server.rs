@@ -568,16 +568,46 @@ mod v3 {
         let state = fixtures.lock().unwrap();
         if state.cloud_v3_issues.contains_key(&key) {
             let mock_attachment = json!([{
-                "id": "mock-attachment-id",
-                "filename": "uploaded-file.bin",
-                "size": 0,
+                "id": "att-1",
+                "filename": "image.png",
+                "size": 12345,
                 "mimeType": "application/octet-stream",
-                "content": "http://localhost:8081/secure/attachment/mock-attachment-id/uploaded-file.bin"
+                "content": "http://localhost:8081/rest/api/3/attachment/content/att-1"
             }]);
             (StatusCode::OK, Json(mock_attachment)).into_response()
         } else {
             StatusCode::NOT_FOUND.into_response()
         }
+    }
+
+    pub async fn create_remotelink(
+        Path(_key): Path<String>,
+        Json(_body): Json<Value>,
+    ) -> impl IntoResponse {
+        (StatusCode::CREATED, Json(json!({ "id": 10001 })))
+    }
+
+    pub async fn get_priorities() -> impl IntoResponse {
+        Json(json!([
+            { "id": "1", "name": "Highest", "iconUrl": "" },
+            { "id": "2", "name": "High", "iconUrl": "" },
+            { "id": "3", "name": "Medium", "iconUrl": "" },
+            { "id": "4", "name": "Low", "iconUrl": "" },
+            { "id": "5", "name": "Lowest", "iconUrl": "" }
+        ]))
+    }
+
+    pub async fn get_project_statuses(Path(_key): Path<String>) -> impl IntoResponse {
+        Json(json!([{
+            "id": "10001",
+            "name": "Task",
+            "statuses": [
+                { "id": "1", "name": "Open" },
+                { "id": "3", "name": "In Progress" },
+                { "id": "5", "name": "Resolved" },
+                { "id": "6", "name": "Closed" }
+            ]
+        }]))
     }
 }
 
@@ -608,6 +638,9 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/3/issue/{key}/comment", post(v3::add_comment))
         .route("/rest/api/3/issue/{key}/worklog", get(v3::get_worklog))
         .route("/rest/api/3/issue/{key}/attachments", post(v3::add_attachment))
+        .route("/rest/api/3/issue/{key}/remotelink", post(v3::create_remotelink))
+        .route("/rest/api/3/priority", get(v3::get_priorities))
+        .route("/rest/api/3/project/{key}/statuses", get(v3::get_project_statuses))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
