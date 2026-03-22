@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import type { JiraTicket, TriageState } from './types';
+import type { JiraTicket, TriageState, TriageEntry } from './types';
 import { TriageIndicator } from './TriageIndicator';
+import { useConnectionStore } from '../connections/connectionStore';
 
 type SortColumn = 'key' | 'summary' | 'status' | 'priority' | 'assignee' | 'updated';
 type SortDirection = 'asc' | 'desc';
@@ -12,7 +13,7 @@ interface SortState {
 
 interface TicketTableProps {
   tickets: JiraTicket[];
-  triageMap: Record<string, TriageState>;
+  triageMap: Record<string, TriageState> | Record<string, TriageEntry>;
   selectedKey: string | null;
   onSelectTicket: (key: string) => void;
 }
@@ -110,8 +111,20 @@ function SkeletonRows() {
   );
 }
 
+function getTriageState(entry: TriageState | TriageEntry | undefined): TriageState | undefined {
+  if (entry === undefined) return undefined;
+  if (typeof entry === 'string') return entry;
+  return entry.state;
+}
+
+function getTriageCopiedKey(entry: TriageState | TriageEntry | undefined): string | null {
+  if (entry === undefined || typeof entry === 'string') return null;
+  return entry.copiedKey;
+}
+
 export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }: TicketTableProps) {
   const [sort, setSort] = useState<SortState>({ col: 'updated', dir: 'desc' });
+  const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
 
   const sortedTickets = useMemo(
     () => [...tickets].sort((a, b) => compareTickets(a, b, sort)),
@@ -177,7 +190,11 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   onClick={() => onSelectTicket(ticket.key)}
                 >
                   <td className="w-6 px-2 py-3 text-center">
-                    <TriageIndicator state={triageMap[ticket.key]} />
+                    <TriageIndicator
+                      state={getTriageState(triageMap[ticket.key])}
+                      copiedKey={getTriageCopiedKey(triageMap[ticket.key])}
+                      cloudBaseUrl={cloudBaseUrl}
+                    />
                   </td>
                   <td className="w-24 px-4 py-3 text-xs font-semibold text-brand-text-secondary">
                     {ticket.key}
