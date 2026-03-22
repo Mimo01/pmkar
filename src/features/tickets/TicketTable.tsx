@@ -140,8 +140,8 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
       <table className="w-full table-fixed">
         <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
           <tr>
-            {/* Triage dot column */}
-            <th className="w-6 px-2 py-2.5" aria-label="Triage status">
+            {/* Triage status column */}
+            <th className="w-32 min-w-[8rem] px-2 py-2.5" aria-label="Triage status">
               <span className="sr-only">Triage</span>
             </th>
             {COLUMNS.map((c) => (
@@ -179,7 +179,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   }`}
                   onClick={() => onSelectTicket(ticket.key)}
                 >
-                  <td className="w-28 min-w-[7rem] px-2 py-3 text-center">
+                  <td className="w-32 min-w-[8rem] px-2 py-3">
                     <TriageIndicator
                       state={triageMap[ticket.key]?.state}
                       copiedKey={triageMap[ticket.key]?.copiedKey ?? null}
