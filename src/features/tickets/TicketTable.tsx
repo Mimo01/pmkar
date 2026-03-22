@@ -135,7 +135,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
   return (
     <div className="overflow-y-auto flex-1" role="table" aria-label="Ticket list">
       <table className="w-full table-fixed">
-        <thead className="bg-slate-900/40 border-b border-slate-800 sticky top-0 z-10">
+        <thead className="bg-slate-950 border-b border-slate-800 sticky top-0 z-10">
           <tr>
             {/* Triage dot column */}
             <th className="w-6 px-2 py-2" aria-label="Triage status">
