@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Tauri scaffold, OS keychain credential store, mock Jira server (both API shapes), and security architecture (credential redaction, error boundaries) (completed 2026-03-20)
 - [x] **Phase 2: Connection Setup** - Setup wizard UI for dual-connection configuration with OS keychain write, connection validation against mock, and error handling (completed 2026-03-20)
 - [ ] **Phase 3: Ticket Fetch and Review** - Dual Jira adapter pair, JQL fetch with pagination, full ticket detail view, and persistent triage state schema
-- [ ] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting
+- [x] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting (completed 2026-03-22)
 - [ ] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy
 - [ ] **Phase 6: Triage and Audit** - Ignore workflow, ignored list view, session-persistent triage state, and in-app audit log viewer
 - [ ] **Phase 7: Internationalization** - Language switcher, English language pack, and Slovak language pack
@@ -84,14 +84,14 @@ Plans:
   2. User can copy a ticket's summary, description, status, priority, assignee, and labels to the company Jira
   3. The copied ticket in company Jira contains a remote link back to the original source ticket
   4. Description content is correctly translated from Jira Server wiki markup to Jira Cloud ADF format (tables, code blocks, mentions, and numbered lists render correctly)
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 04-01-PLAN.md — Rust infra: htmltoadf crate, reqwest multipart, mock server Cloud endpoints, triage_db copied_key
 - [x] 04-02-PLAN.md — TypeScript copy types, copyStore Zustand store, Wave 0 test scaffolds
 - [x] 04-03-PLAN.md — Rust commands: fetch_cloud_meta and copy_ticket pipeline
 - [x] 04-04-PLAN.md — CopyPreviewModal, Copy button in detail panel, TriageIndicator extension
-- [ ] 04-05-PLAN.md — CopyResultModal, progress states, triage refresh, and visual verification
+- [x] 04-05-PLAN.md — CopyResultModal, progress states, triage refresh, and visual verification
 
 ### Phase 5: Copy — Attachments and Comments
 **Goal**: Users can copy tickets with full content fidelity: binary attachments, comment threads, work log, and sub-task hierarchy
@@ -135,7 +135,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
 | 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
-| 4. Copy — Core Fields | 4/5 | In Progress|  |
+| 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
 | 6. Triage and Audit | 0/TBD | Not started | - |
 | 7. Internationalization | 0/TBD | Not started | - |

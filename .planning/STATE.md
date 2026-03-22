@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-03-22T20:02:17.574Z"
+status: Phase complete — ready for verification
+stopped_at: "Completed 04-05: awaiting human-verify checkpoint (Task 3)"
+last_updated: "2026-03-22T20:06:18.957Z"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -60,6 +60,7 @@ Plan: 5 of 5
 | Phase 04-copy-core-fields P01 | 15 | 2 tasks | 4 files |
 | Phase 04-copy-core-fields P03 | 4 | 2 tasks | 2 files |
 | Phase 04 P04 | 15 | 2 tasks | 5 files |
+| Phase 04-copy-core-fields P05 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,7 @@ Recent decisions affecting current work:
 - [Phase 04-copy-core-fields]: target_status parameter in copy_ticket is informational only — Cloud v3 API does not support status at issue creation
 - [Phase 04]: CopyPreviewModal renders null when phase is not previewing/copying — clean unmount
 - [Phase 04]: TicketTable uses helper functions for backward compat between TriageState string and TriageEntry object
+- [Phase 04-copy-core-fields]: Triage refresh on close: invoke get_triage_state in finally block so reset always fires even on network error
 
 ### Pending Todos
 
@@ -122,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T20:02:17.569Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-03-22T20:06:18.952Z
+Stopped at: Completed 04-05: awaiting human-verify checkpoint (Task 3)
 Resume file: None
