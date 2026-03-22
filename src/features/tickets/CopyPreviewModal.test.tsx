@@ -25,6 +25,7 @@ vi.mock('../connections/connectionStore', () => ({
 
 const mockReset = vi.fn();
 const mockConfirmCopy = vi.fn();
+const mockSetTargetSummary = vi.fn();
 const mockSetTargetStatus = vi.fn();
 const mockSetTargetPriorityId = vi.fn();
 const mockToggleLabel = vi.fn();
@@ -84,6 +85,7 @@ function buildStoreState(overrides: Record<string, unknown> = {}) {
     progressStep: '',
     reset: mockReset,
     confirmCopy: mockConfirmCopy,
+    setTargetSummary: mockSetTargetSummary,
     setTargetStatus: mockSetTargetStatus,
     setTargetPriorityId: mockSetTargetPriorityId,
     toggleLabel: mockToggleLabel,
@@ -195,14 +197,12 @@ describe('CopyPreviewModal', () => {
     );
   });
 
-  it('displays status note about project default (status limitation)', () => {
+  it('renders editable summary input prefilled from source', () => {
     render(<CopyPreviewModal />);
 
-    expect(
-      screen.getByText(
-        'Status will be set to project default. Transitions can be applied in Jira after copy.',
-      ),
-    ).toBeInTheDocument();
+    const summaryInput = screen.getByDisplayValue('Source ticket summary');
+    expect(summaryInput).toBeInTheDocument();
+    expect(summaryInput.tagName).toBe('INPUT');
   });
 
   it('renders nothing when phase is idle', () => {

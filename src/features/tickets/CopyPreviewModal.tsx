@@ -31,6 +31,7 @@ export function CopyPreviewModal() {
   const targetLabels = useCopyStore((s) => s.targetLabels);
   const selectedLabels = useCopyStore((s) => s.selectedLabels);
   const progressStep = useCopyStore((s) => s.progressStep);
+  const setTargetSummary = useCopyStore((s) => s.setTargetSummary);
   const setTargetStatus = useCopyStore((s) => s.setTargetStatus);
   const setTargetPriorityId = useCopyStore((s) => s.setTargetPriorityId);
   const toggleLabel = useCopyStore((s) => s.toggleLabel);
@@ -187,8 +188,18 @@ export function CopyPreviewModal() {
           <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
             <h3 className="text-base font-semibold mb-4">Target</h3>
 
-            {/* Summary (read-only) */}
-            <FieldRow label="Summary" value={targetSummary} />
+            {/* Summary (editable) */}
+            <div className="mb-3">
+              <label className="text-xs font-semibold text-brand-muted block mb-1">
+                Summary
+              </label>
+              <input
+                type="text"
+                value={targetSummary}
+                onChange={(e) => setTargetSummary(e.target.value)}
+                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm"
+              />
+            </div>
 
             {/* Assignee (read-only) */}
             <FieldRow label="Assignee" value="Current user" />
@@ -209,10 +220,6 @@ export function CopyPreviewModal() {
                   </option>
                 ))}
               </select>
-              <p className="text-[11px] text-brand-muted mt-1">
-                Status will be set to project default. Transitions can be
-                applied in Jira after copy.
-              </p>
             </div>
 
             {/* Priority dropdown */}

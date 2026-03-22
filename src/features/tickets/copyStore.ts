@@ -31,6 +31,7 @@ interface CopyState {
 
   // Actions
   startPreview: (ticket: JiraTicketDetail, sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
+  setTargetSummary: (summary: string) => void;
   setTargetStatus: (status: string) => void;
   setTargetPriorityId: (priorityId: string) => void;
   toggleLabel: (label: string) => void;
@@ -71,14 +72,30 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       });
 
       const labels = ticket.fields.labels || [];
+
+      // Prefill status: map source status name to target if possible
+      const sourceStatusName = ticket.fields.status.name;
+      const matchedStatus = meta.availableStatuses.find(
+        s => s.name.toLowerCase() === sourceStatusName.toLowerCase()
+      );
+      const defaultStatus = matchedStatus?.name || meta.availableStatuses[0]?.name || '';
+
+      // Prefill priority: map source priority name to target if possible
+      const sourcePriorityName = ticket.fields.priority.name;
+      const matchedPriority = meta.availablePriorities.find(
+        p => p.name.toLowerCase() === sourcePriorityName.toLowerCase()
+      );
+      const defaultPriorityId = matchedPriority?.id
+        || meta.availablePriorities.find(p => p.name === 'Medium')?.id
+        || meta.availablePriorities[0]?.id || '';
+
       set({
         phase: 'previewing',
         cloudMeta: meta,
         targetLabels: labels,
         selectedLabels: [...labels],
-        targetStatus: meta.availableStatuses[0]?.name || '',
-        targetPriorityId: meta.availablePriorities.find(p => p.name === 'Medium')?.id
-          || meta.availablePriorities[0]?.id || '',
+        targetStatus: defaultStatus,
+        targetPriorityId: defaultPriorityId,
       });
     } catch (err) {
       set({
@@ -88,6 +105,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     }
   },
 
+  setTargetSummary: (summary) => set({ targetSummary: summary }),
   setTargetStatus: (status) => set({ targetStatus: status }),
   setTargetPriorityId: (priorityId) => set({ targetPriorityId: priorityId }),
 
@@ -115,6 +133,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetStatus: state.targetStatus,
         targetPriorityId: state.targetPriorityId,
         targetLabels: state.selectedLabels,
+        currentAccountId: state.cloudMeta!.currentAccountId,
       });
 
       set({ phase: 'result', result, progressStep: '' });
