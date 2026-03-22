@@ -103,11 +103,11 @@ Plans:
   3. User can copy a ticket and have its work log entries transferred with original author attribution
   4. User can copy a ticket with sub-tasks and find the sub-tasks created as child issues under the new parent ticket in company Jira
   5. User sees a clear per-item result for attachments (e.g., "3 copied, 1 failed") rather than a silent partial success
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 05-01-PLAN.md — Rust backend: mock server extensions, copy_ticket pipeline for attachments, comments, worklogs, and description footer
-- [ ] 05-02-PLAN.md — Frontend: CopyPreviewModal and CopyResultModal extensions, copyStore progress, tests, and visual verification
+- [x] 05-02-PLAN.md — Frontend: CopyPreviewModal and CopyResultModal extensions, copyStore progress, tests, and visual verification
 
 ### Phase 6: Triage and Audit
 **Goal**: Users can manage their review queue with a persistent ignore list and inspect the full API audit trail from within the app
@@ -140,6 +140,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
-| 5. Copy — Attachments and Comments | 0/2 | Not started | - |
+| 5. Copy — Attachments and Comments | 1/2 | In Progress|  |
 | 6. Triage and Audit | 0/TBD | Not started | - |
 | 7. Internationalization | 0/TBD | Not started | - |

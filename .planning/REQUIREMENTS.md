@@ -34,11 +34,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Copy Workflow
 
 - [x] **COPY-01**: User can copy a ticket's core fields (summary, description, status, priority, assignee, labels) to company Jira
-- [ ] **COPY-02**: User can copy ticket attachments as full binary files (download from source, upload to target)
-- [ ] **COPY-03**: User can copy ticket comment thread with author attribution prefix
-- [ ] **COPY-04**: User can copy ticket work log entries with author attribution
-- [ ] **COPY-05**: User can copy sub-tasks as child issues under the newly created parent ticket
-- [ ] **COPY-06**: User can copy linked issue references as annotations or remote links
+- [x] **COPY-02**: User can copy ticket attachments as full binary files (download from source, upload to target)
+- [x] **COPY-03**: User can copy ticket comment thread with author attribution prefix
+- [x] **COPY-04**: User can copy ticket work log entries with author attribution
+- [x] **COPY-05**: User can copy sub-tasks as child issues under the newly created parent ticket
+- [x] **COPY-06**: User can copy linked issue references as annotations or remote links
 - [x] **COPY-07**: Copied ticket includes a remote link back to the source ticket for origin tracking
 - [x] **COPY-08**: User sees a diff/preview of what will be created before confirming the copy
 - [x] **COPY-09**: Description and comment content is correctly translated between wiki markup (Server) and ADF (Cloud)
@@ -117,11 +117,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | FETCH-11 | Phase 3 | Complete |
 | FETCH-12 | Phase 3 | Complete |
 | COPY-01 | Phase 4 | Complete |
-| COPY-02 | Phase 5 | Pending |
-| COPY-03 | Phase 5 | Pending |
-| COPY-04 | Phase 5 | Pending |
-| COPY-05 | Phase 5 | Pending |
-| COPY-06 | Phase 5 | Pending |
+| COPY-02 | Phase 5 | Complete |
+| COPY-03 | Phase 5 | Complete |
+| COPY-04 | Phase 5 | Complete |
+| COPY-05 | Phase 5 | Complete |
+| COPY-06 | Phase 5 | Complete |
 | COPY-07 | Phase 4 | Complete |
 | COPY-08 | Phase 4 | Complete |
 | COPY-09 | Phase 4 | Complete |
