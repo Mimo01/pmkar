@@ -144,7 +144,7 @@ export function TicketListPage() {
             type="button"
             disabled={isLoading}
             onClick={handleFetch}
-            className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-4 py-3 text-sm transition-colors duration-150 ${
+            className={`flex items-center gap-2 bg-red-700 hover:bg-red-600 text-white font-semibold rounded-lg px-4 py-3 text-sm transition-colors duration-150 ${
               isLoading ? 'opacity-40 cursor-not-allowed' : ''
             }`}
           >
@@ -159,7 +159,7 @@ export function TicketListPage() {
           {totalCount > 0 && (
             <span className="text-xs text-slate-400" aria-live="polite">
               {totalCount} candidates{newCount > 0 ? ', ' : ''}
-              {newCount > 0 && <span className="text-blue-400">{newCount} new</span>}
+              {newCount > 0 && <span className="text-red-500">{newCount} new</span>}
             </span>
           )}
         </div>

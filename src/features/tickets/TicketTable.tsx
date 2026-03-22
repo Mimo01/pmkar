@@ -172,7 +172,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   role="row"
                   aria-selected={isSelected}
                   className={`border-b border-slate-800/40 hover:bg-slate-800/30 cursor-pointer transition-colors duration-150 border-l-2 ${
-                    isSelected ? 'bg-slate-800/60 border-l-blue-500' : 'border-l-transparent'
+                    isSelected ? 'bg-slate-800/60 border-l-red-600' : 'border-l-transparent'
                   }`}
                   onClick={() => onSelectTicket(ticket.key)}
                 >

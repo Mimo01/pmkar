@@ -74,7 +74,7 @@ export function SummaryStep({ serverConnection, cloudConnection, onDone }: Summa
         <button
           type="button"
           onClick={onDone}
-          className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium rounded-lg py-2.5 px-6 text-sm transition-all duration-200"
+          className="bg-red-700 hover:bg-red-600 active:bg-red-800 text-white font-medium rounded-lg py-2.5 px-6 text-sm transition-all duration-200"
         >
           Done
         </button>

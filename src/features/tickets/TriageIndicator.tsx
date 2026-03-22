@@ -8,7 +8,7 @@ export function TriageIndicator({ state }: TriageIndicatorProps) {
   if (state === 'new') {
     return (
       <span
-        className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400"
+        className="inline-block w-1.5 h-1.5 rounded-full bg-red-500"
         aria-label="New ticket"
       />
     );
