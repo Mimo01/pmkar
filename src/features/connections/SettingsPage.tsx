@@ -327,12 +327,11 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
           {/* Watched Users Section */}
           <section>
-            <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider">Watched users</h2>
-              {safeWatchedUsers.length > 0 && (
-                <span className="text-xs text-brand-muted">{safeWatchedUsers.length}</span>
+            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
+              Watched users{safeWatchedUsers.length > 0 && (
+                <span className="text-brand-text-secondary font-normal ml-2">({safeWatchedUsers.length})</span>
               )}
-            </div>
+            </h2>
             <p className="text-xs text-brand-muted mb-3">
               Tickets assigned to these users appear in "All watched users" results.
             </p>
