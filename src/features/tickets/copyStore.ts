@@ -127,7 +127,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     const state = get();
     if (!state.sourceKey || !state.cloudMeta) return;
 
-    set({ phase: 'copying', progressStep: 'Creating ticket...' });
+    set({ phase: 'copying', progressStep: 'Copying ticket with attachments, comments, and work log...' });
 
     try {
       const result = await invoke<CopyTicketResult>('copy_ticket', {

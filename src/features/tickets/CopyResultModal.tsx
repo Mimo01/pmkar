@@ -18,6 +18,24 @@ function stepLabel(step: CopyStepResult): string {
   if (step.step === 'add_remote_link') {
     return step.success ? 'Origin link added' : 'Origin link \u2014 could not be added';
   }
+  if (step.step.startsWith('attach:')) {
+    const filename = step.step.slice('attach:'.length);
+    return step.success
+      ? `${filename} \u2014 attached`
+      : `${filename} \u2014 ${step.detail || 'attachment failed'}`;
+  }
+  if (step.step.startsWith('comment:')) {
+    const n = step.step.slice('comment:'.length);
+    return step.success
+      ? `Comment ${n} copied`
+      : `Comment ${n} \u2014 ${step.detail || 'failed'}`;
+  }
+  if (step.step.startsWith('worklog:')) {
+    const n = step.step.slice('worklog:'.length);
+    return step.success
+      ? `Work log entry ${n} copied`
+      : `Work log ${n} \u2014 ${step.detail || 'failed'}`;
+  }
   return step.step;
 }
 

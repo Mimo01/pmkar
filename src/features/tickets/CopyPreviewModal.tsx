@@ -168,6 +168,38 @@ export function CopyPreviewModal() {
                   : 'None'
               }
             />
+            {sourceTicket.fields.attachment.length > 0 && (
+              <SourceFieldRow
+                label="Attachments"
+                value={`${sourceTicket.fields.attachment.length} file(s) will be copied`}
+              />
+            )}
+            {sourceTicket.fields.comment.comments.length > 0 && (
+              <SourceFieldRow
+                label="Comments"
+                value={`${sourceTicket.fields.comment.comments.length} comment(s) will be copied`}
+              />
+            )}
+            {sourceTicket.fields.subtasks.length > 0 && (
+              <SourceFieldRow
+                label="Sub-tasks"
+                value={sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}
+              />
+            )}
+            {sourceTicket.fields.issuelinks.length > 0 && (
+              <SourceFieldRow
+                label="Linked Issues"
+                value={sourceTicket.fields.issuelinks.map(link => {
+                  if (link.outwardIssue) {
+                    return `${link.type.outward}: ${link.outwardIssue.key} \u2014 ${link.outwardIssue.fields.summary}`;
+                  }
+                  if (link.inwardIssue) {
+                    return `${link.type.inward}: ${link.inwardIssue.key} \u2014 ${link.inwardIssue.fields.summary}`;
+                  }
+                  return '';
+                }).filter(Boolean).join(', ')}
+              />
+            )}
 
             <div className="mt-4">
               <span className="text-xs font-semibold text-brand-muted">
