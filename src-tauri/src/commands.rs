@@ -9,6 +9,22 @@ use crate::mock_server;
 use crate::triage_db::{TriageDb, FetchConfig, ConnectionMeta};
 use base64::Engine as _;
 
+/// Retrieve the Jira Server PAT from the OS keychain using the
+/// connection_meta table to look up the stored username.
+fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    let metas = db.get_all_connection_meta()?;
+    let server_meta = metas.iter().find(|m| m.connection_type == "server");
+    if let Some(meta) = server_meta {
+        return keychain::get_credential("jira-server", &meta.username);
+    }
+    Err(AppError::Keychain(
+        "No server credential found. Please re-run the setup wizard.".into(),
+    ))
+}
+
 // --- Credential commands ---
 
 #[tauri::command]
@@ -307,7 +323,7 @@ pub async fn fetch_tickets(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<FetchTicketsResult, AppError> {
-    let pat = keychain::get_credential("server", "pat")?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
@@ -381,8 +397,9 @@ pub async fn fetch_ticket_detail(
     base_url: String,
     issue_key: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<serde_json::Value, AppError> {
-    let pat = keychain::get_credential("server", "pat")?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
@@ -419,8 +436,9 @@ pub async fn fetch_worklog(
     base_url: String,
     issue_key: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<serde_json::Value, AppError> {
-    let pat = keychain::get_credential("server", "pat")?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
@@ -457,8 +475,9 @@ pub async fn fetch_changelog(
     base_url: String,
     issue_key: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<serde_json::Value, AppError> {
-    let pat = keychain::get_credential("server", "pat")?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
@@ -497,6 +516,7 @@ pub async fn fetch_jira_image(
     image_url: String,
     base_url: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<String, AppError> {
     // Security: prevent SSRF by validating URL origin
     let trimmed_base = base_url.trim_end_matches('/');
@@ -506,7 +526,7 @@ pub async fn fetch_jira_image(
         ));
     }
 
-    let pat = keychain::get_credential("server", "pat")?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
 
