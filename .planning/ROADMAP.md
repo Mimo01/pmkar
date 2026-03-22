@@ -66,7 +66,14 @@ Plans:
   3. User can configure watched users whose tickets are included in the candidate fetch
   4. User can customize the JQL query used to fetch candidates
   5. Ticket triage state (seen, ignored, copied) is remembered across app restarts
-**Plans**: TBD
+**Plans:** 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Rust backend: triage_db, mock server extensions, enriched fixtures, fetch/triage Tauri commands
+- [ ] 03-02-PLAN.md — TypeScript types and Zustand ticket store
+- [ ] 03-03-PLAN.md — TicketListPage, TicketTable, TriageIndicator, App.tsx routing
+- [ ] 03-04-PLAN.md — TicketDetailPanel with all 5 tabs and DescriptionRenderer
+- [ ] 03-05-PLAN.md — Settings FetchConfigSection, frontend tests, and visual verification
 
 ### Phase 4: Copy — Core Fields
 **Goal**: Users can copy a ticket's core fields and metadata to the company Jira with full origin tracking and a preview before committing
@@ -120,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
 | 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
-| 3. Ticket Fetch and Review | 0/TBD | Not started | - |
+| 3. Ticket Fetch and Review | 0/5 | Not started | - |
 | 4. Copy — Core Fields | 0/TBD | Not started | - |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
 | 6. Triage and Audit | 0/TBD | Not started | - |
