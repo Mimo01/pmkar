@@ -146,7 +146,7 @@ export interface FetchConfig {
 export interface FetchTicketsResult {
   issues: JiraTicket[];
   total: number;
-  triageMap: Record<string, TriageState>;
+  triageMap: Record<string, TriageEntry>;
 }
 
 // --- Copy Pipeline Types (Phase 4) ---

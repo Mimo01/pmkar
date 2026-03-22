@@ -122,7 +122,7 @@ describe('TicketListPage', () => {
         return Promise.resolve({
           issues: mockTickets,
           total: 2,
-          triageMap: { 'PROJ-1': 'new' },
+          triageMap: { 'PROJ-1': { state: 'new', copiedKey: null } },
         });
       return Promise.resolve(undefined);
     });
@@ -154,7 +154,7 @@ describe('TicketListPage', () => {
         return Promise.resolve({
           issues: mockTickets,
           total: 2,
-          triageMap: { 'PROJ-1': 'new' },
+          triageMap: { 'PROJ-1': { state: 'new', copiedKey: null } },
         });
       return Promise.resolve(undefined);
     });
@@ -184,7 +184,7 @@ describe('TicketListPage', () => {
         return Promise.resolve({
           issues: mockTickets,
           total: 2,
-          triageMap: { 'PROJ-1': 'new' },
+          triageMap: { 'PROJ-1': { state: 'new', copiedKey: null } },
         });
       return Promise.resolve(undefined);
     });

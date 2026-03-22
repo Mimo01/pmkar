@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import type { JiraTicket, TriageState, TriageEntry } from './types';
+import type { JiraTicket, TriageEntry } from './types';
 import { TriageIndicator } from './TriageIndicator';
 import { useConnectionStore } from '../connections/connectionStore';
 
@@ -13,7 +13,7 @@ interface SortState {
 
 interface TicketTableProps {
   tickets: JiraTicket[];
-  triageMap: Record<string, TriageState> | Record<string, TriageEntry>;
+  triageMap: Record<string, TriageEntry>;
   selectedKey: string | null;
   onSelectTicket: (key: string) => void;
 }
@@ -111,16 +111,6 @@ function SkeletonRows() {
   );
 }
 
-function getTriageState(entry: TriageState | TriageEntry | undefined): TriageState | undefined {
-  if (entry === undefined) return undefined;
-  if (typeof entry === 'string') return entry;
-  return entry.state;
-}
-
-function getTriageCopiedKey(entry: TriageState | TriageEntry | undefined): string | null {
-  if (entry === undefined || typeof entry === 'string') return null;
-  return entry.copiedKey;
-}
 
 export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }: TicketTableProps) {
   const [sort, setSort] = useState<SortState>({ col: 'updated', dir: 'desc' });
@@ -191,8 +181,8 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                 >
                   <td className="w-6 px-2 py-3 text-center">
                     <TriageIndicator
-                      state={getTriageState(triageMap[ticket.key])}
-                      copiedKey={getTriageCopiedKey(triageMap[ticket.key])}
+                      state={triageMap[ticket.key]?.state}
+                      copiedKey={triageMap[ticket.key]?.copiedKey ?? null}
                       cloudBaseUrl={cloudBaseUrl}
                     />
                   </td>

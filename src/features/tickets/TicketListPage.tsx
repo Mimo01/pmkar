@@ -86,8 +86,8 @@ export function TicketListPage() {
   // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
   useEffect(() => {
     Promise.all([
-      invoke<Record<string, string>>('get_triage_state')
-        .then((map) => useTicketStore.getState().hydrateTriageMap(map as Record<string, import('./types').TriageState>))
+      invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
+        .then((map) => useTicketStore.getState().hydrateTriageMap(map))
         .catch(() => {}),
       invoke<import('./types').FetchConfig>('get_fetch_config')
         .then((config) => {

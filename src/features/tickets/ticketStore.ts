@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type {
   JiraTicket,
   TriageState,
+  TriageEntry,
   FetchStatus,
   FetchConfig,
   JqlPreset,
@@ -10,7 +11,7 @@ import type {
 interface TicketState {
   // Data
   tickets: JiraTicket[];
-  triageMap: Record<string, TriageState>;
+  triageMap: Record<string, TriageEntry>;
   selectedTicketKey: string | null;
   fetchStatus: FetchStatus;
   fetchError: string | null;
@@ -24,14 +25,14 @@ interface TicketState {
   watchedUsers: string[];
 
   // Actions — ticket data
-  setTickets: (tickets: JiraTicket[], triageMap: Record<string, TriageState>, total: number) => void;
+  setTickets: (tickets: JiraTicket[], triageMap: Record<string, TriageEntry>, total: number) => void;
   selectTicket: (key: string | null) => void;
   markSeen: (key: string) => void;
   setFetchStatus: (status: FetchStatus, error?: string) => void;
   setLastFetchedAt: (timestamp: string) => void;
 
   // Actions — triage hydration
-  hydrateTriageMap: (map: Record<string, TriageState>) => void;
+  hydrateTriageMap: (map: Record<string, TriageEntry>) => void;
 
   // Actions — fetch config
   setJqlPreset: (preset: JqlPreset) => void;
@@ -58,7 +59,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   // Actions
   setTickets: (tickets, triageMap, total) => {
     const safeMap = triageMap ?? {};
-    const newCount = Object.values(safeMap).filter((s) => s === 'new').length;
+    const newCount = Object.values(safeMap).filter((e) => e.state === 'new').length;
     set({
       tickets,
       triageMap: safeMap,
@@ -73,9 +74,9 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   markSeen: (key) => {
     const current = get().triageMap[key];
-    if (current === 'new') {
-      const updated = { ...get().triageMap, [key]: 'seen' as TriageState };
-      const newCount = Object.values(updated).filter((s) => s === 'new').length;
+    if (current?.state === 'new') {
+      const updated = { ...get().triageMap, [key]: { ...current, state: 'seen' as TriageState } };
+      const newCount = Object.values(updated).filter((e) => e.state === 'new').length;
       set({ triageMap: updated, newCount });
     }
   },
@@ -87,7 +88,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   hydrateTriageMap: (map) => {
     const safeMap = map ?? {};
-    const newCount = Object.values(safeMap).filter((s) => s === 'new').length;
+    const newCount = Object.values(safeMap).filter((e) => e.state === 'new').length;
     set({ triageMap: safeMap, newCount });
   },
 

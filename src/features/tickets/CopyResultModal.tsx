@@ -38,11 +38,9 @@ export function CopyResultModal() {
 
   const handleClose = () => {
     // Refresh triage map so the ticket row shows the copied badge
-    invoke<Record<string, string>>('get_triage_state')
+    invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
       .then((map) => {
-        useTicketStore.getState().hydrateTriageMap(
-          map as Record<string, import('./types').TriageState>,
-        );
+        useTicketStore.getState().hydrateTriageMap(map);
       })
       .catch(() => {})
       .finally(() => {
