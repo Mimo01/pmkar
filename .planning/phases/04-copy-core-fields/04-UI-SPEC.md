@@ -45,7 +45,7 @@ Declared values (must be multiples of 4):
 
 Exceptions:
 - Full-screen modal: `inset-0` (0px margin, full viewport coverage) — decision D-04
-- Header bar in modal: `py-2.5` (10px, consistent with AppShell header) — from AppShell pattern
+- Header bar in modal: `py-2.5` (10px) — inherited non-conformant value from AppShell pattern (`src/components/ui/AppShell.tsx`). This value is pre-existing in AppShell and Phase 4 merely reuses it for consistency. It is NOT introduced by this phase and must not be counted as a new spacing exception.
 - Touch-size minimum for all interactive controls: 28px height (consistent with gear icon `w-7 h-7` = 28px) — from AppShell pattern
 
 Source: `src/components/ui/AppShell.tsx` spacing audit. Defaults applied for modal internals.
@@ -57,7 +57,7 @@ Source: `src/components/ui/AppShell.tsx` spacing audit. Defaults applied for mod
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 600 (semibold) | 1.4 |
 | Heading | 16px | 600 (semibold) | 1.2 |
 | App brand / modal title | 13px | 600 (semibold) | 1.0 |
 
@@ -66,7 +66,7 @@ Notes:
 - Label 12px is used for column headers and metadata fields (Tailwind `text-xs`).
 - Modal title uses 13px semibold consistent with the AppShell brand label (`text-[13px] font-semibold`).
 - Heading 16px (`text-base font-semibold`) is used for section headings within modal columns.
-- Maximum of 2 weights active: 400 and 600. Weight 500 is used only for column header labels as it is already established in the existing TicketTable (`font-medium`).
+- Active weights declared by this phase: 400 (regular) and 600 (semibold). Weight 500 (`font-medium`) is used in TicketTable column header labels and is inherited from that pre-existing component — it is not a new declaration introduced by Phase 4.
 
 Source: `src/components/ui/AppShell.tsx` line 32, existing ticket table patterns.
 
@@ -132,11 +132,11 @@ Reused components (no changes needed unless noted):
 - Left column (source): 50% width, `bg-brand-surface`, scrollable, read-only field list + description preview using DescriptionRenderer
 - Right column (target): 50% width, `bg-brand-surface-raised`, scrollable, editable fields
 - Column divider: 1px `border-brand-border`
-- Header bar: spans full width, `bg-brand-surface border-b border-brand-border`, contains modal title "Preview Copy" (13px semibold) and Cancel + Confirm buttons
-- Cancel button: `text-brand-muted hover:text-brand-text`, no border, closes modal and resets copyStore
+- Header bar: spans full width, `bg-brand-surface border-b border-brand-border`, contains modal title "Preview Copy" (13px semibold) and Discard Preview + Confirm buttons
+- Discard Preview button: `text-brand-muted hover:text-brand-text`, no border, closes modal and resets copyStore
 - Confirm button: accent-colored primary button "Copy to Company Jira", triggers copy pipeline
 - Warning icon: amber triangle SVG (16×16) shown inline next to any target field that could not be auto-mapped from source
-- Escape key: closes modal (same as Cancel)
+- Escape key: closes modal (same as Discard Preview)
 - Focus trap: first interactive element in target column on open
 
 ### Editable Target Fields (right column)
@@ -179,7 +179,7 @@ Reused components (no changes needed unless noted):
 | Primary CTA (preview trigger) | "Copy to Company Jira" |
 | Primary CTA (confirm in modal) | "Copy to Company Jira" |
 | Modal title | "Preview Copy" |
-| Cancel button | "Cancel" |
+| Cancel button | "Discard Preview" |
 | Close result button | "Close" |
 | Empty labels state | "No labels on source ticket" |
 | Loading preview label | "Loading target fields..." |
@@ -203,7 +203,7 @@ Reused components (no changes needed unless noted):
 | Error: copy button, meta fetch failed | "Could not load target fields. Check your Company Jira connection in Settings." |
 | Copied key badge (TriageIndicator) | "{TARGET-KEY}" (e.g., "MYCO-42") |
 
-Destructive actions in this phase: none. Copy is additive (creates a new ticket). Cancel in preview modal is non-destructive (no ticket is created). No confirmation dialog required for cancel.
+Destructive actions in this phase: none. Copy is additive (creates a new ticket). "Discard Preview" in the preview modal is non-destructive (no ticket is created). No confirmation dialog required.
 
 ---
 
