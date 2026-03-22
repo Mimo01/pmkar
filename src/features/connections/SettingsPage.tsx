@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from './connectionStore';
 import { ConnectionCard } from './ConnectionCard';
+import { ConnectionForm } from './ConnectionForm';
 import { useTicketStore } from '../tickets/ticketStore';
-import type { ConnectionType } from './types';
+import type { ConnectionType, ConnectionMeta, ConnectionTestResult } from './types';
 import type { JqlPreset, FetchConfig } from '../tickets/types';
 
 interface SettingsPageProps {
@@ -32,10 +33,12 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
   const watchedUsers = useTicketStore((s) => s.watchedUsers);
   const safeWatchedUsers = Array.isArray(watchedUsers) ? watchedUsers : [];
+  const [editingConnection, setEditingConnection] = useState<ConnectionType | null>(null);
 
   const [userQuery, setUserQuery] = useState('');
   const [suggestions, setSuggestions] = useState<JiraUser[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [noResults, setNoResults] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +47,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
     if (!userQuery.trim() || !serverConn) {
       setSuggestions([]);
       setShowSuggestions(false);
+      setNoResults(false);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -56,11 +60,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           const filtered = users.filter(u => !safeWatchedUsers.includes(u.name));
           setSuggestions(filtered);
           setShowSuggestions(filtered.length > 0);
+          setNoResults(filtered.length === 0);
           setSelectedIdx(-1);
         })
         .catch(() => {
           setSuggestions([]);
           setShowSuggestions(false);
+          setNoResults(true);
         });
     }, 250);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
@@ -89,6 +95,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
     setUserQuery('');
     setSuggestions([]);
     setShowSuggestions(false);
+    setNoResults(false);
     inputRef.current?.focus();
     persistFetchConfigWith(updated);
   }
@@ -133,9 +140,45 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   }
 
   function handleEdit(connectionType: ConnectionType) {
-    if (onEdit) {
-      onEdit(connectionType);
+    setEditingConnection(connectionType);
+  }
+
+  function handleEditTestSuccess(
+    connectionType: ConnectionType,
+    result: ConnectionTestResult,
+    credentials: { baseUrl: string; [key: string]: string },
+  ) {
+    const username = result.username ?? '';
+    const serverVersion = result.serverVersion ?? '';
+    const meta: ConnectionMeta = {
+      baseUrl: credentials.baseUrl,
+      username,
+      serverVersion,
+      lastTestedAt: new Date().toISOString(),
+      status: 'ok',
+    };
+
+    if (connectionType === 'server') {
+      useConnectionStore.getState().setServerConnection(meta);
+      invoke('store_credential', {
+        connectionType: 'jira-server',
+        username,
+        secret: credentials.pat ?? credentials.apiToken ?? '',
+      }).catch(() => {});
+    } else {
+      useConnectionStore.getState().setCloudConnection(meta);
+      invoke('store_credential', {
+        connectionType: 'jira-cloud',
+        username: credentials.email ?? username,
+        secret: credentials.apiToken ?? '',
+      }).catch(() => {});
     }
+
+    invoke('set_connection_meta', {
+      meta: { connectionType: connectionType === 'server' ? 'server' : 'cloud', baseUrl: credentials.baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+    }).catch(() => {});
+
+    setEditingConnection(null);
   }
 
   const hasNoConnections = serverConn === null && cloudConn === null;
@@ -171,16 +214,56 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           {/* Connections Section */}
           <section>
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Connections</h2>
-            <ConnectionCard
-              label="Source (Customer Jira)"
-              connection={serverConn}
-              onEdit={() => handleEdit('server')}
-            />
-            <ConnectionCard
-              label="Destination (Company Jira)"
-              connection={cloudConn}
-              onEdit={() => handleEdit('cloud')}
-            />
+            {editingConnection === 'server' ? (
+              <div className="rounded-xl border border-blue-500/30 bg-slate-900/60 p-4 mb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-slate-200">Edit Source Connection</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingConnection(null)}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <ConnectionForm
+                  connectionType="server"
+                  onTestSuccess={(result, creds) => handleEditTestSuccess('server', result, creds as { baseUrl: string; [key: string]: string })}
+                  onTestInvalidated={() => {}}
+                />
+              </div>
+            ) : (
+              <ConnectionCard
+                label="Source (Customer Jira)"
+                connection={serverConn}
+                onEdit={() => handleEdit('server')}
+              />
+            )}
+            {editingConnection === 'cloud' ? (
+              <div className="rounded-xl border border-blue-500/30 bg-slate-900/60 p-4 mb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-slate-200">Edit Destination Connection</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingConnection(null)}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <ConnectionForm
+                  connectionType="cloud"
+                  onTestSuccess={(result, creds) => handleEditTestSuccess('cloud', result, creds as { baseUrl: string; [key: string]: string })}
+                  onTestInvalidated={() => {}}
+                />
+              </div>
+            ) : (
+              <ConnectionCard
+                label="Destination (Company Jira)"
+                connection={cloudConn}
+                onEdit={() => handleEdit('cloud')}
+              />
+            )}
           </section>
 
           {/* What to Fetch Section */}
@@ -271,6 +354,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     placeholder="Search Jira users..."
                   />
                 </div>
+
+                {/* No results feedback */}
+                {noResults && userQuery.trim() && !showSuggestions && (
+                  <div className="absolute left-0 right-0 top-full z-10 border border-slate-700 rounded-lg bg-slate-900 shadow-xl px-4 py-3">
+                    <p className="text-xs text-slate-500">No users found matching "{userQuery.trim()}"</p>
+                  </div>
+                )}
 
                 {/* Dropdown suggestions */}
                 {showSuggestions && suggestions.length > 0 && (
