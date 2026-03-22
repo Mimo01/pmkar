@@ -228,6 +228,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 </div>
                 <ConnectionForm
                   connectionType="server"
+                  initialValues={{ baseUrl: serverConn?.baseUrl, username: serverConn?.username }}
                   onTestSuccess={(result, creds) => handleEditTestSuccess('server', result, creds as { baseUrl: string; [key: string]: string })}
                   onTestInvalidated={() => {}}
                 />
@@ -253,6 +254,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 </div>
                 <ConnectionForm
                   connectionType="cloud"
+                  initialValues={{ baseUrl: cloudConn?.baseUrl, username: cloudConn?.username }}
                   onTestSuccess={(result, creds) => handleEditTestSuccess('cloud', result, creds as { baseUrl: string; [key: string]: string })}
                   onTestInvalidated={() => {}}
                 />

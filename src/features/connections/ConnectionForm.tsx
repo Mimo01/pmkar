@@ -17,8 +17,14 @@ interface CloudCredentials {
 
 type Credentials = ServerCredentials | CloudCredentials;
 
+interface InitialValues {
+  baseUrl?: string;
+  username?: string;
+}
+
 interface ConnectionFormProps {
   connectionType: 'server' | 'cloud';
+  initialValues?: InitialValues;
   onTestSuccess: (result: ConnectionTestResult, credentials: Credentials) => void;
   onTestInvalidated: () => void;
 }
@@ -50,17 +56,18 @@ const CLOUD_API_TOKEN_HELP_URL =
 
 export function ConnectionForm({
   connectionType,
+  initialValues,
   onTestSuccess,
   onTestInvalidated,
 }: ConnectionFormProps) {
-  const [baseUrl, setBaseUrl] = useState('');
+  const [baseUrl, setBaseUrl] = useState(initialValues?.baseUrl ?? '');
   const [urlError, setUrlError] = useState('');
 
   // Server-only
   const [pat, setPat] = useState('');
 
   // Cloud-only
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(connectionType === 'cloud' ? (initialValues?.username ?? '') : '');
   const [apiToken, setApiToken] = useState('');
 
   const [testing, setTesting] = useState(false);
