@@ -212,9 +212,6 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Appearance Section */}
-          <ThemeSection />
-
           {/* Connections Section */}
           <section>
             <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Connections</h2>
@@ -428,6 +425,9 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               )}
             </div>
           </section>
+
+          {/* Appearance Section */}
+          <ThemeSection />
         </div>
       )}
     </div>
