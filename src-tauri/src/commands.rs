@@ -314,7 +314,7 @@ pub fn ping_keychain() -> Result<bool, AppError> {
 pub struct FetchTicketsResult {
     pub issues: Vec<serde_json::Value>,
     pub total: u64,
-    pub triage_map: HashMap<String, String>,
+    pub triage_map: HashMap<String, TriageEntryResponse>,
 }
 
 #[tauri::command]
@@ -383,7 +383,10 @@ pub async fn fetch_tickets(
         let tdb = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        tdb.get_all_triage()?
+        let raw = tdb.get_all_triage()?;
+        raw.into_iter()
+            .map(|(key, (state, copied_key))| (key, TriageEntryResponse { state, copied_key }))
+            .collect()
     };
 
     Ok(FetchTicketsResult {
@@ -563,14 +566,28 @@ pub async fn fetch_jira_image(
 
 // --- Triage state commands ---
 
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TriageEntryResponse {
+    pub state: String,
+    pub copied_key: Option<String>,
+}
+
 #[tauri::command]
 pub fn get_triage_state(
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
-) -> Result<HashMap<String, String>, AppError> {
+) -> Result<HashMap<String, TriageEntryResponse>, AppError> {
     let db = triage_db
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-    db.get_all_triage()
+    let raw = db.get_all_triage()?;
+    let result = raw
+        .into_iter()
+        .map(|(key, (state, copied_key))| {
+            (key, TriageEntryResponse { state, copied_key })
+        })
+        .collect();
+    Ok(result)
 }
 
 #[tauri::command]

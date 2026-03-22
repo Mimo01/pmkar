@@ -34,6 +34,9 @@ const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
     last_updated TEXT NOT NULL
 );";
 
+const ALTER_TRIAGE_ADD_COPIED_KEY: &str =
+    "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
+
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
     base_url        TEXT NOT NULL,
@@ -58,6 +61,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_CONNECTION_META_SQL)?;
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
+        let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
         Ok(Self { conn })
     }
 
@@ -67,19 +71,34 @@ impl TriageDb {
         conn.execute_batch(CREATE_CONNECTION_META_SQL)?;
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
+        let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
         Ok(Self { conn })
     }
 
-    pub fn get_all_triage(&self) -> AppResult<HashMap<String, String>> {
+    pub fn get_all_triage(&self) -> AppResult<HashMap<String, (String, Option<String>)>> {
         let mut stmt = self.conn.prepare(
-            "SELECT ticket_key, state FROM triage_state",
+            "SELECT ticket_key, state, copied_key FROM triage_state",
         )?;
         let rows = stmt
             .query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+                Ok((
+                    row.get::<_, String>(0)?,
+                    (row.get::<_, String>(1)?, row.get::<_, Option<String>>(2)?),
+                ))
             })?
-            .collect::<Result<HashMap<String, String>, _>>()?;
+            .collect::<Result<HashMap<String, (String, Option<String>)>, _>>()?;
         Ok(rows)
+    }
+
+    pub fn set_triage_copied(&self, source_key: &str, target_key: &str) -> AppResult<()> {
+        let now = chrono::Utc::now().to_rfc3339();
+        self.conn.execute(
+            "INSERT INTO triage_state (ticket_key, state, first_seen, last_updated, copied_key)
+             VALUES (?1, 'copied', ?2, ?2, ?3)
+             ON CONFLICT(ticket_key) DO UPDATE SET state='copied', last_updated=?2, copied_key=?3",
+            rusqlite::params![source_key, now, target_key],
+        )?;
+        Ok(())
     }
 
     pub fn set_triage(&self, key: &str, state: &str) -> AppResult<()> {
