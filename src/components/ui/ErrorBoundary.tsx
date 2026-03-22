@@ -26,12 +26,12 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950">
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-brand-bg">
           <div className="max-w-md p-6 text-center">
             <h1 className="text-xl font-semibold leading-tight text-slate-950 dark:text-slate-50 mb-2">
               Something went wrong
             </h1>
-            <p className="text-sm font-normal leading-normal text-slate-500 dark:text-slate-400">
+            <p className="text-sm font-normal leading-normal text-brand-muted dark:text-brand-text-secondary">
               Restart the app to continue. If the problem persists, check the audit log.
             </p>
           </div>

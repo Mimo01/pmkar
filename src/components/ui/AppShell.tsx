@@ -27,15 +27,17 @@ function GearIcon() {
 
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-slate-800/80">
-        <span className="text-base font-semibold tracking-tight text-slate-200">pmkar</span>
+    <div className="min-h-screen bg-brand-bg text-brand-text">
+      {/* Brand accent stripe */}
+      <div className="h-1 bg-brand" />
+      <header className="flex items-center justify-between px-6 py-3 bg-brand-surface border-b border-brand-border">
+        <span className="text-base font-semibold tracking-tight text-brand-text">pmkar</span>
         {onGearClick && (
           <button
             type="button"
             onClick={onGearClick}
             aria-label="Settings"
-            className="flex items-center justify-center w-9 h-9 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
+            className="flex items-center justify-center w-9 h-9 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
           >
             <GearIcon />
           </button>

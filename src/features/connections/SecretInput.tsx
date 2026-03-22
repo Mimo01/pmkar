@@ -41,7 +41,7 @@ export function SecretInput({
         <button
           type="button"
           onClick={handleHelpClick}
-          className="text-xs text-slate-500 hover:text-brand transition-colors cursor-pointer"
+          className="text-xs text-brand-muted hover:text-brand transition-colors cursor-pointer"
         >
           {helpLabel}
         </button>
@@ -54,8 +54,8 @@ export function SecretInput({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           className={[
-            'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
-            'text-slate-100 placeholder-slate-500',
+            'w-full rounded-lg border border-brand-border bg-brand-surface',
+            'text-slate-100 placeholder-brand-muted',
             'px-3 py-2.5 pr-11 text-sm',
             'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
             'transition-all duration-200',
@@ -72,7 +72,7 @@ export function SecretInput({
           aria-pressed={revealed}
           className={[
             'absolute right-0 flex items-center justify-center w-11 h-11',
-            'text-slate-500 hover:text-slate-300',
+            'text-brand-muted hover:text-brand-text',
             'transition-colors duration-200 rounded-lg',
             disabled ? 'opacity-40 cursor-not-allowed' : '',
           ]

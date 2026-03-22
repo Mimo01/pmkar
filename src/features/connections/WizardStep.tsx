@@ -14,7 +14,7 @@ export function WizardStep({ title, subtitle, children }: WizardStepProps) {
           {title}
         </h1>
         {subtitle && (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-brand-muted">
             {subtitle}
           </p>
         )}

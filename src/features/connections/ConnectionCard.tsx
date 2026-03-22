@@ -47,7 +47,7 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
     : 'Not yet tested';
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 mb-3 hover:border-slate-700/80 transition-colors duration-200">
+    <div className="rounded-xl border border-brand-border bg-brand-surface p-4 mb-3 hover:border-brand-border/80 transition-colors duration-200">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -57,18 +57,18 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
             </span>
           </div>
           {connection?.baseUrl && (
-            <p className="text-xs text-slate-500 ml-4 truncate">
+            <p className="text-xs text-brand-muted ml-4 truncate">
               {connection.baseUrl}
             </p>
           )}
-          <p className="text-xs text-slate-600 ml-4 mt-0.5">
+          <p className="text-xs text-brand-muted ml-4 mt-0.5">
             {lastTestedText}
           </p>
         </div>
         <button
           type="button"
           onClick={onEdit}
-          className="text-xs text-slate-500 hover:text-brand font-medium transition-colors duration-200 ml-4"
+          className="text-xs text-brand-muted hover:text-brand font-medium transition-colors duration-200 ml-4"
         >
           Edit
         </button>

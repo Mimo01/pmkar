@@ -96,14 +96,14 @@ function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 8 }).map((_, i) => (
-        <tr key={i} className="border-b border-slate-800/40" aria-hidden="true">
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-3" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-16" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-full" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-14" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-12" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-20" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-slate-800/60 rounded h-3 w-16" /></td>
+        <tr key={i} className="border-b border-brand-border-subtle" aria-hidden="true">
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-3" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-full" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-14" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-12" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-20" /></td>
+          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" /></td>
         </tr>
       ))}
     </>
@@ -135,7 +135,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
   return (
     <div className="overflow-y-auto flex-1" role="table" aria-label="Ticket list">
       <table className="w-full table-fixed">
-        <thead className="bg-slate-950 border-b border-slate-800 sticky top-0 z-10">
+        <thead className="bg-brand-bg border-b border-brand-border sticky top-0 z-10">
           <tr>
             {/* Triage dot column */}
             <th className="w-6 px-2 py-2" aria-label="Triage status">
@@ -148,8 +148,8 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                 aria-sort={ariaSortValue(c.key)}
                 aria-label={`Sort ${c.label} ${ariaSortValue(c.key) === 'ascending' ? 'descending' : 'ascending'}`}
                 className={`${c.width === 'flex-1' ? '' : c.width} text-xs font-semibold ${
-                  sort.col === c.key ? 'text-slate-300' : 'text-slate-500'
-                } px-4 py-2 cursor-pointer select-none hover:text-slate-300 transition-colors duration-150 ${
+                  sort.col === c.key ? 'text-slate-300' : 'text-brand-muted'
+                } px-4 py-2 cursor-pointer select-none hover:text-brand-text transition-colors duration-150 ${
                   c.align ?? 'text-left'
                 }`}
                 onClick={() => handleSort(c.key)}
@@ -171,15 +171,15 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   key={ticket.key}
                   role="row"
                   aria-selected={isSelected}
-                  className={`border-b border-slate-800/40 hover:bg-slate-800/30 cursor-pointer transition-colors duration-150 border-l-2 ${
-                    isSelected ? 'bg-slate-800/60 border-l-brand' : 'border-l-transparent'
+                  className={`border-b border-brand-border-subtle hover:bg-brand-surface-hover cursor-pointer transition-colors duration-150 border-l-2 ${
+                    isSelected ? 'bg-brand-surface-hover border-l-brand' : 'border-l-transparent'
                   }`}
                   onClick={() => onSelectTicket(ticket.key)}
                 >
                   <td className="w-6 px-2 py-3 text-center">
                     <TriageIndicator state={triageMap[ticket.key]} />
                   </td>
-                  <td className="w-24 px-4 py-3 text-xs font-semibold text-slate-400">
+                  <td className="w-24 px-4 py-3 text-xs font-semibold text-brand-text-secondary">
                     {ticket.key}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-200 truncate">
@@ -188,13 +188,13 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   <td className="w-24 px-4 py-3 text-xs text-slate-300">
                     {ticket.fields.status.name}
                   </td>
-                  <td className="w-18 px-4 py-3 text-xs text-slate-400">
+                  <td className="w-18 px-4 py-3 text-xs text-brand-text-secondary">
                     {ticket.fields.priority.name}
                   </td>
-                  <td className="w-30 px-4 py-3 text-xs text-slate-400 truncate">
+                  <td className="w-30 px-4 py-3 text-xs text-brand-text-secondary truncate">
                     {ticket.fields.assignee?.displayName ?? ''}
                   </td>
-                  <td className="w-24 px-4 py-3 text-right text-xs text-slate-500">
+                  <td className="w-24 px-4 py-3 text-right text-xs text-brand-muted">
                     {relativeTime(ticket.fields.updated)}
                   </td>
                 </tr>

@@ -190,7 +190,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-all duration-200"
+          className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
           aria-label="Back"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -202,10 +202,10 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
       {hasNoConnections ? (
         <div className="text-center py-16">
-          <p className="text-slate-400 text-sm font-semibold mb-1">
+          <p className="text-brand-text-secondary text-sm font-semibold mb-1">
             No connections configured
           </p>
-          <p className="text-slate-600 text-xs">
+          <p className="text-brand-muted text-xs">
             Run setup to configure your Jira connections.
           </p>
         </div>
@@ -213,15 +213,15 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         <div className="space-y-8">
           {/* Connections Section */}
           <section>
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Connections</h2>
+            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Connections</h2>
             {editingConnection === 'server' ? (
-              <div className="rounded-xl border border-brand/30 bg-slate-900/60 p-4 mb-3">
+              <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-slate-200">Edit Source Connection</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
-                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     Cancel
                   </button>
@@ -241,13 +241,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               />
             )}
             {editingConnection === 'cloud' ? (
-              <div className="rounded-xl border border-brand/30 bg-slate-900/60 p-4 mb-3">
+              <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-slate-200">Edit Destination Connection</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
-                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     Cancel
                   </button>
@@ -270,23 +270,23 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
           {/* What to Fetch Section */}
           <section>
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">What to fetch</h2>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">What to fetch</h2>
+            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
               {PRESET_OPTIONS.map((opt, i) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
                   className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors duration-150 ${
-                    i > 0 ? 'border-t border-slate-800/60' : ''
+                    i > 0 ? 'border-t border-brand-border-subtle' : ''
                   } ${
                     jqlPreset === opt.value
                       ? 'bg-brand/8'
-                      : 'hover:bg-slate-800/40'
+                      : 'hover:bg-brand-surface-hover'
                   }`}
                 >
                   <span className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
-                    jqlPreset === opt.value ? 'border-brand' : 'border-slate-600'
+                    jqlPreset === opt.value ? 'border-brand' : 'border-brand-border'
                   }`}>
                     {jqlPreset === opt.value && (
                       <span className="w-2 h-2 rounded-full bg-brand" />
@@ -294,9 +294,9 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                   </span>
                   <div className="flex-1 min-w-0">
                     <span className={`text-sm block ${
-                      jqlPreset === opt.value ? 'text-slate-200 font-semibold' : 'text-slate-400'
+                      jqlPreset === opt.value ? 'text-slate-200 font-semibold' : 'text-brand-text-secondary'
                     }`}>{opt.label}</span>
-                    <span className="text-xs text-slate-600 block truncate font-mono">{opt.jql}</span>
+                    <span className="text-xs text-brand-muted block truncate font-mono">{opt.jql}</span>
                   </div>
                 </button>
               ))}
@@ -307,7 +307,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 <textarea
                   value={jqlCustom ?? ''}
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
+                  className="w-full rounded-lg border border-brand-border bg-brand-surface text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
                   placeholder="assignee = currentUser() ORDER BY updated DESC"
                   autoFocus
                 />
@@ -315,7 +315,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                   <button
                     type="button"
                     onClick={handleResetJql}
-                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors duration-200"
+                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     Reset to default
                   </button>
@@ -327,20 +327,20 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           {/* Watched Users Section */}
           <section>
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Watched users</h2>
+              <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider">Watched users</h2>
               {safeWatchedUsers.length > 0 && (
-                <span className="text-xs text-slate-600">{safeWatchedUsers.length}</span>
+                <span className="text-xs text-brand-muted">{safeWatchedUsers.length}</span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mb-3">
+            <p className="text-xs text-brand-muted mb-3">
               Tickets assigned to these users appear in "All watched users" results.
             </p>
 
-            <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
               {/* Autocomplete input */}
               <div className="relative">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-800/60">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-600 flex-shrink-0" aria-hidden="true">
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-brand-border-subtle">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-muted flex-shrink-0" aria-hidden="true">
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
@@ -352,36 +352,36 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     onKeyDown={handleKeyDown}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-600 focus:outline-none"
+                    className="flex-1 bg-transparent text-sm text-slate-200 placeholder-brand-muted focus:outline-none"
                     placeholder="Search Jira users..."
                   />
                 </div>
 
                 {/* No results feedback */}
                 {noResults && userQuery.trim() && !showSuggestions && (
-                  <div className="absolute left-0 right-0 top-full z-10 border border-slate-700 rounded-lg bg-slate-900 shadow-xl px-4 py-3">
-                    <p className="text-xs text-slate-500">No users found matching "{userQuery.trim()}"</p>
+                  <div className="absolute left-0 right-0 top-full z-10 border border-brand-border rounded-lg bg-brand-surface shadow-xl px-4 py-3">
+                    <p className="text-xs text-brand-muted">No users found matching "{userQuery.trim()}"</p>
                   </div>
                 )}
 
                 {/* Dropdown suggestions */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full z-10 border border-slate-700 rounded-lg bg-slate-900 shadow-xl overflow-hidden">
+                  <div className="absolute left-0 right-0 top-full z-10 border border-brand-border rounded-lg bg-brand-surface shadow-xl overflow-hidden">
                     {suggestions.map((user, i) => (
                       <button
                         key={user.name}
                         type="button"
                         onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
                         className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors duration-100 ${
-                          i > 0 ? 'border-t border-slate-800/40' : ''
-                        } ${i === selectedIdx ? 'bg-brand/15' : 'hover:bg-slate-800/60'}`}
+                          i > 0 ? 'border-t border-brand-border-subtle' : ''
+                        } ${i === selectedIdx ? 'bg-brand/15' : 'hover:bg-brand-surface-hover'}`}
                       >
-                        <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400 flex-shrink-0">
+                        <span className="w-7 h-7 rounded-full bg-brand-surface-hover flex items-center justify-center text-xs font-semibold text-brand-text-secondary flex-shrink-0">
                           {user.displayName.charAt(0).toUpperCase()}
                         </span>
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-slate-200 block">{user.displayName}</span>
-                          <span className="text-xs text-slate-500 block">{user.name}</span>
+                          <span className="text-xs text-brand-muted block">{user.name}</span>
                         </div>
                       </button>
                     ))}
@@ -392,18 +392,18 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               {/* User list */}
               {safeWatchedUsers.length === 0 ? (
                 <div className="px-4 py-6 text-center">
-                  <p className="text-xs text-slate-600">No watched users yet</p>
+                  <p className="text-xs text-brand-muted">No watched users yet</p>
                 </div>
               ) : (
                 safeWatchedUsers.map((user, i) => (
                   <div
                     key={user}
                     className={`flex items-center justify-between px-4 py-2.5 group ${
-                      i > 0 ? 'border-t border-slate-800/40' : ''
+                      i > 0 ? 'border-t border-brand-border-subtle' : ''
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400">
+                      <span className="w-6 h-6 rounded-full bg-brand-surface-hover flex items-center justify-center text-xs font-semibold text-brand-text-secondary">
                         {user.charAt(0).toUpperCase()}
                       </span>
                       <span className="text-sm text-slate-300">{user}</span>
@@ -411,7 +411,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveUser(user)}
-                      className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
                       aria-label={`Remove ${user}`}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

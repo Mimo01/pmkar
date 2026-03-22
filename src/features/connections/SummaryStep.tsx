@@ -29,16 +29,16 @@ interface ConnectionSummaryCardProps {
 
 function ConnectionSummaryCard({ label, connection }: ConnectionSummaryCardProps) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
+    <div className="flex items-center gap-3 rounded-lg border border-brand-border bg-brand-surface p-4">
       <CheckIcon />
       <div className="min-w-0">
         <p className="text-sm font-medium text-slate-200">
           {label}
         </p>
-        <p className="text-xs text-slate-500 truncate">
+        <p className="text-xs text-brand-muted truncate">
           {connection.baseUrl}
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-brand-text-secondary">
           {connection.username}
         </p>
       </div>
@@ -55,7 +55,7 @@ interface SummaryStepProps {
 export function SummaryStep({ serverConnection, cloudConnection, onDone }: SummaryStepProps) {
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-brand-text-secondary">
         Both connections are configured and verified.
       </p>
 

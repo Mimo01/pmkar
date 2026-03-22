@@ -6,4 +6,30 @@
   --color-brand-dark: #a01c2a;
   --color-brand-bg: #231f20;
   --color-brand-surface: #2d2829;
+  --color-brand-surface-hover: #363132;
+  --color-brand-border: #3d3738;
+  --color-brand-border-subtle: #332e2f;
+  --color-brand-muted: #8a7f81;
+  --color-brand-text: #e8e2e3;
+  --color-brand-text-secondary: #a89d9f;
+}
+
+body {
+  background-color: #231f20;
+  color: #e8e2e3;
+}
+
+/* Scrollbar styling to match brand */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #231f20;
+}
+::-webkit-scrollbar-thumb {
+  background: #3d3738;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4d4748;
 }

@@ -35,7 +35,7 @@ export function StepProgress({ currentStep }: StepProgressProps) {
                   'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300',
                   state === 'completed' ? 'bg-emerald-500 text-white' : '',
                   state === 'current' ? 'bg-brand text-white ring-4 ring-brand/20' : '',
-                  state === 'upcoming' ? 'bg-slate-800 text-slate-500 border border-slate-700' : '',
+                  state === 'upcoming' ? 'bg-brand-surface-hover text-brand-muted border border-brand-border' : '',
                 ].filter(Boolean).join(' ')}
               >
                 {state === 'completed' ? <CheckMark /> : step.index}
@@ -44,7 +44,7 @@ export function StepProgress({ currentStep }: StepProgressProps) {
                 'text-[11px] font-medium tracking-wide uppercase transition-colors duration-300',
                 state === 'completed' ? 'text-emerald-400' : '',
                 state === 'current' ? 'text-brand' : '',
-                state === 'upcoming' ? 'text-slate-600' : '',
+                state === 'upcoming' ? 'text-brand-muted' : '',
               ].filter(Boolean).join(' ')}>
                 {step.label}
               </span>
@@ -52,7 +52,7 @@ export function StepProgress({ currentStep }: StepProgressProps) {
             {i < STEPS.length - 1 && (
               <div className={[
                 'w-16 h-px mx-3 mb-5 transition-colors duration-300',
-                step.index < currentStep ? 'bg-emerald-500/50' : 'bg-slate-800',
+                step.index < currentStep ? 'bg-emerald-500/50' : 'bg-brand-surface-hover',
               ].join(' ')} />
             )}
           </div>

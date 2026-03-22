@@ -96,18 +96,18 @@ export function TicketDetailPanel({
   return (
     <div className="flex flex-col h-full" role="complementary" aria-label="Ticket detail">
       {/* Panel header */}
-      <div className="px-5 py-4 border-b border-slate-800">
+      <div className="px-5 py-4 border-b border-brand-border">
         {loading ? (
           /* Skeleton loading state */
           <div aria-busy="true">
             <div className="flex justify-end mb-2">
-              <div className="w-8 h-8 animate-pulse bg-slate-800/60 rounded-lg" />
+              <div className="w-8 h-8 animate-pulse bg-brand-surface-hover rounded-lg" />
             </div>
-            <div className="animate-pulse bg-slate-800/60 rounded h-3 w-20 mb-2" />
-            <div className="animate-pulse bg-slate-800/60 rounded h-5 w-full mb-2" />
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-20 mb-2" />
+            <div className="animate-pulse bg-brand-surface-hover rounded h-5 w-full mb-2" />
             <div className="flex gap-2">
-              <div className="animate-pulse bg-slate-800/60 rounded-full h-6 w-16" />
-              <div className="animate-pulse bg-slate-800/60 rounded-full h-6 w-16" />
+              <div className="animate-pulse bg-brand-surface-hover rounded-full h-6 w-16" />
+              <div className="animate-pulse bg-brand-surface-hover rounded-full h-6 w-16" />
             </div>
           </div>
         ) : detail ? (
@@ -117,7 +117,7 @@ export function TicketDetailPanel({
                 ref={closeButtonRef}
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-slate-800/60 rounded-lg transition-colors duration-150"
+                className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-colors duration-150"
                 aria-label="Close ticket detail"
               >
                 <svg
@@ -137,17 +137,17 @@ export function TicketDetailPanel({
                 </svg>
               </button>
             </div>
-            <div className="text-xs font-semibold text-slate-500 mb-1">
+            <div className="text-xs font-semibold text-brand-muted mb-1">
               {detail.key}
             </div>
             <div className="text-xl font-semibold text-slate-100 leading-tight line-clamp-2">
               {detail.fields.summary}
             </div>
             <div className="flex gap-2 mt-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-slate-300">
                 {detail.fields.status.name}
               </span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-slate-800 text-slate-300">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-slate-300">
                 {detail.fields.priority.name}
               </span>
             </div>
@@ -159,7 +159,7 @@ export function TicketDetailPanel({
 
       {/* Tab bar */}
       {detail && (
-        <div className="flex border-b border-slate-800 px-5" role="tablist">
+        <div className="flex border-b border-brand-border px-5" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -171,7 +171,7 @@ export function TicketDetailPanel({
               className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 ${
                 activeTab === tab.id
                   ? 'text-slate-200 font-semibold border-brand'
-                  : 'font-normal text-slate-500 hover:text-slate-300 border-transparent'
+                  : 'font-normal text-brand-muted hover:text-brand-text border-transparent'
               }`}
             >
               {tab.label}

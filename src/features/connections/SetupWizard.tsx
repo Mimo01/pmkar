@@ -110,9 +110,11 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950">
+    <div className="flex items-center justify-center min-h-screen bg-brand-bg">
+      {/* Brand accent stripe */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-brand z-50" />
       {/* Subtle gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-brand-bg via-brand-bg to-brand-surface pointer-events-none" />
 
       <div className="relative max-w-[440px] w-full px-6 py-10">
         <StepProgress currentStep={currentStep} />
@@ -133,7 +135,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-slate-700/50"
+                  className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
                 >
                   Next
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -161,7 +163,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-slate-700/50"
+                  className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-slate-200 font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
                 >
                   Next
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

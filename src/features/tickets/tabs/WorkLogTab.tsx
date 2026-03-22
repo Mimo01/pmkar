@@ -51,11 +51,11 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
   if (worklogs === null && error === null) {
     return (
       <div className="px-5 py-4" aria-busy="true" aria-live="polite">
-        <p className="text-xs text-slate-500 mb-3">Loading work log...</p>
+        <p className="text-xs text-brand-muted mb-3">Loading work log...</p>
         <div className="space-y-2" aria-hidden="true">
-          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
-          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
-          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
+          <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
+          <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
+          <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
         </div>
       </div>
     );
@@ -74,23 +74,23 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
   if (!worklogs || worklogs.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <p className="text-xs text-slate-500">No work log entries</p>
+        <p className="text-xs text-brand-muted">No work log entries</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-slate-800/40 px-5">
+    <div className="divide-y divide-brand-border-subtle px-5">
       {worklogs.map((entry) => (
         <div key={entry.id} className="py-3">
           <div className="flex items-center gap-2 pb-1">
             <span className="text-xs font-semibold text-slate-300">
               {entry.author.displayName}
             </span>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-brand-muted">
               {formatDate(entry.started)}
             </span>
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.timeSpent}
             </span>
           </div>

@@ -9,7 +9,7 @@ interface OverviewTabProps {
 function FieldItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-xs font-semibold text-slate-500 mb-1">{label}</div>
+      <div className="text-xs font-semibold text-brand-muted mb-1">{label}</div>
       <div className="text-sm text-slate-300">{value}</div>
     </div>
   );
@@ -55,8 +55,8 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
       </div>
 
       {/* Description */}
-      <div className="px-5 py-4 border-t border-slate-800/60">
-        <div className="text-xs font-semibold text-slate-500 mb-3">
+      <div className="px-5 py-4 border-t border-brand-border-subtle">
+        <div className="text-xs font-semibold text-brand-muted mb-3">
           Description
         </div>
         <DescriptionRenderer
@@ -68,19 +68,19 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
 
       {/* Sub-tasks */}
       {fields.subtasks.length > 0 && (
-        <div className="px-5 py-4 border-t border-slate-800/60">
-          <div className="text-xs font-semibold text-slate-500 mb-2">
+        <div className="px-5 py-4 border-t border-brand-border-subtle">
+          <div className="text-xs font-semibold text-brand-muted mb-2">
             Sub-tasks
           </div>
           {fields.subtasks.map((subtask) => (
             <div key={subtask.key} className="flex items-center gap-2 py-1">
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-xs font-semibold text-brand-text-secondary">
                 {subtask.key}
               </span>
               <span className="text-sm text-slate-300">
                 {subtask.fields.summary}
               </span>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-brand-muted">
                 {subtask.fields.status.name}
               </span>
             </div>
@@ -90,8 +90,8 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
 
       {/* Linked Issues */}
       {fields.issuelinks.length > 0 && (
-        <div className="px-5 py-4 border-t border-slate-800/60">
-          <div className="text-xs font-semibold text-slate-500 mb-2">
+        <div className="px-5 py-4 border-t border-brand-border-subtle">
+          <div className="text-xs font-semibold text-brand-muted mb-2">
             Linked Issues
           </div>
           {fields.issuelinks.map((link) => {
@@ -107,14 +107,14 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
 
             return (
               <div key={link.id} className="flex items-center gap-2 py-1">
-                <span className="text-xs text-slate-400">{direction}</span>
-                <span className="text-xs font-semibold text-slate-400">
+                <span className="text-xs text-brand-text-secondary">{direction}</span>
+                <span className="text-xs font-semibold text-brand-text-secondary">
                   {linkedIssue.key}
                 </span>
                 <span className="text-sm text-slate-300">
                   {linkedIssue.fields.summary}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-brand-muted">
                   {linkedIssue.fields.status.name}
                 </span>
               </div>

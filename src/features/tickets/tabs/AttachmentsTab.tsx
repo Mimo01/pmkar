@@ -16,13 +16,13 @@ export function AttachmentsTab({ attachments }: AttachmentsTabProps) {
   if (attachments.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <p className="text-xs text-slate-500">No attachments</p>
+        <p className="text-xs text-brand-muted">No attachments</p>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-slate-800/40 px-5">
+    <div className="divide-y divide-brand-border-subtle px-5">
       {attachments.map((attachment) => (
         <div key={attachment.id} className="flex items-center gap-3 py-3">
           <div className="flex-1 min-w-0">
@@ -30,10 +30,10 @@ export function AttachmentsTab({ attachments }: AttachmentsTabProps) {
               {attachment.filename}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-brand-muted">
                 {formatSize(attachment.size)}
               </span>
-              <span className="text-xs text-slate-600">
+              <span className="text-xs text-brand-muted">
                 {attachment.mimeType}
               </span>
             </div>

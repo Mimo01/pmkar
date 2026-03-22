@@ -18,18 +18,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Ticket Fetch & Review
 
-- [ ] **FETCH-01**: User can fetch candidate tickets from customer Jira assigned to them
-- [ ] **FETCH-02**: User can fetch candidate tickets where they were mentioned
-- [ ] **FETCH-03**: User can configure watched users and fetch their tickets too
-- [ ] **FETCH-04**: User can view full ticket detail: summary, description, status, priority, assignee, reporter, labels, components, fix versions
+- [x] **FETCH-01**: User can fetch candidate tickets from customer Jira assigned to them
+- [x] **FETCH-02**: User can fetch candidate tickets where they were mentioned
+- [x] **FETCH-03**: User can configure watched users and fetch their tickets too
+- [x] **FETCH-04**: User can view full ticket detail: summary, description, status, priority, assignee, reporter, labels, components, fix versions
 - [ ] **FETCH-05**: User can view ticket comments thread with authors and timestamps
-- [ ] **FETCH-06**: User can view ticket work log entries with authors and time spent
+- [x] **FETCH-06**: User can view ticket work log entries with authors and time spent
 - [ ] **FETCH-07**: User can view ticket attachments list with filenames and sizes
 - [ ] **FETCH-08**: User can view ticket sub-tasks list
 - [ ] **FETCH-09**: User can view ticket linked issues
-- [ ] **FETCH-10**: User can view ticket change history
-- [ ] **FETCH-11**: User can customize the JQL query used to fetch candidates
-- [ ] **FETCH-12**: App remembers triage state (seen/ignored/copied) across sessions
+- [x] **FETCH-10**: User can view ticket change history
+- [x] **FETCH-11**: User can customize the JQL query used to fetch candidates
+- [x] **FETCH-12**: App remembers triage state (seen/ignored/copied) across sessions
 
 ### Copy Workflow
 
@@ -104,18 +104,18 @@ Deferred to future release. Tracked but not in current roadmap.
 | CONN-04 | Phase 2 | Complete |
 | CONN-05 | Phase 2 | Complete |
 | CONN-06 | Phase 2 | Complete |
-| FETCH-01 | Phase 3 | Pending |
-| FETCH-02 | Phase 3 | Pending |
-| FETCH-03 | Phase 3 | Pending |
-| FETCH-04 | Phase 3 | Pending |
+| FETCH-01 | Phase 3 | Complete |
+| FETCH-02 | Phase 3 | Complete |
+| FETCH-03 | Phase 3 | Complete |
+| FETCH-04 | Phase 3 | Complete |
 | FETCH-05 | Phase 3 | Pending |
-| FETCH-06 | Phase 3 | Pending |
+| FETCH-06 | Phase 3 | Complete |
 | FETCH-07 | Phase 3 | Pending |
 | FETCH-08 | Phase 3 | Pending |
 | FETCH-09 | Phase 3 | Pending |
-| FETCH-10 | Phase 3 | Pending |
-| FETCH-11 | Phase 3 | Pending |
-| FETCH-12 | Phase 3 | Pending |
+| FETCH-10 | Phase 3 | Complete |
+| FETCH-11 | Phase 3 | Complete |
+| FETCH-12 | Phase 3 | Complete |
 | COPY-01 | Phase 4 | Pending |
 | COPY-02 | Phase 5 | Pending |
 | COPY-03 | Phase 5 | Pending |

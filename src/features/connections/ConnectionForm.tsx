@@ -213,8 +213,8 @@ export function ConnectionForm({
   }
 
   const inputClass = [
-    'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
-    'text-slate-100 placeholder-slate-500',
+    'w-full rounded-lg border border-brand-border bg-brand-surface',
+    'text-slate-100 placeholder-brand-muted',
     'px-3 py-2.5 text-sm',
     'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
     'transition-all duration-200',
@@ -222,7 +222,7 @@ export function ConnectionForm({
   ].filter(Boolean).join(' ');
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-4 backdrop-blur-sm">
+    <div className="rounded-xl border border-brand-border bg-brand-surface p-5 space-y-4 backdrop-blur-sm">
       {/* Base URL field */}
       <div className="space-y-2">
         <label

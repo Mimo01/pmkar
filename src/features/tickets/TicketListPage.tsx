@@ -139,7 +139,7 @@ export function TicketListPage() {
       {/* Left pane: ticket list */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* FetchBar */}
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-slate-800/60">
+        <div className="flex items-center gap-4 px-6 py-4 border-b border-brand-border-subtle">
           <button
             type="button"
             disabled={isLoading}
@@ -152,12 +152,12 @@ export function TicketListPage() {
             {isLoading ? 'Fetching...' : 'Fetch Tickets'}
           </button>
 
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-brand-muted">
             {lastFetchedAt ? `Last fetched: ${relativeTime(lastFetchedAt)}` : 'Not yet fetched'}
           </span>
 
           {totalCount > 0 && (
-            <span className="text-xs text-slate-400" aria-live="polite">
+            <span className="text-xs text-brand-text-secondary" aria-live="polite">
               {totalCount} candidates{newCount > 0 ? ', ' : ''}
               {newCount > 0 && <span className="text-brand">{newCount} new</span>}
             </span>
@@ -171,15 +171,15 @@ export function TicketListPage() {
             role="alert"
           >
             <p className="text-sm text-red-400">Could not fetch tickets</p>
-            <p className="text-xs text-slate-500 mt-1">{getErrorDetail(fetchError)}</p>
+            <p className="text-xs text-brand-muted mt-1">{getErrorDetail(fetchError)}</p>
           </div>
         )}
 
         {/* Empty state */}
         {showEmptyState && (
           <div className="flex flex-col items-center justify-center flex-1 py-16">
-            <p className="text-sm font-semibold text-slate-400 mb-1">No candidates found</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm font-semibold text-brand-text-secondary mb-1">No candidates found</p>
+            <p className="text-xs text-brand-muted">
               Your JQL returned no results. Try adjusting your fetch settings.
             </p>
           </div>
@@ -198,7 +198,7 @@ export function TicketListPage() {
 
       {/* Right pane: detail panel */}
       {selectedTicketKey ? (
-        <div className="w-[45%] border-l border-slate-800 bg-slate-900 flex flex-col transition-all duration-200 ease-in-out">
+        <div className="w-[45%] border-l border-brand-border bg-brand-surface flex flex-col transition-all duration-200 ease-in-out">
           <TicketDetailPanel
             issueKey={selectedTicketKey}
             baseUrl={useConnectionStore.getState().serverConnection?.baseUrl ?? ''}
