@@ -4,6 +4,7 @@ import type { FetchTicketsResult, JqlPreset } from './types';
 import { useTicketStore } from './ticketStore';
 import { useConnectionStore } from '../connections/connectionStore';
 import { TicketTable } from './TicketTable';
+import { TicketDetailPanel } from './TicketDetailPanel';
 
 // --- Helpers ---
 
