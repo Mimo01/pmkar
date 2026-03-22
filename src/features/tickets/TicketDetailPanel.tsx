@@ -6,6 +6,9 @@ import { CommentsTab } from './tabs/CommentsTab';
 import { WorkLogTab } from './tabs/WorkLogTab';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
+import { useCopyStore } from './copyStore';
+import { useConnectionStore } from '../connections/connectionStore';
+import { CopyPreviewModal } from './CopyPreviewModal';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
 
@@ -24,6 +27,16 @@ export function TicketDetailPanel({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  const copyPhase = useCopyStore((s) => s.phase);
+  const copyError = useCopyStore((s) => s.error);
+  const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+
+  const handleStartCopy = () => {
+    if (detail) {
+      useCopyStore.getState().startPreview(detail, baseUrl, cloudBaseUrl);
+    }
+  };
 
   // Fetch detail on mount or key change
   useEffect(() => {
@@ -112,7 +125,43 @@ export function TicketDetailPanel({
           </div>
         ) : detail ? (
           <>
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between">
+              <div>
+                <button
+                  type="button"
+                  onClick={handleStartCopy}
+                  disabled={copyPhase === 'loading_preview'}
+                  className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {copyPhase === 'loading_preview' ? (
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                  ) : (
+                    'Copy to Company Jira'
+                  )}
+                </button>
+                {copyError && (
+                  <p className="text-xs text-red-400 mt-1">{copyError}</p>
+                )}
+              </div>
               <button
                 ref={closeButtonRef}
                 type="button"
@@ -204,6 +253,9 @@ export function TicketDetailPanel({
           )}
         </div>
       )}
+
+      {/* Copy preview modal — overlays when copy phase is active */}
+      <CopyPreviewModal />
     </div>
   );
 }
