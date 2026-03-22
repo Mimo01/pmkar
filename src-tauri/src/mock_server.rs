@@ -366,6 +366,18 @@ mod v2 {
             StatusCode::NOT_FOUND.into_response()
         }
     }
+
+    /// Serve mock attachment binary content for download
+    pub async fn download_attachment(
+        Path((_id, filename)): Path<(String, String)>,
+    ) -> impl IntoResponse {
+        let body = format!("mock-content-for-{}", filename);
+        (
+            StatusCode::OK,
+            [(axum::http::header::CONTENT_TYPE, "application/octet-stream".to_string())],
+            body,
+        )
+    }
 }
 
 // --- Cloud v3 handlers ---
@@ -662,6 +674,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
         .route("/rest/api/2/issue/{key}/comment", post(v2::add_comment))
         .route("/rest/api/2/issue/{key}/worklog", get(v2::get_worklog))
         .route("/rest/api/2/issue/{key}/attachments", post(v2::add_attachment))
+        .route("/secure/attachment/{id}/{filename}", get(v2::download_attachment))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
