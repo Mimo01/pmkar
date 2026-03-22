@@ -9,8 +9,8 @@ function GearIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="16"
+      height="16"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -28,16 +28,20 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      {/* Brand accent stripe */}
-      <div className="h-1 bg-brand" />
-      <header className="flex items-center justify-between px-6 py-3 bg-brand-surface border-b border-brand-border">
-        <span className="text-base font-semibold tracking-tight text-brand-text">pmkar</span>
+      <header className="flex items-center justify-between px-5 py-0 border-b border-brand-border bg-brand-bg">
+        <div className="flex items-center gap-0">
+          {/* Brand mark — red block with app name */}
+          <div className="bg-brand px-4 py-2.5 -ml-5 mr-4">
+            <span className="text-sm font-semibold tracking-wider uppercase text-white">pmkar</span>
+          </div>
+          <span className="text-xs text-brand-muted">Jira Ticket Bridge</span>
+        </div>
         {onGearClick && (
           <button
             type="button"
             onClick={onGearClick}
             aria-label="Settings"
-            className="flex items-center justify-center w-9 h-9 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
+            className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded transition-all duration-200"
           >
             <GearIcon />
           </button>

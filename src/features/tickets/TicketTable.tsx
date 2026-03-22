@@ -135,7 +135,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
   return (
     <div className="overflow-y-auto flex-1" role="table" aria-label="Ticket list">
       <table className="w-full table-fixed">
-        <thead className="bg-brand-bg border-b border-brand-border sticky top-0 z-10">
+        <thead className="bg-brand-surface-raised border-b border-brand-border sticky top-0 z-10 shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
           <tr>
             {/* Triage dot column */}
             <th className="w-6 px-2 py-2" aria-label="Triage status">
@@ -147,9 +147,9 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                 role="columnheader"
                 aria-sort={ariaSortValue(c.key)}
                 aria-label={`Sort ${c.label} ${ariaSortValue(c.key) === 'ascending' ? 'descending' : 'ascending'}`}
-                className={`${c.width === 'flex-1' ? '' : c.width} text-xs font-semibold ${
-                  sort.col === c.key ? 'text-slate-300' : 'text-brand-muted'
-                } px-4 py-2 cursor-pointer select-none hover:text-brand-text transition-colors duration-150 ${
+                className={`${c.width === 'flex-1' ? '' : c.width} text-[11px] font-semibold uppercase tracking-wider ${
+                  sort.col === c.key ? 'text-brand-text-secondary' : 'text-brand-muted'
+                } px-4 py-2.5 cursor-pointer select-none hover:text-brand-text transition-colors duration-150 ${
                   c.align ?? 'text-left'
                 }`}
                 onClick={() => handleSort(c.key)}

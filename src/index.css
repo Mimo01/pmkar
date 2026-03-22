@@ -4,19 +4,20 @@
   --color-brand: #c02232;
   --color-brand-light: #d4354a;
   --color-brand-dark: #a01c2a;
-  --color-brand-bg: #231f20;
-  --color-brand-surface: #2d2829;
-  --color-brand-surface-hover: #363132;
-  --color-brand-border: #3d3738;
-  --color-brand-border-subtle: #332e2f;
-  --color-brand-muted: #8a7f81;
-  --color-brand-text: #e8e2e3;
-  --color-brand-text-secondary: #a89d9f;
+  --color-brand-bg: #1c1a1b;
+  --color-brand-surface: #262324;
+  --color-brand-surface-hover: #312d2e;
+  --color-brand-surface-raised: #2e2a2b;
+  --color-brand-border: #3a3536;
+  --color-brand-border-subtle: #302c2d;
+  --color-brand-muted: #847b7d;
+  --color-brand-text: #e5e1e2;
+  --color-brand-text-secondary: #a29a9c;
 }
 
 body {
-  background-color: #231f20;
-  color: #e8e2e3;
+  background-color: #1c1a1b;
+  color: #e5e1e2;
 }
 
 /* Scrollbar styling to match brand */
@@ -24,12 +25,12 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #231f20;
+  background: #1c1a1b;
 }
 ::-webkit-scrollbar-thumb {
-  background: #3d3738;
+  background: #3a3536;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4d4748;
+  background: #4a4546;
 }
