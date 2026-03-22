@@ -1,10 +1,12 @@
 use tauri::State;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use crate::error::AppError;
 use crate::audit::{AuditDb, AuditEntry, build_audited_client};
 use crate::keychain;
 use crate::fixtures::SharedFixtures;
 use crate::mock_server;
+use crate::triage_db::{TriageDb, FetchConfig};
 use base64::Engine as _;
 
 // --- Credential commands ---
@@ -287,4 +289,310 @@ pub fn ping_keychain() -> Result<bool, AppError> {
         }
         Err(_) => Ok(false),
     }
+}
+
+// --- Ticket fetch commands ---
+
+#[derive(serde::Serialize, Clone, Debug)]
+pub struct FetchTicketsResult {
+    pub issues: Vec<serde_json::Value>,
+    pub total: u64,
+    pub triage_map: HashMap<String, String>,
+}
+
+#[tauri::command]
+pub async fn fetch_tickets(
+    base_url: String,
+    jql: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<FetchTicketsResult, AppError> {
+    let pat = keychain::get_credential("server", "pat")?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let encoded_jql = urlencoding::encode(&jql);
+    let url = format!(
+        "{}/rest/api/2/search?jql={}&fields=summary,status,priority,assignee,updated,labels,components,fixVersions&maxResults=50",
+        trimmed_url, encoded_jql
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch tickets".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Jira search returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse search response".into()))?;
+
+    let issues = body["issues"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    let total = body["total"].as_u64().unwrap_or(0);
+
+    // Update triage state for new tickets
+    {
+        let tdb = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let existing = tdb.get_all_triage()?;
+        for issue in &issues {
+            if let Some(key) = issue["key"].as_str() {
+                if !existing.contains_key(key) {
+                    tdb.set_triage(key, "new")?;
+                }
+            }
+        }
+        // Update last_fetched_at
+        let now = chrono::Utc::now().to_rfc3339();
+        tdb.update_last_fetched(&now)?;
+    }
+
+    // Get full triage map after updates
+    let triage_map = {
+        let tdb = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        tdb.get_all_triage()?
+    };
+
+    Ok(FetchTicketsResult {
+        issues,
+        total,
+        triage_map,
+    })
+}
+
+#[tauri::command]
+pub async fn fetch_ticket_detail(
+    base_url: String,
+    issue_key: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+) -> Result<serde_json::Value, AppError> {
+    let pat = keychain::get_credential("server", "pat")?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let url = format!(
+        "{}/rest/api/2/issue/{}?expand=renderedFields,changelog&fields=*all",
+        trimmed_url, issue_key
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch ticket detail".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Jira issue detail returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse issue detail response".into()))?;
+
+    Ok(body)
+}
+
+#[tauri::command]
+pub async fn fetch_worklog(
+    base_url: String,
+    issue_key: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+) -> Result<serde_json::Value, AppError> {
+    let pat = keychain::get_credential("server", "pat")?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let url = format!(
+        "{}/rest/api/2/issue/{}/worklog",
+        trimmed_url, issue_key
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch worklog".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Jira worklog returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse worklog response".into()))?;
+
+    Ok(body)
+}
+
+#[tauri::command]
+pub async fn fetch_changelog(
+    base_url: String,
+    issue_key: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+) -> Result<serde_json::Value, AppError> {
+    let pat = keychain::get_credential("server", "pat")?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let url = format!(
+        "{}/rest/api/2/issue/{}?expand=changelog",
+        trimmed_url, issue_key
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch changelog".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Jira changelog returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse changelog response".into()))?;
+
+    // Extract just the changelog portion
+    let changelog = body.get("changelog").cloned().unwrap_or(serde_json::json!({"histories": []}));
+    Ok(changelog)
+}
+
+#[tauri::command]
+pub async fn fetch_jira_image(
+    image_url: String,
+    base_url: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+) -> Result<String, AppError> {
+    // Security: prevent SSRF by validating URL origin
+    let trimmed_base = base_url.trim_end_matches('/');
+    if !image_url.starts_with(trimmed_base) {
+        return Err(AppError::Internal(
+            "URL not from configured Jira instance".into(),
+        ));
+    }
+
+    let pat = keychain::get_credential("server", "pat")?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+
+    let resp = client
+        .get(&image_url)
+        .header("Authorization", format!("Bearer {}", pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch image".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Image fetch returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let mime = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("image/png")
+        .to_string();
+
+    let bytes = resp
+        .bytes()
+        .await
+        .map_err(|_| AppError::Http("Failed to read image bytes".into()))?;
+
+    let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(format!("data:{};base64,{}", mime, encoded))
+}
+
+// --- Triage state commands ---
+
+#[tauri::command]
+pub fn get_triage_state(
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<HashMap<String, String>, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.get_all_triage()
+}
+
+#[tauri::command]
+pub fn set_triage_state(
+    ticket_key: String,
+    state: String,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<(), AppError> {
+    // Validate state value
+    match state.as_str() {
+        "new" | "seen" | "ignored" | "copied" => {}
+        _ => {
+            return Err(AppError::Internal(format!(
+                "Invalid triage state: '{}'. Must be one of: new, seen, ignored, copied",
+                state
+            )));
+        }
+    }
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.set_triage(&ticket_key, &state)
+}
+
+// --- Fetch config commands ---
+
+#[tauri::command]
+pub fn get_fetch_config(
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<FetchConfig, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.get_fetch_config()
+}
+
+#[tauri::command]
+pub fn set_fetch_config(
+    config: FetchConfig,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<(), AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.set_fetch_config(&config)
 }

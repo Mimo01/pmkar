@@ -5,6 +5,7 @@ use tauri::Manager;
 use pmkar_lib::{
     audit::AuditDb,
     fixtures::build_fixtures,
+    triage_db::TriageDb,
     commands,
 };
 
@@ -22,6 +23,12 @@ fn main() {
                 .expect("Failed to open audit database");
 
             app.manage(Arc::new(Mutex::new(audit_db)));
+
+            let triage_db_path = app_dir.join("triage.db");
+            let triage_db = TriageDb::open(&triage_db_path)
+                .expect("Failed to open triage database");
+            app.manage(Arc::new(Mutex::new(triage_db)));
+
             app.manage(fixtures.clone());
 
             // Start mock servers in dev mode
@@ -49,6 +56,15 @@ fn main() {
             commands::test_jira_server_connection,
             commands::test_jira_cloud_connection,
             commands::open_external_url,
+            commands::fetch_tickets,
+            commands::fetch_ticket_detail,
+            commands::fetch_worklog,
+            commands::fetch_changelog,
+            commands::fetch_jira_image,
+            commands::get_triage_state,
+            commands::set_triage_state,
+            commands::get_fetch_config,
+            commands::set_fetch_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
