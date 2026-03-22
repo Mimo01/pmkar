@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-22T19:54:38.370Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-03-22T20:02:17.574Z"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 17
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 04 (copy-core-fields) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: 4 of 5
 | Phase 04-copy-core-fields P02 | 12 | 2 tasks | 4 files |
 | Phase 04-copy-core-fields P01 | 15 | 2 tasks | 4 files |
 | Phase 04-copy-core-fields P03 | 4 | 2 tasks | 2 files |
+| Phase 04 P04 | 15 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,8 @@ Recent decisions affecting current work:
 - [Phase 04-copy-core-fields]: FetchTicketsResult.triage_map updated to TriageEntryResponse for single consistent shape sent to frontend
 - [Phase 04-copy-core-fields]: Used plain reqwest::Client for multipart image uploads because reqwest_middleware::ClientWithMiddleware lacks .multipart() support
 - [Phase 04-copy-core-fields]: target_status parameter in copy_ticket is informational only — Cloud v3 API does not support status at issue creation
+- [Phase 04]: CopyPreviewModal renders null when phase is not previewing/copying — clean unmount
+- [Phase 04]: TicketTable uses helper functions for backward compat between TriageState string and TriageEntry object
 
 ### Pending Todos
 
@@ -119,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T19:54:38.365Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-22T20:02:17.569Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
