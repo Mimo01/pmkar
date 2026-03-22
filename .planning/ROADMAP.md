@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Connection Setup** - Setup wizard UI for dual-connection configuration with OS keychain write, connection validation against mock, and error handling (completed 2026-03-20)
 - [ ] **Phase 3: Ticket Fetch and Review** - Dual Jira adapter pair, JQL fetch with pagination, full ticket detail view, and persistent triage state schema
 - [x] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting (completed 2026-03-22)
-- [ ] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy
+- [x] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy (completed 2026-03-22)
 - [ ] **Phase 6: Triage and Audit** - Ignore workflow, ignored list view, session-persistent triage state, and in-app audit log viewer
 - [ ] **Phase 7: Internationalization** - Language switcher, English language pack, and Slovak language pack
 
@@ -103,10 +103,10 @@ Plans:
   3. User can copy a ticket and have its work log entries transferred with original author attribution
   4. User can copy a ticket with sub-tasks and find the sub-tasks created as child issues under the new parent ticket in company Jira
   5. User sees a clear per-item result for attachments (e.g., "3 copied, 1 failed") rather than a silent partial success
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
-- [ ] 05-01-PLAN.md — Rust backend: mock server extensions, copy_ticket pipeline for attachments, comments, worklogs, and description footer
+- [x] 05-01-PLAN.md — Rust backend: mock server extensions, copy_ticket pipeline for attachments, comments, worklogs, and description footer
 - [x] 05-02-PLAN.md — Frontend: CopyPreviewModal and CopyResultModal extensions, copyStore progress, tests, and visual verification
 
 ### Phase 6: Triage and Audit
@@ -140,6 +140,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
-| 5. Copy — Attachments and Comments | 1/2 | In Progress|  |
+| 5. Copy — Attachments and Comments | 2/2 | Complete   | 2026-03-22 |
 | 6. Triage and Audit | 0/TBD | Not started | - |
 | 7. Internationalization | 0/TBD | Not started | - |

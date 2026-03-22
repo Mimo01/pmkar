@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: "Checkpoint: 05-02 Tasks 1-2 complete, awaiting human-verify for Task 3 (visual verification of copy flow)"
-last_updated: "2026-03-22T22:58:03.375Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-22T23:00:08.078Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -62,6 +62,7 @@ Plan: 2 of 2
 | Phase 04 P04 | 15 | 2 tasks | 5 files |
 | Phase 04-copy-core-fields P05 | 15 | 2 tasks | 3 files |
 | Phase 05-copy-attachments-and-comments P02 | 7 | 2 tasks | 5 files |
+| Phase 05 P01 | 25 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Recent decisions affecting current work:
 - [Phase 04-copy-core-fields]: Triage refresh on close: invoke get_triage_state in finally block so reset always fires even on network error
 - [Phase 05-copy-attachments-and-comments]: Failed attach: step emits detail in both stepLabel span and detail paragraph — tests use getAllByText to handle dual rendering
 - [Phase 05-copy-attachments-and-comments]: No real-time attachment/comment progress (single Tauri invoke) — progressStep updated to reflect all phases, per-item detail shown post-completion
+- [Phase 05]: Attachment loop placed after add_remotelink step so issue exists with description before binary uploads
+- [Phase 05]: Comment loop uses renderedFields.comment.comments HTML with fallback to fields.comment.comments plain text
+- [Phase 05]: Worklogs fetched from source v2 worklog API independently, not from issue fields
 
 ### Pending Todos
 
@@ -127,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T22:58:03.369Z
-Stopped at: Checkpoint: 05-02 Tasks 1-2 complete, awaiting human-verify for Task 3 (visual verification of copy flow)
+Last session: 2026-03-22T23:00:08.072Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
