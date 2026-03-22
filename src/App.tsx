@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { DevStatusPanel } from './features/dev/DevStatusPanel';
+import { TicketListPage } from './features/tickets/TicketListPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { useConnectionStore } from './features/connections/connectionStore';
@@ -44,7 +44,7 @@ function App() {
   return (
     <ErrorBoundary>
       <AppShell onGearClick={() => setShowSettings(true)}>
-        <DevStatusPanel />
+        <TicketListPage />
       </AppShell>
     </ErrorBoundary>
   );

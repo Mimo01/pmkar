@@ -186,18 +186,18 @@ export function TicketListPage() {
         )}
       </div>
 
-      {/* Right pane: detail panel placeholder */}
-      <div
-        className={`border-l border-slate-800 bg-slate-900 flex flex-col transition-all duration-200 ease-in-out ${
-          selectedTicketKey ? 'w-[45%]' : 'w-0 overflow-hidden'
-        }`}
-      >
-        {selectedTicketKey && (
-          <div className="px-5 py-4 text-sm text-slate-500">
-            Detail panel — Plan 04
-          </div>
-        )}
-      </div>
+      {/* Right pane: detail panel */}
+      {selectedTicketKey ? (
+        <div className="w-[45%] border-l border-slate-800 bg-slate-900 flex flex-col transition-all duration-200 ease-in-out">
+          <TicketDetailPanel
+            issueKey={selectedTicketKey}
+            baseUrl={useConnectionStore.getState().serverConnection?.baseUrl ?? ''}
+            onClose={() => useTicketStore.getState().selectTicket(null)}
+          />
+        </div>
+      ) : (
+        <div className="w-0 overflow-hidden transition-all duration-200 ease-in-out" />
+      )}
     </div>
   );
 }
