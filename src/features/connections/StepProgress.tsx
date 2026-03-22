@@ -34,7 +34,7 @@ export function StepProgress({ currentStep }: StepProgressProps) {
                 className={[
                   'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300',
                   state === 'completed' ? 'bg-emerald-500 text-white' : '',
-                  state === 'current' ? 'bg-red-600 text-white ring-4 ring-red-600/20' : '',
+                  state === 'current' ? 'bg-brand text-white ring-4 ring-brand/20' : '',
                   state === 'upcoming' ? 'bg-slate-800 text-slate-500 border border-slate-700' : '',
                 ].filter(Boolean).join(' ')}
               >
@@ -43,7 +43,7 @@ export function StepProgress({ currentStep }: StepProgressProps) {
               <span className={[
                 'text-[11px] font-medium tracking-wide uppercase transition-colors duration-300',
                 state === 'completed' ? 'text-emerald-400' : '',
-                state === 'current' ? 'text-red-500' : '',
+                state === 'current' ? 'text-brand' : '',
                 state === 'upcoming' ? 'text-slate-600' : '',
               ].filter(Boolean).join(' ')}>
                 {step.label}

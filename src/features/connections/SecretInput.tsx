@@ -41,7 +41,7 @@ export function SecretInput({
         <button
           type="button"
           onClick={handleHelpClick}
-          className="text-xs text-slate-500 hover:text-red-500 transition-colors cursor-pointer"
+          className="text-xs text-slate-500 hover:text-brand transition-colors cursor-pointer"
         >
           {helpLabel}
         </button>
@@ -57,7 +57,7 @@ export function SecretInput({
             'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
             'text-slate-100 placeholder-slate-500',
             'px-3 py-2.5 pr-11 text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-red-600/40 focus:border-red-600/50',
+            'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
             'transition-all duration-200',
             disabled ? 'opacity-40 cursor-not-allowed' : '',
           ]

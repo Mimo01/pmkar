@@ -68,7 +68,7 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
         <button
           type="button"
           onClick={onEdit}
-          className="text-xs text-slate-500 hover:text-red-500 font-medium transition-colors duration-200 ml-4"
+          className="text-xs text-slate-500 hover:text-brand font-medium transition-colors duration-200 ml-4"
         >
           Edit
         </button>

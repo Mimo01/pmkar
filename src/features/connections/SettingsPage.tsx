@@ -215,7 +215,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           <section>
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Connections</h2>
             {editingConnection === 'server' ? (
-              <div className="rounded-xl border border-red-600/30 bg-slate-900/60 p-4 mb-3">
+              <div className="rounded-xl border border-brand/30 bg-slate-900/60 p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-slate-200">Edit Source Connection</span>
                   <button
@@ -241,7 +241,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               />
             )}
             {editingConnection === 'cloud' ? (
-              <div className="rounded-xl border border-red-600/30 bg-slate-900/60 p-4 mb-3">
+              <div className="rounded-xl border border-brand/30 bg-slate-900/60 p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-slate-200">Edit Destination Connection</span>
                   <button
@@ -281,15 +281,15 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     i > 0 ? 'border-t border-slate-800/60' : ''
                   } ${
                     jqlPreset === opt.value
-                      ? 'bg-red-600/8'
+                      ? 'bg-brand/8'
                       : 'hover:bg-slate-800/40'
                   }`}
                 >
                   <span className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
-                    jqlPreset === opt.value ? 'border-red-600' : 'border-slate-600'
+                    jqlPreset === opt.value ? 'border-brand' : 'border-slate-600'
                   }`}>
                     {jqlPreset === opt.value && (
-                      <span className="w-2 h-2 rounded-full bg-red-600" />
+                      <span className="w-2 h-2 rounded-full bg-brand" />
                     )}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -307,7 +307,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 <textarea
                   value={jqlCustom ?? ''}
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-red-600/50 focus:ring-1 focus:ring-red-600/20 transition-colors duration-200"
+                  className="w-full rounded-lg border border-slate-700/50 bg-slate-800/50 text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
                   placeholder="assignee = currentUser() ORDER BY updated DESC"
                   autoFocus
                 />
@@ -374,7 +374,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                         onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
                         className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors duration-100 ${
                           i > 0 ? 'border-t border-slate-800/40' : ''
-                        } ${i === selectedIdx ? 'bg-red-600/15' : 'hover:bg-slate-800/60'}`}
+                        } ${i === selectedIdx ? 'bg-brand/15' : 'hover:bg-slate-800/60'}`}
                       >
                         <span className="w-7 h-7 rounded-full bg-slate-800 flex items-center justify-center text-xs font-semibold text-slate-400 flex-shrink-0">
                           {user.displayName.charAt(0).toUpperCase()}

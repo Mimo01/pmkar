@@ -216,7 +216,7 @@ export function ConnectionForm({
     'w-full rounded-lg border border-slate-700/50 bg-slate-800/50',
     'text-slate-100 placeholder-slate-500',
     'px-3 py-2.5 text-sm',
-    'focus:outline-none focus:ring-2 focus:ring-red-600/40 focus:border-red-600/50',
+    'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
     'transition-all duration-200',
     testing ? 'opacity-40 cursor-not-allowed' : '',
   ].filter(Boolean).join(' ');
@@ -297,7 +297,7 @@ export function ConnectionForm({
         aria-busy={testing}
         className={[
           'w-full flex items-center justify-center gap-2',
-          'bg-red-700 hover:bg-red-600 active:bg-red-800 text-white font-medium rounded-lg py-2.5 text-sm',
+          'bg-brand hover:bg-brand-light active:bg-brand-dark text-white font-medium rounded-lg py-2.5 text-sm',
           'transition-all duration-200',
           !canTest ? 'opacity-40 cursor-not-allowed' : '',
         ]

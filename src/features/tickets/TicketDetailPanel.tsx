@@ -170,7 +170,7 @@ export function TicketDetailPanel({
               onClick={() => setActiveTab(tab.id)}
               className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 ${
                 activeTab === tab.id
-                  ? 'text-slate-200 font-semibold border-red-600'
+                  ? 'text-slate-200 font-semibold border-brand'
                   : 'font-normal text-slate-500 hover:text-slate-300 border-transparent'
               }`}
             >
