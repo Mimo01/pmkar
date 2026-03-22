@@ -42,12 +42,9 @@ Declared values (must be multiples of 4):
 | 2xl | 48px | Empty state vertical padding (`py-12`) |
 | 3xl | 64px | Large empty state vertical padding (`py-16`) |
 
-Exceptions:
-- Header bar uses `py-2.5` (10px) — established in Phase 4 CopyPreviewModal header, do not change
-- Step rows in CopyResultModal use `py-2` (8px) — match existing row pattern
-- Field group spacing uses `mb-3` (12px) — established in CopyPreviewModal FieldRow, do not change
-
 Source: `src/features/tickets/CopyResultModal.tsx`, `src/features/tickets/CopyPreviewModal.tsx`, `src/features/tickets/tabs/*.tsx`
+
+> **Legacy note:** Existing components use `py-2.5` (10px) and `mb-3` (12px) from Phase 4 — these are legacy values present in existing files, do not replicate on new elements. They are not part of the Phase 5 spacing contract.
 
 ---
 
