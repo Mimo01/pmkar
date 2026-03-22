@@ -179,7 +179,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   }`}
                   onClick={() => onSelectTicket(ticket.key)}
                 >
-                  <td className="w-6 px-2 py-3 text-center">
+                  <td className="w-28 min-w-[7rem] px-2 py-3 text-center">
                     <TriageIndicator
                       state={triageMap[ticket.key]?.state}
                       copiedKey={triageMap[ticket.key]?.copiedKey ?? null}

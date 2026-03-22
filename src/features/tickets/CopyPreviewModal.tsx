@@ -26,12 +26,14 @@ export function CopyPreviewModal() {
   const sourceTicket = useCopyStore((s) => s.sourceTicket);
   const cloudMeta = useCopyStore((s) => s.cloudMeta);
   const targetSummary = useCopyStore((s) => s.targetSummary);
+  const targetDescription = useCopyStore((s) => s.targetDescription);
   const targetStatus = useCopyStore((s) => s.targetStatus);
   const targetPriorityId = useCopyStore((s) => s.targetPriorityId);
   const targetLabels = useCopyStore((s) => s.targetLabels);
   const selectedLabels = useCopyStore((s) => s.selectedLabels);
   const progressStep = useCopyStore((s) => s.progressStep);
   const setTargetSummary = useCopyStore((s) => s.setTargetSummary);
+  const setTargetDescription = useCopyStore((s) => s.setTargetDescription);
   const setTargetStatus = useCopyStore((s) => s.setTargetStatus);
   const setTargetPriorityId = useCopyStore((s) => s.setTargetPriorityId);
   const toggleLabel = useCopyStore((s) => s.toggleLabel);
@@ -266,18 +268,17 @@ export function CopyPreviewModal() {
               )}
             </div>
 
-            {/* Description preview (rendered HTML, same as source — per D-05) */}
+            {/* Description (editable) */}
             <div className="mt-4">
-              <span className="text-xs font-semibold text-brand-muted">
-                Description (preview)
-              </span>
-              <div className="mt-2">
-                <DescriptionRenderer
-                  description={sourceTicket.fields.description}
-                  renderedHtml={renderedDescription ?? undefined}
-                  baseUrl={sourceBaseUrl}
-                />
-              </div>
+              <label className="text-xs font-semibold text-brand-muted block mb-1">
+                Description
+              </label>
+              <textarea
+                value={targetDescription}
+                onChange={(e) => setTargetDescription(e.target.value)}
+                rows={8}
+                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1.5 text-sm font-mono resize-y"
+              />
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ interface CopyState {
 
   // Target field values (editable in preview)
   targetSummary: string;
+  targetDescription: string;
   targetStatus: string;
   targetPriorityId: string;
   targetLabels: string[];
@@ -32,6 +33,7 @@ interface CopyState {
   // Actions
   startPreview: (ticket: JiraTicketDetail, sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
   setTargetSummary: (summary: string) => void;
+  setTargetDescription: (description: string) => void;
   setTargetStatus: (status: string) => void;
   setTargetPriorityId: (priorityId: string) => void;
   toggleLabel: (label: string) => void;
@@ -44,6 +46,7 @@ const initialState = {
   sourceTicket: null,
   sourceKey: null,
   targetSummary: '',
+  targetDescription: '',
   targetStatus: '',
   targetPriorityId: '',
   targetLabels: [],
@@ -63,6 +66,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       sourceTicket: ticket,
       sourceKey: ticket.key,
       targetSummary: ticket.fields.summary,
+      targetDescription: ticket.fields.description ?? '',
       error: null,
     });
 
@@ -106,6 +110,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   },
 
   setTargetSummary: (summary) => set({ targetSummary: summary }),
+  setTargetDescription: (description) => set({ targetDescription: description }),
   setTargetStatus: (status) => set({ targetStatus: status }),
   setTargetPriorityId: (priorityId) => set({ targetPriorityId: priorityId }),
 
@@ -130,6 +135,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         sourceBaseUrl,
         targetBaseUrl: cloudBaseUrl,
         targetSummary: state.targetSummary,
+        targetDescription: state.targetDescription || null,
         targetStatus: state.targetStatus,
         targetPriorityId: state.targetPriorityId,
         targetLabels: state.selectedLabels,

@@ -915,6 +915,7 @@ pub async fn copy_ticket(
     source_base_url: String,
     target_base_url: String,
     target_summary: String,
+    target_description: Option<String>,
     target_status: String,       // informational only — status transitions not supported at creation
     target_priority_id: String,
     target_labels: Vec<String>,
@@ -1154,12 +1155,33 @@ pub async fn copy_ticket(
         }
     }
 
-    // Step 6: Rewrite HTML image URLs with Cloud attachment URLs, convert to ADF (per D-03)
-    let rewritten_html = rewrite_image_urls(&html_description, &url_map);
-    let adf_str = htmltoadf::convert_html_str_to_adf_str(rewritten_html);
-    let adf_value: serde_json::Value = serde_json::from_str(&adf_str).map_err(|e| {
-        AppError::Serialization(format!("Failed to parse ADF JSON: {}", e))
-    })?;
+    // Step 6: Build ADF description
+    // If user provided edited description, wrap as plain text ADF.
+    // Otherwise, rewrite HTML image URLs and convert via htmltoadf pipeline.
+    let adf_value: serde_json::Value = match target_description {
+        Some(ref edited) if !edited.is_empty() => {
+            // User-edited description — wrap as plain text ADF
+            serde_json::json!({
+                "version": 1,
+                "type": "doc",
+                "content": [{
+                    "type": "paragraph",
+                    "content": [{
+                        "type": "text",
+                        "text": edited
+                    }]
+                }]
+            })
+        }
+        _ => {
+            // Use source HTML → rewrite images → convert to ADF
+            let rewritten_html = rewrite_image_urls(&html_description, &url_map);
+            let adf_str = htmltoadf::convert_html_str_to_adf_str(rewritten_html);
+            serde_json::from_str(&adf_str).map_err(|e| {
+                AppError::Serialization(format!("Failed to parse ADF JSON: {}", e))
+            })?
+        }
+    };
 
     steps.push(CopyStepResult {
         step: "convert_description".to_string(),
@@ -1167,7 +1189,7 @@ pub async fn copy_ticket(
         detail: None,
     });
 
-    // Step 7: Update issue description with rewritten ADF (two-pass: PUT after image uploads)
+    // Step 7: Update issue description with ADF (two-pass: PUT after image uploads)
     let update_body = serde_json::json!({
         "fields": {
             "description": adf_value
