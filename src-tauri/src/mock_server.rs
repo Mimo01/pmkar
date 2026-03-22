@@ -283,6 +283,7 @@ mod v2 {
             .to_string();
         let description = body["fields"]["description"].clone();
 
+        let now = chrono::Utc::now().to_rfc3339();
         let new_issue = JiraIssue {
             id: issue_id.clone(),
             key: key.clone(),
@@ -291,10 +292,16 @@ mod v2 {
                 "status": { "name": "Open", "id": "1" },
                 "priority": body["fields"]["priority"].clone(),
                 "description": description,
+                "assignee": null,
+                "reporter": null,
+                "labels": body["fields"]["labels"].clone(),
+                "components": [],
+                "fixVersions": [],
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "updated": now
             }),
         };
 
@@ -539,6 +546,7 @@ mod v3 {
             serde_json::to_value(AdfDoc::paragraph("")).unwrap()
         };
 
+        let now = chrono::Utc::now().to_rfc3339();
         let new_issue = JiraIssue {
             id: issue_id.clone(),
             key: key.clone(),
@@ -547,10 +555,16 @@ mod v3 {
                 "status": { "name": "Open", "statusCategory": { "key": "new" } },
                 "priority": body["fields"]["priority"].clone(),
                 "description": description,
+                "assignee": null,
+                "reporter": null,
+                "labels": body["fields"]["labels"].clone(),
+                "components": [],
+                "fixVersions": [],
                 "comment": { "comments": [] },
                 "attachment": [],
                 "subtasks": [],
-                "issuelinks": []
+                "issuelinks": [],
+                "updated": now
             }),
         };
 
