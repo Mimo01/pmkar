@@ -148,3 +148,31 @@ export interface FetchTicketsResult {
   total: number;
   triageMap: Record<string, TriageState>;
 }
+
+// --- Copy Pipeline Types (Phase 4) ---
+
+export type CopyPhase = 'idle' | 'loading_preview' | 'previewing' | 'copying' | 'result';
+
+export interface CopyStepResult {
+  step: string;        // "create_issue" | "convert_description" | "upload_images" | "add_remote_link"
+  success: boolean;
+  detail: string | null; // error message or created key
+}
+
+export interface CopyTicketResult {
+  targetKey: string | null;
+  targetUrl: string | null;
+  steps: CopyStepResult[];
+}
+
+export interface CloudMeta {
+  availableStatuses: { id: string; name: string }[];
+  availablePriorities: { id: string; name: string }[];
+  currentAccountId: string;
+  cloudBaseUrl: string;
+}
+
+export interface TriageEntry {
+  state: TriageState;
+  copiedKey: string | null;
+}
