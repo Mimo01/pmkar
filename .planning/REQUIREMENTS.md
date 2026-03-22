@@ -33,14 +33,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Copy Workflow
 
-- [ ] **COPY-01**: User can copy a ticket's core fields (summary, description, status, priority, assignee, labels) to company Jira
+- [x] **COPY-01**: User can copy a ticket's core fields (summary, description, status, priority, assignee, labels) to company Jira
 - [ ] **COPY-02**: User can copy ticket attachments as full binary files (download from source, upload to target)
 - [ ] **COPY-03**: User can copy ticket comment thread with author attribution prefix
 - [ ] **COPY-04**: User can copy ticket work log entries with author attribution
 - [ ] **COPY-05**: User can copy sub-tasks as child issues under the newly created parent ticket
 - [ ] **COPY-06**: User can copy linked issue references as annotations or remote links
 - [ ] **COPY-07**: Copied ticket includes a remote link back to the source ticket for origin tracking
-- [ ] **COPY-08**: User sees a diff/preview of what will be created before confirming the copy
+- [x] **COPY-08**: User sees a diff/preview of what will be created before confirming the copy
 - [ ] **COPY-09**: Description and comment content is correctly translated between wiki markup (Server) and ADF (Cloud)
 
 ### Triage
@@ -116,14 +116,14 @@ Deferred to future release. Tracked but not in current roadmap.
 | FETCH-10 | Phase 3 | Complete |
 | FETCH-11 | Phase 3 | Complete |
 | FETCH-12 | Phase 3 | Complete |
-| COPY-01 | Phase 4 | Pending |
+| COPY-01 | Phase 4 | Complete |
 | COPY-02 | Phase 5 | Pending |
 | COPY-03 | Phase 5 | Pending |
 | COPY-04 | Phase 5 | Pending |
 | COPY-05 | Phase 5 | Pending |
 | COPY-06 | Phase 5 | Pending |
 | COPY-07 | Phase 4 | Pending |
-| COPY-08 | Phase 4 | Pending |
+| COPY-08 | Phase 4 | Complete |
 | COPY-09 | Phase 4 | Pending |
 | TRIA-01 | Phase 6 | Pending |
 | TRIA-02 | Phase 6 | Pending |

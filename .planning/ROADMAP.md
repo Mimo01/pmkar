@@ -84,11 +84,11 @@ Plans:
   2. User can copy a ticket's summary, description, status, priority, assignee, and labels to the company Jira
   3. The copied ticket in company Jira contains a remote link back to the original source ticket
   4. Description content is correctly translated from Jira Server wiki markup to Jira Cloud ADF format (tables, code blocks, mentions, and numbered lists render correctly)
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 04-01-PLAN.md — Rust infra: htmltoadf crate, reqwest multipart, mock server Cloud endpoints, triage_db copied_key
-- [ ] 04-02-PLAN.md — TypeScript copy types, copyStore Zustand store, Wave 0 test scaffolds
+- [x] 04-02-PLAN.md — TypeScript copy types, copyStore Zustand store, Wave 0 test scaffolds
 - [ ] 04-03-PLAN.md — Rust commands: fetch_cloud_meta and copy_ticket pipeline
 - [ ] 04-04-PLAN.md — CopyPreviewModal, Copy button in detail panel, TriageIndicator extension
 - [ ] 04-05-PLAN.md — CopyResultModal, progress states, triage refresh, and visual verification
@@ -135,7 +135,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 1. Foundation | 4/4 | Complete   | 2026-03-20 |
 | 2. Connection Setup | 3/3 | Complete   | 2026-03-20 |
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
-| 4. Copy — Core Fields | 0/5 | Not started | - |
+| 4. Copy — Core Fields | 1/5 | In Progress|  |
 | 5. Copy — Attachments and Comments | 0/TBD | Not started | - |
 | 6. Triage and Audit | 0/TBD | Not started | - |
 | 7. Internationalization | 0/TBD | Not started | - |
