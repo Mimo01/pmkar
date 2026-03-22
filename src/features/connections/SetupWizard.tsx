@@ -56,6 +56,9 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       status: 'ok',
     };
     setServerConnection(meta);
+    invoke('set_connection_meta', {
+      meta: { connectionType: 'server', baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+    }).catch((err) => console.error('Failed to persist server connection meta:', err));
     setTestPassed(true);
   }
 
@@ -85,6 +88,9 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       status: 'ok',
     };
     setCloudConnection(meta);
+    invoke('set_connection_meta', {
+      meta: { connectionType: 'cloud', baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+    }).catch((err) => console.error('Failed to persist cloud connection meta:', err));
     setTestPassed(true);
   }
 

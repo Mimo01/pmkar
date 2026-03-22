@@ -6,7 +6,7 @@ use crate::audit::{AuditDb, AuditEntry, build_audited_client};
 use crate::keychain;
 use crate::fixtures::SharedFixtures;
 use crate::mock_server;
-use crate::triage_db::{TriageDb, FetchConfig};
+use crate::triage_db::{TriageDb, FetchConfig, ConnectionMeta};
 use base64::Engine as _;
 
 // --- Credential commands ---
@@ -595,4 +595,27 @@ pub fn set_fetch_config(
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
     db.set_fetch_config(&config)
+}
+
+// --- Connection meta commands ---
+
+#[tauri::command]
+pub fn set_connection_meta(
+    meta: ConnectionMeta,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<(), AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.set_connection_meta(&meta)
+}
+
+#[tauri::command]
+pub fn get_all_connection_meta(
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<ConnectionMeta>, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.get_all_connection_meta()
 }

@@ -65,6 +65,8 @@ fn main() {
             commands::set_triage_state,
             commands::get_fetch_config,
             commands::set_fetch_config,
+            commands::set_connection_meta,
+            commands::get_all_connection_meta,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

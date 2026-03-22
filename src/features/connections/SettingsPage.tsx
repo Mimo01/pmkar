@@ -20,11 +20,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
   const watchedUsers = useTicketStore((s) => s.watchedUsers);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [watchedUsersText, setWatchedUsersText] = useState(watchedUsers.join('\n'));
+  const safeWatchedUsers = Array.isArray(watchedUsers) ? watchedUsers : [];
+  const [watchedUsersText, setWatchedUsersText] = useState(safeWatchedUsers.join('\n'));
 
   // Sync watchedUsersText when store changes
   useEffect(() => {
-    setWatchedUsersText(watchedUsers.join('\n'));
+    const safe = Array.isArray(watchedUsers) ? watchedUsers : [];
+    setWatchedUsersText(safe.join('\n'));
   }, [watchedUsers]);
 
   function handlePresetChange(preset: JqlPreset) {

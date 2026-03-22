@@ -95,9 +95,9 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   hydrateFetchConfig: (config) =>
     set({
-      jqlPreset: config.jqlPreset,
-      jqlCustom: config.jqlCustom,
-      watchedUsers: config.watchedUsers,
-      lastFetchedAt: config.lastFetchedAt,
+      jqlPreset: config.jqlPreset ?? 'assigned',
+      jqlCustom: config.jqlCustom ?? null,
+      watchedUsers: Array.isArray(config.watchedUsers) ? config.watchedUsers : [],
+      lastFetchedAt: config.lastFetchedAt ?? null,
     }),
 }));

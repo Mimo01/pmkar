@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App';
 import { useConnectionStore } from './features/connections/connectionStore';
@@ -16,6 +16,7 @@ vi.mock('@tauri-apps/api/core', () => ({
         watchedUsers: [],
         lastFetchedAt: null,
       });
+    if (cmd === 'get_all_connection_meta') return Promise.resolve([]);
     return Promise.resolve(null);
   }),
 }));
@@ -47,22 +48,29 @@ describe('App', () => {
     });
   });
 
-  it('renders app name in header when setup is complete', () => {
+  it('renders app name in header when setup is complete', async () => {
     setupConnections();
     render(<App />);
-    expect(screen.getByText('pmkar')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('pmkar')).toBeInTheDocument();
+    });
   });
 
-  it('renders Fetch Tickets button when setup is complete', () => {
+  it('renders Fetch Tickets button when setup is complete', async () => {
     setupConnections();
     render(<App />);
-    expect(screen.getByText('Fetch Tickets')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Fetch Tickets')).toBeInTheDocument();
+    });
     expect(screen.getByText('Not yet fetched')).toBeInTheDocument();
   });
 
-  it('renders error boundary fallback text', () => {
+  it('renders error boundary fallback text', async () => {
     setupConnections();
     render(<App />);
+    await waitFor(() => {
+      expect(screen.getByText('pmkar')).toBeInTheDocument();
+    });
     expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
   });
 });
