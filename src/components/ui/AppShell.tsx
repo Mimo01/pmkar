@@ -28,8 +28,9 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
-      <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface">
-        <span className="text-[13px] font-semibold text-brand-text tracking-tight">
+      {/* Dark header bar — inverted from content */}
+      <header className="relative flex items-center justify-between px-5 py-2.5 bg-[#231f20]">
+        <span className="text-[13px] font-semibold tracking-tight text-white">
           <span className="text-brand">pm</span>kar
         </span>
 
@@ -38,7 +39,7 @@ export function AppShell({ children, onGearClick }: AppShellProps) {
             type="button"
             onClick={onGearClick}
             aria-label="Settings"
-            className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
+            className="flex items-center justify-center w-7 h-7 text-[#8c8c92] hover:text-white rounded transition-all duration-200"
           >
             <GearIcon />
           </button>

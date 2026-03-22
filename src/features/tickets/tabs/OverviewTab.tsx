@@ -10,7 +10,7 @@ function FieldItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs font-semibold text-brand-muted mb-1">{label}</div>
-      <div className="text-sm text-slate-300">{value}</div>
+      <div className="text-sm text-brand-text-secondary">{value}</div>
     </div>
   );
 }
@@ -77,7 +77,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
               <span className="text-xs font-semibold text-brand-text-secondary">
                 {subtask.key}
               </span>
-              <span className="text-sm text-slate-300">
+              <span className="text-sm text-brand-text-secondary">
                 {subtask.fields.summary}
               </span>
               <span className="text-xs text-brand-muted">
@@ -111,7 +111,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
                 <span className="text-xs font-semibold text-brand-text-secondary">
                   {linkedIssue.key}
                 </span>
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-brand-text-secondary">
                   {linkedIssue.fields.summary}
                 </span>
                 <span className="text-xs text-brand-muted">

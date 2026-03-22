@@ -7,7 +7,7 @@ interface ConnectionCardProps {
 }
 
 function getStatusDotClass(connection: ConnectionMeta | null): string {
-  if (connection === null) return 'bg-slate-600';
+  if (connection === null) return 'bg-brand-muted';
   switch (connection.status) {
     case 'ok':
       return 'bg-emerald-400';
@@ -15,7 +15,7 @@ function getStatusDotClass(connection: ConnectionMeta | null): string {
       return 'bg-red-400';
     case 'unconfigured':
     default:
-      return 'bg-slate-600';
+      return 'bg-brand-muted';
   }
 }
 
@@ -52,7 +52,7 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
-            <span className="text-sm font-medium text-slate-200">
+            <span className="text-sm font-medium text-brand-text">
               {label}
             </span>
           </div>

@@ -197,7 +197,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className="text-lg font-semibold tracking-tight text-slate-200">Settings</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-brand-text">Settings</h1>
       </div>
 
       {hasNoConnections ? (
@@ -217,7 +217,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {editingConnection === 'server' ? (
               <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-slate-200">Edit Source Connection</span>
+                  <span className="text-sm font-semibold text-brand-text">Edit Source Connection</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
@@ -243,7 +243,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {editingConnection === 'cloud' ? (
               <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-slate-200">Edit Destination Connection</span>
+                  <span className="text-sm font-semibold text-brand-text">Edit Destination Connection</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
@@ -294,7 +294,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                   </span>
                   <div className="flex-1 min-w-0">
                     <span className={`text-sm block ${
-                      jqlPreset === opt.value ? 'text-slate-200 font-semibold' : 'text-brand-text-secondary'
+                      jqlPreset === opt.value ? 'text-brand-text font-semibold' : 'text-brand-text-secondary'
                     }`}>{opt.label}</span>
                     <span className="text-xs text-brand-muted block truncate font-mono">{opt.jql}</span>
                   </div>
@@ -307,7 +307,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 <textarea
                   value={jqlCustom ?? ''}
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
-                  className="w-full rounded-lg border border-brand-border bg-brand-surface text-slate-100 px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
+                  className="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
                   placeholder="assignee = currentUser() ORDER BY updated DESC"
                   autoFocus
                 />
@@ -352,7 +352,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     onKeyDown={handleKeyDown}
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    className="flex-1 bg-transparent text-sm text-slate-200 placeholder-brand-muted focus:outline-none"
+                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-muted focus:outline-none"
                     placeholder="Search Jira users..."
                   />
                 </div>
@@ -380,7 +380,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                           {user.displayName.charAt(0).toUpperCase()}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <span className="text-sm text-slate-200 block">{user.displayName}</span>
+                          <span className="text-sm text-brand-text block">{user.displayName}</span>
                           <span className="text-xs text-brand-muted block">{user.name}</span>
                         </div>
                       </button>
@@ -406,7 +406,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                       <span className="w-6 h-6 rounded-full bg-brand-surface-hover flex items-center justify-center text-xs font-semibold text-brand-text-secondary">
                         {user.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-sm text-slate-300">{user}</span>
+                      <span className="text-sm text-brand-text-secondary">{user}</span>
                     </div>
                     <button
                       type="button"

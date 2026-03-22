@@ -182,10 +182,10 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                   <td className="w-24 px-4 py-3 text-xs font-semibold text-brand-text-secondary">
                     {ticket.key}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-200 truncate">
+                  <td className="px-4 py-3 text-sm text-brand-text truncate">
                     {ticket.fields.summary}
                   </td>
-                  <td className="w-24 px-4 py-3 text-xs text-slate-300">
+                  <td className="w-24 px-4 py-3 text-xs text-brand-text-secondary">
                     {ticket.fields.status.name}
                   </td>
                   <td className="w-18 px-4 py-3 text-xs text-brand-text-secondary">

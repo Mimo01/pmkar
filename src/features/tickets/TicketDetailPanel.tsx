@@ -140,14 +140,14 @@ export function TicketDetailPanel({
             <div className="text-xs font-semibold text-brand-muted mb-1">
               {detail.key}
             </div>
-            <div className="text-xl font-semibold text-slate-100 leading-tight line-clamp-2">
+            <div className="text-xl font-semibold text-brand-text leading-tight line-clamp-2">
               {detail.fields.summary}
             </div>
             <div className="flex gap-2 mt-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-slate-300">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-brand-text-secondary">
                 {detail.fields.status.name}
               </span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-slate-300">
+              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-brand-text-secondary">
                 {detail.fields.priority.name}
               </span>
             </div>
@@ -170,7 +170,7 @@ export function TicketDetailPanel({
               onClick={() => setActiveTab(tab.id)}
               className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 ${
                 activeTab === tab.id
-                  ? 'text-slate-200 font-semibold border-brand'
+                  ? 'text-brand-text font-semibold border-brand'
                   : 'font-normal text-brand-muted hover:text-brand-text border-transparent'
               }`}
             >

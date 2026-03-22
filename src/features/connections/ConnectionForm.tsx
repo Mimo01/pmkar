@@ -214,7 +214,7 @@ export function ConnectionForm({
 
   const inputClass = [
     'w-full rounded-lg border border-brand-border bg-brand-surface',
-    'text-slate-100 placeholder-brand-muted',
+    'text-brand-text placeholder-brand-muted',
     'px-3 py-2.5 text-sm',
     'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
     'transition-all duration-200',
@@ -227,7 +227,7 @@ export function ConnectionForm({
       <div className="space-y-2">
         <label
           htmlFor="base-url"
-          className="text-sm font-medium text-slate-300"
+          className="text-sm font-medium text-brand-text-secondary"
         >
           Base URL
         </label>
@@ -264,7 +264,7 @@ export function ConnectionForm({
           <div className="space-y-2">
             <label
               htmlFor="email"
-              className="text-sm font-medium text-slate-300"
+              className="text-sm font-medium text-brand-text-secondary"
             >
               Email
             </label>

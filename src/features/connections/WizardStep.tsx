@@ -10,7 +10,7 @@ export function WizardStep({ title, subtitle, children }: WizardStepProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-100">
+        <h1 className="text-xl font-semibold tracking-tight text-brand-text">
           {title}
         </h1>
         {subtitle && (

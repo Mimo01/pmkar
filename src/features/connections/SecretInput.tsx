@@ -34,7 +34,7 @@ export function SecretInput({
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="text-sm font-medium text-slate-300"
+          className="text-sm font-medium text-brand-text-secondary"
         >
           {label}
         </label>
@@ -55,7 +55,7 @@ export function SecretInput({
           disabled={disabled}
           className={[
             'w-full rounded-lg border border-brand-border bg-brand-surface',
-            'text-slate-100 placeholder-brand-muted',
+            'text-brand-text placeholder-brand-muted',
             'px-3 py-2.5 pr-11 text-sm',
             'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
             'transition-all duration-200',

@@ -50,7 +50,7 @@ export function DescriptionRenderer({
     return (
       <div
         ref={containerRef}
-        className="text-sm text-slate-300 leading-relaxed [&_h1]:text-slate-200 [&_h1]:font-semibold [&_h1]:text-lg [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-slate-200 [&_h2]:font-semibold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-1 [&_a]:text-blue-400 [&_a]:hover:underline [&_code]:bg-brand-surface-hover [&_code]:px-1 [&_code]:py-1 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_code]:text-emerald-300 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-border [&_blockquote]:pl-3 [&_blockquote]:text-brand-text-secondary [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+        className="text-sm text-brand-text-secondary leading-relaxed [&_h1]:text-brand-text [&_h1]:font-semibold [&_h1]:text-lg [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-brand-text [&_h2]:font-semibold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-1 [&_a]:text-blue-400 [&_a]:hover:underline [&_code]:bg-brand-surface-hover [&_code]:px-1 [&_code]:py-1 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_code]:text-emerald-300 [&_blockquote]:border-l-2 [&_blockquote]:border-brand-border [&_blockquote]:pl-3 [&_blockquote]:text-brand-text-secondary [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
         dangerouslySetInnerHTML={{ __html: renderedHtml }}
       />
     );
@@ -59,7 +59,7 @@ export function DescriptionRenderer({
   // Plain text string description
   if (typeof description === 'string' && description.trim().length > 0) {
     return (
-      <pre className="text-sm text-slate-300 whitespace-pre-wrap">
+      <pre className="text-sm text-brand-text-secondary whitespace-pre-wrap">
         {description}
       </pre>
     );

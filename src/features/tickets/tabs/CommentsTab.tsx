@@ -33,14 +33,14 @@ export function CommentsTab({ comments }: CommentsTabProps) {
       {comments.map((comment) => (
         <div key={comment.id} className="py-3">
           <div className="flex items-center gap-2 pb-1">
-            <span className="text-xs font-semibold text-slate-300">
+            <span className="text-xs font-semibold text-brand-text-secondary">
               {comment.author.displayName}
             </span>
             <span className="text-xs text-brand-muted">
               {formatRelativeTime(comment.created)}
             </span>
           </div>
-          <div className="text-sm text-slate-300 pb-3">
+          <div className="text-sm text-brand-text-secondary pb-3">
             {typeof comment.body === 'string' ? (
               <span className="whitespace-pre-wrap">{comment.body}</span>
             ) : (

@@ -32,7 +32,7 @@ function ConnectionSummaryCard({ label, connection }: ConnectionSummaryCardProps
     <div className="flex items-center gap-3 rounded-lg border border-brand-border bg-brand-surface p-4">
       <CheckIcon />
       <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-200">
+        <p className="text-sm font-medium text-brand-text">
           {label}
         </p>
         <p className="text-xs text-brand-muted truncate">

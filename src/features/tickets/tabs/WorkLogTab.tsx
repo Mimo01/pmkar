@@ -84,7 +84,7 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
       {worklogs.map((entry) => (
         <div key={entry.id} className="py-3">
           <div className="flex items-center gap-2 pb-1">
-            <span className="text-xs font-semibold text-slate-300">
+            <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.author.displayName}
             </span>
             <span className="text-xs text-brand-muted">
@@ -95,7 +95,7 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
             </span>
           </div>
           {entry.comment && (
-            <div className="text-sm text-slate-300 pb-1">{entry.comment}</div>
+            <div className="text-sm text-brand-text-secondary pb-1">{entry.comment}</div>
           )}
         </div>
       ))}

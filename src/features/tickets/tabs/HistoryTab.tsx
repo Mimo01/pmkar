@@ -84,7 +84,7 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
       {histories.map((entry) => (
         <div key={entry.id} className="py-3">
           <div className="flex items-center gap-2 pb-1">
-            <span className="text-xs font-semibold text-slate-300">
+            <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.author.displayName}
             </span>
             <span className="text-xs text-brand-muted">
@@ -101,7 +101,7 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
                 )}
                 {item.fromString && ' \u2192 '}
                 {item.toString && (
-                  <span className="text-slate-300">{item.toString}</span>
+                  <span className="text-brand-text-secondary">{item.toString}</span>
                 )}
               </div>
             ))}

@@ -4,33 +4,32 @@
   --color-brand: #c02232;
   --color-brand-light: #d4354a;
   --color-brand-dark: #a01c2a;
-  --color-brand-bg: #161617;
-  --color-brand-surface: #1e1e20;
-  --color-brand-surface-hover: #28282a;
-  --color-brand-surface-raised: #1a1a1c;
-  --color-brand-border: #2e2e30;
-  --color-brand-border-subtle: #252527;
-  --color-brand-muted: #6b6b6f;
-  --color-brand-text: #e4e4e6;
-  --color-brand-text-secondary: #95959a;
+  --color-brand-bg: #f7f7f8;
+  --color-brand-surface: #ffffff;
+  --color-brand-surface-hover: #f0f0f2;
+  --color-brand-surface-raised: #eaeaec;
+  --color-brand-border: #e0e0e3;
+  --color-brand-border-subtle: #ebebed;
+  --color-brand-muted: #8c8c92;
+  --color-brand-text: #231f20;
+  --color-brand-text-secondary: #5c585a;
 }
 
 body {
-  background-color: #161617;
-  color: #e4e4e6;
+  background-color: #f7f7f8;
+  color: #231f20;
 }
 
-/* Scrollbar styling to match brand */
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #161617;
+  background: #f7f7f8;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2e2e30;
+  background: #d0d0d4;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3e3e42;
+  background: #b0b0b6;
 }
