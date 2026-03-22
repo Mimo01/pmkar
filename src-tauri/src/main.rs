@@ -68,6 +68,8 @@ fn main() {
             commands::search_jira_users,
             commands::set_connection_meta,
             commands::get_all_connection_meta,
+            commands::fetch_cloud_meta,
+            commands::copy_ticket,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

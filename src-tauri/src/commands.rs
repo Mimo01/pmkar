@@ -864,3 +864,399 @@ pub fn get_all_connection_meta(
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
     db.get_all_connection_meta()
 }
+
+// --- Copy ticket command ---
+
+/// Replace old image URLs in HTML with new Cloud attachment URLs.
+/// Used in the two-pass copy pipeline (D-03) before HTML→ADF conversion.
+fn rewrite_image_urls(html: &str, url_map: &HashMap<String, String>) -> String {
+    let mut result = html.to_string();
+    for (old_url, new_url) in url_map {
+        result = result.replace(old_url.as_str(), new_url.as_str());
+    }
+    result
+}
+
+/// Extract (src_url, filename) pairs for all `<img` tags in HTML.
+/// Uses simple string parsing — no regex dependency needed.
+fn extract_image_urls(html: &str) -> Vec<(String, String)> {
+    let mut results = Vec::new();
+    let mut remaining = html;
+    while let Some(img_start) = remaining.find("<img") {
+        let after_img = &remaining[img_start..];
+        // Find end of tag
+        let tag_end = after_img.find('>').unwrap_or(after_img.len());
+        let tag = &after_img[..tag_end];
+        // Find src="..." within the tag
+        if let Some(src_pos) = tag.find("src=\"") {
+            let after_src = &tag[src_pos + 5..];
+            if let Some(quote_end) = after_src.find('"') {
+                let url = &after_src[..quote_end];
+                if url.starts_with("http://") || url.starts_with("https://") {
+                    // Extract filename from URL path
+                    let filename = url
+                        .split('/')
+                        .last()
+                        .and_then(|f| f.split('?').next())
+                        .unwrap_or("image.png")
+                        .to_string();
+                    results.push((url.to_string(), filename));
+                }
+            }
+        }
+        remaining = &remaining[img_start + 4..];
+    }
+    results
+}
+
+#[tauri::command]
+pub async fn copy_ticket(
+    source_key: String,
+    source_base_url: String,
+    target_base_url: String,
+    target_summary: String,
+    target_status: String,       // informational only — status transitions not supported at creation
+    target_priority_id: String,
+    target_labels: Vec<String>,
+    current_account_id: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<CopyTicketResult, AppError> {
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let mut steps: Vec<CopyStepResult> = Vec::new();
+
+    let trimmed_source = source_base_url.trim_end_matches('/');
+    let trimmed_target = target_base_url.trim_end_matches('/');
+
+    // Get Cloud credentials for target API calls
+    let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD.encode(
+            format!("{}:{}", cloud_email, cloud_api_token)
+        )
+    );
+
+    // Get Server PAT for source API calls
+    let server_pat = get_server_pat(triage_db.inner())?;
+
+    // Step 1: Fetch source issue with renderedFields
+    let source_url = format!(
+        "{}/rest/api/2/issue/{}?expand=renderedFields&fields=*all",
+        trimmed_source, source_key
+    );
+    let source_resp = client
+        .get(&source_url)
+        .header("Authorization", format!("Bearer {}", server_pat))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch source issue".into()))?;
+
+    if !source_resp.status().is_success() {
+        return Ok(CopyTicketResult {
+            target_key: None,
+            target_url: None,
+            steps: vec![CopyStepResult {
+                step: "fetch_source".to_string(),
+                success: false,
+                detail: Some(format!(
+                    "Source issue fetch returned status {}",
+                    source_resp.status().as_u16()
+                )),
+            }],
+        });
+    }
+
+    let source_body: serde_json::Value = source_resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse source issue response".into()))?;
+
+    steps.push(CopyStepResult {
+        step: "fetch_source".to_string(),
+        success: true,
+        detail: None,
+    });
+
+    // Step 2: Extract rendered HTML description and summary
+    let html_description = source_body["renderedFields"]["description"]
+        .as_str()
+        .unwrap_or("")
+        .to_string();
+    let source_summary = source_body["fields"]["summary"]
+        .as_str()
+        .unwrap_or(&source_key)
+        .to_string();
+
+    // Step 3: Collect inline image URLs from HTML
+    let image_pairs = extract_image_urls(&html_description);
+
+    // Step 4: Create issue in Cloud with placeholder description (two-pass approach per D-03)
+    let create_body = serde_json::json!({
+        "fields": {
+            "project": { "key": "MYPROJ" },
+            "issuetype": { "name": "Task" },
+            "summary": target_summary,
+            "priority": { "id": target_priority_id },
+            "labels": target_labels,
+            "assignee": { "accountId": current_account_id }
+        }
+    });
+
+    // target_status is captured for informational purposes (used in preview UI per D-07)
+    // Status transitions are not supported at Cloud issue creation; user intent is recorded
+    let _ = &target_status;
+
+    let create_body_str = serde_json::to_string(&create_body)
+        .map_err(|e| AppError::Serialization(format!("Failed to serialize create body: {}", e)))?;
+    let create_resp = client
+        .post(format!("{}/rest/api/3/issue", trimmed_target))
+        .header("Authorization", &cloud_auth)
+        .header("Content-Type", "application/json")
+        .body(create_body_str)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to create issue in Cloud Jira".into()))?;
+
+    if !create_resp.status().is_success() {
+        let status = create_resp.status().as_u16();
+        steps.push(CopyStepResult {
+            step: "create_issue".to_string(),
+            success: false,
+            detail: Some(format!("Cloud issue creation returned status {}", status)),
+        });
+        return Ok(CopyTicketResult {
+            target_key: None,
+            target_url: None,
+            steps,
+        });
+    }
+
+    let create_resp_text = create_resp
+        .text()
+        .await
+        .map_err(|_| AppError::Http("Failed to read create issue response".into()))?;
+    let create_resp_body: serde_json::Value = serde_json::from_str(&create_resp_text)
+        .map_err(|_| AppError::Http("Failed to parse create issue response".into()))?;
+    let target_key = create_resp_body["key"]
+        .as_str()
+        .unwrap_or("UNKNOWN")
+        .to_string();
+
+    steps.push(CopyStepResult {
+        step: "create_issue".to_string(),
+        success: true,
+        detail: Some(target_key.clone()),
+    });
+
+    // Step 5: Upload inline images and build URL map (per D-03)
+    let mut url_map: HashMap<String, String> = HashMap::new();
+
+    for (old_url, filename) in &image_pairs {
+        // Download image bytes from source Jira using Server PAT
+        let img_resp = client
+            .get(old_url)
+            .header("Authorization", format!("Bearer {}", server_pat))
+            .send()
+            .await;
+
+        match img_resp {
+            Ok(resp) if resp.status().is_success() => {
+                let content_type = resp
+                    .headers()
+                    .get("content-type")
+                    .and_then(|v| v.to_str().ok())
+                    .unwrap_or("image/png")
+                    .to_string();
+
+                match resp.bytes().await {
+                    Ok(img_bytes) => {
+                        // Upload to target ticket using plain reqwest::Client
+                        // (reqwest_middleware doesn't support multipart)
+                        let plain_client = reqwest::Client::new();
+                        let part = reqwest::multipart::Part::bytes(img_bytes.to_vec())
+                            .file_name(filename.clone())
+                            .mime_str(&content_type)
+                            .unwrap_or_else(|_| {
+                                reqwest::multipart::Part::bytes(img_bytes.to_vec())
+                                    .file_name(filename.clone())
+                            });
+                        let form = reqwest::multipart::Form::new().part("file", part);
+
+                        let upload_resp = plain_client
+                            .post(format!(
+                                "{}/rest/api/3/issue/{}/attachments",
+                                trimmed_target, target_key
+                            ))
+                            .header("Authorization", &cloud_auth)
+                            .header("X-Atlassian-Token", "no-check")
+                            .multipart(form)
+                            .send()
+                            .await;
+
+                        match upload_resp {
+                            Ok(up_resp) if up_resp.status().is_success() => {
+                                let up_body: serde_json::Value =
+                                    up_resp.json().await.unwrap_or_default();
+                                // Response is a JSON array; first element has `content` field
+                                let new_url = up_body
+                                    .as_array()
+                                    .and_then(|arr| arr.first())
+                                    .and_then(|el| el["content"].as_str())
+                                    .unwrap_or("")
+                                    .to_string();
+                                if !new_url.is_empty() {
+                                    url_map.insert(old_url.clone(), new_url.clone());
+                                }
+                                steps.push(CopyStepResult {
+                                    step: format!("upload_image:{}", filename),
+                                    success: true,
+                                    detail: Some(new_url),
+                                });
+                            }
+                            Ok(up_resp) => {
+                                let up_status = up_resp.status().as_u16();
+                                steps.push(CopyStepResult {
+                                    step: format!("upload_image:{}", filename),
+                                    success: false,
+                                    detail: Some(format!(
+                                        "Upload returned status {}",
+                                        up_status
+                                    )),
+                                });
+                            }
+                            Err(_) => {
+                                steps.push(CopyStepResult {
+                                    step: format!("upload_image:{}", filename),
+                                    success: false,
+                                    detail: Some("Network error during upload".to_string()),
+                                });
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        steps.push(CopyStepResult {
+                            step: format!("upload_image:{}", filename),
+                            success: false,
+                            detail: Some("Failed to read image bytes".to_string()),
+                        });
+                    }
+                }
+            }
+            _ => {
+                steps.push(CopyStepResult {
+                    step: format!("upload_image:{}", filename),
+                    success: false,
+                    detail: Some("Failed to download source image".to_string()),
+                });
+            }
+        }
+    }
+
+    // Step 6: Rewrite HTML image URLs with Cloud attachment URLs, convert to ADF (per D-03)
+    let rewritten_html = rewrite_image_urls(&html_description, &url_map);
+    let adf_str = htmltoadf::convert_html_str_to_adf_str(rewritten_html);
+    let adf_value: serde_json::Value = serde_json::from_str(&adf_str).map_err(|e| {
+        AppError::Serialization(format!("Failed to parse ADF JSON: {}", e))
+    })?;
+
+    steps.push(CopyStepResult {
+        step: "convert_description".to_string(),
+        success: true,
+        detail: None,
+    });
+
+    // Step 7: Update issue description with rewritten ADF (two-pass: PUT after image uploads)
+    let update_body = serde_json::json!({
+        "fields": {
+            "description": adf_value
+        }
+    });
+    let update_body_str = serde_json::to_string(&update_body)
+        .map_err(|e| AppError::Serialization(format!("Failed to serialize update body: {}", e)))?;
+
+    let update_resp = client
+        .put(format!("{}/rest/api/3/issue/{}", trimmed_target, target_key))
+        .header("Authorization", &cloud_auth)
+        .header("Content-Type", "application/json")
+        .body(update_body_str)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to update issue description in Cloud Jira".into()))?;
+
+    let update_status = update_resp.status().as_u16();
+    let update_success = update_resp.status().is_success();
+    steps.push(CopyStepResult {
+        step: "update_description".to_string(),
+        success: update_success,
+        detail: if update_success {
+            None
+        } else {
+            Some(format!(
+                "Description update returned status {}",
+                update_status
+            ))
+        },
+    });
+
+    // Step 8: Add remote link back to source ticket (origin tracking, D-15)
+    let encoded_source_url = urlencoding::encode(trimmed_source).to_string();
+    let remote_link_body = serde_json::json!({
+        "globalId": format!("pmkar-source={}&key={}", encoded_source_url, source_key),
+        "object": {
+            "url": format!("{}/browse/{}", trimmed_source, source_key),
+            "title": format!("{}: {}", source_key, source_summary)
+        },
+        "relationship": "copied from"
+    });
+    let remote_link_body_str = serde_json::to_string(&remote_link_body)
+        .map_err(|e| AppError::Serialization(format!("Failed to serialize remotelink body: {}", e)))?;
+
+    let remotelink_resp = client
+        .post(format!(
+            "{}/rest/api/3/issue/{}/remotelink",
+            trimmed_target, target_key
+        ))
+        .header("Authorization", &cloud_auth)
+        .header("Content-Type", "application/json")
+        .body(remote_link_body_str)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to create remote link in Cloud Jira".into()))?;
+
+    let remotelink_status = remotelink_resp.status().as_u16();
+    let remotelink_success = remotelink_status < 300;
+    steps.push(CopyStepResult {
+        step: "add_remotelink".to_string(),
+        success: remotelink_success,
+        detail: if remotelink_success {
+            None
+        } else {
+            Some(format!(
+                "Remote link creation returned status {}",
+                remotelink_status
+            ))
+        },
+    });
+
+    // Step 9: Update triage state to copied
+    {
+        let db = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        db.set_triage_copied(&source_key, &target_key)?;
+    }
+
+    steps.push(CopyStepResult {
+        step: "update_triage".to_string(),
+        success: true,
+        detail: Some(target_key.clone()),
+    });
+
+    Ok(CopyTicketResult {
+        target_key: Some(target_key.clone()),
+        target_url: Some(format!("{}/browse/{}", trimmed_target, target_key)),
+        steps,
+    })
+}
