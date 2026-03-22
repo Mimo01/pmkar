@@ -1,0 +1,104 @@
+import { useState, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import type { JiraWorklog } from '../types';
+
+interface WorkLogTabProps {
+  issueKey: string;
+  baseUrl: string;
+}
+
+function formatDate(isoTimestamp: string): string {
+  const date = new Date(isoTimestamp);
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
+  const [worklogs, setWorklogs] = useState<JiraWorklog[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchWorklogs() {
+      try {
+        const result = await invoke<{ worklogs: JiraWorklog[] }>(
+          'fetch_worklog',
+          { baseUrl, issueKey },
+        );
+        if (!cancelled) {
+          setWorklogs(result.worklogs);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to load work log',
+          );
+        }
+      }
+    }
+
+    fetchWorklogs();
+    return () => {
+      cancelled = true;
+    };
+  }, [issueKey, baseUrl]);
+
+  // Loading state
+  if (worklogs === null && error === null) {
+    return (
+      <div className="px-5 py-4" aria-busy="true" aria-live="polite">
+        <p className="text-xs text-slate-500 mb-3">Loading work log...</p>
+        <div className="space-y-2" aria-hidden="true">
+          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
+          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
+          <div className="animate-pulse bg-slate-800/60 rounded h-3" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="px-5 py-4">
+        <p className="text-xs text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (!worklogs || worklogs.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-xs text-slate-500">No work log entries</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-800/40 px-5">
+      {worklogs.map((entry) => (
+        <div key={entry.id} className="py-3">
+          <div className="flex items-center gap-2 pb-1">
+            <span className="text-xs font-semibold text-slate-300">
+              {entry.author.displayName}
+            </span>
+            <span className="text-xs text-slate-500">
+              {formatDate(entry.started)}
+            </span>
+            <span className="text-xs font-semibold text-slate-400">
+              {entry.timeSpent}
+            </span>
+          </div>
+          {entry.comment && (
+            <div className="text-sm text-slate-300 pb-1">{entry.comment}</div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

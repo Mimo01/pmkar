@@ -1,0 +1,45 @@
+import type { JiraAttachment } from '../types';
+
+interface AttachmentsTabProps {
+  attachments: JiraAttachment[];
+}
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  return `${mb.toFixed(1)} MB`;
+}
+
+export function AttachmentsTab({ attachments }: AttachmentsTabProps) {
+  if (attachments.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <p className="text-xs text-slate-500">No attachments</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-800/40 px-5">
+      {attachments.map((attachment) => (
+        <div key={attachment.id} className="flex items-center gap-3 py-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm text-slate-300 truncate">
+              {attachment.filename}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">
+                {formatSize(attachment.size)}
+              </span>
+              <span className="text-xs text-slate-600">
+                {attachment.mimeType}
+              </span>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
