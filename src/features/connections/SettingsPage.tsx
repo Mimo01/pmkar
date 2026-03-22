@@ -4,6 +4,7 @@ import { useConnectionStore } from './connectionStore';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useTicketStore } from '../tickets/ticketStore';
+import { useThemeStore, type ThemeMode } from '../theme/themeStore';
 import type { ConnectionType, ConnectionMeta, ConnectionTestResult } from './types';
 import type { JqlPreset, FetchConfig } from '../tickets/types';
 
@@ -211,6 +212,9 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Appearance Section */}
+          <ThemeSection />
+
           {/* Connections Section */}
           <section>
             <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Connections</h2>
@@ -427,5 +431,63 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
         </div>
       )}
     </div>
+  );
+}
+
+const THEME_OPTIONS: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
+  {
+    value: 'light',
+    label: 'Light',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+      </svg>
+    ),
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      </svg>
+    ),
+  },
+  {
+    value: 'system',
+    label: 'System',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+    ),
+  },
+];
+
+function ThemeSection() {
+  const mode = useThemeStore((s) => s.mode);
+  const setMode = useThemeStore((s) => s.setMode);
+
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Appearance</h2>
+      <div className="flex gap-2">
+        {THEME_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setMode(opt.value)}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+              mode === opt.value
+                ? 'border-brand bg-brand/8 text-brand-text font-semibold'
+                : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+            }`}
+          >
+            <span className={mode === opt.value ? 'text-brand' : ''}>{opt.icon}</span>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

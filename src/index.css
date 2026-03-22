@@ -4,6 +4,8 @@
   --color-brand: #c02232;
   --color-brand-light: #d4354a;
   --color-brand-dark: #a01c2a;
+
+  /* Light theme (default) */
   --color-brand-bg: #f7f7f8;
   --color-brand-surface: #ffffff;
   --color-brand-surface-hover: #f0f0f2;
@@ -15,21 +17,38 @@
   --color-brand-text-secondary: #5c585a;
 }
 
+/* Light theme body defaults */
 body {
   background-color: #f7f7f8;
   color: #231f20;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Dark theme overrides */
+body.dark {
+  --color-brand-bg: #161617;
+  --color-brand-surface: #1e1e20;
+  --color-brand-surface-hover: #28282a;
+  --color-brand-surface-raised: #1a1a1c;
+  --color-brand-border: #2e2e30;
+  --color-brand-border-subtle: #252527;
+  --color-brand-muted: #6b6b6f;
+  --color-brand-text: #e4e4e6;
+  --color-brand-text-secondary: #95959a;
+  background-color: #161617;
+  color: #e4e4e6;
 }
 
 ::-webkit-scrollbar {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f7f7f8;
+  background: var(--color-brand-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #d0d0d4;
+  background: var(--color-brand-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b0b0b6;
+  background: var(--color-brand-muted);
 }

@@ -6,6 +6,7 @@ import { TicketListPage } from './features/tickets/TicketListPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { useConnectionStore } from './features/connections/connectionStore';
+import { useApplyTheme } from './features/theme/useApplyTheme';
 import type { ConnectionType, ConnectionMeta } from './features/connections/types';
 
 interface StoredConnectionMeta {
@@ -20,6 +21,7 @@ interface StoredConnectionMeta {
 function App() {
   const hasSetup = useConnectionStore((s) => s.hasCompletedSetup());
   const [hydrated, setHydrated] = useState(false);
+  useApplyTheme();
 
   useEffect(() => {
     invoke<StoredConnectionMeta[]>('get_all_connection_meta')

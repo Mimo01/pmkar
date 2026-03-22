@@ -111,9 +111,8 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-brand-bg">
-      {/* Dark top bar with brand accent */}
+      {/* Top bar with brand accent */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="h-10 bg-[#231f20]" />
         <div className="h-[2px] bg-gradient-to-r from-brand via-brand/60 to-transparent" />
       </div>
 

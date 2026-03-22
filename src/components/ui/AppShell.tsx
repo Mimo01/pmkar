@@ -28,22 +28,24 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
-      {/* Dark header bar — inverted from content */}
-      <header className="relative flex items-center justify-between px-5 py-2.5 bg-[#231f20]">
-        <span className="text-[13px] font-semibold tracking-tight text-white">
+      <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface border-b border-brand-border">
+        <span className="text-[13px] font-semibold tracking-tight text-brand-text">
           <span className="text-brand">pm</span>kar
         </span>
 
-        {onGearClick && (
-          <button
-            type="button"
-            onClick={onGearClick}
-            aria-label="Settings"
-            className="flex items-center justify-center w-7 h-7 text-[#8c8c92] hover:text-white rounded transition-all duration-200"
-          >
-            <GearIcon />
-          </button>
-        )}
+        {/* Always reserve space for gear icon to prevent height jump */}
+        <div className="w-7 h-7 flex items-center justify-center">
+          {onGearClick && (
+            <button
+              type="button"
+              onClick={onGearClick}
+              aria-label="Settings"
+              className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
+            >
+              <GearIcon />
+            </button>
+          )}
+        </div>
 
         {/* Brand accent underline */}
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand via-brand/60 to-transparent" />
