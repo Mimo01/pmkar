@@ -220,4 +220,93 @@ describe('CopyPreviewModal', () => {
     render(<CopyPreviewModal />);
     expect(screen.getByText('No labels on source ticket')).toBeInTheDocument();
   });
+
+  it('shows attachment count when source has attachments (COPY-02)', () => {
+    currentStoreState = buildStoreState({
+      sourceTicket: {
+        ...mockSourceTicket,
+        fields: {
+          ...mockSourceTicket.fields,
+          attachment: [
+            { id: '1', filename: 'screenshot.png', size: 1024, mimeType: 'image/png', content: 'http://example.com/att/1' },
+            { id: '2', filename: 'log.txt', size: 512, mimeType: 'text/plain', content: 'http://example.com/att/2' },
+          ],
+        },
+      },
+    });
+    render(<CopyPreviewModal />);
+    expect(screen.getByText('2 file(s) will be copied')).toBeInTheDocument();
+  });
+
+  it('hides attachment row when source has no attachments (COPY-02)', () => {
+    currentStoreState = buildStoreState();  // mockSourceTicket.attachment is []
+    render(<CopyPreviewModal />);
+    expect(screen.queryByText(/file\(s\) will be copied/)).not.toBeInTheDocument();
+  });
+
+  it('shows comment count when source has comments (COPY-03)', () => {
+    currentStoreState = buildStoreState({
+      sourceTicket: {
+        ...mockSourceTicket,
+        fields: {
+          ...mockSourceTicket.fields,
+          comment: {
+            comments: [
+              { id: '1', author: { displayName: 'Jane' }, body: 'First comment', created: '2026-01-01T10:00:00.000+0000' },
+              { id: '2', author: { displayName: 'John' }, body: 'Second comment', created: '2026-01-02T10:00:00.000+0000' },
+              { id: '3', author: { displayName: 'Jane' }, body: 'Third comment', created: '2026-01-03T10:00:00.000+0000' },
+            ],
+          },
+        },
+      },
+    });
+    render(<CopyPreviewModal />);
+    expect(screen.getByText('3 comment(s) will be copied')).toBeInTheDocument();
+  });
+
+  it('shows sub-task list with KEY: summary format (COPY-05)', () => {
+    currentStoreState = buildStoreState({
+      sourceTicket: {
+        ...mockSourceTicket,
+        fields: {
+          ...mockSourceTicket.fields,
+          subtasks: [
+            { key: 'CUST-101', fields: { summary: 'Fix login timeout', status: { name: 'Open' } } },
+            { key: 'CUST-102', fields: { summary: 'Add retry logic', status: { name: 'Open' } } },
+          ],
+        },
+      },
+    });
+    render(<CopyPreviewModal />);
+    expect(screen.getByText(/CUST-101: Fix login timeout/)).toBeInTheDocument();
+    expect(screen.getByText(/CUST-102: Add retry logic/)).toBeInTheDocument();
+  });
+
+  it('shows linked issues with linkType: KEY - summary format (COPY-06)', () => {
+    currentStoreState = buildStoreState({
+      sourceTicket: {
+        ...mockSourceTicket,
+        fields: {
+          ...mockSourceTicket.fields,
+          issuelinks: [
+            {
+              id: '1',
+              type: { name: 'Blocks', inward: 'is blocked by', outward: 'Blocks' },
+              outwardIssue: { key: 'CUST-200', fields: { summary: 'API rate limiting', status: { name: 'Open' } } },
+            },
+          ],
+        },
+      },
+    });
+    render(<CopyPreviewModal />);
+    expect(screen.getByText(/Blocks: CUST-200/)).toBeInTheDocument();
+    expect(screen.getByText(/API rate limiting/)).toBeInTheDocument();
+  });
+
+  it('hides sub-tasks and linked issues rows when arrays are empty (COPY-05, COPY-06)', () => {
+    currentStoreState = buildStoreState();  // mockSourceTicket has empty subtasks and issuelinks
+    render(<CopyPreviewModal />);
+    expect(screen.queryByText('Sub-tasks')).not.toBeInTheDocument();
+    expect(screen.queryByText('Linked Issues')).not.toBeInTheDocument();
+  });
 });

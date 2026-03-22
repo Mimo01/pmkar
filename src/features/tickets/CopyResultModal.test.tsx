@@ -122,4 +122,82 @@ describe('CopyResultModal', () => {
       expect(mockReset).toHaveBeenCalledOnce();
     });
   });
+
+  it('shows attachment step label with filename on success (COPY-02)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'attach:screenshot.png', success: true, detail: null },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText(/screenshot\.png/)).toBeInTheDocument();
+    expect(screen.getByText(/attached/)).toBeInTheDocument();
+  });
+
+  it('shows attachment step label with failure reason (COPY-02, D-06)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'attach:database-dump.sql', success: false, detail: '413 too large' },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText(/database-dump\.sql/)).toBeInTheDocument();
+    // detail text appears in both the stepLabel span and the detail paragraph
+    expect(screen.getAllByText(/413 too large/).length).toBeGreaterThan(0);
+  });
+
+  it('shows comment step label with number on success (COPY-03)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'comment:1', success: true, detail: null },
+          { step: 'comment:2', success: true, detail: null },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText('Comment 1 copied')).toBeInTheDocument();
+    expect(screen.getByText('Comment 2 copied')).toBeInTheDocument();
+  });
+
+  it('shows worklog step label on success (COPY-04)', () => {
+    mockStoreState({
+      result: {
+        ...allSuccessResult,
+        steps: [
+          ...allSuccessResult.steps,
+          { step: 'worklog:1', success: true, detail: null },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText('Work log entry 1 copied')).toBeInTheDocument();
+  });
+
+  it('shows partial failure title when attachment fails but create_issue succeeds (COPY-02)', () => {
+    mockStoreState({
+      result: {
+        targetKey: 'MYCO-42',
+        targetUrl: 'https://company.jira.example.com/browse/MYCO-42',
+        steps: [
+          { step: 'create_issue', success: true, detail: 'MYCO-42' },
+          { step: 'attach:big-file.zip', success: false, detail: '413 too large' },
+        ],
+      },
+    });
+    render(<CopyResultModal />);
+    expect(screen.getByText('Copy Finished with Errors')).toBeInTheDocument();
+    // Should still show Open in Company Jira since create_issue succeeded
+    expect(screen.getByText('Open in Company Jira')).toBeInTheDocument();
+  });
 });
