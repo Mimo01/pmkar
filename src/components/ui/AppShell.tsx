@@ -28,13 +28,12 @@ function GearIcon() {
 export function AppShell({ children, onGearClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text">
-      <header className="flex items-center justify-between px-5 py-0 border-b border-brand-border bg-brand-bg">
-        <div className="flex items-center gap-0">
-          {/* Brand mark — red block with app name */}
-          <div className="bg-brand px-4 py-2.5 -ml-5 mr-4">
-            <span className="text-sm font-semibold tracking-wider uppercase text-white">pmkar</span>
-          </div>
-          <span className="text-xs text-brand-muted">Jira Ticket Bridge</span>
+      <header className="flex items-center justify-between px-6 py-2.5 border-b border-brand-border bg-brand-bg">
+        <div className="flex items-center gap-3">
+          {/* Red dot brand mark */}
+          <span className="w-2.5 h-2.5 rounded-full bg-brand flex-shrink-0" />
+          <span className="text-[13px] font-semibold tracking-tight text-brand-text">pmkar</span>
+          <span className="text-[11px] text-brand-muted font-normal">Ticket Bridge</span>
         </div>
         {onGearClick && (
           <button
