@@ -89,9 +89,9 @@ System font stack throughout. No custom font loading (Tauri desktop — no web f
 | Display (page title, modal title) | 16px | 600 (semibold) | 1.2 |
 
 Notes:
-- App branding "pmkar" in header: 13px, weight 600, tracking-tight — retain existing value
-- Ticket key in card top row: 12px, weight 500 (medium), monospace-adjacent (`font-mono`) — secondary role
-- Two weights only: 400 and 600. Weight 500 is the exception for ticket keys only (monospace label context)
+- Two weights only: 400 (regular) and 600 (semibold). No weight 500 anywhere.
+- App branding "pmkar" in header: 12px, weight 600, tracking-tight — uses Label size tier
+- Ticket key in card top row: 12px, weight 400, `font-mono` — monospace family alone provides visual distinctiveness; no separate weight needed
 - Line height 1.5 for body text ensures comfortable reading density for description content
 - Heading line height 1.2 for display/modal titles is appropriate for single-line headings
 
@@ -115,8 +115,9 @@ Existing tokens in `src/index.css` are the canonical source. The redesign refine
 4. Copy button (primary action CTA) — filled background
 5. Active triage state dot (copied status indicator)
 6. Audit count badge background
+7. Focus rings (`focus-visible:ring-brand`) — keyboard navigation only, not pointer interaction
 
-Accent is NOT used for: hover states, focus rings, form borders, informational badges, general links.
+Accent is NOT used for: hover states, form borders, informational badges, general links.
 
 **Supporting semantic colors (from existing token set):**
 - Muted text: `--color-brand-muted` (`#8c8c92` light / `#6b6b6f` dark) — metadata, timestamps, placeholder
@@ -161,14 +162,25 @@ Source: CONTEXT.md phase boundary — all functionality preserved, UI text uncha
 | Copy progress — done | "Ticket copied successfully" |
 | Error state (fetch failed) | "Could not fetch tickets. Check your connection in Settings and try again." |
 | Error state (copy failed) | "Copy did not complete. Check the audit log for details." |
-| Destructive confirmation (ignore ticket) | "Ignore ticket": "Mark this ticket as 'not for me'? You can restore it from the Ignored tab at any time." — confirm button label: "Ignore" |
+| Destructive confirmation (ignore ticket) | Dialog title: "Ignore ticket" — body: "Mark this ticket as 'not for me'? You can restore it from the Ignored tab at any time." — confirm button label: "Ignore Ticket" |
 | Audit log empty state | "No API calls recorded yet. Fetch or copy a ticket to see activity." |
-| Settings back button | "Back" |
+| Settings back button | "Back to App" |
 | Detail page back button | "Back to tickets" |
 
 Notes:
 - All copy strings must have corresponding i18n keys in `en.json` and `sk.json` (existing i18n architecture — CONTEXT.md code_context)
 - Existing translated strings are preserved where component copy does not change
+
+---
+
+## Primary Focal Point
+
+**TicketListPage (main screen):** The ticket card list is the primary visual anchor. The first visible ticket card at the top of the list is the focal point entry. Visual hierarchy is established by:
+- The ticket summary (card title line) at 14px weight 600 as the most prominent text element per card
+- Cards rendered flush against each other with only `--color-brand-border` dividers — no whitespace between cards — directing eye downward through the list
+- The "Copy to Company Jira" button as the single accent-filled element per card on hover, drawing action focus
+
+All other UI elements (header, tabs, metadata) are secondary to the card list.
 
 ---
 
@@ -218,8 +230,9 @@ Notes:
 ### Focus rings
 
 - Use Tailwind `focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2`
-- Ring color: `--color-brand` (`#c02232`)
+- Ring color: `--color-brand` (`#c02232`) — consistent with accent item 7 in Color section above
 - Ring offset color: matches surface background
+- Applied on keyboard navigation only (`focus-visible`, not `focus`) — does not appear on pointer click
 
 ### Animations
 
@@ -264,6 +277,12 @@ No third-party registries declared.
 | Existing CSS tokens preserved | `src/index.css` — token values already correct |
 | Status badge color system | Claude's Discretion — inferred from existing `StatusBadge.tsx` patterns |
 | Priority dot color system | Claude's Discretion — standard Jira priority palette |
+| Weight 500 removed — ticket key uses font-mono at 400 | Checker revision 2026-03-24 — max 2 weights rule |
+| Focus ring added to accent reserved list | Checker revision 2026-03-24 — resolve color/interaction contradiction |
+| "Ignore" → "Ignore Ticket" confirm button | Checker revision 2026-03-24 — verb + noun requirement |
+| "Back" → "Back to App" (settings) | Checker revision 2026-03-24 — verb + noun requirement |
+| TicketListPage primary focal point declared | Checker revision 2026-03-24 — visual anchor required |
+| 13px brand wordmark consolidated to 12px | Checker revision 2026-03-24 — near-identical size removed |
 
 ---
 
