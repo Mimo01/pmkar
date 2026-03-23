@@ -151,10 +151,11 @@ None yet.
 |---|-------------|------|--------|--------|-----------|
 | 260323-plu | Redesign settings page | 2026-03-23 | 17cabc8 | Needs Review | [260323-plu-i-want-to-redesign-settings](./quick/260323-plu-i-want-to-redesign-settings/) |
 | 260323-w2c | 3-tab homepage: New / Not Mine / Already Linked | 2026-03-23 | 8269805 | | [260323-w2c-homepage-shows-only-new-tickets-with-not](./quick/260323-w2c-homepage-shows-only-new-tickets-with-not/) |
+| 260323-wcw | Debug logs triggered as icon next to settings | 2026-03-23 | 6d3dbe3 | | [260323-wcw-i-want-the-debug-logs-to-be-triggered-as](./quick/260323-wcw-i-want-the-debug-logs-to-be-triggered-as/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-23 - Completed quick task 260323-w2c: 3-tab homepage redesign
+Last activity: 2026-03-23 - Completed quick task 260323-wcw: Debug logs triggered as icon next to settings
 Last session: 2026-03-23T09:16:36.094Z
 Stopped at: 07-03: Task 1 complete, awaiting Task 2 human-verify checkpoint
 Resume file: None
