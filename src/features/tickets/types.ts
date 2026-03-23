@@ -176,3 +176,15 @@ export interface TriageEntry {
   state: TriageState;
   copiedKey: string | null;
 }
+
+// --- Audit Log Types (Phase 6) ---
+
+export interface AuditEntry {
+  id: number | null;
+  timestamp: string;      // ISO 8601 UTC
+  method: string;         // GET, POST, etc.
+  url: string;
+  headers: string;        // JSON string, Authorization = "[REDACTED]"
+  statusCode: number | null;  // camelCase from Rust snake_case
+  responseBody: string | null; // Truncated at 10KB, often null
+}

@@ -51,6 +51,7 @@ fn main() {
             commands::start_mock_servers_cmd,
             commands::get_audit_logs,
             commands::clear_audit_logs,
+            commands::get_audit_count,
             commands::ping_mock_servers,
             commands::ping_keychain,
             commands::test_jira_server_connection,
