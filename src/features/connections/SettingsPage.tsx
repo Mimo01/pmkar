@@ -503,19 +503,34 @@ function LanguageSection() {
   const { t } = useTranslation();
   const language = useLanguageStore((s) => s.language);
   const setLanguage = useLanguageStore((s) => s.setLanguage);
+
+  const LANGUAGE_OPTIONS: { value: Language; label: string; flag: string }[] = [
+    { value: 'en', label: t('settings.language.english'), flag: '🇬🇧' },
+    { value: 'sk', label: t('settings.language.slovak'), flag: '🇸🇰' },
+  ];
+
   return (
     <section>
       <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
         {t('settings.language')}
       </h2>
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value as Language)}
-        className="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 text-sm focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
-      >
-        <option value="en">{t('settings.language.english')}</option>
-        <option value="sk">{t('settings.language.slovak')}</option>
-      </select>
+      <div className="flex gap-2">
+        {LANGUAGE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setLanguage(opt.value)}
+            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+              language === opt.value
+                ? 'border-brand bg-brand/8 text-brand-text font-semibold'
+                : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+            }`}
+          >
+            <span className="text-base">{opt.flag}</span>
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

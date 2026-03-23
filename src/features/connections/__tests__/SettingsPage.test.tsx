@@ -39,43 +39,36 @@ describe('SettingsPage — Language section', () => {
 
   it('renders Language section heading', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    // The language section heading uses t('settings.language') = "Language"
-    // It renders as uppercase due to CSS class, but getByText uses text content
     const headings = screen.getAllByText(/language/i);
     expect(headings.length).toBeGreaterThan(0);
   });
 
-  it('renders language select dropdown', () => {
+  it('renders language toggle buttons', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /English/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Slovak/i })).toBeInTheDocument();
   });
 
-  it('language dropdown has English and Slovak options', () => {
+  it('English button is visually selected by default', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    expect(screen.getByRole('option', { name: 'English' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Slovak' })).toBeInTheDocument();
+    const enButton = screen.getByRole('button', { name: /English/i });
+    expect(enButton.className).toContain('border-brand');
+    expect(enButton.className).toContain('font-semibold');
   });
 
-  it('language dropdown shows English as default selected', () => {
+  it('clicking Slovak updates language store', async () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    const select = screen.getByRole('combobox') as HTMLSelectElement;
-    expect(select.value).toBe('en');
-  });
-
-  it('changing dropdown to Slovak updates language store', async () => {
-    renderWithI18n(<SettingsPage onClose={noop} />);
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 'sk' } });
+    const skButton = screen.getByRole('button', { name: /Slovak/i });
+    fireEvent.click(skButton);
     await waitFor(() => {
       expect(useLanguageStore.getState().language).toBe('sk');
     });
   });
 
-  it('changing dropdown to Slovak calls invoke set_app_language', async () => {
+  it('clicking Slovak calls invoke set_app_language', async () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 'sk' } });
+    const skButton = screen.getByRole('button', { name: /Slovak/i });
+    fireEvent.click(skButton);
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('set_app_language', { language: 'sk' });
     });
@@ -83,9 +76,8 @@ describe('SettingsPage — Language section', () => {
 
   it('after switching to Slovak, Settings heading text becomes Slovak', async () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
-    const select = screen.getByRole('combobox');
-    fireEvent.change(select, { target: { value: 'sk' } });
-    // Slovak for "Settings" is "Nastavenia"
+    const skButton = screen.getByRole('button', { name: /Slovak/i });
+    fireEvent.click(skButton);
     await waitFor(() => {
       expect(screen.getByText('Nastavenia')).toBeInTheDocument();
     });
