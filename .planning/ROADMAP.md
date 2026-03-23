@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Ticket Fetch and Review** - Dual Jira adapter pair, JQL fetch with pagination, full ticket detail view, and persistent triage state schema
 - [x] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting (completed 2026-03-22)
 - [x] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy (completed 2026-03-22)
-- [ ] **Phase 6: Triage and Audit** - Ignore workflow, ignored list view, session-persistent triage state, and in-app audit log viewer
+- [x] **Phase 6: Triage and Audit** - Ignore workflow, ignored list view, session-persistent triage state, and in-app audit log viewer (completed 2026-03-23)
 - [ ] **Phase 7: Internationalization** - Language switcher, English language pack, and Slovak language pack
 
 ## Phase Details
@@ -119,12 +119,12 @@ Plans:
   2. User can open the ignored list, see all previously ignored tickets, and un-ignore any of them to return them to the candidate list
   3. User can open an in-app audit log view that shows all REST API calls made during the session with timestamp, method, URL, status code, and response
   4. Ignored state survives app restart — re-launching does not re-surface ignored tickets
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 06-01-PLAN.md — Backend get_audit_count, AppShell nav tabs + footer, App.tsx routing, TicketListPage ignore filter
-- [ ] 06-02-PLAN.md — IgnoredTicketsPage with restore action and tests
-- [ ] 06-03-PLAN.md — AuditLogPage with expandable rows and tests
+- [x] 06-02-PLAN.md — IgnoredTicketsPage with restore action and tests
+- [x] 06-03-PLAN.md — AuditLogPage with expandable rows and tests
 
 ### Phase 7: Internationalization
 **Goal**: The app UI is available in English and Slovak, switchable at runtime
@@ -147,5 +147,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
-| 6. Triage and Audit | 1/3 | In Progress|  |
+| 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
 | 7. Internationalization | 0/TBD | Not started | - |

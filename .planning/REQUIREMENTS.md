@@ -52,7 +52,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Audit & Logging
 
 - [x] **AUDIT-01**: All REST API calls are logged with timestamp, method, URL, status code, and response
-- [ ] **AUDIT-02**: User can view the audit log within the app
+- [x] **AUDIT-02**: User can view the audit log within the app
 - [x] **AUDIT-03**: Audit log redacts credentials and sensitive auth headers
 
 ### Internationalization
@@ -129,7 +129,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | TRIA-02 | Phase 6 | Pending |
 | TRIA-03 | Phase 6 | Pending |
 | AUDIT-01 | Phase 1 | Complete |
-| AUDIT-02 | Phase 6 | Pending |
+| AUDIT-02 | Phase 6 | Complete |
 | AUDIT-03 | Phase 1 | Complete |
 | I18N-01 | Phase 7 | Pending |
 | I18N-02 | Phase 7 | Pending |
