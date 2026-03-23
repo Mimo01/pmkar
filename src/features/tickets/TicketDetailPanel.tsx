@@ -187,7 +187,7 @@ export function TicketDetailPanel({
                 {detail.fields.priority.name}
               </span>
               <div className="ml-auto flex items-center gap-2">
-                {isIgnored ? (
+                {isCopied ? null : isIgnored ? (
                   <button
                     type="button"
                     onClick={handleUnignore}
