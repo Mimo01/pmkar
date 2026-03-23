@@ -57,8 +57,8 @@ completed: 2026-03-23
 - **Duration:** ~10 min
 - **Started:** 2026-03-23T10:14:00Z
 - **Completed:** 2026-03-23T10:24:00Z
-- **Tasks:** 1 of 2 (Task 2 is a human-verify checkpoint — pending user approval)
-- **Files modified:** 3
+- **Tasks:** 2 of 2
+- **Files modified:** 4
 
 ## Accomplishments
 
@@ -69,6 +69,9 @@ completed: 2026-03-23
 ## Task Commits
 
 1. **Task 1: i18n test suite** - `353db85` (feat)
+2. **Task 2: Visual verification** - `155adfe` (fix — restyled language switcher per user feedback)
+
+**Plan metadata:** `87572d7` (docs: complete plan)
 
 ## Files Created/Modified
 
@@ -83,7 +86,20 @@ completed: 2026-03-23
 
 ## Deviations from Plan
 
-None — plan executed exactly as written. One minor fix applied: initial `languageStore.test.ts` used `const mockInvoke = vi.fn()` captured before `vi.mock` factory (would cause hoisting ReferenceError). Fixed by using factory `vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))` and `vi.mocked(invoke)` after import.
+### Auto-fixed Issues
+
+**1. [User feedback] Restyled LanguageSection from dropdown to toggle buttons**
+- **Found during:** Task 2 (Visual verification checkpoint)
+- **Issue:** Plain `<select>` dropdown looked inconsistent with ThemeSection's button-group pattern
+- **Fix:** Replaced with toggle buttons using flag emojis (🇬🇧/🇸🇰), matching ThemeSection styling. Updated tests from combobox/option queries to button queries.
+- **Files modified:** src/features/connections/SettingsPage.tsx, src/features/connections/__tests__/SettingsPage.test.tsx
+- **Verification:** All 109 tests pass, user approved visual result
+- **Committed in:** `155adfe`
+
+---
+
+**Total deviations:** 1 (user-requested UI improvement)
+**Impact on plan:** Improved visual consistency. No scope creep.
 
 ## Issues Encountered
 
@@ -95,9 +111,9 @@ None — test files only, no UI stubs.
 
 ## Next Phase Readiness
 
-- All i18n automated tests pass (110/110 suite green)
-- Task 2 (human-verify checkpoint) requires user to launch `npm run tauri dev` and visually verify language switching across all pages
-- Once user approves Task 2, Phase 7 is complete and all I18N requirements are satisfied
+- All i18n automated tests pass (109/109 suite green)
+- Visual verification approved by user
+- Phase 7 complete — all I18N requirements (I18N-01, I18N-02, I18N-03) satisfied
 
 ---
 *Phase: 07-internationalization*
