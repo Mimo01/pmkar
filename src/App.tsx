@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { TicketListPage } from './features/tickets/TicketListPage';
+import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
+import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { useConnectionStore } from './features/connections/connectionStore';
@@ -44,8 +46,22 @@ function App() {
       .catch(() => {})
       .finally(() => setHydrated(true));
   }, []);
+
   const [showSettings, setShowSettings] = useState(false);
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
+  const [currentTab, setCurrentTab] = useState<'tickets' | 'ignored'>('tickets');
+  const [showAuditLog, setShowAuditLog] = useState(false);
+  const [auditCount, setAuditCount] = useState(0);
+
+  useEffect(() => {
+    if (hydrated && hasSetup) {
+      invoke<number>('get_audit_count').then(setAuditCount).catch(() => {});
+    }
+  }, [hydrated, hasSetup]);
+
+  const refreshAuditCount = useCallback(() => {
+    invoke<number>('get_audit_count').then(setAuditCount).catch(() => {});
+  }, []);
 
   // Wait for hydration before deciding what to show
   if (!hydrated) {
@@ -81,10 +97,27 @@ function App() {
     );
   }
 
+  if (showAuditLog) {
+    return (
+      <ErrorBoundary>
+        <AppShell>
+          <AuditLogPage onClose={() => { setShowAuditLog(false); refreshAuditCount(); }} />
+        </AppShell>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
-      <AppShell onGearClick={() => setShowSettings(true)}>
-        <TicketListPage />
+      <AppShell
+        onGearClick={() => setShowSettings(true)}
+        activeTab={currentTab}
+        onTabChange={setCurrentTab}
+        auditCount={auditCount}
+        onAuditClick={() => setShowAuditLog(true)}
+      >
+        {currentTab === 'tickets' && <TicketListPage />}
+        {currentTab === 'ignored' && <IgnoredTicketsPage />}
       </AppShell>
     </ErrorBoundary>
   );

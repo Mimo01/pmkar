@@ -129,13 +129,25 @@ export function TicketListPage() {
     invoke('set_triage_state', { ticketKey: key, state: 'seen' }).catch(() => {});
   }
 
+  const candidateTickets = tickets.filter(
+    (t) => triageMap[t.key]?.state !== 'ignored'
+  );
+
   const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
-  const hasTickets = tickets.length > 0;
+  const hasTickets = candidateTickets.length > 0;
   const showEmptyState = hasFetched && !hasTickets && fetchStatus === 'idle';
 
+  // Close detail panel when the selected ticket becomes ignored
+  useEffect(() => {
+    if (selectedTicketKey && triageMap[selectedTicketKey]?.state === 'ignored') {
+      useTicketStore.getState().selectTicket(null);
+    }
+  }, [selectedTicketKey, triageMap]);
+
+
   return (
-    <div className="flex h-[calc(100vh-49px)] overflow-hidden">
+    <div className="flex h-[calc(100vh-113px)] overflow-hidden">
       {/* Left pane: ticket list */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* FetchBar */}
@@ -158,7 +170,7 @@ export function TicketListPage() {
 
           {totalCount > 0 && (
             <span className="text-xs text-brand-text-secondary" aria-live="polite">
-              {totalCount} candidates{newCount > 0 ? ', ' : ''}
+              {candidateTickets.length} candidates{newCount > 0 ? ', ' : ''}
               {newCount > 0 && <span className="text-brand">{newCount} new</span>}
             </span>
           )}
@@ -188,7 +200,7 @@ export function TicketListPage() {
         {/* Ticket table */}
         {(hasTickets || isLoading) && (
           <TicketTable
-            tickets={tickets}
+            tickets={candidateTickets}
             triageMap={triageMap}
             selectedKey={selectedTicketKey}
             onSelectTicket={handleSelectTicket}

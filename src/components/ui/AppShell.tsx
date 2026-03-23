@@ -3,7 +3,16 @@ import { type ReactNode } from 'react';
 interface AppShellProps {
   children: ReactNode;
   onGearClick?: () => void;
+  activeTab?: 'tickets' | 'ignored';
+  onTabChange?: (tab: 'tickets' | 'ignored') => void;
+  auditCount?: number;
+  onAuditClick?: () => void;
 }
+
+const NAV_TABS: { id: 'tickets' | 'ignored'; label: string }[] = [
+  { id: 'tickets', label: 'Tickets' },
+  { id: 'ignored', label: 'Ignored' },
+];
 
 function GearIcon() {
   return (
@@ -25,7 +34,7 @@ function GearIcon() {
   );
 }
 
-export function AppShell({ children, onGearClick }: AppShellProps) {
+export function AppShell({ children, onGearClick, activeTab, onTabChange, auditCount, onAuditClick }: AppShellProps) {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
       <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface border-b border-brand-border">
@@ -50,9 +59,38 @@ export function AppShell({ children, onGearClick }: AppShellProps) {
         {/* Brand accent underline */}
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand via-brand/60 to-transparent" />
       </header>
+      {onTabChange && (
+        <nav className="flex px-4 bg-brand-surface border-b border-brand-border" aria-label="Main navigation">
+          {NAV_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onTabChange(tab.id)}
+              className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 ${
+                activeTab === tab.id
+                  ? 'text-brand-text font-semibold border-brand'
+                  : 'text-brand-muted hover:text-brand-text border-transparent'
+              }`}
+              aria-current={activeTab === tab.id ? 'page' : undefined}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+      )}
       <div className="flex-1 flex flex-col overflow-hidden">
         {children}
       </div>
+      {onAuditClick && (
+        <button
+          type="button"
+          onClick={onAuditClick}
+          className="px-4 py-2 bg-brand-surface border-t border-brand-border text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 text-left"
+          aria-label="Open audit log"
+        >
+          {auditCount ?? 0} API calls
+        </button>
+      )}
     </div>
   );
 }
