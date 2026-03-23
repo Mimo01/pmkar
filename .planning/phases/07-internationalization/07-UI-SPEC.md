@@ -42,10 +42,11 @@ Declared values (multiples of 4 only):
 | 3xl | 64px | Page-level spacing (`py-16`) |
 
 Exceptions:
-- Touch targets for icon-only buttons: 28px (`w-7 h-7`) — established by gear icon button in AppShell; do not change
-- Select/input vertical padding: `py-2.5` (10px) — established by SettingsPage ThemeSection and ConnectionForm inputs; maintain this exact value for the language dropdown
 
-**Source:** Extracted from AppShell (`px-5 py-2.5`), SettingsPage (`px-6 py-8`, `gap-2`, `py-6`, `py-16`), ConnectionForm.
+- Touch targets for icon-only buttons: 28px (`w-7 h-7`) — established by gear icon button in AppShell; do not change
+- Interactive element vertical padding: `py-2.5` (10px) — **inherited deviation from the 4-point grid.** This value is present throughout the entire codebase across all prior phases: `ConnectionForm.tsx` input fields, `SecretInput.tsx` inputs, `SettingsPage.tsx` JQL textarea and list items, `AppShell.tsx` header, `CopyPreviewModal.tsx` header bar, `SummaryStep.tsx` buttons, `SetupWizard.tsx` buttons, `TicketTable.tsx` table headers, `IgnoredTicketsPage.tsx` table headers, `AuditLogPage.tsx` table headers, and `TestResult.tsx` status rows. It is the project-wide vertical padding for interactive elements at compact density. **The language dropdown must use `py-2.5` to match every other form control in the app.** Changing only the language dropdown to `py-3` would make it visually taller than all other inputs — that would be the inconsistency, not the deviation.
+
+**Source:** Extracted from AppShell (`px-5 py-2.5`), SettingsPage (`px-6 py-8`, `gap-2`, `py-6`, `py-16`), ConnectionForm, SecretInput, IgnoredTicketsPage, AuditLogPage, TicketTable, CopyPreviewModal, SetupWizard, SummaryStep, TestResult.
 
 ---
 
@@ -93,7 +94,7 @@ All color values reference the `brand-*` token system defined in `src/index.css`
 ```
 w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 text-sm focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200
 ```
-This is copied verbatim from the custom JQL textarea class in SettingsPage — same input treatment, no deviation.
+This is copied verbatim from the custom JQL textarea class in SettingsPage — same input treatment, no deviation. The `py-2.5` here is the project-wide inherited deviation documented in the Spacing Scale section above.
 
 **Source:** `src/index.css` `@theme` block; SettingsPage ThemeSection button classes; AppShell gradient; RESEARCH.md code example for LanguageSection.
 
@@ -113,12 +114,16 @@ Structure:
   <h2 class="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
     {t('settings.language')}
   </h2>
-  <select ...>
+  <select
+    class="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 text-sm focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
+  >
     <option value="en">{t('settings.language.english')}</option>
     <option value="sk">{t('settings.language.slovak')}</option>
   </select>
 </section>
 ```
+
+The `py-2.5` in the select class string is the project-wide inherited deviation — identical to every other form input in the codebase. Do not change it.
 
 No custom dropdown widget. Use a native `<select>` element. This is consistent with the app's existing pattern of using native form controls (textarea, input) without custom wrappers.
 
