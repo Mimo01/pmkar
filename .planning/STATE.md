@@ -150,10 +150,11 @@ None yet.
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 260323-plu | Redesign settings page | 2026-03-23 | 17cabc8 | Needs Review | [260323-plu-i-want-to-redesign-settings](./quick/260323-plu-i-want-to-redesign-settings/) |
+| 260323-w2c | 3-tab homepage: New / Not Mine / Already Linked | 2026-03-23 | 8269805 | | [260323-w2c-homepage-shows-only-new-tickets-with-not](./quick/260323-w2c-homepage-shows-only-new-tickets-with-not/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-23 - Completed quick task 260323-plu: Redesign settings page
+Last activity: 2026-03-23 - Completed quick task 260323-w2c: 3-tab homepage redesign
 Last session: 2026-03-23T09:16:36.094Z
 Stopped at: 07-03: Task 1 complete, awaiting Task 2 human-verify checkpoint
 Resume file: None
