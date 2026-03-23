@@ -119,7 +119,12 @@ Plans:
   2. User can open the ignored list, see all previously ignored tickets, and un-ignore any of them to return them to the candidate list
   3. User can open an in-app audit log view that shows all REST API calls made during the session with timestamp, method, URL, status code, and response
   4. Ignored state survives app restart — re-launching does not re-surface ignored tickets
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Backend get_audit_count, AppShell nav tabs + footer, App.tsx routing, TicketListPage ignore filter
+- [ ] 06-02-PLAN.md — IgnoredTicketsPage with restore action and tests
+- [ ] 06-03-PLAN.md — AuditLogPage with expandable rows and tests
 
 ### Phase 7: Internationalization
 **Goal**: The app UI is available in English and Slovak, switchable at runtime
@@ -142,5 +147,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 3. Ticket Fetch and Review | 0/5 | Not started | - |
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
-| 6. Triage and Audit | 0/TBD | Not started | - |
+| 6. Triage and Audit | 0/3 | Not started | - |
 | 7. Internationalization | 0/TBD | Not started | - |
