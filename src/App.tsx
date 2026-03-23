@@ -1,5 +1,7 @@
+import './i18n/index';
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { hydrateLanguage } from './i18n/languageStore';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { TicketListPage } from './features/tickets/TicketListPage';
@@ -26,8 +28,11 @@ function App() {
   useApplyTheme();
 
   useEffect(() => {
-    invoke<StoredConnectionMeta[]>('get_all_connection_meta')
-      .then((metas) => {
+    Promise.all([
+      invoke<StoredConnectionMeta[]>('get_all_connection_meta'),
+      hydrateLanguage(),
+    ])
+      .then(([metas]) => {
         for (const m of metas) {
           const meta: ConnectionMeta = {
             baseUrl: m.baseUrl,
