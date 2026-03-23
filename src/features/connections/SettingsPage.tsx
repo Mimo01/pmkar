@@ -21,8 +21,18 @@ interface JiraUser {
   emailAddress?: string;
 }
 
+type ActiveSection =
+  | 'source'
+  | 'destination'
+  | 'jql-presets'
+  | 'watched-users'
+  | 'theme'
+  | 'language';
+
 export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const { t } = useTranslation();
+
+  const [activeSection, setActiveSection] = useState<ActiveSection>('source');
 
   const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
     { value: 'assigned', label: t('settings.preset.assigned'), jql: 'assignee = currentUser() ORDER BY updated DESC' },
@@ -188,24 +198,37 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
   const hasNoConnections = serverConn === null && cloudConn === null;
 
-  return (
-    <div className="max-w-[540px] mx-auto px-6 py-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-8">
-        <button
-          type="button"
-          onClick={onClose}
-          className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
-          aria-label={t('settings.back')}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-        </button>
-        <h1 className="text-lg font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
-      </div>
+  // Sidebar nav item component
+  function NavItem({ section, label }: { section: ActiveSection; label: string }) {
+    const isActive = activeSection === section;
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveSection(section)}
+        className={`w-full text-left text-sm rounded-lg px-3 py-2 transition-all duration-150 ${
+          isActive
+            ? 'bg-brand/10 text-brand-text font-medium border-l-[3px] border-brand pl-[9px]'
+            : 'text-brand-text-secondary hover:bg-brand-surface-hover border-l-[3px] border-transparent pl-[9px]'
+        }`}
+      >
+        {label}
+      </button>
+    );
+  }
 
-      {hasNoConnections ? (
+  // Content card wrapper
+  function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+    return (
+      <div className="rounded-xl border border-brand-border bg-brand-surface p-6">
+        <h2 className="text-base font-semibold text-brand-text mb-4">{title}</h2>
+        {children}
+      </div>
+    );
+  }
+
+  function renderContent() {
+    if (hasNoConnections) {
+      return (
         <div className="text-center py-16">
           <p className="text-brand-text-secondary text-sm font-semibold mb-1">
             {t('settings.noConnections')}
@@ -214,13 +237,15 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {t('settings.noConnections.hint')}
           </p>
         </div>
-      ) : (
-        <div className="space-y-8">
-          {/* Connections Section */}
-          <section>
-            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.connections')}</h2>
+      );
+    }
+
+    switch (activeSection) {
+      case 'source':
+        return (
+          <SectionCard title={t('settings.section.source')}>
             {editingConnection === 'server' ? (
-              <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
+              <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-brand-text">{t('settings.editSource')}</span>
                   <button
@@ -245,8 +270,14 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 onEdit={() => handleEdit('server')}
               />
             )}
+          </SectionCard>
+        );
+
+      case 'destination':
+        return (
+          <SectionCard title={t('settings.section.destination')}>
             {editingConnection === 'cloud' ? (
-              <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
+              <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-semibold text-brand-text">{t('settings.editDestination')}</span>
                   <button
@@ -271,12 +302,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 onEdit={() => handleEdit('cloud')}
               />
             )}
-          </section>
+          </SectionCard>
+        );
 
-          {/* What to Fetch Section */}
-          <section>
-            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.whatToFetch')}</h2>
-            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
+      case 'jql-presets':
+        return (
+          <SectionCard title={t('settings.section.jqlPresets')}>
+            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden -mx-6 -mt-2 mb-0">
               {PRESET_OPTIONS.map((opt, i) => (
                 <button
                   key={opt.value}
@@ -327,20 +359,17 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 </div>
               </div>
             )}
-          </section>
+          </SectionCard>
+        );
 
-          {/* Watched Users Section */}
-          <section>
-            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
-              {t('settings.watchedUsers')}{safeWatchedUsers.length > 0 && (
-                <span className="text-brand-text-secondary font-normal ml-2">{t('settings.watchedUsers.count', { count: safeWatchedUsers.length })}</span>
-              )}
-            </h2>
+      case 'watched-users':
+        return (
+          <SectionCard title={t('settings.section.watchedUsers')}>
             <p className="text-xs text-brand-muted mb-3">
               {t('settings.watchedUsers.hint')}
             </p>
 
-            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
+            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden -mx-0">
               {/* Autocomplete input */}
               <div className="relative">
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-brand-border-subtle">
@@ -427,15 +456,78 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 ))
               )}
             </div>
-          </section>
+          </SectionCard>
+        );
 
-          {/* Appearance Section */}
-          <ThemeSection />
+      case 'theme':
+        return (
+          <SectionCard title={t('settings.section.theme')}>
+            <ThemeSection />
+          </SectionCard>
+        );
 
-          {/* Language Section */}
-          <LanguageSection />
+      case 'language':
+        return (
+          <SectionCard title={t('settings.section.language')}>
+            <LanguageSection />
+          </SectionCard>
+        );
+    }
+  }
+
+  return (
+    <div className="flex h-full">
+      {/* Left sidebar */}
+      <div className="w-[220px] flex-shrink-0 bg-brand-surface border-r border-brand-border py-6 px-4 flex flex-col">
+        {/* Back button + heading */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
+            aria-label={t('settings.back')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
         </div>
-      )}
+
+        {/* Connections group */}
+        <div className="mb-4">
+          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+            {t('settings.group.connections')}
+          </p>
+          <NavItem section="source" label={t('settings.nav.source')} />
+          <NavItem section="destination" label={t('settings.nav.destination')} />
+        </div>
+
+        {/* Fetching group */}
+        <div className="mb-4">
+          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+            {t('settings.group.fetching')}
+          </p>
+          <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
+          <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+        </div>
+
+        {/* Appearance group */}
+        <div className="mb-4">
+          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+            {t('settings.group.appearance')}
+          </p>
+          <NavItem section="theme" label={t('settings.nav.theme')} />
+          <NavItem section="language" label={t('settings.nav.language')} />
+        </div>
+      </div>
+
+      {/* Right content panel */}
+      <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="max-w-[640px]">
+          {renderContent()}
+        </div>
+      </div>
     </div>
   );
 }
@@ -476,26 +568,23 @@ function ThemeSection() {
   ];
 
   return (
-    <section>
-      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.appearance')}</h2>
-      <div className="flex gap-2">
-        {THEME_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setMode(opt.value)}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
-              mode === opt.value
-                ? 'border-brand bg-brand/8 text-brand-text font-semibold'
-                : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
-            }`}
-          >
-            <span className={mode === opt.value ? 'text-brand' : ''}>{opt.icon}</span>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </section>
+    <div className="flex gap-2">
+      {THEME_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => setMode(opt.value)}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+            mode === opt.value
+              ? 'border-brand bg-brand/8 text-brand-text font-semibold'
+              : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+          }`}
+        >
+          <span className={mode === opt.value ? 'text-brand' : ''}>{opt.icon}</span>
+          {opt.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -510,27 +599,22 @@ function LanguageSection() {
   ];
 
   return (
-    <section>
-      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
-        {t('settings.language')}
-      </h2>
-      <div className="flex gap-2">
-        {LANGUAGE_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setLanguage(opt.value)}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
-              language === opt.value
-                ? 'border-brand bg-brand/8 text-brand-text font-semibold'
-                : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
-            }`}
-          >
-            <span className="text-base">{opt.flag}</span>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </section>
+    <div className="flex gap-2">
+      {LANGUAGE_OPTIONS.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => setLanguage(opt.value)}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+            language === opt.value
+              ? 'border-brand bg-brand/8 text-brand-text font-semibold'
+              : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+          }`}
+        >
+          <span className="text-base">{opt.flag}</span>
+          {opt.label}
+        </button>
+      ))}
+    </div>
   );
 }
