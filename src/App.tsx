@@ -6,6 +6,7 @@ import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { TicketListPage } from './features/tickets/TicketListPage';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
+import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import { SettingsPage } from './features/connections/SettingsPage';
@@ -54,7 +55,7 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
-  const [currentTab, setCurrentTab] = useState<'tickets' | 'ignored'>('tickets');
+  const [currentTab, setCurrentTab] = useState<'new' | 'not-mine' | 'linked'>('new');
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditCount, setAuditCount] = useState(0);
 
@@ -121,8 +122,9 @@ function App() {
         auditCount={auditCount}
         onAuditClick={() => setShowAuditLog(true)}
       >
-        {currentTab === 'tickets' && <TicketListPage />}
-        {currentTab === 'ignored' && <IgnoredTicketsPage />}
+        {currentTab === 'new' && <TicketListPage />}
+        {currentTab === 'not-mine' && <IgnoredTicketsPage />}
+        {currentTab === 'linked' && <LinkedTicketsPage />}
       </AppShell>
     </ErrorBoundary>
   );

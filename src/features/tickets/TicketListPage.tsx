@@ -120,18 +120,23 @@ export function TicketListPage() {
     invoke('set_triage_state', { ticketKey: key, state: 'seen' }).catch(() => {});
   }
 
-  const candidateTickets = tickets.filter(
-    (t) => triageMap[t.key]?.state !== 'ignored'
-  );
+  const candidateTickets = tickets.filter((t) => {
+    const s = triageMap[t.key]?.state;
+    return s !== 'ignored' && s !== 'copied';
+  });
 
   const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
   const hasTickets = candidateTickets.length > 0;
   const showEmptyState = hasFetched && !hasTickets && fetchStatus === 'idle';
 
-  // Close detail panel when the selected ticket becomes ignored
+  // Close detail panel when the selected ticket becomes ignored or copied
   useEffect(() => {
-    if (selectedTicketKey && triageMap[selectedTicketKey]?.state === 'ignored') {
+    if (
+      selectedTicketKey &&
+      (triageMap[selectedTicketKey]?.state === 'ignored' ||
+        triageMap[selectedTicketKey]?.state === 'copied')
+    ) {
       useTicketStore.getState().selectTicket(null);
     }
   }, [selectedTicketKey, triageMap]);

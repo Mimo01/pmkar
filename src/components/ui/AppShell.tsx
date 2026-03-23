@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 interface AppShellProps {
   children: ReactNode;
   onGearClick?: () => void;
-  activeTab?: 'tickets' | 'ignored';
-  onTabChange?: (tab: 'tickets' | 'ignored') => void;
+  activeTab?: 'new' | 'not-mine' | 'linked';
+  onTabChange?: (tab: 'new' | 'not-mine' | 'linked') => void;
   auditCount?: number;
   onAuditClick?: () => void;
 }
@@ -33,9 +33,10 @@ function GearIcon() {
 export function AppShell({ children, onGearClick, activeTab, onTabChange, auditCount, onAuditClick }: AppShellProps) {
   const { t } = useTranslation();
 
-  const NAV_TABS: { id: 'tickets' | 'ignored'; label: string }[] = [
-    { id: 'tickets', label: t('nav.tickets') },
-    { id: 'ignored', label: t('nav.ignored') },
+  const NAV_TABS: { id: 'new' | 'not-mine' | 'linked'; label: string }[] = [
+    { id: 'new', label: t('nav.new') },
+    { id: 'not-mine', label: t('nav.notMine') },
+    { id: 'linked', label: t('nav.linked') },
   ];
 
   return (
