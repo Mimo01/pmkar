@@ -21,6 +21,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] Full mirror copy: attachments, comments, work log, sub-tasks, linked issues — Validated in Phase 5: Copy Attachments and Comments
 - [x] Ignored tickets filtered from candidate list, reviewable in dedicated page with restore — Validated in Phase 6: Triage and Audit
 - [x] In-app audit log viewer with expandable REST API call details — Validated in Phase 6: Triage and Audit
+- [x] UI available in English and Slovak, switchable at runtime with persistent preference — Validated in Phase 7: Internationalization
 
 ### Active
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
@@ -70,4 +71,4 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 | Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-23 — Phase 5 (Copy Attachments and Comments) complete*
+*Last updated: 2026-03-23 — Phase 7 (Internationalization) complete*
