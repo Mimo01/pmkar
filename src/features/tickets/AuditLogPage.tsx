@@ -10,10 +10,31 @@ interface AuditLogPageProps {
 
 function formatResponseBody(body: string | null): string {
   if (!body) return '';
+  // Try strict JSON parse + pretty-print first
   try {
-    return JSON.stringify(JSON.parse(body), null, 2);
+    const parsed = JSON.parse(body);
+    return JSON.stringify(parsed, null, 2);
   } catch {
-    return body;
+    // JSON may be truncated (10KB limit) — do a best-effort visual format:
+    // add newlines after commas/braces for readability
+    return body
+      .replace(/,\s*"/g, ',\n"')
+      .replace(/\{"/g, '{\n"')
+      .replace(/"\}/g, '"\n}')
+      .replace(/\[\{/g, '[\n{')
+      .replace(/\}\]/g, '}\n]');
+  }
+}
+
+function parseHeaders(raw: string): Record<string, string> | null {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, string>;
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 
@@ -171,7 +192,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     <td className={`w-16 px-4 py-2 text-xs font-semibold ${methodColor(entry.method)}`}>
                       {entry.method}
                     </td>
-                    <td className="px-4 py-2 text-xs text-brand-text-secondary truncate">{entry.url}</td>
+                    <td className="max-w-0 px-4 py-2 text-xs text-brand-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">{entry.url}</td>
                     <td className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}>
                       {entry.statusCode ?? '\u2014'}
                     </td>
@@ -181,23 +202,59 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   {expandedId === entry.id && (
                     <tr>
                       <td colSpan={4} className="bg-brand-surface-raised px-4 py-3">
-                        <div className="space-y-2">
+                        <div className="space-y-3">
+                          {/* Full URL */}
+                          <div>
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                              {t('audit.url')}
+                            </span>
+                            <p className="break-all font-mono text-xs text-brand-text mt-1">{entry.url}</p>
+                          </div>
+
+                          {/* Request headers as key/value rows */}
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
                               {t('audit.requestHeaders')}
                             </span>
-                            <pre className="whitespace-pre-wrap break-all font-mono text-xs text-brand-text mt-1">
-                              {entry.headers}
-                            </pre>
+                            {(() => {
+                              const parsed = parseHeaders(entry.headers);
+                              if (parsed) {
+                                const keys = Object.keys(parsed);
+                                return keys.length === 0 ? (
+                                  <p className="text-xs text-brand-muted mt-1">{t('audit.headersEmpty')}</p>
+                                ) : (
+                                  <div className="mt-1 rounded border border-brand-border divide-y divide-brand-border-subtle/50">
+                                    {keys.map((key) => (
+                                      <div key={key} className="flex items-baseline gap-2 px-2 py-1">
+                                        <span className="shrink-0 font-mono text-[11px] font-semibold text-brand-text-secondary w-40 truncate" title={key}>
+                                          {key}
+                                        </span>
+                                        <span className="font-mono text-[11px] text-brand-text break-all min-w-0">
+                                          {parsed[key]}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              }
+                              // Fallback: raw string
+                              return (
+                                <pre className="mt-1 rounded border border-brand-border bg-black/20 px-2 py-2 whitespace-pre-wrap break-all font-mono text-xs text-brand-text">
+                                  {entry.headers}
+                                </pre>
+                              );
+                            })()}
                           </div>
+
+                          {/* Response body — pretty-printed JSON in a scrollable code block */}
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
                               {t('audit.response')}
                             </span>
                             {entry.responseBody ? (
-                              <pre className="whitespace-pre-wrap break-all font-mono text-xs text-brand-text mt-1">
-                                {formatResponseBody(entry.responseBody)}
-                              </pre>
+                              <div className="mt-1 rounded border border-brand-border bg-black/20 px-3 py-2 overflow-x-auto">
+                                <pre className="font-mono text-xs text-brand-text whitespace-pre">{formatResponseBody(entry.responseBody)}</pre>
+                              </div>
                             ) : (
                               <p className="text-xs text-brand-muted mt-1">{t('audit.responseBodyEmpty')}</p>
                             )}

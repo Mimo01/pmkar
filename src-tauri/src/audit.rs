@@ -3,10 +3,12 @@ use chrono::Utc;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use urlencoding;
 
-const MAX_RESPONSE_BODY_BYTES: usize = 10_240; // 10KB
+const MAX_RESPONSE_BODY_BYTES: usize = 102_400; // 100KB
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuditEntry {
     pub id: Option<i64>,
     pub timestamp: String,            // ISO 8601 UTC
@@ -117,7 +119,10 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
         next: reqwest_middleware::Next<'_>,
     ) -> reqwest_middleware::Result<reqwest::Response> {
         let method = req.method().to_string();
-        let url = req.url().to_string();
+        // Decode percent-encoding so URLs are human-readable in the audit log
+        let url = urlencoding::decode(req.url().as_str())
+            .map(|s| s.into_owned())
+            .unwrap_or_else(|_| req.url().to_string());
         let timestamp = Utc::now().to_rfc3339();
 
         // REDACT Authorization header BEFORE any logging
@@ -126,14 +131,34 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
             if h.contains_key("authorization") {
                 h.insert("authorization", "[REDACTED]".parse().unwrap());
             }
-            format!("{:?}", h)
+            let map: std::collections::HashMap<String, String> = h
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("[binary]").to_string()))
+                .collect();
+            serde_json::to_string(&map).unwrap_or_else(|_| format!("{:?}", h))
         };
 
         let result = next.run(req, extensions).await;
 
-        match &result {
+        match result {
             Ok(resp) => {
                 let status = resp.status().as_u16();
+                // Capture response metadata before consuming the body
+                let resp_status = resp.status();
+                let resp_version = resp.version();
+                let resp_headers = resp.headers().clone();
+
+                // Read the body bytes — this consumes the response, so we must reconstruct it
+                let body_bytes = resp.bytes().await.unwrap_or_default();
+
+                // Truncate for the audit log, then store as UTF-8 string
+                let truncated = &body_bytes[..body_bytes.len().min(MAX_RESPONSE_BODY_BYTES)];
+                let response_body = if truncated.is_empty() {
+                    None
+                } else {
+                    Some(String::from_utf8_lossy(truncated).into_owned())
+                };
+
                 let entry = AuditEntry {
                     id: None,
                     timestamp,
@@ -141,13 +166,26 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
                     url,
                     headers: headers_redacted,
                     status_code: Some(status),
-                    response_body: None, // Response body read separately if needed
+                    response_body,
                 };
                 if let Ok(db) = self.db.lock() {
                     let _ = db.insert(&entry); // Audit failure must not break the request
                 }
+
+                // Reconstruct a reqwest::Response from the buffered bytes so the
+                // rest of the call chain still receives a complete response
+                let mut builder = http::Response::builder()
+                    .status(resp_status)
+                    .version(resp_version);
+                if let Some(headers_mut) = builder.headers_mut() {
+                    *headers_mut = resp_headers;
+                }
+                let http_resp = builder
+                    .body(body_bytes)
+                    .expect("failed to reconstruct http response");
+                Ok(reqwest::Response::from(http_resp))
             }
-            Err(_) => {
+            Err(e) => {
                 let entry = AuditEntry {
                     id: None,
                     timestamp,
@@ -160,10 +198,9 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
                 if let Ok(db) = self.db.lock() {
                     let _ = db.insert(&entry);
                 }
+                Err(e)
             }
         }
-
-        result
     }
 }
 
