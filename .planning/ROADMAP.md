@@ -144,7 +144,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) → 5 → 7
+Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) → 5 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -155,3 +155,26 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
 | 7. Internationalization | 3/3 | Complete   | 2026-03-23 |
+| 8. UI Redesign | 0/5 | Planned | - |
+
+### Phase 8: Fully redesign the app UI — modern, sleek, easy to use
+
+**Goal:** Complete visual overhaul to a Linear-inspired minimal aesthetic using shadcn/ui, Lucide icons, card-based ticket lists, full-page detail view, and polished settings/modals — all functionality preserved
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05, UI-06, UI-07
+**Depends on:** Phase 7
+**Success Criteria** (what must be TRUE):
+  1. All hand-coded SVG icons are replaced with Lucide React icons
+  2. Ticket list uses compact 3-line cards instead of sortable tables (all 3 tabs)
+  3. Clicking a ticket shows a full-page detail view (not a side panel) with back navigation preserving tab context
+  4. Copy preview and result modals use shadcn Dialog with progress visualization
+  5. Settings page uses a sidebar nav layout with section-based content
+  6. Loading states show skeleton cards, empty states show heading + body text
+  7. Dark and light themes both render correctly with the merged token system
+**Plans:** 5 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — shadcn/ui init, Lucide install, CSS token merge, AppShell redesign
+- [ ] 08-02-PLAN.md — TicketCard component, card-based list pages (New, Ignored, Linked)
+- [ ] 08-03-PLAN.md — TicketDetailPage full-page view, App.tsx routing update
+- [ ] 08-04-PLAN.md — CopyPreviewModal/CopyResultModal redesign, SettingsPage sidebar nav
+- [ ] 08-05-PLAN.md — AuditLogPage polish, i18n keys, SetupWizard polish, visual verification
