@@ -46,8 +46,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Triage
 
 - [x] **TRIA-01**: User can mark a ticket as "not for me" to move it to the ignored list
-- [ ] **TRIA-02**: User can view the ignored tickets list
-- [ ] **TRIA-03**: User can un-ignore a ticket to bring it back to the candidate list
+- [x] **TRIA-02**: User can view the ignored tickets list
+- [x] **TRIA-03**: User can un-ignore a ticket to bring it back to the candidate list
 
 ### Audit & Logging
 
@@ -126,8 +126,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | COPY-08 | Phase 4 | Complete |
 | COPY-09 | Phase 4 | Complete |
 | TRIA-01 | Phase 6 | Complete |
-| TRIA-02 | Phase 6 | Pending |
-| TRIA-03 | Phase 6 | Pending |
+| TRIA-02 | Phase 6 | Complete |
+| TRIA-03 | Phase 6 | Complete |
 | AUDIT-01 | Phase 1 | Complete |
 | AUDIT-02 | Phase 6 | Complete |
 | AUDIT-03 | Phase 1 | Complete |
