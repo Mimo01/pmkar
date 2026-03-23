@@ -86,20 +86,22 @@ describe('IgnoredTicketsPage', () => {
 
   it('clicking Restore invokes set_triage_state with seen', async () => {
     render(<IgnoredTicketsPage />);
-    const restoreButtons = screen.getAllByRole('button', { name: 'Restore' });
-    fireEvent.click(restoreButtons[0]);
+    // TEST-2 (Jan 11) sorts before TEST-1 (Jan 10) in DESC order — first button is TEST-2
+    const restoreButton = screen.getAllByRole('button', { name: 'Restore' })[0];
+    fireEvent.click(restoreButton);
     expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-      ticketKey: 'TEST-1',
+      ticketKey: 'TEST-2',
       state: 'seen',
     });
   });
 
   it('clicking Restore updates triageMap via hydrateTriageMap', () => {
     render(<IgnoredTicketsPage />);
-    const restoreButtons = screen.getAllByRole('button', { name: 'Restore' });
-    fireEvent.click(restoreButtons[0]);
+    // TEST-2 (Jan 11) sorts first in DESC order — click first button
+    const restoreButton = screen.getAllByRole('button', { name: 'Restore' })[0];
+    fireEvent.click(restoreButton);
     const updatedMap = useTicketStore.getState().triageMap;
-    expect(updatedMap['TEST-1'].state).toBe('seen');
+    expect(updatedMap['TEST-2'].state).toBe('seen');
   });
 
   it('shows empty state when no ignored tickets', () => {
