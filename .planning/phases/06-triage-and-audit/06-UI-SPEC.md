@@ -36,16 +36,16 @@ Declared values (must be multiples of 4):
 | xs | 4px | Icon gaps, inline badge padding (`px-1.5 py-0.5`) |
 | sm | 8px | Compact element spacing, button gaps (`gap-2`) |
 | md | 16px | Default element spacing, panel horizontal padding (`px-4`) |
-| lg | 20px | Panel horizontal padding for detail/header areas (`px-5 py-4`) |
+| lg | 20px | Panel horizontal padding for detail/header areas (`px-5`) — horizontal axis only; justified exception: `px-5` is used in 10+ existing component files (TicketDetailPanel tabs, OverviewTab, HistoryTab, WorkLogTab, AppShell header) and cannot be changed without touching pre-existing code |
 | xl | 24px | Section padding |
 | 2xl | 32px | Layout gaps |
 | 3xl | 48px | Major section breaks |
 
 Exceptions:
-- Header: `px-5 py-2.5` (10px vertical — established pattern in AppShell)
+- Header: `px-5 py-2` (8px vertical — new Phase 6 footer and header elements must use `py-2`; the pre-existing AppShell header uses `py-2.5` in live code but that value is not introduced by this phase)
 - Table cell padding: `px-4 py-3` (established in TicketTable)
 - Tab bar buttons: `py-2 mr-4` (established in TicketDetailPanel)
-- Footer status bar: `px-4 py-1.5` (compact single-line bar, 6px vertical)
+- Footer status bar: `px-4 py-2` (compact single-line bar, 8px vertical — new component introduced in Phase 6)
 - Min touch target for icon-only buttons: 28x28px (`w-7 h-7` — established in AppShell gear)
 
 ---
@@ -133,7 +133,7 @@ New components introduced in Phase 6:
 ### Footer Status Bar
 
 - Position: fixed at the bottom of the app window, inside `AppShell`, above no other element
-- Height: 28px (`py-1.5` + `text-xs` single line)
+- Height: 28px (`py-2` + `text-xs` single line — 8px vertical padding)
 - Background: `brand-surface` with `border-t border-brand-border`
 - Content: left-aligned `text-xs text-brand-muted`, format: `{N} API calls`
 - Interaction: entire footer bar is clickable, opens AuditLogPage
