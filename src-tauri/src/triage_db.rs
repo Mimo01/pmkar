@@ -54,6 +54,11 @@ const CREATE_FETCH_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS fetch_config (
     last_fetched_at TEXT
 );";
 
+const CREATE_APP_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS app_config (
+    id       INTEGER PRIMARY KEY CHECK(id = 1),
+    language TEXT NOT NULL DEFAULT 'en'
+);";
+
 impl TriageDb {
     pub fn open(path: &std::path::Path) -> AppResult<Self> {
         let conn = Connection::open(path)?;
@@ -62,6 +67,8 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
+        conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         Ok(Self { conn })
     }
 
@@ -72,6 +79,8 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
+        conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         Ok(Self { conn })
     }
 
@@ -167,6 +176,23 @@ impl TriageDb {
                 meta.last_tested_at,
                 meta.status,
             ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_app_language(&self) -> AppResult<Option<String>> {
+        let lang: Option<String> = self.conn.query_row(
+            "SELECT language FROM app_config WHERE id = 1",
+            [],
+            |row| row.get(0),
+        ).ok();
+        Ok(lang)
+    }
+
+    pub fn set_app_language(&self, language: &str) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET language = ?1 WHERE id = 1",
+            [language],
         )?;
         Ok(())
     }

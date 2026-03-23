@@ -9,6 +9,28 @@ use crate::mock_server;
 use crate::triage_db::{TriageDb, FetchConfig, ConnectionMeta};
 use base64::Engine as _;
 
+#[tauri::command]
+pub fn get_os_locale() -> Option<String> {
+    sys_locale::get_locale()
+}
+
+#[tauri::command]
+pub fn get_app_language(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Option<String>, AppError> {
+    let db = triage_db.lock().map_err(|_| AppError::Internal("Lock poisoned".into()))?;
+    db.get_app_language()
+}
+
+#[tauri::command]
+pub fn set_app_language(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    language: String,
+) -> Result<(), AppError> {
+    let db = triage_db.lock().map_err(|_| AppError::Internal("Lock poisoned".into()))?;
+    db.set_app_language(&language)
+}
+
 /// Retrieve the Jira Server PAT from the OS keychain using the
 /// connection_meta table to look up the stored username.
 fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> {

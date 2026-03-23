@@ -71,6 +71,9 @@ fn main() {
             commands::get_all_connection_meta,
             commands::fetch_cloud_meta,
             commands::copy_ticket,
+            commands::get_os_locale,
+            commands::get_app_language,
+            commands::set_app_language,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
