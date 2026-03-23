@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { JiraTicketDetail } from '../types';
 import { DescriptionRenderer } from '../DescriptionRenderer';
 
@@ -17,7 +16,6 @@ function FieldItem({ label, value }: { label: string; value: string }) {
 }
 
 export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
-  const { t } = useTranslation();
   const { fields } = detail;
 
   return (

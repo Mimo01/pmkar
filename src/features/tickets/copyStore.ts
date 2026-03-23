@@ -66,7 +66,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       sourceTicket: ticket,
       sourceKey: ticket.key,
       targetSummary: ticket.fields.summary,
-      targetDescription: ticket.fields.description ?? '',
+      targetDescription: typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
       error: null,
     });
 

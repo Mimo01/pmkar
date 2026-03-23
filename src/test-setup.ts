@@ -1,10 +1,14 @@
-import { randomFillSync } from 'crypto';
 import '@testing-library/jest-dom/vitest';
 import './i18n/index';
 
-// jsdom lacks WebCrypto — required for @tauri-apps/api/mocks
-Object.defineProperty(window, 'crypto', {
-  value: {
-    getRandomValues: (buf: BufferSource) => randomFillSync(buf as NodeJS.ArrayBufferView),
-  },
-});
+// jsdom lacks WebCrypto — polyfill using globalThis.crypto (available in Node 19+/jsdom)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+if (typeof (window as any).crypto === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { randomFillSync } = require('crypto') as { randomFillSync: (buf: ArrayBufferView) => ArrayBufferView };
+  Object.defineProperty(window, 'crypto', {
+    value: {
+      getRandomValues: (buf: ArrayBufferView) => randomFillSync(buf),
+    },
+  });
+}

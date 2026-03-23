@@ -29,7 +29,7 @@ type ActiveSection =
   | 'theme'
   | 'language';
 
-export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
+export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const { t } = useTranslation();
 
   const [activeSection, setActiveSection] = useState<ActiveSection>('source');
@@ -55,7 +55,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -261,7 +261,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 <ConnectionForm
                   connectionType="server"
                   initialValues={{ baseUrl: serverConn?.baseUrl, username: serverConn?.username }}
-                  onTestSuccess={(result, creds) => handleEditTestSuccess('server', result, creds as { baseUrl: string; [key: string]: string })}
+                  onTestSuccess={(result, creds) => handleEditTestSuccess('server', result, creds as unknown as { baseUrl: string; [key: string]: string })}
                   onTestInvalidated={() => {}}
                 />
               </div>
@@ -293,7 +293,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                 <ConnectionForm
                   connectionType="cloud"
                   initialValues={{ baseUrl: cloudConn?.baseUrl, username: cloudConn?.username }}
-                  onTestSuccess={(result, creds) => handleEditTestSuccess('cloud', result, creds as { baseUrl: string; [key: string]: string })}
+                  onTestSuccess={(result, creds) => handleEditTestSuccess('cloud', result, creds as unknown as { baseUrl: string; [key: string]: string })}
                   onTestInvalidated={() => {}}
                 />
               </div>

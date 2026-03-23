@@ -143,7 +143,7 @@ describe('AuditLogPage', () => {
 
   it('Test 8: status code colors: 2xx green-400, 4xx/5xx red-400', async () => {
     mockInvoke.mockResolvedValue(mockEntries);
-    const { container } = render(<AuditLogPage onClose={() => {}} />);
+    render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
       expect(screen.getByText('200')).toBeTruthy();
     });
