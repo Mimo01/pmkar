@@ -134,10 +134,10 @@ Plans:
   1. User can switch the app language from a language selector in the UI
   2. After switching to English, all UI strings display in English
   3. After switching to Slovak, all UI strings display in Slovak with no untranslated fallback strings visible
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 07-01-PLAN.md — i18n infrastructure: Rust backend persistence, i18next init, languageStore, formatting utils, App.tsx wiring
+- [x] 07-01-PLAN.md — i18n infrastructure: Rust backend persistence, i18next init, languageStore, formatting utils, App.tsx wiring
 - [ ] 07-02-PLAN.md — Complete en.json + sk.json translation packs, string extraction from all components, LanguageSection in SettingsPage
 - [ ] 07-03-PLAN.md — i18n test suite (language store, translation completeness, SettingsPage dropdown) and visual verification
 
@@ -154,4 +154,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
-| 7. Internationalization | 0/3 | Not started | - |
+| 7. Internationalization | 1/3 | In Progress|  |

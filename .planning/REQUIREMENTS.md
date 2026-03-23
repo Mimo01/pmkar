@@ -57,7 +57,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Internationalization
 
-- [ ] **I18N-01**: App UI supports multiple languages with a language switcher
+- [x] **I18N-01**: App UI supports multiple languages with a language switcher
 - [ ] **I18N-02**: English language pack is complete and is the default language
 - [ ] **I18N-03**: Slovak language pack is complete
 
@@ -131,7 +131,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | AUDIT-01 | Phase 1 | Complete |
 | AUDIT-02 | Phase 6 | Complete |
 | AUDIT-03 | Phase 1 | Complete |
-| I18N-01 | Phase 7 | Pending |
+| I18N-01 | Phase 7 | Complete |
 | I18N-02 | Phase 7 | Pending |
 | I18N-03 | Phase 7 | Pending |
 | TEST-01 | Phase 1 | Complete |
