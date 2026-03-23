@@ -205,10 +205,10 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
       <button
         type="button"
         onClick={() => setActiveSection(section)}
-        className={`w-full text-left text-sm rounded-lg px-3 py-2 transition-all duration-150 ${
+        className={`w-full text-left text-[13px] rounded-md px-3 py-[7px] transition-all duration-200 ${
           isActive
-            ? 'bg-brand/10 text-brand-text font-medium border-l-[3px] border-brand pl-[9px]'
-            : 'text-brand-text-secondary hover:bg-brand-surface-hover border-l-[3px] border-transparent pl-[9px]'
+            ? 'bg-brand/10 text-brand font-medium'
+            : 'text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
         }`}
       >
         {label}
@@ -219,9 +219,11 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   // Content card wrapper
   function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-      <div className="rounded-xl border border-brand-border bg-brand-surface p-6">
-        <h2 className="text-base font-semibold text-brand-text mb-4">{title}</h2>
-        {children}
+      <div>
+        <h2 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3">{title}</h2>
+        <div className="rounded-xl border border-brand-border bg-brand-surface p-5">
+          {children}
+        </div>
       </div>
     );
   }
@@ -247,11 +249,11 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {editingConnection === 'server' ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-brand-text">{t('settings.editSource')}</span>
+                  <span className="text-[13px] font-medium text-brand-text">{t('settings.editSource')}</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
-                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
+                    className="text-[11px] text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     {t('settings.cancel')}
                   </button>
@@ -279,11 +281,11 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {editingConnection === 'cloud' ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-brand-text">{t('settings.editDestination')}</span>
+                  <span className="text-[13px] font-medium text-brand-text">{t('settings.editDestination')}</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
-                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
+                    className="text-[11px] text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     {t('settings.cancel')}
                   </button>
@@ -308,43 +310,41 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
       case 'jql-presets':
         return (
           <SectionCard title={t('settings.section.jqlPresets')}>
-            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden -mx-6 -mt-2 mb-0">
-              {PRESET_OPTIONS.map((opt, i) => (
+            <div className="space-y-1.5">
+              {PRESET_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => handlePresetChange(opt.value)}
-                  className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors duration-150 ${
-                    i > 0 ? 'border-t border-brand-border-subtle' : ''
-                  } ${
+                  className={`w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all duration-150 ${
                     jqlPreset === opt.value
-                      ? 'bg-brand/8'
+                      ? 'bg-brand/8 ring-1 ring-brand/20'
                       : 'hover:bg-brand-surface-hover'
                   }`}
                 >
-                  <span className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
+                  <span className={`flex-shrink-0 w-[15px] h-[15px] rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
                     jqlPreset === opt.value ? 'border-brand' : 'border-brand-border'
                   }`}>
                     {jqlPreset === opt.value && (
-                      <span className="w-2 h-2 rounded-full bg-brand" />
+                      <span className="w-[7px] h-[7px] rounded-full bg-brand" />
                     )}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className={`text-sm block ${
-                      jqlPreset === opt.value ? 'text-brand-text font-semibold' : 'text-brand-text-secondary'
+                    <span className={`text-[13px] block ${
+                      jqlPreset === opt.value ? 'text-brand-text font-medium' : 'text-brand-text-secondary'
                     }`}>{opt.label}</span>
-                    <span className="text-xs text-brand-muted block truncate font-mono">{opt.jql}</span>
+                    <span className="text-[11px] text-brand-muted block truncate font-mono mt-0.5">{opt.jql}</span>
                   </div>
                 </button>
               ))}
             </div>
 
             {jqlPreset === 'custom' && (
-              <div className="mt-3">
+              <div className="mt-3 pt-3 border-t border-brand-border-subtle">
                 <textarea
                   value={jqlCustom ?? ''}
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
-                  className="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
+                  className="w-full rounded-lg border border-brand-border bg-brand-bg text-brand-text px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15 transition-colors duration-200"
                   placeholder={t('settings.jql.placeholder')}
                   autoFocus
                 />
@@ -352,7 +352,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                   <button
                     type="button"
                     onClick={handleResetJql}
-                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
+                    className="text-[11px] text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
                     {t('settings.jql.reset')}
                   </button>
@@ -365,81 +365,79 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
       case 'watched-users':
         return (
           <SectionCard title={t('settings.section.watchedUsers')}>
-            <p className="text-xs text-brand-muted mb-3">
+            <p className="text-[12px] text-brand-muted mb-4">
               {t('settings.watchedUsers.hint')}
             </p>
 
-            <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden -mx-0">
-              {/* Autocomplete input */}
-              <div className="relative">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-brand-border-subtle">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-muted flex-shrink-0" aria-hidden="true">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={userQuery}
-                    onChange={(e) => setUserQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-muted focus:outline-none"
-                    placeholder={t('settings.watchedUsers.searchPlaceholder')}
-                  />
-                </div>
-
-                {/* No results feedback */}
-                {noResults && userQuery.trim() && !showSuggestions && (
-                  <div className="absolute left-0 right-0 top-full z-10 border border-brand-border rounded-lg bg-brand-surface shadow-xl px-4 py-3">
-                    <p className="text-xs text-brand-muted">{t('settings.watchedUsers.noResults', { query: userQuery.trim() })}</p>
-                  </div>
-                )}
-
-                {/* Dropdown suggestions */}
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full z-10 border border-brand-border rounded-lg bg-brand-surface shadow-xl overflow-hidden">
-                    {suggestions.map((user, i) => (
-                      <button
-                        key={user.name}
-                        type="button"
-                        onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
-                        className={`w-full text-left flex items-center gap-3 px-4 py-2.5 transition-colors duration-100 ${
-                          i > 0 ? 'border-t border-brand-border-subtle' : ''
-                        } ${i === selectedIdx ? 'bg-brand/15' : 'hover:bg-brand-surface-hover'}`}
-                      >
-                        <span className="w-7 h-7 rounded-full bg-brand-surface-hover flex items-center justify-center text-xs font-semibold text-brand-text-secondary flex-shrink-0">
-                          {user.displayName.charAt(0).toUpperCase()}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-sm text-brand-text block">{user.displayName}</span>
-                          <span className="text-xs text-brand-muted block">{user.name}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            {/* Search input */}
+            <div className="relative mb-4">
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-muted flex-shrink-0" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
+                  placeholder={t('settings.watchedUsers.searchPlaceholder')}
+                />
               </div>
 
-              {/* User list */}
-              {safeWatchedUsers.length === 0 ? (
-                <div className="px-4 py-6 text-center">
-                  <p className="text-xs text-brand-muted">{t('settings.watchedUsers.empty')}</p>
+              {/* No results feedback */}
+              {noResults && userQuery.trim() && !showSuggestions && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg px-3.5 py-2.5">
+                  <p className="text-[11px] text-brand-muted">{t('settings.watchedUsers.noResults', { query: userQuery.trim() })}</p>
                 </div>
-              ) : (
-                safeWatchedUsers.map((user, i) => (
+              )}
+
+              {/* Dropdown suggestions */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden">
+                  {suggestions.map((user, i) => (
+                    <button
+                      key={user.name}
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
+                      className={`w-full text-left flex items-center gap-2.5 px-3.5 py-2 transition-colors duration-100 ${
+                        i > 0 ? 'border-t border-brand-border-subtle' : ''
+                      } ${i === selectedIdx ? 'bg-brand/10' : 'hover:bg-brand-surface-hover'}`}
+                    >
+                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand flex-shrink-0">
+                        {user.displayName.charAt(0).toUpperCase()}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[13px] text-brand-text block">{user.displayName}</span>
+                        <span className="text-[11px] text-brand-muted block">{user.name}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* User list */}
+            {safeWatchedUsers.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {safeWatchedUsers.map((user) => (
                   <div
                     key={user}
-                    className={`flex items-center justify-between px-4 py-2.5 group ${
-                      i > 0 ? 'border-t border-brand-border-subtle' : ''
-                    }`}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-brand-surface-hover flex items-center justify-center text-xs font-semibold text-brand-text-secondary">
+                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
                         {user.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-sm text-brand-text-secondary">{user}</span>
+                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
                     </div>
                     <button
                       type="button"
@@ -447,15 +445,15 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                       className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
                       aria-label={t('settings.watchedUsers.remove', { user })}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </SectionCard>
         );
 
@@ -476,55 +474,61 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-brand-bg">
       {/* Left sidebar */}
-      <div className="w-[220px] flex-shrink-0 bg-brand-surface border-r border-brand-border py-6 px-4 flex flex-col">
+      <div className="w-[200px] flex-shrink-0 border-r border-brand-border py-5 px-3 flex flex-col">
         {/* Back button + heading */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-2 mb-6 px-1">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
+            className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded-md transition-colors duration-200"
             aria-label={t('settings.back')}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <h1 className="text-lg font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
+          <h1 className="text-sm font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
         </div>
 
         {/* Connections group */}
-        <div className="mb-4">
-          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+        <div className="mb-5">
+          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
             {t('settings.group.connections')}
           </p>
-          <NavItem section="source" label={t('settings.nav.source')} />
-          <NavItem section="destination" label={t('settings.nav.destination')} />
+          <div className="space-y-0.5">
+            <NavItem section="source" label={t('settings.nav.source')} />
+            <NavItem section="destination" label={t('settings.nav.destination')} />
+          </div>
         </div>
 
         {/* Fetching group */}
-        <div className="mb-4">
-          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+        <div className="mb-5">
+          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
             {t('settings.group.fetching')}
           </p>
-          <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
-          <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+          <div className="space-y-0.5">
+            <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
+            <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+          </div>
         </div>
 
         {/* Appearance group */}
-        <div className="mb-4">
-          <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2 px-3">
+        <div className="mb-5">
+          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
             {t('settings.group.appearance')}
           </p>
-          <NavItem section="theme" label={t('settings.nav.theme')} />
-          <NavItem section="language" label={t('settings.nav.language')} />
+          <div className="space-y-0.5">
+            <NavItem section="theme" label={t('settings.nav.theme')} />
+            <NavItem section="language" label={t('settings.nav.language')} />
+          </div>
         </div>
       </div>
 
       {/* Right content panel */}
-      <div className="flex-1 overflow-y-auto px-8 py-8">
-        <div className="max-w-[640px]">
+      <div className="flex-1 overflow-y-auto px-10 py-8">
+        <div className="max-w-[560px]">
           {renderContent()}
         </div>
       </div>
@@ -574,13 +578,13 @@ function ThemeSection() {
           key={opt.value}
           type="button"
           onClick={() => setMode(opt.value)}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[13px] transition-all duration-200 ${
             mode === opt.value
-              ? 'border-brand bg-brand/8 text-brand-text font-semibold'
-              : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+              ? 'border-brand/30 bg-brand/8 text-brand-text font-medium ring-1 ring-brand/10'
+              : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
           }`}
         >
-          <span className={mode === opt.value ? 'text-brand' : ''}>{opt.icon}</span>
+          <span className={`transition-colors duration-200 ${mode === opt.value ? 'text-brand' : ''}`}>{opt.icon}</span>
           {opt.label}
         </button>
       ))}
@@ -605,10 +609,10 @@ function LanguageSection() {
           key={opt.value}
           type="button"
           onClick={() => setLanguage(opt.value)}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-all duration-150 ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-[13px] transition-all duration-200 ${
             language === opt.value
-              ? 'border-brand bg-brand/8 text-brand-text font-semibold'
-              : 'border-brand-border bg-brand-surface text-brand-muted hover:border-brand-border hover:text-brand-text-secondary'
+              ? 'border-brand/30 bg-brand/8 text-brand-text font-medium ring-1 ring-brand/10'
+              : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
           }`}
         >
           <span className="text-base">{opt.flag}</span>

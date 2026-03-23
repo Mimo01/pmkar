@@ -128,7 +128,7 @@ describe('SettingsPage — Language section', () => {
     fireEvent.click(languageNavItem);
     const enButton = screen.getByRole('button', { name: /English/i });
     expect(enButton.className).toContain('border-brand');
-    expect(enButton.className).toContain('font-semibold');
+    expect(enButton.className).toContain('font-medium');
   });
 
   it('clicking Slovak updates language store', async () => {
