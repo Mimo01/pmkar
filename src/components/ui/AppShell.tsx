@@ -30,6 +30,26 @@ function GearIcon() {
   );
 }
 
+function TerminalIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="4 17 10 11 4 5" />
+      <line x1="12" y1="19" x2="20" y2="19" />
+    </svg>
+  );
+}
+
 export function AppShell({ children, onGearClick, activeTab, onTabChange, auditCount, onAuditClick }: AppShellProps) {
   const { t } = useTranslation();
 
@@ -46,8 +66,25 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
           <span className="text-brand">pm</span>kar
         </span>
 
-        {/* Always reserve space for gear icon to prevent height jump */}
-        <div className="w-7 h-7 flex items-center justify-center">
+        {/* Header icon toolbar */}
+        <div className="flex items-center gap-1">
+          {onAuditClick && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={onAuditClick}
+                aria-label={t('audit.open')}
+                className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
+              >
+                <TerminalIcon />
+              </button>
+              {(auditCount ?? 0) > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 text-[9px] bg-brand text-white rounded-full min-w-[14px] h-[14px] flex items-center justify-center pointer-events-none">
+                  {auditCount}
+                </span>
+              )}
+            </div>
+          )}
           {onGearClick && (
             <button
               type="button"
@@ -85,16 +122,6 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
       <div className="flex-1 flex flex-col overflow-hidden">
         {children}
       </div>
-      {onAuditClick && (
-        <button
-          type="button"
-          onClick={onAuditClick}
-          className="px-4 py-2 bg-brand-surface border-t border-brand-border text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 text-left"
-          aria-label={t('audit.open')}
-        >
-          {t('nav.apiCalls', { count: auditCount ?? 0 })}
-        </button>
-      )}
     </div>
   );
 }
