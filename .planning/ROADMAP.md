@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Copy — Core Fields** - End-to-end copy pipeline for flat fields with ADF translation, origin tracking, diff preview, and copy result reporting (completed 2026-03-22)
 - [x] **Phase 5: Copy — Attachments and Comments** - Binary attachment transfer, comment copy with attribution, work log copy, and sub-task hierarchy (completed 2026-03-22)
 - [x] **Phase 6: Triage and Audit** - Ignore workflow, ignored list view, session-persistent triage state, and in-app audit log viewer (completed 2026-03-23)
-- [ ] **Phase 7: Internationalization** - Language switcher, English language pack, and Slovak language pack
+- [x] **Phase 7: Internationalization** - Language switcher, English language pack, and Slovak language pack (completed 2026-03-23)
 
 ## Phase Details
 
@@ -134,12 +134,12 @@ Plans:
   1. User can switch the app language from a language selector in the UI
   2. After switching to English, all UI strings display in English
   3. After switching to Slovak, all UI strings display in Slovak with no untranslated fallback strings visible
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md — i18n infrastructure: Rust backend persistence, i18next init, languageStore, formatting utils, App.tsx wiring
 - [x] 07-02-PLAN.md — Complete en.json + sk.json translation packs, string extraction from all components, LanguageSection in SettingsPage
-- [ ] 07-03-PLAN.md — i18n test suite (language store, translation completeness, SettingsPage dropdown) and visual verification
+- [x] 07-03-PLAN.md — i18n test suite (language store, translation completeness, SettingsPage dropdown) and visual verification
 
 ## Progress
 
@@ -154,4 +154,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 4. Copy — Core Fields | 5/5 | Complete   | 2026-03-22 |
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
-| 7. Internationalization | 2/3 | In Progress|  |
+| 7. Internationalization | 3/3 | Complete   | 2026-03-23 |
