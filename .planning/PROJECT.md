@@ -19,15 +19,15 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] Copy ticket core fields (summary, description, status, priority, labels) with ADF translation and diff preview — Validated in Phase 4: Copy Core Fields
 - [x] Track origin — remote link back to source ticket, copiedKey in triage state — Validated in Phase 4: Copy Core Fields
 - [x] Full mirror copy: attachments, comments, work log, sub-tasks, linked issues — Validated in Phase 5: Copy Attachments and Comments
+- [x] Ignored tickets filtered from candidate list, reviewable in dedicated page with restore — Validated in Phase 6: Triage and Audit
+- [x] In-app audit log viewer with expandable REST API call details — Validated in Phase 6: Triage and Audit
 
 ### Active
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
 - [ ] Configure watched users beyond just myself
 - [ ] Present candidate tickets in full detail (links, images, assignees, work log, history, comments, attachments, sub-tasks)
 - [ ] Two actions per ticket: "Ignore" (move to ignored list) or "Copy to my Jira"
-- [ ] Ignored tickets list — reviewable, not permanently hidden
 - [ ] Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
-- [ ] All REST API calls logged with full request/response for audit and verification
 - [ ] Mock Jira server for development and testing without real PATs
 - [ ] Excel export capability (scope to be defined in later milestones)
 - [ ] Extensible architecture for future additions
