@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface AppShellProps {
   children: ReactNode;
@@ -8,11 +9,6 @@ interface AppShellProps {
   auditCount?: number;
   onAuditClick?: () => void;
 }
-
-const NAV_TABS: { id: 'tickets' | 'ignored'; label: string }[] = [
-  { id: 'tickets', label: 'Tickets' },
-  { id: 'ignored', label: 'Ignored' },
-];
 
 function GearIcon() {
   return (
@@ -35,6 +31,13 @@ function GearIcon() {
 }
 
 export function AppShell({ children, onGearClick, activeTab, onTabChange, auditCount, onAuditClick }: AppShellProps) {
+  const { t } = useTranslation();
+
+  const NAV_TABS: { id: 'tickets' | 'ignored'; label: string }[] = [
+    { id: 'tickets', label: t('nav.tickets') },
+    { id: 'ignored', label: t('nav.ignored') },
+  ];
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
       <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface border-b border-brand-border">
@@ -48,7 +51,7 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
             <button
               type="button"
               onClick={onGearClick}
-              aria-label="Settings"
+              aria-label={t('common.settings')}
               className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-all duration-200"
             >
               <GearIcon />
@@ -86,9 +89,9 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
           type="button"
           onClick={onAuditClick}
           className="px-4 py-2 bg-brand-surface border-t border-brand-border text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 text-left"
-          aria-label="Open audit log"
+          aria-label={t('audit.open')}
         >
-          {auditCount ?? 0} API calls
+          {t('nav.apiCalls', { count: auditCount ?? 0 })}
         </button>
       )}
     </div>

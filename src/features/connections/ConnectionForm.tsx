@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import { SecretInput } from './SecretInput';
 import { TestResult } from './TestResult';
 import type { ConnectionTestResult } from './types';
@@ -60,6 +61,7 @@ export function ConnectionForm({
   onTestSuccess,
   onTestInvalidated,
 }: ConnectionFormProps) {
+  const { t } = useTranslation();
   const [baseUrl, setBaseUrl] = useState(initialValues?.baseUrl ?? '');
   const [urlError, setUrlError] = useState('');
 
@@ -135,9 +137,9 @@ export function ConnectionForm({
     } else if (trimmed.startsWith('http://') && isLocalhost(trimmed)) {
       setUrlError('');
     } else if (trimmed.startsWith('http://')) {
-      setUrlError('HTTPS required for non-local URLs');
+      setUrlError(t('connection.urlError.httpsRequired'));
     } else {
-      setUrlError('URL must start with https://');
+      setUrlError(t('connection.urlError.mustStartHttps'));
     }
   }
 
@@ -229,7 +231,7 @@ export function ConnectionForm({
           htmlFor="base-url"
           className="text-sm font-medium text-brand-text-secondary"
         >
-          Base URL
+          {t('connection.baseUrl')}
         </label>
         <input
           id="base-url"
@@ -238,7 +240,9 @@ export function ConnectionForm({
           onChange={(e) => handleBaseUrlChange(e.target.value)}
           onBlur={handleUrlBlur}
           disabled={testing}
-          placeholder="https://jira.example.com"
+          placeholder={connectionType === 'server'
+            ? t('connection.baseUrl.placeholder.server')
+            : t('connection.baseUrl.placeholder.cloud')}
           className={inputClass}
         />
         {urlError && (
@@ -250,7 +254,7 @@ export function ConnectionForm({
       {connectionType === 'server' && (
         <SecretInput
           id="pat"
-          label="Personal Access Token"
+          label={t('connection.pat')}
           value={pat}
           onChange={handleFieldChange(setPat)}
           disabled={testing}
@@ -266,7 +270,7 @@ export function ConnectionForm({
               htmlFor="email"
               className="text-sm font-medium text-brand-text-secondary"
             >
-              Email
+              {t('connection.email')}
             </label>
             <input
               id="email"
@@ -280,7 +284,7 @@ export function ConnectionForm({
           </div>
           <SecretInput
             id="api-token"
-            label="API Token"
+            label={t('connection.apiToken')}
             value={apiToken}
             onChange={handleFieldChange(setApiToken)}
             disabled={testing}
@@ -305,7 +309,7 @@ export function ConnectionForm({
           .join(' ')}
       >
         {testing && <SpinnerIcon />}
-        {testing ? 'Testing...' : 'Test Connection'}
+        {testing ? t('connection.testing') : t('connection.testButton')}
       </button>
 
       <TestResult result={testResult} connectionType={connectionType} />

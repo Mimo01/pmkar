@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import type { JiraTicketDetail } from './types';
 import { OverviewTab } from './tabs/OverviewTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -25,6 +26,7 @@ export function TicketDetailPanel({
   baseUrl,
   onClose,
 }: TicketDetailPanelProps) {
+  const { t } = useTranslation();
   const [detail, setDetail] = useState<JiraTicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
@@ -113,17 +115,17 @@ export function TicketDetailPanel({
 
   const tabs: { id: TabId; label: string }[] = detail
     ? [
-        { id: 'overview', label: 'Overview' },
+        { id: 'overview', label: t('detail.tab.overview') },
         {
           id: 'comments',
-          label: `Comments (${detail.fields.comment.comments.length})`,
+          label: `${t('detail.tab.comments')} (${detail.fields.comment.comments.length})`,
         },
-        { id: 'worklog', label: 'Work Log' },
+        { id: 'worklog', label: t('detail.tab.worklog') },
         {
           id: 'attachments',
-          label: `Attachments (${detail.fields.attachment.length})`,
+          label: `${t('detail.tab.attachments')} (${detail.fields.attachment.length})`,
         },
-        { id: 'history', label: 'History' },
+        { id: 'history', label: t('detail.tab.history') },
       ]
     : [];
 
@@ -152,7 +154,7 @@ export function TicketDetailPanel({
                 type="button"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-colors duration-150"
-                aria-label="Close ticket detail"
+                aria-label={t('detail.close')}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -191,7 +193,7 @@ export function TicketDetailPanel({
                     onClick={handleUnignore}
                     className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
                   >
-                    Undo Not Mine
+                    {t('detail.ignored')}
                   </button>
                 ) : (
                   <button
@@ -199,12 +201,12 @@ export function TicketDetailPanel({
                     onClick={handleIgnore}
                     className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
                   >
-                    Not Mine
+                    {t('detail.ignore')}
                   </button>
                 )}
                 {isCopied ? (
                   <span className="px-3 py-1 rounded text-sm font-semibold text-emerald-400 border border-emerald-400/30">
-                    Copied{triageEntry?.copiedKey ? ` → ${triageEntry.copiedKey}` : ''}
+                    {t('detail.copied')}{triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
                   </span>
                 ) : (
                   <button
@@ -235,7 +237,7 @@ export function TicketDetailPanel({
                         />
                       </svg>
                     ) : (
-                      'Copy to Company Jira'
+                      t('detail.copy')
                     )}
                   </button>
                 )}
@@ -246,7 +248,7 @@ export function TicketDetailPanel({
             )}
           </>
         ) : (
-          <div className="text-xs text-red-400">Failed to load ticket detail</div>
+          <div className="text-xs text-red-400">{t('detail.failedToLoad')}</div>
         )}
       </div>
 

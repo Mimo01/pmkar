@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import type { TriageState } from './types';
 
 interface TriageIndicatorProps {
@@ -8,6 +9,8 @@ interface TriageIndicatorProps {
 }
 
 export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndicatorProps) {
+  const { t } = useTranslation();
+
   if (state === 'new') {
     return (
       <span
@@ -30,7 +33,7 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
           strokeLinecap="round"
           strokeLinejoin="round"
           className="text-emerald-400 shrink-0"
-          aria-label="Copied"
+          aria-label={t('detail.copied')}
         >
           <polyline points="20 6 9 17 4 12" />
         </svg>
@@ -55,7 +58,7 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
   if (state === 'ignored') {
     return (
       <span className="inline-flex items-center whitespace-nowrap px-1.5 py-0.5 rounded-full bg-brand-surface-hover">
-        <span className="text-[11px] font-medium text-brand-muted">Not mine</span>
+        <span className="text-[11px] font-medium text-brand-muted">{t('detail.ignore')}</span>
       </span>
     );
   }

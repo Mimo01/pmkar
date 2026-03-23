@@ -104,6 +104,7 @@
   "ignored.col.actions": "Akcie",
   "audit.heading": "Audit API volan\u00ed",
   "audit.back": "Sp\u00e4\u0165",
+  "audit.close": "Zavrie\u0165 audit log",
   "audit.empty": "\u017diadne API volania zaznamenan\u00e9",
   "audit.empty.hint": "API volania uskuto\u010dnen\u00e9 po\u010das tejto rel\u00e1cie sa objavia tu.",
   "audit.clear": "Vymaza\u0165 log",

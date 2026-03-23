@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '../../lib/format';
 import type { JiraTicket, TriageEntry } from './types';
 import { TriageIndicator } from './TriageIndicator';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -16,18 +18,6 @@ interface TicketTableProps {
   triageMap: Record<string, TriageEntry>;
   selectedKey: string | null;
   onSelectTicket: (key: string) => void;
-}
-
-function relativeTime(iso: string): string {
-  const now = Date.now();
-  const then = new Date(iso).getTime();
-  const diffSeconds = Math.round((then - now) / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  const absDiff = Math.abs(diffSeconds);
-  if (absDiff < 60) return rtf.format(diffSeconds, 'second');
-  if (absDiff < 3600) return rtf.format(Math.round(diffSeconds / 60), 'minute');
-  if (absDiff < 86400) return rtf.format(Math.round(diffSeconds / 3600), 'hour');
-  return rtf.format(Math.round(diffSeconds / 86400), 'day');
 }
 
 function ChevronIcon({ direction }: { direction: 'asc' | 'desc' }) {
@@ -52,15 +42,6 @@ function ChevronIcon({ direction }: { direction: 'asc' | 'desc' }) {
     </svg>
   );
 }
-
-const COLUMNS: { key: SortColumn; label: string; width: string; align?: string }[] = [
-  { key: 'key', label: 'Key', width: 'w-24' },
-  { key: 'summary', label: 'Summary', width: 'flex-1' },
-  { key: 'status', label: 'Status', width: 'w-24' },
-  { key: 'priority', label: 'Priority', width: 'w-18' },
-  { key: 'assignee', label: 'Assignee', width: 'w-30' },
-  { key: 'updated', label: 'Updated', width: 'w-24', align: 'text-right' },
-];
 
 function getColumnValue(ticket: JiraTicket, col: SortColumn): string {
   switch (col) {
@@ -113,8 +94,18 @@ function SkeletonRows() {
 
 
 export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }: TicketTableProps) {
+  const { t } = useTranslation();
   const [sort, setSort] = useState<SortState>({ col: 'updated', dir: 'desc' });
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+
+  const COLUMNS: { key: SortColumn; label: string; width: string; align?: string }[] = [
+    { key: 'key', label: t('tickets.col.key'), width: 'w-24' },
+    { key: 'summary', label: t('tickets.col.summary'), width: 'flex-1' },
+    { key: 'status', label: t('tickets.col.status'), width: 'w-24' },
+    { key: 'priority', label: t('tickets.col.priority'), width: 'w-18' },
+    { key: 'assignee', label: t('tickets.col.assignee'), width: 'w-30' },
+    { key: 'updated', label: t('tickets.col.updated'), width: 'w-24', align: 'text-right' },
+  ];
 
   const sortedTickets = useMemo(
     () => [...tickets].sort((a, b) => compareTickets(a, b, sort)),
@@ -202,7 +193,7 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
                     {ticket.fields.assignee?.displayName ?? ''}
                   </td>
                   <td className="w-24 px-4 py-3 text-right text-xs text-brand-muted">
-                    {relativeTime(ticket.fields.updated)}
+                    {formatRelativeTime(ticket.fields.updated)}
                   </td>
                 </tr>
               );

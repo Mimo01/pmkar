@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import { StatusBadge, type BadgeStatus } from '../../components/ui/StatusBadge';
 
 interface MockServerStatus {
@@ -8,6 +9,7 @@ interface MockServerStatus {
 }
 
 export function DevStatusPanel() {
+  const { t } = useTranslation();
   const [serverV2, setServerV2] = useState<BadgeStatus>('loading');
   const [cloudV3, setCloudV3] = useState<BadgeStatus>('loading');
   const [keychain, setKeychain] = useState<BadgeStatus>('loading');

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../../lib/format';
 import type { JiraWorklog } from '../types';
 
 interface WorkLogTabProps {
@@ -7,16 +9,8 @@ interface WorkLogTabProps {
   baseUrl: string;
 }
 
-function formatDate(isoTimestamp: string): string {
-  const date = new Date(isoTimestamp);
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
+  const { t } = useTranslation();
   const [worklogs, setWorklogs] = useState<JiraWorklog[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +45,7 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
   if (worklogs === null && error === null) {
     return (
       <div className="px-5 py-4" aria-busy="true" aria-live="polite">
-        <p className="text-xs text-brand-muted mb-3">Loading work log...</p>
+        <p className="text-xs text-brand-muted mb-3">{t('detail.loading')}</p>
         <div className="space-y-2" aria-hidden="true">
           <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
           <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
@@ -74,7 +68,7 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
   if (!worklogs || worklogs.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <p className="text-xs text-brand-muted">No work log entries</p>
+        <p className="text-xs text-brand-muted">{t('detail.tab.worklog')}</p>
       </div>
     );
   }

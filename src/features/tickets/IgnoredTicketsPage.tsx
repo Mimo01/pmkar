@@ -1,19 +1,9 @@
 import { useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '../../lib/format';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
-
-function relativeTime(iso: string): string {
-  const now = Date.now();
-  const then = new Date(iso).getTime();
-  const diffSeconds = Math.round((then - now) / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  const absDiff = Math.abs(diffSeconds);
-  if (absDiff < 60) return rtf.format(diffSeconds, 'second');
-  if (absDiff < 3600) return rtf.format(Math.round(diffSeconds / 60), 'minute');
-  if (absDiff < 86400) return rtf.format(Math.round(diffSeconds / 3600), 'hour');
-  return rtf.format(Math.round(diffSeconds / 86400), 'day');
-}
 
 function handleRestore(issueKey: string) {
   invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
@@ -24,6 +14,7 @@ function handleRestore(issueKey: string) {
 }
 
 export function IgnoredTicketsPage() {
+  const { t } = useTranslation();
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
 
@@ -45,9 +36,9 @@ export function IgnoredTicketsPage() {
     <div className="flex flex-col h-[calc(100vh-113px)] overflow-hidden">
       {ignoredTickets.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text-secondary mb-1">No ignored tickets</p>
+          <p className="text-sm font-semibold text-brand-text-secondary mb-1">{t('ignored.empty')}</p>
           <p className="text-xs text-brand-muted">
-            Tickets you mark as &quot;not mine&quot; will appear here.
+            {t('ignored.empty.hint')}
           </p>
         </div>
       )}
@@ -58,25 +49,25 @@ export function IgnoredTicketsPage() {
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-24 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Key
+                  {t('ignored.col.key')}
                 </th>
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Summary
+                  {t('ignored.col.summary')}
                 </th>
                 <th className="w-24 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Status
+                  {t('ignored.col.status')}
                 </th>
                 <th className="w-18 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Priority
+                  {t('ignored.col.priority')}
                 </th>
                 <th className="w-30 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Assignee
+                  {t('ignored.col.assignee')}
                 </th>
                 <th className="w-24 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
-                  Updated
+                  {t('ignored.col.updated')}
                 </th>
                 <th className="w-24 px-4 py-2.5">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t('ignored.col.actions')}</span>
                 </th>
               </tr>
             </thead>
@@ -102,7 +93,7 @@ export function IgnoredTicketsPage() {
                     {ticket.fields.assignee?.displayName ?? ''}
                   </td>
                   <td className="w-24 px-4 py-3 text-right text-xs text-brand-muted">
-                    {relativeTime(ticket.fields.updated)}
+                    {formatRelativeTime(ticket.fields.updated)}
                   </td>
                   <td className="w-24 px-4 py-3">
                     <button
@@ -110,7 +101,7 @@ export function IgnoredTicketsPage() {
                       onClick={() => handleRestore(ticket.key)}
                       className="text-xs font-semibold text-brand-muted border border-brand-border rounded px-2 py-1 hover:text-brand-text hover:border-brand-text transition-colors"
                     >
-                      Restore
+                      {t('ignored.restore')}
                     </button>
                   </td>
                 </tr>

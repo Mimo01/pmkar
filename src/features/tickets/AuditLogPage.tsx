@@ -1,5 +1,7 @@
 import { Fragment, useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
+import { formatTimestamp } from '../../lib/format';
 import type { AuditEntry } from './types';
 
 interface AuditLogPageProps {
@@ -27,16 +29,8 @@ function methodColor(method: string): string {
   return 'text-brand-text-secondary';
 }
 
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  return (
-    d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
-    ' ' +
-    d.toLocaleDateString([], { month: 'short', day: 'numeric' })
-  );
-}
-
 export function AuditLogPage({ onClose }: AuditLogPageProps) {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +52,12 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
     <div className="flex flex-col h-full">
       {/* Header bar with title and close button */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
-        <h1 className="text-xl font-semibold text-brand-text">API Audit Log</h1>
+        <h1 className="text-xl font-semibold text-brand-text">{t('audit.heading')}</h1>
         <button
           type="button"
           onClick={onClose}
           className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-colors duration-150"
-          aria-label="Close audit log"
+          aria-label={t('audit.close')}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -90,16 +84,16 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Timestamp
+                  {t('audit.col.time')}
                 </th>
                 <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Method
+                  {t('audit.col.method')}
                 </th>
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  URL
+                  {t('audit.col.url')}
                 </th>
                 <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
-                  Status
+                  {t('audit.col.status')}
                 </th>
               </tr>
             </thead>
@@ -129,7 +123,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {error && (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-red-400">
-            Could not load audit log. Restart the app if the problem persists.
+            {t('audit.loadError')}
           </p>
         </div>
       )}
@@ -137,8 +131,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {/* Empty state */}
       {!loading && !error && entries.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text-secondary mb-1">No API calls recorded</p>
-          <p className="text-xs text-brand-muted">API calls made during this session will appear here.</p>
+          <p className="text-sm font-semibold text-brand-text-secondary mb-1">{t('audit.empty')}</p>
+          <p className="text-xs text-brand-muted">{t('audit.empty.hint')}</p>
         </div>
       )}
 
@@ -149,16 +143,16 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Timestamp
+                  {t('audit.col.time')}
                 </th>
                 <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  Method
+                  {t('audit.col.method')}
                 </th>
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
-                  URL
+                  {t('audit.col.url')}
                 </th>
                 <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
-                  Status
+                  {t('audit.col.status')}
                 </th>
               </tr>
             </thead>
@@ -179,7 +173,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     </td>
                     <td className="px-4 py-2 text-xs text-brand-text-secondary truncate">{entry.url}</td>
                     <td className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}>
-                      {entry.statusCode ?? '—'}
+                      {entry.statusCode ?? '\u2014'}
                     </td>
                   </tr>
 
@@ -190,7 +184,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                         <div className="space-y-2">
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
-                              Request Headers
+                              {t('audit.requestHeaders')}
                             </span>
                             <pre className="whitespace-pre-wrap break-all font-mono text-xs text-brand-text mt-1">
                               {entry.headers}
@@ -198,14 +192,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                           </div>
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
-                              Response Body
+                              {t('audit.response')}
                             </span>
                             {entry.responseBody ? (
                               <pre className="whitespace-pre-wrap break-all font-mono text-xs text-brand-text mt-1">
                                 {formatResponseBody(entry.responseBody)}
                               </pre>
                             ) : (
-                              <p className="text-xs text-brand-muted mt-1">Response body not recorded</p>
+                              <p className="text-xs text-brand-muted mt-1">{t('audit.responseBodyEmpty')}</p>
                             )}
                           </div>
                         </div>

@@ -1,27 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import type { ConnectionTestResult } from './types';
 
 interface TestResultProps {
   result: ConnectionTestResult | null;
   connectionType: 'server' | 'cloud';
-}
-
-function getErrorMessage(result: ConnectionTestResult): string {
-  switch (result.errorKind) {
-    case 'auth':
-      return 'Authentication failed — check your PAT is valid';
-    case 'forbidden':
-      return 'PAT lacks required permissions';
-    case 'rate_limit': {
-      const secs = result.retryAfterSecs ?? null;
-      return `Rate limited — try again in ${secs !== null ? secs : 'a few'} seconds`;
-    }
-    case 'server_error':
-      return 'Server error — try again later';
-    case 'network':
-      return 'Cannot reach server — check URL';
-    default:
-      return 'An unexpected error occurred — try again';
-  }
 }
 
 function SuccessIcon() {
@@ -44,6 +26,8 @@ function ErrorIcon() {
 }
 
 export function TestResult({ result, connectionType }: TestResultProps) {
+  const { t } = useTranslation();
+
   if (result === null) {
     return null;
   }
@@ -60,10 +44,32 @@ export function TestResult({ result, connectionType }: TestResultProps) {
       >
         <SuccessIcon />
         <span className="text-sm text-emerald-300">
-          Connected as {username} — {jiraType} v{version}
+          {t('connection.test.connected', { username, jiraType, version })}
         </span>
       </div>
     );
+  }
+
+  function getErrorMessage(r: ConnectionTestResult): string {
+    switch (r.errorKind) {
+      case 'auth':
+        return t('connection.test.auth');
+      case 'forbidden':
+        return t('connection.test.forbidden');
+      case 'rate_limit': {
+        const secs = r.retryAfterSecs ?? null;
+        if (secs !== null) {
+          return t('connection.test.rateLimited', { secs });
+        }
+        return t('connection.test.rateLimitedFew');
+      }
+      case 'server_error':
+        return t('connection.test.serverError');
+      case 'network':
+        return t('connection.test.network');
+      default:
+        return t('connection.test.unexpected');
+    }
   }
 
   return (

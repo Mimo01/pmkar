@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import { StepProgress } from './StepProgress';
 import { WizardStep } from './WizardStep';
 import { ConnectionForm } from './ConnectionForm';
@@ -24,6 +25,7 @@ interface SetupWizardProps {
 }
 
 export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(initialStep);
   const [testPassed, setTestPassed] = useState(false);
 
@@ -121,7 +123,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
 
         {currentStep === 1 && (
           <>
-            <WizardStep title="Source Connection" subtitle="Customer Jira Server">
+            <WizardStep title={t('wizard.source.title')} subtitle={t('wizard.source.subtitle')}>
               <ConnectionForm
                 connectionType="server"
                 onTestSuccess={(result, creds) =>
@@ -137,7 +139,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                   onClick={handleNext}
                   className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-brand-text font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
                 >
-                  Next
+                  {t('wizard.next')}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
@@ -149,7 +151,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
 
         {currentStep === 2 && (
           <>
-            <WizardStep title="Destination Connection" subtitle="Company Jira Cloud">
+            <WizardStep title={t('wizard.destination.title')} subtitle={t('wizard.destination.subtitle')}>
               <ConnectionForm
                 connectionType="cloud"
                 onTestSuccess={(result, creds) =>
@@ -165,7 +167,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                   onClick={handleNext}
                   className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-brand-text font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
                 >
-                  Next
+                  {t('wizard.next')}
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
@@ -176,7 +178,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
         )}
 
         {currentStep === 3 && serverConnection && cloudConnection && (
-          <WizardStep title="All Set" subtitle="">
+          <WizardStep title={t('wizard.allSet.title')} subtitle="">
             <SummaryStep
               serverConnection={serverConnection}
               cloudConnection={cloudConnection}

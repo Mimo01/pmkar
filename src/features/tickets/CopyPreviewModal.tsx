@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -22,6 +23,7 @@ function FieldRow({ label, value }: { label: string; value: string }) {
 }
 
 export function CopyPreviewModal() {
+  const { t } = useTranslation();
   const phase = useCopyStore((s) => s.phase);
   const sourceTicket = useCopyStore((s) => s.sourceTicket);
   const cloudMeta = useCopyStore((s) => s.cloudMeta);
@@ -100,7 +102,7 @@ export function CopyPreviewModal() {
             id="preview-modal-title"
             className="text-[13px] font-semibold"
           >
-            Preview Copy
+            {t('copy.preview.title')}
           </h2>
           <div className="flex items-center gap-3">
             <button
@@ -109,7 +111,7 @@ export function CopyPreviewModal() {
               onClick={handleDiscard}
               className="text-brand-muted hover:text-brand-text text-sm"
             >
-              Discard Preview
+              {t('copy.preview.discard')}
             </button>
             <button
               type="button"
@@ -117,7 +119,7 @@ export function CopyPreviewModal() {
               disabled={phase === 'copying'}
               className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Copy to Company Jira
+              {t('copy.preview.confirm')}
             </button>
           </div>
         </div>
@@ -128,7 +130,7 @@ export function CopyPreviewModal() {
             <div
               className="h-1 bg-brand animate-pulse"
               role="progressbar"
-              aria-label="Copy in progress"
+              aria-label={t('copy.preview.copying')}
             />
             <p className="text-center text-xs text-brand-muted py-1">
               {progressStep}
@@ -142,7 +144,7 @@ export function CopyPreviewModal() {
         >
           {/* Left: Source (read-only) */}
           <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
-            <h3 className="text-base font-semibold mb-4">Source</h3>
+            <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
 
             <SourceFieldRow
               label="Summary"
@@ -220,7 +222,7 @@ export function CopyPreviewModal() {
 
           {/* Right: Target (editable) */}
           <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
-            <h3 className="text-base font-semibold mb-4">Target</h3>
+            <h3 className="text-base font-semibold mb-4">{t('copy.preview.target')}</h3>
 
             {/* Summary (editable) */}
             <div className="mb-3">

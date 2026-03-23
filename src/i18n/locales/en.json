@@ -104,6 +104,7 @@
   "ignored.col.actions": "Actions",
   "audit.heading": "API Audit Log",
   "audit.back": "Back",
+  "audit.close": "Close audit log",
   "audit.empty": "No API calls recorded",
   "audit.empty.hint": "API calls made during this session will appear here.",
   "audit.clear": "Clear log",

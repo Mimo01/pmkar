@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ConnectionMeta } from './types';
 
 function CheckIcon() {
@@ -53,19 +54,20 @@ interface SummaryStepProps {
 }
 
 export function SummaryStep({ serverConnection, cloudConnection, onDone }: SummaryStepProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <p className="text-sm text-brand-text-secondary">
-        Both connections are configured and verified.
+        {t('wizard.bothConfigured')}
       </p>
 
       <div className="space-y-3">
         <ConnectionSummaryCard
-          label="Source (Customer Jira)"
+          label={t('settings.sourceLabel')}
           connection={serverConnection}
         />
         <ConnectionSummaryCard
-          label="Destination (Company Jira)"
+          label={t('settings.destLabel')}
           connection={cloudConnection}
         />
       </div>
@@ -76,7 +78,7 @@ export function SummaryStep({ serverConnection, cloudConnection, onDone }: Summa
           onClick={onDone}
           className="bg-brand hover:bg-brand-light active:bg-brand-dark text-white font-medium rounded-lg py-2.5 px-6 text-sm transition-all duration-200"
         >
-          Done
+          {t('wizard.done')}
         </button>
       </div>
     </div>

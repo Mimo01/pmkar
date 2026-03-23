@@ -1,24 +1,14 @@
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import type { FetchTicketsResult, JqlPreset } from './types';
 import { useTicketStore } from './ticketStore';
 import { useConnectionStore } from '../connections/connectionStore';
 import { TicketTable } from './TicketTable';
 import { TicketDetailPanel } from './TicketDetailPanel';
+import { formatRelativeTime } from '../../lib/format';
 
 // --- Helpers ---
-
-function relativeTime(iso: string): string {
-  const now = Date.now();
-  const then = new Date(iso).getTime();
-  const diffSeconds = Math.round((then - now) / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  const absDiff = Math.abs(diffSeconds);
-  if (absDiff < 60) return rtf.format(diffSeconds, 'second');
-  if (absDiff < 3600) return rtf.format(Math.round(diffSeconds / 60), 'minute');
-  if (absDiff < 86400) return rtf.format(Math.round(diffSeconds / 3600), 'hour');
-  return rtf.format(Math.round(diffSeconds / 86400), 'day');
-}
 
 function buildJql(
   preset: JqlPreset,
@@ -54,26 +44,10 @@ function SpinnerIcon() {
   );
 }
 
-function getErrorDetail(error: string): string {
-  const lower = error.toLowerCase();
-  if (lower.includes('401') || lower.includes('auth') || lower.includes('unauthorized')) {
-    return 'Authentication failed. Check your Source connection credentials in Settings.';
-  }
-  if (lower.includes('network') || lower.includes('connect') || lower.includes('reach')) {
-    return 'Could not reach the server. Check your network and Source connection URL.';
-  }
-  if (lower.includes('429') || lower.includes('rate')) {
-    return 'Rate limited by Jira. Try again in a few seconds.';
-  }
-  if (lower.includes('500') || lower.includes('server error')) {
-    return 'Jira returned a server error. Try again or check server status.';
-  }
-  return error;
-}
-
 // --- Component ---
 
 export function TicketListPage() {
+  const { t } = useTranslation();
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
   const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
@@ -82,6 +56,23 @@ export function TicketListPage() {
   const lastFetchedAt = useTicketStore((s) => s.lastFetchedAt);
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
+
+  function getErrorDetail(error: string): string {
+    const lower = error.toLowerCase();
+    if (lower.includes('401') || lower.includes('auth') || lower.includes('unauthorized')) {
+      return t('error.authFailed');
+    }
+    if (lower.includes('network') || lower.includes('connect') || lower.includes('reach')) {
+      return t('error.networkError');
+    }
+    if (lower.includes('429') || lower.includes('rate')) {
+      return t('error.rateLimited');
+    }
+    if (lower.includes('500') || lower.includes('server error')) {
+      return t('error.serverError');
+    }
+    return error;
+  }
 
   // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
   useEffect(() => {
@@ -161,17 +152,17 @@ export function TicketListPage() {
             }`}
           >
             {isLoading && <SpinnerIcon />}
-            {isLoading ? 'Fetching...' : 'Fetch Tickets'}
+            {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
           </button>
 
           <span className="text-xs text-brand-muted">
-            {lastFetchedAt ? `Last fetched: ${relativeTime(lastFetchedAt)}` : 'Not yet fetched'}
+            {lastFetchedAt ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) }) : t('tickets.notYetFetched')}
           </span>
 
           {totalCount > 0 && (
             <span className="text-xs text-brand-text-secondary" aria-live="polite">
-              {candidateTickets.length} candidates{newCount > 0 ? ', ' : ''}
-              {newCount > 0 && <span className="text-brand">{newCount} new</span>}
+              {t('tickets.candidates', { count: candidateTickets.length })}{newCount > 0 ? ', ' : ''}
+              {newCount > 0 && <span className="text-brand">{t('tickets.new', { count: newCount })}</span>}
             </span>
           )}
         </div>
@@ -182,7 +173,7 @@ export function TicketListPage() {
             className="mx-6 mt-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3"
             role="alert"
           >
-            <p className="text-sm text-red-400">Could not fetch tickets</p>
+            <p className="text-sm text-red-400">{t('tickets.fetchError')}</p>
             <p className="text-xs text-brand-muted mt-1">{getErrorDetail(fetchError)}</p>
           </div>
         )}
@@ -190,9 +181,9 @@ export function TicketListPage() {
         {/* Empty state */}
         {showEmptyState && (
           <div className="flex flex-col items-center justify-center flex-1 py-16">
-            <p className="text-sm font-semibold text-brand-text-secondary mb-1">No candidates found</p>
+            <p className="text-sm font-semibold text-brand-text-secondary mb-1">{t('tickets.empty')}</p>
             <p className="text-xs text-brand-muted">
-              Your JQL returned no results. Try adjusting your fetch settings.
+              {t('tickets.empty.hint')}
             </p>
           </div>
         )}

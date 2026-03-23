@@ -1,8 +1,4 @@
-const STEPS = [
-  { label: 'Source', index: 1 },
-  { label: 'Destination', index: 2 },
-  { label: 'Done', index: 3 },
-];
+import { useTranslation } from 'react-i18next';
 
 interface StepProgressProps {
   currentStep: number;
@@ -23,6 +19,14 @@ function CheckMark() {
 }
 
 export function StepProgress({ currentStep }: StepProgressProps) {
+  const { t } = useTranslation();
+
+  const STEPS = [
+    { label: t('wizard.step.source'), index: 1 },
+    { label: t('wizard.step.destination'), index: 2 },
+    { label: t('wizard.step.done'), index: 3 },
+  ];
+
   return (
     <div className="flex items-center justify-center gap-0 mb-8" role="list">
       {STEPS.map((step, i) => {

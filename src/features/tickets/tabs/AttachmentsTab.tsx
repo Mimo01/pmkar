@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { JiraAttachment } from '../types';
 
 interface AttachmentsTabProps {
@@ -13,10 +14,12 @@ function formatSize(bytes: number): string {
 }
 
 export function AttachmentsTab({ attachments }: AttachmentsTabProps) {
+  const { t } = useTranslation();
+
   if (attachments.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <p className="text-xs text-brand-muted">No attachments</p>
+        <p className="text-xs text-brand-muted">{t('detail.tab.attachments')}</p>
       </div>
     );
   }

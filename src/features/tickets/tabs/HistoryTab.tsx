@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
+import { formatDate } from '../../../lib/format';
 import type { ChangelogEntry } from '../types';
 
 interface HistoryTabProps {
@@ -7,16 +9,8 @@ interface HistoryTabProps {
   baseUrl: string;
 }
 
-function formatDate(isoTimestamp: string): string {
-  const date = new Date(isoTimestamp);
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
 export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
+  const { t } = useTranslation();
   const [histories, setHistories] = useState<ChangelogEntry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +45,7 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
   if (histories === null && error === null) {
     return (
       <div className="px-5 py-4" aria-busy="true" aria-live="polite">
-        <p className="text-xs text-brand-muted mb-3">Loading history...</p>
+        <p className="text-xs text-brand-muted mb-3">{t('detail.loading')}</p>
         <div className="space-y-2" aria-hidden="true">
           <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
           <div className="animate-pulse bg-brand-surface-hover rounded h-3" />
@@ -74,7 +68,7 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
   if (!histories || histories.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <p className="text-xs text-brand-muted">No change history</p>
+        <p className="text-xs text-brand-muted">{t('detail.tab.history')}</p>
       </div>
     );
   }

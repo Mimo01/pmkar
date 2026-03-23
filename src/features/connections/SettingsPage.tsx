@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from './connectionStore';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useTicketStore } from '../tickets/ticketStore';
 import { useThemeStore, type ThemeMode } from '../theme/themeStore';
+import { useLanguageStore, type Language } from '../../i18n/languageStore';
 import type { ConnectionType, ConnectionMeta, ConnectionTestResult } from './types';
 import type { JqlPreset, FetchConfig } from '../tickets/types';
 
@@ -19,14 +21,16 @@ interface JiraUser {
   emailAddress?: string;
 }
 
-const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
-  { value: 'assigned', label: 'Assigned to me', jql: 'assignee = currentUser() ORDER BY updated DESC' },
-  { value: 'mentioned', label: 'Mentioned', jql: 'text ~ currentUser() ORDER BY updated DESC' },
-  { value: 'all_watched', label: 'All watched users', jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC' },
-  { value: 'custom', label: 'Custom query', jql: 'You write the JQL' },
-];
-
 export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
+  const { t } = useTranslation();
+
+  const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
+    { value: 'assigned', label: t('settings.preset.assigned'), jql: 'assignee = currentUser() ORDER BY updated DESC' },
+    { value: 'mentioned', label: t('settings.preset.mentioned'), jql: 'text ~ currentUser() ORDER BY updated DESC' },
+    { value: 'all_watched', label: t('settings.preset.allWatched'), jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC' },
+    { value: 'custom', label: t('settings.preset.custom'), jql: 'You write the JQL' },
+  ];
+
   const serverConn = useConnectionStore((s) => s.serverConnection);
   const cloudConn = useConnectionStore((s) => s.cloudConnection);
 
@@ -192,39 +196,39 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           type="button"
           onClick={onClose}
           className="flex items-center justify-center w-8 h-8 text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-all duration-200"
-          aria-label="Back"
+          aria-label={t('settings.back')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className="text-lg font-semibold tracking-tight text-brand-text">Settings</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
       </div>
 
       {hasNoConnections ? (
         <div className="text-center py-16">
           <p className="text-brand-text-secondary text-sm font-semibold mb-1">
-            No connections configured
+            {t('settings.noConnections')}
           </p>
           <p className="text-brand-muted text-xs">
-            Run setup to configure your Jira connections.
+            {t('settings.noConnections.hint')}
           </p>
         </div>
       ) : (
         <div className="space-y-8">
           {/* Connections Section */}
           <section>
-            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Connections</h2>
+            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.connections')}</h2>
             {editingConnection === 'server' ? (
               <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-brand-text">Edit Source Connection</span>
+                  <span className="text-sm font-semibold text-brand-text">{t('settings.editSource')}</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
                     className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
-                    Cancel
+                    {t('settings.cancel')}
                   </button>
                 </div>
                 <ConnectionForm
@@ -236,7 +240,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               </div>
             ) : (
               <ConnectionCard
-                label="Source (Customer Jira)"
+                label={t('settings.sourceLabel')}
                 connection={serverConn}
                 onEdit={() => handleEdit('server')}
               />
@@ -244,13 +248,13 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
             {editingConnection === 'cloud' ? (
               <div className="rounded-xl border border-brand/30 bg-brand-surface p-4 mb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-brand-text">Edit Destination Connection</span>
+                  <span className="text-sm font-semibold text-brand-text">{t('settings.editDestination')}</span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
                     className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
-                    Cancel
+                    {t('settings.cancel')}
                   </button>
                 </div>
                 <ConnectionForm
@@ -262,7 +266,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               </div>
             ) : (
               <ConnectionCard
-                label="Destination (Company Jira)"
+                label={t('settings.destLabel')}
                 connection={cloudConn}
                 onEdit={() => handleEdit('cloud')}
               />
@@ -271,7 +275,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
           {/* What to Fetch Section */}
           <section>
-            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">What to fetch</h2>
+            <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.whatToFetch')}</h2>
             <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
               {PRESET_OPTIONS.map((opt, i) => (
                 <button
@@ -309,7 +313,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                   value={jqlCustom ?? ''}
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
                   className="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
-                  placeholder="assignee = currentUser() ORDER BY updated DESC"
+                  placeholder={t('settings.jql.placeholder')}
                   autoFocus
                 />
                 <div className="flex justify-end mt-1.5">
@@ -318,7 +322,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     onClick={handleResetJql}
                     className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-200"
                   >
-                    Reset to default
+                    {t('settings.jql.reset')}
                   </button>
                 </div>
               </div>
@@ -328,12 +332,12 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
           {/* Watched Users Section */}
           <section>
             <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
-              Watched users{safeWatchedUsers.length > 0 && (
-                <span className="text-brand-text-secondary font-normal ml-2">({safeWatchedUsers.length})</span>
+              {t('settings.watchedUsers')}{safeWatchedUsers.length > 0 && (
+                <span className="text-brand-text-secondary font-normal ml-2">{t('settings.watchedUsers.count', { count: safeWatchedUsers.length })}</span>
               )}
             </h2>
             <p className="text-xs text-brand-muted mb-3">
-              Tickets assigned to these users appear in "All watched users" results.
+              {t('settings.watchedUsers.hint')}
             </p>
 
             <div className="rounded-xl border border-brand-border bg-brand-surface overflow-hidden">
@@ -353,14 +357,14 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                     onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-muted focus:outline-none"
-                    placeholder="Search Jira users..."
+                    placeholder={t('settings.watchedUsers.searchPlaceholder')}
                   />
                 </div>
 
                 {/* No results feedback */}
                 {noResults && userQuery.trim() && !showSuggestions && (
                   <div className="absolute left-0 right-0 top-full z-10 border border-brand-border rounded-lg bg-brand-surface shadow-xl px-4 py-3">
-                    <p className="text-xs text-brand-muted">No users found matching "{userQuery.trim()}"</p>
+                    <p className="text-xs text-brand-muted">{t('settings.watchedUsers.noResults', { query: userQuery.trim() })}</p>
                   </div>
                 )}
 
@@ -392,7 +396,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
               {/* User list */}
               {safeWatchedUsers.length === 0 ? (
                 <div className="px-4 py-6 text-center">
-                  <p className="text-xs text-brand-muted">No watched users yet</p>
+                  <p className="text-xs text-brand-muted">{t('settings.watchedUsers.empty')}</p>
                 </div>
               ) : (
                 safeWatchedUsers.map((user, i) => (
@@ -412,7 +416,7 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
                       type="button"
                       onClick={() => handleRemoveUser(user)}
                       className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      aria-label={`Remove ${user}`}
+                      aria-label={t('settings.watchedUsers.remove', { user })}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18" />
@@ -427,49 +431,53 @@ export function SettingsPage({ onClose, onEdit }: SettingsPageProps) {
 
           {/* Appearance Section */}
           <ThemeSection />
+
+          {/* Language Section */}
+          <LanguageSection />
         </div>
       )}
     </div>
   );
 }
 
-const THEME_OPTIONS: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  {
-    value: 'light',
-    label: 'Light',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-      </svg>
-    ),
-  },
-  {
-    value: 'dark',
-    label: 'Dark',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-      </svg>
-    ),
-  },
-  {
-    value: 'system',
-    label: 'System',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
-    ),
-  },
-];
-
 function ThemeSection() {
+  const { t } = useTranslation();
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
 
+  const THEME_OPTIONS: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
+    {
+      value: 'light',
+      label: t('settings.theme.light'),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+      ),
+    },
+    {
+      value: 'dark',
+      label: t('settings.theme.dark'),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      ),
+    },
+    {
+      value: 'system',
+      label: t('settings.theme.system'),
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <section>
-      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">Appearance</h2>
+      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">{t('settings.appearance')}</h2>
       <div className="flex gap-2">
         {THEME_OPTIONS.map((opt) => (
           <button
@@ -487,6 +495,27 @@ function ThemeSection() {
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+function LanguageSection() {
+  const { t } = useTranslation();
+  const language = useLanguageStore((s) => s.language);
+  const setLanguage = useLanguageStore((s) => s.setLanguage);
+  return (
+    <section>
+      <h2 className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3">
+        {t('settings.language')}
+      </h2>
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value as Language)}
+        className="w-full rounded-lg border border-brand-border bg-brand-surface text-brand-text px-3 py-2.5 text-sm focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition-colors duration-200"
+      >
+        <option value="en">{t('settings.language.english')}</option>
+        <option value="sk">{t('settings.language.slovak')}</option>
+      </select>
     </section>
   );
 }

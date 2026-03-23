@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from 'react-i18next';
 
 interface SecretInputProps {
   id: string;
@@ -18,9 +19,12 @@ export function SecretInput({
   onChange,
   disabled = false,
   helpUrl,
-  helpLabel = 'Where do I find this?',
+  helpLabel,
 }: SecretInputProps) {
+  const { t } = useTranslation();
   const [revealed, setRevealed] = useState(false);
+
+  const resolvedHelpLabel = helpLabel ?? t('connection.secret.whereFind');
 
   function handleHelpClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -43,7 +47,7 @@ export function SecretInput({
           onClick={handleHelpClick}
           className="text-xs text-brand-muted hover:text-brand transition-colors cursor-pointer"
         >
-          {helpLabel}
+          {resolvedHelpLabel}
         </button>
       </div>
       <div className="relative flex items-center">
@@ -68,7 +72,7 @@ export function SecretInput({
           type="button"
           onClick={() => setRevealed((r) => !r)}
           disabled={disabled}
-          aria-label={revealed ? 'Hide token' : 'Show token'}
+          aria-label={revealed ? t('connection.secret.hide') : t('connection.secret.show')}
           aria-pressed={revealed}
           className={[
             'absolute right-0 flex items-center justify-center w-11 h-11',

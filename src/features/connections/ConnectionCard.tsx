@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '../../lib/format';
 import type { ConnectionMeta } from './types';
 
 interface ConnectionCardProps {
@@ -19,32 +21,12 @@ function getStatusDotClass(connection: ConnectionMeta | null): string {
   }
 }
 
-function formatRelativeTime(isoTimestamp: string): string {
-  const now = Date.now();
-  const then = new Date(isoTimestamp).getTime();
-  const diffMs = now - then;
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffDays >= 1) {
-    return `Last tested ${diffDays}d ago`;
-  }
-  if (diffHours >= 1) {
-    return `Last tested ${diffHours}h ago`;
-  }
-  if (diffMins >= 1) {
-    return `Last tested ${diffMins}m ago`;
-  }
-  return 'Last tested just now';
-}
-
 export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProps) {
+  const { t } = useTranslation();
   const dotClass = getStatusDotClass(connection);
   const lastTestedText = connection?.lastTestedAt
     ? formatRelativeTime(connection.lastTestedAt)
-    : 'Not yet tested';
+    : t('connection.notYetTested');
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-surface p-4 mb-3 hover:border-brand-border/80 transition-colors duration-200">
@@ -70,7 +52,7 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
           onClick={onEdit}
           className="text-xs text-brand-muted hover:text-brand font-medium transition-colors duration-200 ml-4"
         >
-          Edit
+          {t('connection.edit')}
         </button>
       </div>
     </div>
