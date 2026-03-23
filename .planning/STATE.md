@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Milestone complete
-stopped_at: Phase 8 UI-SPEC approved
-last_updated: "2026-03-23T23:09:57.572Z"
-last_activity: "2026-03-23 - Completed quick task 260323-wcw: Debug logs triggered as icon next to settings"
+status: Ready to execute
+stopped_at: "Completed 08-01-PLAN.md: shadcn/ui foundation, AppShell redesign"
+last_updated: "2026-03-23T23:58:32.676Z"
+last_activity: 2026-03-23
 progress:
   total_phases: 8
   completed_phases: 7
-  total_plans: 26
-  completed_plans: 26
+  total_plans: 31
+  completed_plans: 27
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** Phase 07 — internationalization
+**Current focus:** Phase 08 — fully-redesign-the-app-ui-modern-sleek-easy-to-use
 
 ## Current Position
 
-Phase: 07
-Plan: Not started
+Phase: 08 (fully-redesign-the-app-ui-modern-sleek-easy-to-use) — EXECUTING
+Plan: 2 of 5
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Plan: Not started
 | Phase 06-triage-and-audit P02 | 4min | 1 tasks | 2 files |
 | Phase 07-internationalization P01 | 20 | 2 tasks | 14 files |
 | Phase 07-internationalization P02 | 16 | 2 tasks | 26 files |
+| Phase 08 P01 | 9 | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,9 @@ Recent decisions affecting current work:
 - [Phase 07-internationalization]: i18n: sys-locale Rust crate for OS locale detection, app_config SQLite table for persistence (D-08/D-09/D-10), i18n initialized at module import with Promise.all hydration gate
 - [Phase 07-02]: audit.close key added for aria-label semantics — tests expected 'Close audit log'; dedicated key separate from 'Back' heading text
 - [Phase 07-02]: WizardStep.tsx left without useTranslation — renders only props; translated strings supplied by SetupWizard caller
+- [Phase 08]: Use relative import in AppShell.tsx for tooltip components instead of @/ alias to avoid vitest test resolution issues
+- [Phase 08]: Add @/ alias to vitest.config.ts separately — separate vitest config overrides vite.config.ts test settings
+- [Phase 08]: shadcn/ui components use CSS variable token bridge pattern — brand tokens aliased to shadcn semantic variables in @theme block
 
 ### Roadmap Evolution
 
@@ -160,7 +164,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-23 - Completed quick task 260323-wcw: Debug logs triggered as icon next to settings
-Last session: 2026-03-23T23:09:57.566Z
-Stopped at: Phase 8 UI-SPEC approved
-Resume file: .planning/phases/08-fully-redesign-the-app-ui-modern-sleek-easy-to-use/08-UI-SPEC.md
+Last activity: 2026-03-23
+Last session: 2026-03-23T23:58:32.671Z
+Stopped at: Completed 08-01-PLAN.md: shadcn/ui foundation, AppShell redesign
+Resume file: None

@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 5. Copy — Attachments and Comments | 3/3 | Complete   | 2026-03-22 |
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
 | 7. Internationalization | 3/3 | Complete   | 2026-03-23 |
-| 8. UI Redesign | 0/5 | Planned | - |
+| 8. UI Redesign | 1/5 | In Progress|  |
 
 ### Phase 8: Fully redesign the app UI — modern, sleek, easy to use
 
@@ -170,10 +170,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
   5. Settings page uses a sidebar nav layout with section-based content
   6. Loading states show skeleton cards, empty states show heading + body text
   7. Dark and light themes both render correctly with the merged token system
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
-- [ ] 08-01-PLAN.md — shadcn/ui init, Lucide install, CSS token merge, AppShell redesign
+- [x] 08-01-PLAN.md — shadcn/ui init, Lucide install, CSS token merge, AppShell redesign
 - [ ] 08-02-PLAN.md — TicketCard component, card-based list pages (New, Ignored, Linked)
 - [ ] 08-03-PLAN.md — TicketDetailPage full-page view, App.tsx routing update
 - [ ] 08-04-PLAN.md — CopyPreviewModal/CopyResultModal redesign, SettingsPage sidebar nav
