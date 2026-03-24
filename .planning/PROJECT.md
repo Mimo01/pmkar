@@ -23,6 +23,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] In-app audit log viewer with expandable REST API call details — Validated in Phase 6: Triage and Audit
 - [x] UI available in English and Slovak, switchable at runtime with persistent preference — Validated in Phase 7: Internationalization
 - [x] Modern, consistent UI with shadcn/ui components, Lucide icons, card-based layouts, and Linear-inspired aesthetic — Validated in Phase 8: UI Redesign
+- [x] WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, form labels, ARIA semantics, color-independent indicators, live regions — Validated in Phase 9: Accessibility
 
 ### Active
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
@@ -72,4 +73,4 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 | Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-24 — Phase 8 (UI Redesign) complete*
+*Last updated: 2026-03-24 — Phase 9 (Accessibility) complete*
