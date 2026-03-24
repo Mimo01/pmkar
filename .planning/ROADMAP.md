@@ -144,7 +144,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) → 5 → 7 → 8
+Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) → 5 → 7 → 8 → 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -156,6 +156,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
 | 7. Internationalization | 3/3 | Complete   | 2026-03-23 |
 | 8. UI Redesign | 6/6 | Complete   | 2026-03-24 |
+| 9. Accessibility | 0/4 | Not started | - |
 
 ### Phase 8: Fully redesign the app UI — modern, sleek, easy to use
 
@@ -178,3 +179,23 @@ Plans:
 - [x] 08-03-PLAN.md — TicketDetailPage full-page view, App.tsx routing update
 - [x] 08-04-PLAN.md — CopyPreviewModal/CopyResultModal redesign, SettingsPage sidebar nav
 - [x] 08-05-PLAN.md — AuditLogPage polish, i18n keys, SetupWizard polish, visual verification
+
+### Phase 9: Increase accessibility - ARIA compatible inputs, sufficient contrast in light and dark modes, and general a11y improvements
+
+**Goal:** WCAG AA compliant accessibility across the entire UI — dark mode contrast meets 4.5:1 for text, all interactive elements are keyboard accessible, form inputs have proper label associations, ARIA semantics are complete, and no information is conveyed by color alone
+**Requirements**: A11Y-01, A11Y-02, A11Y-03, A11Y-04, A11Y-05, A11Y-06
+**Depends on:** Phase 8
+**Success Criteria** (what must be TRUE):
+  1. All normal text in dark mode meets WCAG AA 4.5:1 contrast ratio against its background
+  2. No status indicator (priority, triage state, copy status) relies on color alone — each is paired with visible text or distinct icon shape
+  3. All clickable elements (ticket cards, audit log rows) are focusable via Tab and activatable via Enter/Space
+  4. All form inputs have associated labels (via htmlFor/id or wrapping) and error messages linked via aria-describedby
+  5. Semantic landmarks (main, nav with labels) and ARIA attributes (tabpanel, radiogroup, live regions) are complete
+  6. Async operations (copy progress, fetch status) announce state changes via aria-live regions
+**Plans:** 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Dark mode contrast token fixes, AppShell main landmark, StatusBadge dark colors, tab panel ARIA
+- [ ] 09-02-PLAN.md — TicketCard keyboard access, PriorityDot text pairing, TriageIndicator semantics, AuditLogPage keyboard rows
+- [ ] 09-03-PLAN.md — CopyPreviewModal form labeling, ConnectionForm error linking, live regions for copy progress and fetch status
+- [ ] 09-04-PLAN.md — SettingsPage nav label, JQL radiogroup semantics, watched users combobox ARIA
