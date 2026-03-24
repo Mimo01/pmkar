@@ -216,3 +216,84 @@ impl TriageDb {
         Ok(rows)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn new_db() -> TriageDb {
+        TriageDb::open_in_memory().expect("failed to create in-memory TriageDb")
+    }
+
+    #[test]
+    fn test_new_creates_in_memory_db() {
+        // Should not panic — schema creation succeeds
+        let _db = new_db();
+    }
+
+    #[test]
+    fn test_set_and_get_triage_state() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "seen").expect("set_triage failed");
+        let all = db.get_all_triage().expect("get_all_triage failed");
+        assert!(all.contains_key("PROJ-1"), "PROJ-1 should be in triage map");
+        let (state, copied_key) = &all["PROJ-1"];
+        assert_eq!(state, "seen");
+        assert!(copied_key.is_none());
+    }
+
+    #[test]
+    fn test_get_all_triage_returns_all() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "new").expect("set failed");
+        db.set_triage("PROJ-2", "seen").expect("set failed");
+        db.set_triage("PROJ-3", "ignored").expect("set failed");
+        let all = db.get_all_triage().expect("get_all failed");
+        assert_eq!(all.len(), 3, "expected 3 triage entries");
+        assert!(all.contains_key("PROJ-1"));
+        assert!(all.contains_key("PROJ-2"));
+        assert!(all.contains_key("PROJ-3"));
+    }
+
+    #[test]
+    fn test_update_triage_state() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "seen").expect("initial set failed");
+        db.set_triage("PROJ-1", "ignored").expect("update failed");
+        let all = db.get_all_triage().expect("get failed");
+        let (state, _) = &all["PROJ-1"];
+        assert_eq!(state, "ignored", "state should be updated to ignored");
+    }
+
+    #[test]
+    fn test_set_and_get_fetch_config() {
+        let db = new_db();
+        let config = FetchConfig {
+            jql_preset: "custom".to_string(),
+            jql_custom: Some("project = MYPROJ".to_string()),
+            watched_users: vec!["alice".to_string(), "bob".to_string()],
+            last_fetched_at: Some("2024-01-01T00:00:00Z".to_string()),
+        };
+        db.set_fetch_config(&config)
+            .expect("set_fetch_config failed");
+        let retrieved = db.get_fetch_config().expect("get_fetch_config failed");
+        assert_eq!(retrieved.jql_preset, "custom");
+        assert_eq!(retrieved.jql_custom.as_deref(), Some("project = MYPROJ"));
+        assert_eq!(retrieved.watched_users, vec!["alice", "bob"]);
+        assert_eq!(
+            retrieved.last_fetched_at.as_deref(),
+            Some("2024-01-01T00:00:00Z")
+        );
+    }
+
+    #[test]
+    fn test_invalid_triage_state_rejected() {
+        let db = new_db();
+        // SQLite CHECK constraint enforces state IN ('new','seen','ignored','copied')
+        let result = db.set_triage("PROJ-1", "invalid_state");
+        assert!(
+            result.is_err(),
+            "invalid state should be rejected by CHECK constraint"
+        );
+    }
+}

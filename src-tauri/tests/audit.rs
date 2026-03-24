@@ -49,7 +49,8 @@ fn test_audit_redaction_in_headers() {
 #[test]
 fn test_audit_response_body_truncation() {
     let db = AuditDb::open_in_memory().unwrap();
-    let large_body = "x".repeat(20_000); // 20KB > 10KB limit
+    // MAX_RESPONSE_BODY_BYTES is 102_400 (100 KB); use a body larger than that
+    let large_body = "x".repeat(200_000); // 200KB > 100KB limit
     let entry = AuditEntry {
         id: None,
         timestamp: "2026-03-20T10:00:00Z".into(),
@@ -62,7 +63,7 @@ fn test_audit_response_body_truncation() {
     db.insert(&entry).unwrap();
     let all = db.get_all().unwrap();
     let body = all[0].response_body.as_ref().unwrap();
-    assert_eq!(body.len(), 10_240);
+    assert_eq!(body.len(), 102_400); // truncated to MAX_RESPONSE_BODY_BYTES (100 KB)
 }
 
 #[test]

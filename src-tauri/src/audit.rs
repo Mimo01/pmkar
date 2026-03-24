@@ -16,7 +16,7 @@ pub struct AuditEntry {
     pub url: String,
     pub headers: String,          // JSON string, Authorization = "[REDACTED]"
     pub status_code: Option<u16>, // None if request never completed
-    pub response_body: Option<String>, // Truncated at 10KB
+    pub response_body: Option<String>, // Truncated at 100 KB (MAX_RESPONSE_BODY_BYTES)
 }
 
 pub struct AuditDb {
@@ -101,6 +101,102 @@ impl AuditDb {
             .conn
             .query_row("SELECT COUNT(*) FROM audit_log", [], |row| row.get(0))?;
         Ok(count)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn new_db() -> AuditDb {
+        AuditDb::open_in_memory().expect("failed to create in-memory AuditDb")
+    }
+
+    fn make_entry(method: &str, url: &str, status: u16) -> AuditEntry {
+        AuditEntry {
+            id: None,
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+            method: method.to_string(),
+            url: url.to_string(),
+            headers: r#"{"content-type":"application/json"}"#.to_string(),
+            status_code: Some(status),
+            response_body: Some("{}".to_string()),
+        }
+    }
+
+    #[test]
+    fn test_new_creates_in_memory_db() {
+        // Should not panic — schema creation succeeds
+        let _db = new_db();
+    }
+
+    #[test]
+    fn test_insert_and_get_entries() {
+        let db = new_db();
+        let entry = make_entry("GET", "https://jira.example.com/rest/api/2/myself", 200);
+        db.insert(&entry).expect("insert failed");
+        let entries = db.get_all().expect("get_all failed");
+        assert_eq!(entries.len(), 1);
+        let stored = &entries[0];
+        assert_eq!(stored.method, "GET");
+        assert_eq!(stored.url, "https://jira.example.com/rest/api/2/myself");
+        assert_eq!(stored.status_code, Some(200));
+    }
+
+    #[test]
+    fn test_get_count() {
+        let db = new_db();
+        for i in 0..5u16 {
+            db.insert(&make_entry("GET", &format!("https://example.com/{i}"), 200))
+                .expect("insert failed");
+        }
+        assert_eq!(db.count().expect("count failed"), 5);
+    }
+
+    #[test]
+    fn test_entries_ordered_by_id_desc() {
+        let db = new_db();
+        // Insert entries with distinct URLs so we can check ordering
+        db.insert(&make_entry("GET", "https://example.com/first", 200))
+            .expect("insert failed");
+        db.insert(&make_entry("POST", "https://example.com/second", 201))
+            .expect("insert failed");
+        db.insert(&make_entry("GET", "https://example.com/third", 200))
+            .expect("insert failed");
+        let entries = db.get_all().expect("get_all failed");
+        assert_eq!(entries.len(), 3);
+        // get_all returns ORDER BY id DESC — most-recent first
+        assert_eq!(entries[0].url, "https://example.com/third");
+        assert_eq!(entries[2].url, "https://example.com/first");
+    }
+
+    #[test]
+    fn test_authorization_header_not_stored_plaintext() {
+        let db = new_db();
+        // Simulate what AuditMiddleware does: redact Authorization before inserting
+        let headers_json = r#"{"authorization":"[REDACTED]","content-type":"application/json"}"#;
+        let entry = AuditEntry {
+            id: None,
+            timestamp: "2024-01-01T00:00:00Z".to_string(),
+            method: "GET".to_string(),
+            url: "https://example.com/api".to_string(),
+            headers: headers_json.to_string(),
+            status_code: Some(200),
+            response_body: None,
+        };
+        db.insert(&entry).expect("insert failed");
+        let entries = db.get_all().expect("get_all failed");
+        assert_eq!(entries.len(), 1);
+        let stored_headers = &entries[0].headers;
+        // The stored headers must contain [REDACTED], never a real token
+        assert!(
+            stored_headers.contains("[REDACTED]"),
+            "stored headers should have [REDACTED] in place of real auth value"
+        );
+        assert!(
+            !stored_headers.to_lowercase().contains("bearer"),
+            "stored headers must not contain a real Bearer token"
+        );
     }
 }
 
