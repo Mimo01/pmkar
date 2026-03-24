@@ -13,10 +13,13 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
 
   if (state === 'new') {
     return (
-      <span
-        className="inline-block w-1.5 h-1.5 rounded-full bg-brand"
-        aria-label="New ticket"
-      />
+      <span className="inline-flex items-center">
+        <span
+          className="inline-block w-1.5 h-1.5 rounded-full bg-brand"
+          aria-hidden="true"
+        />
+        <span className="sr-only">New</span>
+      </span>
     );
   }
 
@@ -33,23 +36,23 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
           strokeLinecap="round"
           strokeLinejoin="round"
           className="text-emerald-400 shrink-0"
-          aria-label={t('detail.copied')}
+          aria-hidden="true"
         >
           <polyline points="20 6 9 17 4 12" />
         </svg>
         {copiedKey && (
-          <span
-            className="text-[11px] font-semibold text-emerald-400 hover:underline cursor-pointer truncate max-w-[5rem]"
+          <button
+            type="button"
+            className="text-[11px] font-semibold text-emerald-400 hover:underline cursor-pointer truncate max-w-[5rem] bg-transparent border-none p-0"
             onClick={(e) => {
               e.stopPropagation();
               invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${copiedKey}` });
             }}
             title={copiedKey}
-            role="link"
-            aria-label={`Open ${copiedKey} in Company Jira`}
+            aria-label={`Open linked ticket ${copiedKey}`}
           >
             {copiedKey}
-          </span>
+          </button>
         )}
       </span>
     );

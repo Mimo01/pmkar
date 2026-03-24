@@ -27,11 +27,14 @@ function PriorityDot({ priority }: { priority: string }) {
   if (lower === 'medium') color = '#ca8a04';
   if (lower === 'low') color = '#3b82f6';
   return (
-    <span
-      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-      style={{ backgroundColor: color }}
-      aria-label={priority}
-    />
+    <span className="flex items-center gap-1">
+      <span
+        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
+      />
+      <span className="text-xs text-brand-text-secondary">{priority}</span>
+    </span>
   );
 }
 
@@ -50,7 +53,11 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   return (
     <div
       onClick={onClick}
-      className="px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border"
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }}}
+      tabIndex={0}
+      role="button"
+      aria-label={ticket.fields.summary}
+      className="px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
     >
       {/* Line 1: ticket key + relative time */}
       <div className="flex items-center justify-between mb-1">
