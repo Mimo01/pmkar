@@ -1,14 +1,18 @@
-import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { useConnectionStore } from '../connections/connectionStore';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 function SourceFieldRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="mb-3">
-      <span className="text-xs font-semibold text-brand-muted block mb-0.5">{label}</span>
-      <span className="text-sm text-brand-text-secondary">{value}</span>
+      <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
+      <span className="text-sm text-brand-text">{value}</span>
     </div>
   );
 }
@@ -16,10 +20,21 @@ function SourceFieldRow({ label, value }: { label: string; value: string }) {
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="mb-3">
-      <span className="text-xs font-semibold text-brand-muted block mb-0.5">{label}</span>
-      <span className="text-sm text-brand-text-secondary">{value}</span>
+      <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
+      <span className="text-sm text-brand-text">{value}</span>
     </div>
   );
+}
+
+// Map progress step strings to percentage values
+function getProgressPercent(progressStep: string): number {
+  if (!progressStep) return 0;
+  if (progressStep.includes('creating') || progressStep.includes('create')) return 20;
+  if (progressStep.includes('description')) return 40;
+  if (progressStep.includes('attachment') || progressStep.includes('image')) return 60;
+  if (progressStep.includes('comment') || progressStep.includes('worklog')) return 80;
+  if (progressStep.includes('done') || progressStep.includes('complete') || progressStep.includes('link')) return 100;
+  return 20;
 }
 
 export function CopyPreviewModal() {
@@ -45,21 +60,6 @@ export function CopyPreviewModal() {
   const sourceBaseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
 
-  const discardButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Focus first interactive element on mount
-  useEffect(() => {
-    if (discardButtonRef.current) {
-      discardButtonRef.current.focus();
-    }
-  }, []);
-
-  const handleEscape = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      handleDiscard();
-    }
-  };
-
   const handleDiscard = () => {
     reset();
   };
@@ -68,255 +68,241 @@ export function CopyPreviewModal() {
     confirmCopy(sourceBaseUrl, cloudBaseUrl);
   };
 
-  if (phase !== 'previewing' && phase !== 'copying') {
-    return null;
-  }
-
-  if (!sourceTicket || !cloudMeta) {
-    return null;
-  }
+  const isOpen = phase === 'loading_preview' || phase === 'previewing' || phase === 'copying';
 
   const renderedDescription =
-    sourceTicket.renderedFields?.description ?? null;
+    sourceTicket?.renderedFields?.description ?? null;
+
+  const progressPercent = getProgressPercent(progressStep);
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="preview-modal-title"
-      className="fixed inset-0 z-50 flex flex-col"
-      onKeyDown={handleEscape}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && phase !== 'copying') reset();
+      }}
     >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60"
-        onClick={handleDiscard}
-        aria-hidden="true"
-      />
+      <DialogContent className="max-w-[560px] max-h-[85vh] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle className="text-base font-semibold">{t('copy.preview.title')}</DialogTitle>
+        </DialogHeader>
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full">
-        {/* Header bar */}
-        <div className="flex items-center justify-between px-4 py-2.5 bg-brand-surface border-b border-brand-border">
-          <h2
-            id="preview-modal-title"
-            className="text-[13px] font-semibold"
-          >
-            {t('copy.preview.title')}
-          </h2>
-          <div className="flex items-center gap-3">
-            <button
-              ref={discardButtonRef}
-              type="button"
-              onClick={handleDiscard}
-              className="text-brand-muted hover:text-brand-text text-sm"
-            >
-              {t('copy.preview.discard')}
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirm}
-              disabled={phase === 'copying'}
-              className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {t('copy.preview.confirm')}
-            </button>
-          </div>
-        </div>
-
-        {/* Progress bar (visible during copying phase) */}
+        {/* Progress bar during copy */}
         {phase === 'copying' && (
-          <div className="w-full">
-            <div
-              className="h-1 bg-brand animate-pulse"
-              role="progressbar"
-              aria-label={t('copy.preview.copying')}
-            />
-            <p className="text-center text-xs text-brand-muted py-1">
-              {progressStep}
-            </p>
+          <div className="space-y-2 px-6 pt-4">
+            <Progress value={progressPercent} className="h-1 transition-all duration-300" />
+            <p className="text-xs text-brand-muted">{progressStep}</p>
           </div>
         )}
 
-        {/* Two columns */}
-        <div
-          className={`flex flex-1 overflow-hidden ${phase === 'copying' ? 'opacity-50 pointer-events-none' : ''}`}
-        >
-          {/* Left: Source (read-only) */}
-          <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
-            <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
+        <Separator className="mt-4" />
 
-            <SourceFieldRow
-              label="Summary"
-              value={sourceTicket.fields.summary}
-            />
-            <SourceFieldRow
-              label="Status"
-              value={sourceTicket.fields.status.name}
-            />
-            <SourceFieldRow
-              label="Priority"
-              value={sourceTicket.fields.priority.name}
-            />
-            <SourceFieldRow
-              label="Assignee"
-              value={sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
-            />
-            <SourceFieldRow
-              label="Labels"
-              value={
-                sourceTicket.fields.labels.length > 0
-                  ? sourceTicket.fields.labels.join(', ')
-                  : 'None'
-              }
-            />
-            {sourceTicket.fields.attachment.length > 0 && (
-              <SourceFieldRow
-                label="Attachments"
-                value={`${sourceTicket.fields.attachment.length} file(s) will be copied`}
-              />
-            )}
-            {sourceTicket.fields.comment.comments.length > 0 && (
-              <SourceFieldRow
-                label="Comments"
-                value={`${sourceTicket.fields.comment.comments.length} comment(s) will be copied`}
-              />
-            )}
-            {sourceTicket.fields.subtasks.length > 0 && (
-              <SourceFieldRow
-                label="Sub-tasks"
-                value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}`}
-              />
-            )}
-            {sourceTicket.fields.issuelinks.length > 0 && (
-              <SourceFieldRow
-                label="Linked Issues"
-                value={sourceTicket.fields.issuelinks.map(link => {
-                  if (link.outwardIssue) {
-                    return `${link.type.outward}: ${link.outwardIssue.key} \u2014 ${link.outwardIssue.fields.summary}`;
-                  }
-                  if (link.inwardIssue) {
-                    return `${link.type.inward}: ${link.inwardIssue.key} \u2014 ${link.inwardIssue.fields.summary}`;
-                  }
-                  return '';
-                }).filter(Boolean).join(', ')}
-              />
-            )}
+        {/* Two-column content */}
+        {sourceTicket && cloudMeta && (
+          <div
+            className={`flex flex-1 overflow-hidden ${phase === 'copying' ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            {/* Left: Source (read-only) */}
+            <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
+              <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
 
-            <div className="mt-4">
-              <span className="text-xs font-semibold text-brand-muted">
-                Description
-              </span>
-              <div className="mt-2">
-                <DescriptionRenderer
-                  description={sourceTicket.fields.description}
-                  renderedHtml={renderedDescription ?? undefined}
-                  baseUrl={sourceBaseUrl}
+              <SourceFieldRow
+                label="Summary"
+                value={sourceTicket.fields.summary}
+              />
+              <SourceFieldRow
+                label="Status"
+                value={sourceTicket.fields.status.name}
+              />
+              <SourceFieldRow
+                label="Priority"
+                value={sourceTicket.fields.priority.name}
+              />
+              <SourceFieldRow
+                label="Assignee"
+                value={sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
+              />
+              <SourceFieldRow
+                label="Labels"
+                value={
+                  sourceTicket.fields.labels.length > 0
+                    ? sourceTicket.fields.labels.join(', ')
+                    : 'None'
+                }
+              />
+              {sourceTicket.fields.attachment.length > 0 && (
+                <SourceFieldRow
+                  label="Attachments"
+                  value={`${sourceTicket.fields.attachment.length} file(s) will be copied`}
+                />
+              )}
+              {sourceTicket.fields.comment.comments.length > 0 && (
+                <SourceFieldRow
+                  label="Comments"
+                  value={`${sourceTicket.fields.comment.comments.length} comment(s) will be copied`}
+                />
+              )}
+              {sourceTicket.fields.subtasks.length > 0 && (
+                <SourceFieldRow
+                  label="Sub-tasks"
+                  value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}`}
+                />
+              )}
+              {sourceTicket.fields.issuelinks.length > 0 && (
+                <SourceFieldRow
+                  label="Linked Issues"
+                  value={sourceTicket.fields.issuelinks.map(link => {
+                    if (link.outwardIssue) {
+                      return `${link.type.outward}: ${link.outwardIssue.key} \u2014 ${link.outwardIssue.fields.summary}`;
+                    }
+                    if (link.inwardIssue) {
+                      return `${link.type.inward}: ${link.inwardIssue.key} \u2014 ${link.inwardIssue.fields.summary}`;
+                    }
+                    return '';
+                  }).filter(Boolean).join(', ')}
+                />
+              )}
+
+              <div className="mt-4">
+                <span className="text-xs text-brand-muted">
+                  Description
+                </span>
+                <div className="mt-2">
+                  <DescriptionRenderer
+                    description={sourceTicket.fields.description}
+                    renderedHtml={renderedDescription ?? undefined}
+                    baseUrl={sourceBaseUrl}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="w-px bg-brand-border flex-shrink-0" />
+
+            {/* Right: Target (editable) */}
+            <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
+              <h3 className="text-base font-semibold mb-4">{t('copy.preview.target')}</h3>
+
+              {/* Summary (editable) */}
+              <div className="mb-3">
+                <label className="text-xs text-brand-muted block mb-1">
+                  Summary
+                </label>
+                <input
+                  type="text"
+                  value={targetSummary}
+                  onChange={(e) => setTargetSummary(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
+                />
+              </div>
+
+              {/* Assignee (read-only) */}
+              <FieldRow label="Assignee" value="Current user" />
+
+              {/* Status dropdown */}
+              <div className="mb-3">
+                <label className="text-xs text-brand-muted block mb-1">
+                  Status
+                </label>
+                <select
+                  value={targetStatus}
+                  onChange={(e) => setTargetStatus(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  {cloudMeta.availableStatuses.map((s) => (
+                    <option key={s.id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Priority dropdown */}
+              <div className="mb-3">
+                <label className="text-xs text-brand-muted block mb-1">
+                  Priority
+                </label>
+                <select
+                  value={targetPriorityId}
+                  onChange={(e) => setTargetPriorityId(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  {cloudMeta.availablePriorities.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Labels checkboxes */}
+              <div className="mb-3">
+                <label className="text-xs text-brand-muted block mb-1">
+                  Labels
+                </label>
+                {targetLabels.length === 0 ? (
+                  <p className="text-sm text-brand-muted">
+                    No labels on source ticket
+                  </p>
+                ) : (
+                  targetLabels.map((label) => (
+                    <label
+                      key={label}
+                      className="flex items-center gap-2 py-1 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedLabels.includes(label)}
+                        onChange={() => toggleLabel(label)}
+                      />
+                      {label}
+                    </label>
+                  ))
+                )}
+              </div>
+
+              {/* Description (editable) */}
+              <div className="mt-4">
+                <label className="text-xs text-brand-muted block mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={targetDescription}
+                  onChange={(e) => setTargetDescription(e.target.value)}
+                  rows={8}
+                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1.5 text-sm font-mono resize-y focus-visible:ring-2 focus-visible:ring-brand"
                 />
               </div>
             </div>
           </div>
+        )}
 
-          {/* Divider */}
-          <div className="w-px bg-brand-border flex-shrink-0" />
+        <Separator />
 
-          {/* Right: Target (editable) */}
-          <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
-            <h3 className="text-base font-semibold mb-4">{t('copy.preview.target')}</h3>
-
-            {/* Summary (editable) */}
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-brand-muted block mb-1">
-                Summary
-              </label>
-              <input
-                type="text"
-                value={targetSummary}
-                onChange={(e) => setTargetSummary(e.target.value)}
-                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm"
-              />
-            </div>
-
-            {/* Assignee (read-only) */}
-            <FieldRow label="Assignee" value="Current user" />
-
-            {/* Status dropdown */}
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-brand-muted block mb-1">
-                Status
-              </label>
-              <select
-                value={targetStatus}
-                onChange={(e) => setTargetStatus(e.target.value)}
-                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm"
-              >
-                {cloudMeta.availableStatuses.map((s) => (
-                  <option key={s.id} value={s.name}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Priority dropdown */}
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-brand-muted block mb-1">
-                Priority
-              </label>
-              <select
-                value={targetPriorityId}
-                onChange={(e) => setTargetPriorityId(e.target.value)}
-                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm"
-              >
-                {cloudMeta.availablePriorities.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Labels checkboxes */}
-            <div className="mb-3">
-              <label className="text-xs font-semibold text-brand-muted block mb-1">
-                Labels
-              </label>
-              {targetLabels.length === 0 ? (
-                <p className="text-sm text-brand-muted">
-                  No labels on source ticket
-                </p>
-              ) : (
-                targetLabels.map((label) => (
-                  <label
-                    key={label}
-                    className="flex items-center gap-2 py-1 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedLabels.includes(label)}
-                      onChange={() => toggleLabel(label)}
-                    />
-                    {label}
-                  </label>
-                ))
-              )}
-            </div>
-
-            {/* Description (editable) */}
-            <div className="mt-4">
-              <label className="text-xs font-semibold text-brand-muted block mb-1">
-                Description
-              </label>
-              <textarea
-                value={targetDescription}
-                onChange={(e) => setTargetDescription(e.target.value)}
-                rows={8}
-                className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1.5 text-sm font-mono resize-y"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <DialogFooter className="px-6 py-4">
+          <Button
+            variant="ghost"
+            onClick={handleDiscard}
+            disabled={phase === 'copying'}
+          >
+            {t('copy.preview.discard')}
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={phase === 'copying'}
+          >
+            {phase === 'copying' ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                {t('copy.preview.copying')}
+              </>
+            ) : (
+              t('copy.preview.confirm')
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

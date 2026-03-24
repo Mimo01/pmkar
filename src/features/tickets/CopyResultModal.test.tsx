@@ -115,7 +115,10 @@ describe('CopyResultModal', () => {
     mockStoreState();
     render(<CopyResultModal />);
 
-    fireEvent.click(screen.getByText('Close'));
+    // The shadcn Dialog has a built-in sr-only "Close" text; use getAllByText and pick visible button
+    const closeButtons = screen.getAllByText('Close');
+    const visibleCloseBtn = closeButtons.find(el => !el.classList.contains('sr-only'));
+    fireEvent.click(visibleCloseBtn!);
 
     // reset is called after get_triage_state resolves (in finally)
     await vi.waitFor(() => {
