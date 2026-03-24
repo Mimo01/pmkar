@@ -1,16 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <linearGradient id="bg-gradient" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#a01c2a"/>
-      <stop offset="100%" stop-color="#c02232"/>
-    </linearGradient>
-  </defs>
-  <!-- Rounded square background with gradient -->
-  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bg-gradient)"/>
-  <!-- Vertical stem of P -->
-  <rect x="288" y="220" width="108" height="584" rx="8" ry="8" fill="#ffffff"/>
+  <!-- Light rounded square background (~22% corner radius) -->
+  <rect width="1024" height="1024" rx="225" ry="225" fill="#f7f7f8"/>
+  <!-- Geometric "P" lettermark in brand red -->
+  <!-- Vertical stem -->
+  <rect x="310" y="205" width="118" height="614" rx="10" ry="10" fill="#c02232"/>
   <!-- Bowl of P (outer) -->
-  <path d="M 288,220 h 300 a 195,195 0 0 1 0,320 h -300 z" fill="#ffffff"/>
-  <!-- Bowl interior cutout -->
-  <path d="M 396,282 h 185 a 133,133 0 0 1 0,196 h -185 z" fill="url(#bg-gradient)"/>
+  <path d="M 310,205 h 270 a 185,185 0 0 1 0,310 h -270 z" fill="#c02232"/>
+  <!-- Bowl interior cutout (matches background) -->
+  <path d="M 428,283 h 145 a 117,117 0 0 1 0,154 h -145 z" fill="#f7f7f8"/>
 </svg>

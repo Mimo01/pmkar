@@ -1,21 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Rounded square background -->
-  <rect width="1024" height="1024" rx="220" ry="220" fill="#c02232"/>
-  <!-- Bold "P" letterform with a subtle forward-motion tail -->
-  <!-- Main vertical stem -->
-  <rect x="248" y="220" width="110" height="584" rx="10" ry="10" fill="white"/>
-  <!-- Top bowl of P -->
-  <path d="
-    M 248,220 h 310
-    a 200,200 0 0 1 0,330
-    h -310 z
-  " fill="white"/>
-  <!-- Cutout for bowl interior -->
-  <path d="
-    M 358,280 h 200
-    a 130,130 0 0 1 0,210
-    h -200 z
-  " fill="#c02232"/>
-  <!-- Forward-motion arrow element: a small chevron at bottom right of stem -->
-  <path d="M 390,660 L 520,730 L 390,800 L 420,730 Z" fill="white" opacity="0.85"/>
+  <!-- Light rounded square background (~22% corner radius) -->
+  <rect width="1024" height="1024" rx="225" ry="225" fill="#f7f7f8"/>
+  <!-- Geometric "P" lettermark in brand red -->
+  <!-- Vertical stem -->
+  <rect x="310" y="205" width="118" height="614" rx="10" ry="10" fill="#c02232"/>
+  <!-- Bowl of P (outer) -->
+  <path d="M 310,205 h 270 a 185,185 0 0 1 0,310 h -270 z" fill="#c02232"/>
+  <!-- Bowl interior cutout (matches background) -->
+  <path d="M 428,283 h 145 a 117,117 0 0 1 0,154 h -145 z" fill="#f7f7f8"/>
 </svg>
