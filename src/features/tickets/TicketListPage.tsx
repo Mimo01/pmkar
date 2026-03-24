@@ -1,12 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import type { FetchTicketsResult, JqlPreset } from './types';
 import { useTicketStore } from './ticketStore';
 import { useConnectionStore } from '../connections/connectionStore';
-import { TicketTable } from './TicketTable';
-import { TicketDetailPanel } from './TicketDetailPanel';
+import { TicketCard, SkeletonCards } from './TicketCard';
+import { Badge } from '@/components/ui/badge';
 import { formatRelativeTime } from '../../lib/format';
+import { cn } from '@/lib/utils';
 
 // --- Helpers ---
 
@@ -24,24 +26,21 @@ function buildJql(
   return `assignee in (${allUsers}) ORDER BY updated DESC`;
 }
 
-function SpinnerIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="animate-spin"
-      aria-hidden="true"
-    >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  );
+function getErrorDetail(error: string, t: (key: string) => string): string {
+  const lower = error.toLowerCase();
+  if (lower.includes('401') || lower.includes('auth') || lower.includes('unauthorized')) {
+    return t('error.authFailed');
+  }
+  if (lower.includes('network') || lower.includes('connect') || lower.includes('reach')) {
+    return t('error.networkError');
+  }
+  if (lower.includes('429') || lower.includes('rate')) {
+    return t('error.rateLimited');
+  }
+  if (lower.includes('500') || lower.includes('server error')) {
+    return t('error.serverError');
+  }
+  return error;
 }
 
 // --- Component ---
@@ -50,29 +49,11 @@ export function TicketListPage() {
   const { t } = useTranslation();
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
-  const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
   const fetchStatus = useTicketStore((s) => s.fetchStatus);
   const fetchError = useTicketStore((s) => s.fetchError);
   const lastFetchedAt = useTicketStore((s) => s.lastFetchedAt);
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
-
-  function getErrorDetail(error: string): string {
-    const lower = error.toLowerCase();
-    if (lower.includes('401') || lower.includes('auth') || lower.includes('unauthorized')) {
-      return t('error.authFailed');
-    }
-    if (lower.includes('network') || lower.includes('connect') || lower.includes('reach')) {
-      return t('error.networkError');
-    }
-    if (lower.includes('429') || lower.includes('rate')) {
-      return t('error.rateLimited');
-    }
-    if (lower.includes('500') || lower.includes('server error')) {
-      return t('error.serverError');
-    }
-    return error;
-  }
 
   // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
   useEffect(() => {
@@ -125,96 +106,81 @@ export function TicketListPage() {
     return s !== 'ignored' && s !== 'copied';
   });
 
+  // Sort by updated DESC (no user-selectable sort — cards don't have column headers)
+  const sortedCandidates = useMemo(
+    () =>
+      [...candidateTickets].sort(
+        (a, b) => new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime(),
+      ),
+    [candidateTickets],
+  );
+
   const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
-  const hasTickets = candidateTickets.length > 0;
+  const hasTickets = sortedCandidates.length > 0;
   const showEmptyState = hasFetched && !hasTickets && fetchStatus === 'idle';
 
-  // Close detail panel when the selected ticket becomes ignored or copied
-  useEffect(() => {
-    if (
-      selectedTicketKey &&
-      (triageMap[selectedTicketKey]?.state === 'ignored' ||
-        triageMap[selectedTicketKey]?.state === 'copied')
-    ) {
-      useTicketStore.getState().selectTicket(null);
-    }
-  }, [selectedTicketKey, triageMap]);
-
-
   return (
-    <div className="flex h-[calc(100vh-113px)] overflow-hidden">
-      {/* Left pane: ticket list */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* FetchBar */}
-        <div className="flex items-center gap-4 px-6 py-4 border-b border-brand-border-subtle">
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={handleFetch}
-            className={`flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-lg px-4 py-3 text-sm transition-colors duration-150 ${
-              isLoading ? 'opacity-40 cursor-not-allowed' : ''
-            }`}
-          >
-            {isLoading && <SpinnerIcon />}
-            {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
-          </button>
-
-          <span className="text-xs text-brand-muted">
-            {lastFetchedAt ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) }) : t('tickets.notYetFetched')}
-          </span>
-
-          {totalCount > 0 && (
-            <span className="text-xs text-brand-text-secondary" aria-live="polite">
-              {t('tickets.candidates', { count: candidateTickets.length })}{newCount > 0 ? ', ' : ''}
-              {newCount > 0 && <span className="text-brand">{t('tickets.new', { count: newCount })}</span>}
-            </span>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* FetchBar */}
+      <div className="flex items-center gap-4 px-4 py-3 border-b border-brand-border">
+        <button
+          type="button"
+          disabled={isLoading}
+          onClick={handleFetch}
+          className={cn(
+            "flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150",
+            isLoading && "opacity-40 cursor-not-allowed"
           )}
-        </div>
-
-        {/* Error state */}
-        {fetchStatus === 'error' && fetchError && (
-          <div
-            className="mx-6 mt-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3"
-            role="alert"
-          >
-            <p className="text-sm text-red-400">{t('tickets.fetchError')}</p>
-            <p className="text-xs text-brand-muted mt-1">{getErrorDetail(fetchError)}</p>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {showEmptyState && (
-          <div className="flex flex-col items-center justify-center flex-1 py-16">
-            <p className="text-sm font-semibold text-brand-text-secondary mb-1">{t('tickets.empty')}</p>
-            <p className="text-xs text-brand-muted">
-              {t('tickets.empty.hint')}
-            </p>
-          </div>
-        )}
-
-        {/* Ticket table */}
-        {(hasTickets || isLoading) && (
-          <TicketTable
-            tickets={candidateTickets}
-            triageMap={triageMap}
-            selectedKey={selectedTicketKey}
-            onSelectTicket={handleSelectTicket}
-          />
+        >
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
+          {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
+        </button>
+        <span className="text-xs text-brand-muted">
+          {lastFetchedAt ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) }) : t('tickets.notYetFetched')}
+        </span>
+        {totalCount > 0 && (
+          <span className="text-xs text-brand-text-secondary">
+            {t('tickets.candidates', { count: candidateTickets.length })}
+            {newCount > 0 && <Badge variant="secondary" className="ml-1 text-brand">{t('tickets.new', { count: newCount })}</Badge>}
+          </span>
         )}
       </div>
 
-      {/* Right pane: detail panel */}
-      {selectedTicketKey ? (
-        <div className="w-[45%] border-l border-brand-border bg-brand-surface flex flex-col transition-all duration-200 ease-in-out">
-          <TicketDetailPanel
-            issueKey={selectedTicketKey}
-            baseUrl={useConnectionStore.getState().serverConnection?.baseUrl ?? ''}
-            onClose={() => useTicketStore.getState().selectTicket(null)}
-          />
+      {/* Error state */}
+      {fetchStatus === 'error' && fetchError && (
+        <div
+          className="mx-4 mt-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3"
+          role="alert"
+        >
+          <p className="text-sm text-red-400">{t('tickets.fetchError')}</p>
+          <p className="text-xs text-brand-muted mt-1">{getErrorDetail(fetchError, t)}</p>
         </div>
-      ) : (
-        <div className="w-0 overflow-hidden transition-all duration-200 ease-in-out" />
+      )}
+
+      {/* Loading skeleton */}
+      {isLoading && <SkeletonCards count={3} />}
+
+      {/* Empty state */}
+      {showEmptyState && (
+        <div className="flex flex-col items-center justify-center flex-1 py-16">
+          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.heading')}</p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.body')}</p>
+        </div>
+      )}
+
+      {/* Card list */}
+      {hasTickets && (
+        <div className="flex-1 overflow-y-auto">
+          {sortedCandidates.map((ticket) => (
+            <TicketCard
+              key={ticket.key}
+              ticket={ticket}
+              triageEntry={triageMap[ticket.key]}
+              onClick={() => handleSelectTicket(ticket.key)}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
