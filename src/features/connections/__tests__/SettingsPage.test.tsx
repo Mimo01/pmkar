@@ -55,8 +55,9 @@ describe('SettingsPage — Sidebar navigation', () => {
   it('Source section is active by default', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
     const sourceNavItem = screen.getByRole('button', { name: /^Source$/i });
-    expect(sourceNavItem.className).toContain('bg-brand/10');
-    expect(sourceNavItem.className).toContain('font-medium');
+    expect(sourceNavItem.className).toContain('border-l-2');
+    expect(sourceNavItem.className).toContain('border-brand');
+    expect(sourceNavItem.className).toContain('font-semibold');
   });
 
   it('clicking a nav item switches the content panel', () => {

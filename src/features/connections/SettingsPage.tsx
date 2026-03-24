@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeft } from 'lucide-react';
 import { useConnectionStore } from './connectionStore';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useTicketStore } from '../tickets/ticketStore';
 import { useThemeStore, type ThemeMode } from '../theme/themeStore';
 import { useLanguageStore, type Language } from '../../i18n/languageStore';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import type { ConnectionType, ConnectionMeta, ConnectionTestResult } from './types';
 import type { JqlPreset, FetchConfig } from '../tickets/types';
 
@@ -205,11 +208,12 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       <button
         type="button"
         onClick={() => setActiveSection(section)}
-        className={`w-full text-left text-[13px] rounded-md px-3 py-[7px] transition-all duration-200 ${
+        className={cn(
+          "w-full text-left px-3 py-1.5 text-sm rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none",
           isActive
-            ? 'bg-brand/10 text-brand font-medium'
-            : 'text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
-        }`}
+            ? "font-semibold text-brand-text border-l-2 border-brand"
+            : "font-normal text-brand-muted hover:text-brand-text border-l-2 border-transparent"
+        )}
       >
         {label}
       </button>
@@ -474,62 +478,67 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   }
 
   return (
-    <div className="flex h-full bg-brand-bg">
-      {/* Left sidebar */}
-      <div className="w-[200px] flex-shrink-0 border-r border-brand-border py-5 px-3 flex flex-col">
-        {/* Back button + heading */}
-        <div className="flex items-center gap-2 mb-6 px-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded-md transition-colors duration-200"
-            aria-label={t('settings.back')}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <h1 className="text-sm font-semibold tracking-tight text-brand-text">{t('settings.heading')}</h1>
-        </div>
-
-        {/* Connections group */}
-        <div className="mb-5">
-          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
-            {t('settings.group.connections')}
-          </p>
-          <div className="space-y-0.5">
-            <NavItem section="source" label={t('settings.nav.source')} />
-            <NavItem section="destination" label={t('settings.nav.destination')} />
-          </div>
-        </div>
-
-        {/* Fetching group */}
-        <div className="mb-5">
-          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
-            {t('settings.group.fetching')}
-          </p>
-          <div className="space-y-0.5">
-            <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
-            <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
-          </div>
-        </div>
-
-        {/* Appearance group */}
-        <div className="mb-5">
-          <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
-            {t('settings.group.appearance')}
-          </p>
-          <div className="space-y-0.5">
-            <NavItem section="theme" label={t('settings.nav.theme')} />
-            <NavItem section="language" label={t('settings.nav.language')} />
-          </div>
-        </div>
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Settings header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-brand-border bg-brand-surface">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center gap-1 text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
+        >
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          {t('settings.back')}
+        </button>
+        <h1 className="text-base font-semibold text-brand-text">{t('settings.heading')}</h1>
       </div>
 
-      {/* Right content panel */}
-      <div className="flex-1 overflow-y-auto px-10 py-8">
-        <div className="max-w-[560px]">
-          {renderContent()}
+      {/* Content: sidebar + main */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar nav — 160px fixed */}
+        <nav className="w-40 flex-shrink-0 border-r border-brand-border bg-brand-surface py-4 px-2 overflow-y-auto">
+          {/* Connections group */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.connections')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="source" label={t('settings.nav.source')} />
+              <NavItem section="destination" label={t('settings.nav.destination')} />
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* Fetching group */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.fetching')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
+              <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* Appearance group */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.appearance')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="theme" label={t('settings.nav.theme')} />
+              <NavItem section="language" label={t('settings.nav.language')} />
+            </div>
+          </div>
+        </nav>
+
+        {/* Section content — scrollable */}
+        <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="max-w-[560px]">
+            {renderContent()}
+          </div>
         </div>
       </div>
     </div>
