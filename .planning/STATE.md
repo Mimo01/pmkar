@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: "Completed 09-02-PLAN.md: keyboard access and D-02 compliance for TicketCard, TriageIndicator, AuditLogPage"
-last_updated: "2026-03-24T09:16:34.633Z"
+stopped_at: "Completed 09-04-PLAN.md: SettingsPage ARIA semantics"
+last_updated: "2026-03-24T09:16:23.713Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 9
@@ -162,9 +162,6 @@ Recent decisions affecting current work:
 - [Phase 09]: aria-hidden on TooltipContent (not trigger) since button aria-label already provides accessible name
 - [Phase 09]: tabIndex=0 on tabpanel required for keyboard focus after tab selection per ARIA spec
 - [Phase 09]: Used aria-label on search input instead of visible label; added aria-hidden to visual radio dots since aria-checked conveys state
-- [Phase 09]: Use role=button on TicketCard div (not button element) to allow nested buttons in actionSlot without invalid HTML nesting
-- [Phase 09]: PriorityDot adds visible text alongside color dot for D-02 compliance — color no longer sole conveyor of information
-- [Phase 09]: TriageIndicator copiedKey uses real button element instead of span role=link for native keyboard activation
 
 ### Roadmap Evolution
 
@@ -192,6 +189,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-24
-Last session: 2026-03-24T09:16:34.627Z
-Stopped at: Completed 09-02-PLAN.md: keyboard access and D-02 compliance for TicketCard, TriageIndicator, AuditLogPage
+Last session: 2026-03-24T09:15:52.030Z
+Stopped at: Completed 09-04-PLAN.md: SettingsPage ARIA semantics
 Resume file: None

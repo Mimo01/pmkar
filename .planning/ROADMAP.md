@@ -156,7 +156,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4/6 (can be parallelized) →
 | 6. Triage and Audit | 3/3 | Complete   | 2026-03-23 |
 | 7. Internationalization | 3/3 | Complete   | 2026-03-23 |
 | 8. UI Redesign | 6/6 | Complete   | 2026-03-24 |
-| 9. Accessibility | 4/4 | Complete   | 2026-03-24 |
+| 9. Accessibility | 2/4 | In Progress|  |
 
 ### Phase 8: Fully redesign the app UI — modern, sleek, easy to use
 
@@ -192,10 +192,10 @@ Plans:
   4. All form inputs have associated labels (via htmlFor/id or wrapping) and error messages linked via aria-describedby
   5. Semantic landmarks (main, nav with labels) and ARIA attributes (tabpanel, radiogroup, live regions) are complete
   6. Async operations (copy progress, fetch status) announce state changes via aria-live regions
-**Plans:** 4/4 plans complete
+**Plans:** 2/4 plans executed
 
 Plans:
 - [x] 09-01-PLAN.md — Dark mode contrast token fixes, AppShell main landmark, StatusBadge dark colors, tab panel ARIA
-- [x] 09-02-PLAN.md — TicketCard keyboard access, PriorityDot text pairing, TriageIndicator semantics, AuditLogPage keyboard rows
+- [ ] 09-02-PLAN.md — TicketCard keyboard access, PriorityDot text pairing, TriageIndicator semantics, AuditLogPage keyboard rows
 - [x] 09-03-PLAN.md — CopyPreviewModal form labeling, ConnectionForm error linking, live regions for copy progress and fetch status
 - [x] 09-04-PLAN.md — SettingsPage nav label, JQL radiogroup semantics, watched users combobox ARIA

@@ -314,11 +314,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       case 'jql-presets':
         return (
           <SectionCard title={t('settings.section.jqlPresets')}>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5" role="radiogroup" aria-label="JQL presets">
               {PRESET_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
+                  role="radio"
+                  aria-checked={jqlPreset === opt.value}
                   onClick={() => handlePresetChange(opt.value)}
                   className={`w-full text-left flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all duration-150 ${
                     jqlPreset === opt.value
@@ -328,7 +330,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 >
                   <span className={`flex-shrink-0 w-[15px] h-[15px] rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
                     jqlPreset === opt.value ? 'border-brand' : 'border-brand-border'
-                  }`}>
+                  }`} aria-hidden="true">
                     {jqlPreset === opt.value && (
                       <span className="w-[7px] h-[7px] rounded-full bg-brand" />
                     )}
@@ -387,6 +389,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
                   placeholder={t('settings.watchedUsers.searchPlaceholder')}
+                  aria-label="Search users to watch"
+                  aria-expanded={showSuggestions && suggestions.length > 0}
+                  aria-haspopup="listbox"
+                  aria-autocomplete="list"
                 />
               </div>
 
@@ -399,11 +405,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
 
               {/* Dropdown suggestions */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden">
+                <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden" role="listbox">
                   {suggestions.map((user, i) => (
                     <button
                       key={user.name}
                       type="button"
+                      role="option"
+                      aria-selected={i === selectedIdx}
                       onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
                       className={`w-full text-left flex items-center gap-2.5 px-3.5 py-2 transition-colors duration-100 ${
                         i > 0 ? 'border-t border-brand-border-subtle' : ''
@@ -489,7 +497,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       {/* Content: sidebar + main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar nav — 160px fixed */}
-        <nav className="w-40 flex-shrink-0 border-r border-brand-border bg-brand-surface py-4 px-2 overflow-y-auto">
+        <nav className="w-40 flex-shrink-0 border-r border-brand-border bg-brand-surface py-4 px-2 overflow-y-auto" aria-label="Settings navigation">
           {/* Connections group */}
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
