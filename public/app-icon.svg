@@ -6,7 +6,7 @@
 
   <!-- "pmkar" text centered — "pm" in brand red, "kar" in dark -->
   <!-- font-semibold tracking-tight style, matching AppShell header -->
-  <text x="512" y="540" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif" font-size="195" font-weight="600" letter-spacing="-4">
+  <text x="512" y="555" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, Arial, sans-serif" font-size="235" font-weight="600" letter-spacing="-5">
     <tspan fill="#c02232">pm</tspan><tspan fill="#231f20">kar</tspan>
   </text>
 </svg>
