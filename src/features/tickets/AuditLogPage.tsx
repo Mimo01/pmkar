@@ -95,7 +95,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {/* Loading state */}
       {loading && (
         <ScrollArea className="flex-1">
-          <table className="w-full table-fixed">
+          <table className="w-full table-fixed" aria-label="API audit log">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
@@ -154,7 +154,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {/* Populated table */}
       {!loading && !error && entries.length > 0 && (
         <ScrollArea className="flex-1">
-          <table className="w-full table-fixed">
+          <table className="w-full table-fixed" aria-label="API audit log">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
@@ -177,8 +177,16 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   {/* Summary row */}
                   <tr
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                    className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-150"
-                    aria-label={`Expand row for ${entry.method} ${entry.url}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedId(expandedId === entry.id ? null : entry.id);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={expandedId === entry.id}
+                    className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
                   >
                     <td className="w-40 px-4 py-2 text-xs text-brand-text-secondary">
                       {formatTimestamp(entry.timestamp)}
