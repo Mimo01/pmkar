@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Light rounded square background (~22% corner radius) -->
-  <rect width="1024" height="1024" rx="225" ry="225" fill="#f7f7f8"/>
-  <!-- Geometric "P" lettermark in brand red -->
-  <!-- Vertical stem -->
-  <rect x="310" y="205" width="118" height="614" rx="10" ry="10" fill="#c02232"/>
-  <!-- Bowl of P (outer) -->
-  <path d="M 310,205 h 270 a 185,185 0 0 1 0,310 h -270 z" fill="#c02232"/>
-  <!-- Bowl interior cutout (matches background) -->
-  <path d="M 428,283 h 145 a 117,117 0 0 1 0,154 h -145 z" fill="#f7f7f8"/>
+  <!-- 1024x1024 canvas with transparent padding (~100px each side) for macOS Dock compliance -->
+  <!-- Visible icon area: 824x824 centered -->
+
+  <!-- White rounded square background — macOS superellipse style (~22% corner radius of icon area) -->
+  <rect x="100" y="100" width="824" height="824" rx="180" ry="180" fill="#ffffff"/>
+
+  <!-- Bold geometric "P" in brand red — thick strokes for 16x16 legibility -->
+  <!-- Stem -->
+  <rect x="345" y="275" width="115" height="474" rx="6" fill="#c02232"/>
+
+  <!-- Bowl (outer) -->
+  <path d="M 345,275 L 545,275 A 160,160 0 0 1 545,565 L 345,565 Z" fill="#c02232"/>
+
+  <!-- Bowl cutout (white interior) -->
+  <path d="M 460,355 L 530,355 A 82,82 0 0 1 530,485 L 460,485 Z" fill="#ffffff"/>
 </svg>
