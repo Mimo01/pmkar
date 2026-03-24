@@ -91,7 +91,7 @@ export function ConnectionForm({
       .catch(() => {
         /* credential not found — leave empty */
       });
-  }, [connectionType, initialValues.username]);
+  }, [connectionType, initialValues?.username]);
 
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
