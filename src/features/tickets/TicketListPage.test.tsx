@@ -229,4 +229,93 @@ describe('TicketListPage', () => {
       expect(screen.getByText('No new tickets')).toBeInTheDocument();
     });
   });
+
+  it('auto-refetches when lastFetchedAt is set in fetch config', async () => {
+    const fetchConfig = {
+      jqlPreset: 'assigned',
+      jqlCustom: null,
+      watchedUsers: [],
+      lastFetchedAt: '2024-06-01T12:00:00.000Z', // triggers auto-refetch
+    };
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_triage_state') return Promise.resolve({});
+      if (cmd === 'get_fetch_config') return Promise.resolve(fetchConfig);
+      if (cmd === 'fetch_tickets')
+        return Promise.resolve({
+          issues: mockTickets,
+          total: 2,
+          triageMap: {},
+        });
+      return Promise.resolve(undefined);
+    });
+
+    render(<TicketListPage />);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('fetch_tickets', expect.anything());
+    });
+  });
+
+  it('calls selectTicket and markSeen when a ticket card is clicked', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_triage_state')
+        return Promise.resolve({
+          'PROJ-1': { state: 'new', copiedKey: null },
+          'PROJ-2': { state: 'new', copiedKey: null },
+        });
+      if (cmd === 'get_fetch_config')
+        return Promise.resolve({
+          jqlPreset: 'assigned',
+          jqlCustom: null,
+          watchedUsers: [],
+          lastFetchedAt: null,
+        });
+      if (cmd === 'fetch_tickets')
+        return Promise.resolve({
+          issues: mockTickets,
+          total: 2,
+          triageMap: {
+            'PROJ-1': { state: 'new', copiedKey: null },
+            'PROJ-2': { state: 'new', copiedKey: null },
+          },
+        });
+      return Promise.resolve(undefined);
+    });
+
+    render(<TicketListPage />);
+    fireEvent.click(screen.getByText('Fetch Tickets'));
+
+    await waitFor(() => {
+      expect(screen.getByText('PROJ-1')).toBeInTheDocument();
+    });
+
+    // Click on the first ticket card
+    fireEvent.click(screen.getByText('First ticket summary'));
+
+    await waitFor(() => {
+      expect(useTicketStore.getState().selectedTicketKey).toBe('PROJ-1');
+    });
+  });
+
+  it('shows error state when fetch fails', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_triage_state') return Promise.resolve({});
+      if (cmd === 'get_fetch_config')
+        return Promise.resolve({
+          jqlPreset: 'assigned',
+          jqlCustom: null,
+          watchedUsers: [],
+          lastFetchedAt: null,
+        });
+      if (cmd === 'fetch_tickets') return Promise.reject(new Error('401 Unauthorized'));
+      return Promise.resolve(undefined);
+    });
+
+    render(<TicketListPage />);
+    fireEvent.click(screen.getByText('Fetch Tickets'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
 });

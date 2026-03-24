@@ -1,6 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+
+import { invoke } from '@tauri-apps/api/core';
 import { SecretInput } from './SecretInput';
+
+const mockInvoke = vi.mocked(invoke);
 
 const noop = () => {};
 
@@ -89,5 +95,22 @@ describe('SecretInput', () => {
     );
     const input = screen.getByLabelText('Personal Access Token');
     expect(input).toBeDisabled();
+  });
+
+  it('clicking help button calls open_external_url invoke', () => {
+    mockInvoke.mockResolvedValue(undefined);
+    const helpUrl = 'https://docs.example.com/pat';
+    render(
+      <SecretInput
+        id="test-secret"
+        label="Personal Access Token"
+        value=""
+        onChange={noop}
+        helpUrl={helpUrl}
+      />,
+    );
+    const helpBtn = screen.getByRole('button', { name: 'Where do I find this?' });
+    fireEvent.click(helpBtn);
+    expect(mockInvoke).toHaveBeenCalledWith('open_external_url', { url: helpUrl });
   });
 });

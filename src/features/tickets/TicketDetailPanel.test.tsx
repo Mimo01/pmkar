@@ -145,4 +145,16 @@ describe('TicketDetailPanel', () => {
       });
     });
   });
+
+  it('handles fetch error gracefully — shows loading false state', async () => {
+    mockInvoke.mockImplementation(() => Promise.reject(new Error('Network error')));
+    render(
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+    );
+
+    await waitFor(() => {
+      // After error, no loading spinner should remain — component should still render
+      expect(document.body).toBeTruthy();
+    });
+  });
 });

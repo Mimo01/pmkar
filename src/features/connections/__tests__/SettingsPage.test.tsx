@@ -4,6 +4,8 @@ import i18n from '../../../i18n/index';
 import { useLanguageStore } from '../../../i18n/languageStore';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
 import { useConnectionStore } from '../connectionStore';
+import { useTicketStore } from '../../tickets/ticketStore';
+import { useThemeStore } from '../../theme/themeStore';
 import { SettingsPage } from '../SettingsPage';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -167,5 +169,185 @@ describe('SettingsPage — Language section', () => {
     await waitFor(() => {
       expect(screen.getByText('Nastavenia')).toBeInTheDocument();
     });
+  });
+});
+
+describe('SettingsPage — JQL Presets section', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockConnection,
+    });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+    useTicketStore.setState({
+      tickets: [],
+      triageMap: {},
+      selectedTicketKey: null,
+      fetchStatus: 'idle',
+      fetchError: null,
+      lastFetchedAt: null,
+      totalCount: 0,
+      newCount: 0,
+      jqlPreset: 'assigned',
+      jqlCustom: null,
+      watchedUsers: [],
+    });
+  });
+
+  it('navigates to JQL Presets section', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    const jqlNavItem = screen.getByRole('button', { name: /^JQL Presets$/i });
+    fireEvent.click(jqlNavItem);
+    expect(screen.getByRole('radiogroup', { name: /jql presets/i })).toBeInTheDocument();
+  });
+
+  it('shows all four preset options', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
+    expect(screen.getByRole('radio', { name: /assigned/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /mentioned/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /all watched/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /custom/i })).toBeInTheDocument();
+  });
+
+  it('"Assigned to me" is selected by default', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
+    const assignedRadio = screen.getByRole('radio', { name: /assigned/i });
+    expect(assignedRadio).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('clicking a different preset updates the store', async () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /mentioned/i }));
+    await waitFor(() => {
+      expect(useTicketStore.getState().jqlPreset).toBe('mentioned');
+    });
+  });
+
+  it('shows custom textarea when custom preset is selected', () => {
+    useTicketStore.setState({ jqlPreset: 'custom' } as Parameters<typeof useTicketStore.setState>[0]);
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+});
+
+describe('SettingsPage — Theme section', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockConnection,
+    });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+    useThemeStore.setState({ mode: 'system', resolved: 'light' });
+  });
+
+  it('navigates to Theme section and shows theme buttons', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Theme$/i }));
+    expect(screen.getByRole('button', { name: /light/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /dark/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /system/i })).toBeInTheDocument();
+  });
+
+  it('clicking Light updates theme store', async () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Theme$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^light$/i }));
+    await waitFor(() => {
+      expect(useThemeStore.getState().mode).toBe('light');
+    });
+  });
+
+  it('clicking Dark updates theme store', async () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Theme$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^dark$/i }));
+    await waitFor(() => {
+      expect(useThemeStore.getState().mode).toBe('dark');
+    });
+  });
+});
+
+describe('SettingsPage — Source connection section', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockConnection,
+    });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+  });
+
+  it('shows source connection card by default', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    // Source section is active by default — should show connection info (username appears in ConnectionCard)
+    expect(screen.getAllByText(/jdoe|https:\/\/jira\.example\.com/i).length).toBeGreaterThan(0);
+  });
+
+  it('shows destination section when clicked', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Destination$/i }));
+    // Destination section should show a destination-related heading
+    const destHeadings = screen.getAllByText(/destination/i);
+    expect(destHeadings.length).toBeGreaterThan(0);
+  });
+});
+
+describe('SettingsPage — Watched Users section', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockConnection,
+    });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+    useTicketStore.setState({
+      tickets: [],
+      triageMap: {},
+      selectedTicketKey: null,
+      fetchStatus: 'idle',
+      fetchError: null,
+      lastFetchedAt: null,
+      totalCount: 0,
+      newCount: 0,
+      jqlPreset: 'assigned',
+      jqlCustom: null,
+      watchedUsers: [],
+    });
+  });
+
+  it('shows search input in Watched Users section', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+  });
+
+  it('shows empty state when no watched users', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+    // Should show empty state text
+    expect(screen.getByText(/no watched users|watchedUsers\.empty/i)).toBeInTheDocument();
+  });
+
+  it('shows existing watched users', () => {
+    useTicketStore.setState({
+      watchedUsers: ['alice'],
+    } as Parameters<typeof useTicketStore.setState>[0]);
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+    expect(screen.getByText('alice')).toBeInTheDocument();
   });
 });
