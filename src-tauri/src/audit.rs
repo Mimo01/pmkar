@@ -11,11 +11,11 @@ const MAX_RESPONSE_BODY_BYTES: usize = 102_400; // 100KB
 #[serde(rename_all = "camelCase")]
 pub struct AuditEntry {
     pub id: Option<i64>,
-    pub timestamp: String,            // ISO 8601 UTC
-    pub method: String,               // GET, POST, etc.
+    pub timestamp: String, // ISO 8601 UTC
+    pub method: String,    // GET, POST, etc.
     pub url: String,
-    pub headers: String,              // JSON string, Authorization = "[REDACTED]"
-    pub status_code: Option<u16>,     // None if request never completed
+    pub headers: String,          // JSON string, Authorization = "[REDACTED]"
+    pub status_code: Option<u16>, // None if request never completed
     pub response_body: Option<String>, // Truncated at 10KB
 }
 
@@ -97,11 +97,9 @@ impl AuditDb {
     }
 
     pub fn count(&self) -> AppResult<i64> {
-        let count: i64 = self.conn.query_row(
-            "SELECT COUNT(*) FROM audit_log",
-            [],
-            |row| row.get(0),
-        )?;
+        let count: i64 = self
+            .conn
+            .query_row("SELECT COUNT(*) FROM audit_log", [], |row| row.get(0))?;
         Ok(count)
     }
 }
@@ -121,8 +119,7 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
         let method = req.method().to_string();
         // Decode percent-encoding so URLs are human-readable in the audit log
         let url = urlencoding::decode(req.url().as_str())
-            .map(|s| s.into_owned())
-            .unwrap_or_else(|_| req.url().to_string());
+            .map_or_else(|_| req.url().to_string(), std::borrow::Cow::into_owned);
         let timestamp = Utc::now().to_rfc3339();
 
         // REDACT Authorization header BEFORE any logging
@@ -135,7 +132,7 @@ impl reqwest_middleware::Middleware for AuditMiddleware {
                 .iter()
                 .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("[binary]").to_string()))
                 .collect();
-            serde_json::to_string(&map).unwrap_or_else(|_| format!("{:?}", h))
+            serde_json::to_string(&map).unwrap_or_else(|_| format!("{h:?}"))
         };
 
         let result = next.run(req, extensions).await;

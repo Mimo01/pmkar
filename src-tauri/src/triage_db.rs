@@ -34,8 +34,7 @@ const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
     last_updated TEXT NOT NULL
 );";
 
-const ALTER_TRIAGE_ADD_COPIED_KEY: &str =
-    "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
+const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
 
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
@@ -85,9 +84,9 @@ impl TriageDb {
     }
 
     pub fn get_all_triage(&self) -> AppResult<HashMap<String, (String, Option<String>)>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT ticket_key, state, copied_key FROM triage_state",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT ticket_key, state, copied_key FROM triage_state")?;
         let rows = stmt
             .query_map([], |row| {
                 Ok((
@@ -141,8 +140,8 @@ impl TriageDb {
     }
 
     pub fn set_fetch_config(&self, config: &FetchConfig) -> AppResult<()> {
-        let watched_json = serde_json::to_string(&config.watched_users)
-            .unwrap_or_else(|_| "[]".to_string());
+        let watched_json =
+            serde_json::to_string(&config.watched_users).unwrap_or_else(|_| "[]".to_string());
         self.conn.execute(
             "UPDATE fetch_config SET jql_preset=?1, jql_custom=?2, watched_users=?3, last_fetched_at=?4 WHERE id=1",
             rusqlite::params![
@@ -181,11 +180,12 @@ impl TriageDb {
     }
 
     pub fn get_app_language(&self) -> AppResult<Option<String>> {
-        let lang: Option<String> = self.conn.query_row(
-            "SELECT language FROM app_config WHERE id = 1",
-            [],
-            |row| row.get(0),
-        ).ok();
+        let lang: Option<String> = self
+            .conn
+            .query_row("SELECT language FROM app_config WHERE id = 1", [], |row| {
+                row.get(0)
+            })
+            .ok();
         Ok(lang)
     }
 

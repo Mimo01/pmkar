@@ -67,7 +67,10 @@ fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
 }
 
 /// Filter issues by simple JQL: if jql contains `assignee=X`, filter by assignee name/accountId.
-fn filter_issues<'a>(issues: &'a HashMap<String, JiraIssue>, jql: &Option<String>) -> Vec<&'a JiraIssue> {
+fn filter_issues<'a>(
+    issues: &'a HashMap<String, JiraIssue>,
+    jql: Option<&String>,
+) -> Vec<&'a JiraIssue> {
     let mut result: Vec<&JiraIssue> = issues.values().collect();
 
     if let Some(jql_str) = jql {
@@ -94,11 +97,10 @@ fn extract_jql_assignee(jql: &str) -> Option<String> {
     if let Some(pos) = lower.find("assignee") {
         let rest = &jql[pos + "assignee".len()..];
         let rest = rest.trim_start();
-        if rest.starts_with('=') {
-            let after_eq = rest[1..].trim_start();
+        if let Some(stripped) = rest.strip_prefix('=') {
+            let after_eq = stripped.trim_start();
             // Handle quoted value: assignee = "jdoe"
-            if after_eq.starts_with('"') {
-                let inner = &after_eq[1..];
+            if let Some(inner) = after_eq.strip_prefix('"') {
                 if let Some(end_quote) = inner.find('"') {
                     let val = &inner[..end_quote];
                     if !val.is_empty() {
@@ -107,7 +109,9 @@ fn extract_jql_assignee(jql: &str) -> Option<String> {
                 }
             } else {
                 // Unquoted value — take until whitespace
-                let end = after_eq.find(|c: char| c.is_whitespace()).unwrap_or(after_eq.len());
+                let end = after_eq
+                    .find(|c: char| c.is_whitespace())
+                    .unwrap_or(after_eq.len());
                 let val = &after_eq[..end];
                 if !val.is_empty() {
                     return Some(val.to_string());
@@ -121,7 +125,10 @@ fn extract_jql_assignee(jql: &str) -> Option<String> {
 // --- Server v2 handlers ---
 
 mod v2 {
-    use super::*;
+    use super::{
+        filter_issues, json, make_search_response, IntoResponse, IssueQuery, JiraIssue, Json, Path,
+        Query, SearchQuery, SharedFixtures, State, StatusCode, UserSearchQuery, Value,
+    };
 
     pub async fn get_myself() -> impl IntoResponse {
         Json(json!({
@@ -136,7 +143,7 @@ mod v2 {
     pub async fn get_server_info() -> impl IntoResponse {
         Json(json!({
             "version": "8.20.0",
-            "buildNumber": 802000,
+            "buildNumber": 802_000,
             "buildDate": "2022-01-01T00:00:00.000+0000",
             "serverTitle": "Mock Jira Server",
             "baseUrl": "http://127.0.0.1:8080"
@@ -161,9 +168,7 @@ mod v2 {
 
                 // Support expand=renderedFields
                 if expand.contains("renderedFields") {
-                    let desc = issue.fields["description"]
-                        .as_str()
-                        .unwrap_or("");
+                    let desc = issue.fields["description"].as_str().unwrap_or("");
                     let rendered_comments: Vec<Value> = issue.fields["comment"]["comments"]
                         .as_array()
                         .cloned()
@@ -225,7 +230,9 @@ mod v2 {
         let state = fixtures.lock().unwrap();
         match state.server_v2_issues.get(&key) {
             Some(issue) => {
-                let worklogs = issue.fields.get("worklog")
+                let worklogs = issue
+                    .fields
+                    .get("worklog")
                     .and_then(|w| w.get("worklogs"))
                     .cloned()
                     .unwrap_or(json!([]));
@@ -235,9 +242,7 @@ mod v2 {
         }
     }
 
-    pub async fn search_users(
-        Query(params): Query<UserSearchQuery>,
-    ) -> impl IntoResponse {
+    pub async fn search_users(Query(params): Query<UserSearchQuery>) -> impl IntoResponse {
         let mock_users = vec![
             json!({"name": "jdoe", "displayName": "Jane Doe", "emailAddress": "jdoe@example.com", "active": true}),
             json!({"name": "csmith", "displayName": "Chris Smith", "emailAddress": "csmith@example.com", "active": true}),
@@ -248,11 +253,14 @@ mod v2 {
         let filtered: Vec<Value> = if query.is_empty() {
             mock_users
         } else {
-            mock_users.into_iter().filter(|u| {
-                let name = u["name"].as_str().unwrap_or("").to_lowercase();
-                let display = u["displayName"].as_str().unwrap_or("").to_lowercase();
-                name.contains(&query) || display.contains(&query)
-            }).collect()
+            mock_users
+                .into_iter()
+                .filter(|u| {
+                    let name = u["name"].as_str().unwrap_or("").to_lowercase();
+                    let display = u["displayName"].as_str().unwrap_or("").to_lowercase();
+                    name.contains(&query) || display.contains(&query)
+                })
+                .collect()
         };
         (StatusCode::OK, Json(filtered)).into_response()
     }
@@ -262,7 +270,7 @@ mod v2 {
         Query(params): Query<SearchQuery>,
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
-        let filtered = filter_issues(&state.server_v2_issues, &params.jql);
+        let filtered = filter_issues(&state.server_v2_issues, params.jql.as_ref());
         let response = make_search_response(filtered);
         (StatusCode::OK, Json(response)).into_response()
     }
@@ -346,9 +354,9 @@ mod v2 {
                     "body": body["body"].clone(),
                     "created": chrono::Utc::now().to_rfc3339()
                 });
-                issue.fields["comment"]["comments"]
-                    .as_array_mut()
-                    .map(|arr| arr.push(new_comment.clone()));
+                if let Some(arr) = issue.fields["comment"]["comments"].as_array_mut() {
+                    arr.push(new_comment.clone());
+                }
                 (StatusCode::CREATED, Json(new_comment)).into_response()
             }
             None => StatusCode::NOT_FOUND.into_response(),
@@ -378,10 +386,13 @@ mod v2 {
     pub async fn download_attachment(
         Path((_id, filename)): Path<(String, String)>,
     ) -> impl IntoResponse {
-        let body = format!("mock-content-for-{}", filename);
+        let body = format!("mock-content-for-{filename}");
         (
             StatusCode::OK,
-            [(axum::http::header::CONTENT_TYPE, "application/octet-stream".to_string())],
+            [(
+                axum::http::header::CONTENT_TYPE,
+                "application/octet-stream".to_string(),
+            )],
             body,
         )
     }
@@ -390,7 +401,10 @@ mod v2 {
 // --- Cloud v3 handlers ---
 
 mod v3 {
-    use super::*;
+    use super::{
+        filter_issues, json, make_search_response, AdfDoc, IntoResponse, IssueQuery, JiraIssue,
+        Json, Path, Query, SharedFixtures, State, StatusCode, Value,
+    };
 
     pub async fn get_myself() -> impl IntoResponse {
         Json(json!({
@@ -405,7 +419,7 @@ mod v3 {
     pub async fn get_server_info() -> impl IntoResponse {
         Json(json!({
             "version": "1001.0.0",
-            "buildNumber": 100229,
+            "buildNumber": 100_229,
             "serverTitle": "Mock Jira Cloud",
             "baseUrl": "http://127.0.0.1:8081",
             "deploymentType": "Cloud"
@@ -482,7 +496,9 @@ mod v3 {
         let state = fixtures.lock().unwrap();
         match state.cloud_v3_issues.get(&key) {
             Some(issue) => {
-                let worklogs = issue.fields.get("worklog")
+                let worklogs = issue
+                    .fields
+                    .get("worklog")
                     .and_then(|w| w.get("worklogs"))
                     .cloned()
                     .unwrap_or(json!([]));
@@ -520,8 +536,8 @@ mod v3 {
         Json(body): Json<Value>,
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
-        let jql = body["jql"].as_str().map(|s| s.to_string());
-        let filtered = filter_issues(&state.cloud_v3_issues, &jql);
+        let jql = body["jql"].as_str().map(std::string::ToString::to_string);
+        let filtered = filter_issues(&state.cloud_v3_issues, jql.as_ref());
         let response = make_search_response(filtered);
         (StatusCode::OK, Json(response)).into_response()
     }
@@ -605,10 +621,8 @@ mod v3 {
                 let adf_body = if body["body"].is_object() {
                     body["body"].clone()
                 } else {
-                    serde_json::to_value(AdfDoc::paragraph(
-                        body["body"].as_str().unwrap_or(""),
-                    ))
-                    .unwrap()
+                    serde_json::to_value(AdfDoc::paragraph(body["body"].as_str().unwrap_or("")))
+                        .unwrap()
                 };
                 let new_comment = json!({
                     "id": comment_id,
@@ -616,9 +630,9 @@ mod v3 {
                     "body": adf_body,
                     "created": chrono::Utc::now().to_rfc3339()
                 });
-                issue.fields["comment"]["comments"]
-                    .as_array_mut()
-                    .map(|arr| arr.push(new_comment.clone()));
+                if let Some(arr) = issue.fields["comment"]["comments"].as_array_mut() {
+                    arr.push(new_comment.clone());
+                }
                 (StatusCode::CREATED, Json(new_comment)).into_response()
             }
             None => StatusCode::NOT_FOUND.into_response(),
@@ -681,14 +695,23 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
     Router::new()
         .route("/rest/api/2/myself", get(v2::get_myself))
         .route("/rest/api/2/serverInfo", get(v2::get_server_info))
-        .route("/rest/api/2/issue/{key}", get(v2::get_issue).put(v2::update_issue))
+        .route(
+            "/rest/api/2/issue/{key}",
+            get(v2::get_issue).put(v2::update_issue),
+        )
         .route("/rest/api/2/issue", post(v2::create_issue))
         .route("/rest/api/2/search", get(v2::search_issues))
         .route("/rest/api/2/user/search", get(v2::search_users))
         .route("/rest/api/2/issue/{key}/comment", post(v2::add_comment))
         .route("/rest/api/2/issue/{key}/worklog", get(v2::get_worklog))
-        .route("/rest/api/2/issue/{key}/attachments", post(v2::add_attachment))
-        .route("/secure/attachment/{id}/{filename}", get(v2::download_attachment))
+        .route(
+            "/rest/api/2/issue/{key}/attachments",
+            post(v2::add_attachment),
+        )
+        .route(
+            "/secure/attachment/{id}/{filename}",
+            get(v2::download_attachment),
+        )
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
@@ -697,15 +720,30 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
     Router::new()
         .route("/rest/api/3/myself", get(v3::get_myself))
         .route("/rest/api/3/serverInfo", get(v3::get_server_info))
-        .route("/rest/api/3/issue/{key}", get(v3::get_issue).put(v3::update_issue))
+        .route(
+            "/rest/api/3/issue/{key}",
+            get(v3::get_issue).put(v3::update_issue),
+        )
         .route("/rest/api/3/issue", post(v3::create_issue))
         .route("/rest/api/3/search/jql", post(v3::search_issues))
         .route("/rest/api/3/issue/{key}/comment", post(v3::add_comment))
-        .route("/rest/api/3/issue/{key}/worklog", get(v3::get_worklog).post(v3::add_worklog))
-        .route("/rest/api/3/issue/{key}/attachments", post(v3::add_attachment))
-        .route("/rest/api/3/issue/{key}/remotelink", post(v3::create_remotelink))
+        .route(
+            "/rest/api/3/issue/{key}/worklog",
+            get(v3::get_worklog).post(v3::add_worklog),
+        )
+        .route(
+            "/rest/api/3/issue/{key}/attachments",
+            post(v3::add_attachment),
+        )
+        .route(
+            "/rest/api/3/issue/{key}/remotelink",
+            post(v3::create_remotelink),
+        )
         .route("/rest/api/3/priority", get(v3::get_priorities))
-        .route("/rest/api/3/project/{key}/statuses", get(v3::get_project_statuses))
+        .route(
+            "/rest/api/3/project/{key}/statuses",
+            get(v3::get_project_statuses),
+        )
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
@@ -718,11 +756,11 @@ pub async fn start_mock_servers(fixtures: SharedFixtures) -> AppResult<()> {
 
     let v2_listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await
-        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8080: {}", e)))?;
+        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8080: {e}")))?;
 
     let v3_listener = tokio::net::TcpListener::bind("127.0.0.1:8081")
         .await
-        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8081: {}", e)))?;
+        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8081: {e}")))?;
 
     tokio::spawn(async move {
         axum::serve(v2_listener, v2_router).await.ok();

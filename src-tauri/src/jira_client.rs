@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex};
+use crate::audit::{build_audited_client, AuditDb};
 use reqwest_middleware::ClientWithMiddleware;
-use crate::audit::{AuditDb, build_audited_client};
+use std::sync::{Arc, Mutex};
 
-/// The Jira HTTP client. Wraps reqwest with AuditMiddleware.
-/// All outbound requests are logged to SQLite with Authorization redacted.
+/// The Jira HTTP client. Wraps reqwest with `AuditMiddleware`.
+/// All outbound requests are logged to `SQLite` with Authorization redacted.
 pub struct JiraClient {
     pub client: ClientWithMiddleware,
 }

@@ -185,7 +185,13 @@ fn adf_paragraph(text: &str) -> serde_json::Value {
 }
 
 // Helper to create v2 comment body (plain text)
-fn v2_comment(id: &str, author_name: &str, author_display: &str, body: &str, created: &str) -> serde_json::Value {
+fn v2_comment(
+    id: &str,
+    author_name: &str,
+    author_display: &str,
+    body: &str,
+    created: &str,
+) -> serde_json::Value {
     json!({
         "id": id,
         "author": { "name": author_name, "displayName": author_display },
@@ -195,7 +201,13 @@ fn v2_comment(id: &str, author_name: &str, author_display: &str, body: &str, cre
 }
 
 // Helper to create v3 comment body (ADF)
-fn v3_comment(id: &str, account_id: &str, author_display: &str, body: &str, created: &str) -> serde_json::Value {
+fn v3_comment(
+    id: &str,
+    account_id: &str,
+    author_display: &str,
+    body: &str,
+    created: &str,
+) -> serde_json::Value {
     json!({
         "id": id,
         "author": { "accountId": account_id, "displayName": author_display },
@@ -204,6 +216,9 @@ fn v3_comment(id: &str, account_id: &str, author_display: &str, body: &str, crea
     })
 }
 
+// build_fixtures constructs all mock Jira fixtures inline — it's intentionally long
+// because the fixture data is declarative and splitting it would reduce readability.
+#[allow(clippy::too_many_lines)]
 pub fn build_fixtures() -> SharedFixtures {
     let mut v2: HashMap<String, JiraIssue> = HashMap::new();
     let mut v3: HashMap<String, JiraIssue> = HashMap::new();
@@ -244,12 +259,36 @@ pub fn build_fixtures() -> SharedFixtures {
         }]);
 
         let comments_v2 = json!([
-            v2_comment("20001", "jdoe", "Jane Doe", "I can reproduce this on build 4.2.1", "2026-01-15T10:30:00.000+0000"),
-            v2_comment("20002", "csmith", "Chris Smith", "Confirmed. The session token has a 0-second TTL in the new config.", "2026-01-15T14:00:00.000+0000")
+            v2_comment(
+                "20001",
+                "jdoe",
+                "Jane Doe",
+                "I can reproduce this on build 4.2.1",
+                "2026-01-15T10:30:00.000+0000"
+            ),
+            v2_comment(
+                "20002",
+                "csmith",
+                "Chris Smith",
+                "Confirmed. The session token has a 0-second TTL in the new config.",
+                "2026-01-15T14:00:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20001", "acc-jdoe", "Jane Doe", "I can reproduce this on build 4.2.1", "2026-01-15T10:30:00.000+0000"),
-            v3_comment("20002", "acc-csmith", "Chris Smith", "Confirmed. The session token has a 0-second TTL in the new config.", "2026-01-15T14:00:00.000+0000")
+            v3_comment(
+                "20001",
+                "acc-jdoe",
+                "Jane Doe",
+                "I can reproduce this on build 4.2.1",
+                "2026-01-15T10:30:00.000+0000"
+            ),
+            v3_comment(
+                "20002",
+                "acc-csmith",
+                "Chris Smith",
+                "Confirmed. The session token has a 0-second TTL in the new config.",
+                "2026-01-15T14:00:00.000+0000"
+            )
         ]);
 
         v2.insert(key.to_string(), JiraIssue {
@@ -331,14 +370,50 @@ pub fn build_fixtures() -> SharedFixtures {
         }]);
 
         let comments_v2 = json!([
-            v2_comment("20003", "bwilson", "Bob Wilson", "Pool size is hardcoded to 5 in the Docker config. Need to increase.", "2026-02-01T09:00:00.000+0000"),
-            v2_comment("20004", "jdoe", "Jane Doe", "Increasing pool size to 50 and adding connection timeout logic.", "2026-02-01T11:30:00.000+0000"),
-            v2_comment("20005", "csmith", "Chris Smith", "PR #442 addresses this. Review requested.", "2026-02-02T08:15:00.000+0000")
+            v2_comment(
+                "20003",
+                "bwilson",
+                "Bob Wilson",
+                "Pool size is hardcoded to 5 in the Docker config. Need to increase.",
+                "2026-02-01T09:00:00.000+0000"
+            ),
+            v2_comment(
+                "20004",
+                "jdoe",
+                "Jane Doe",
+                "Increasing pool size to 50 and adding connection timeout logic.",
+                "2026-02-01T11:30:00.000+0000"
+            ),
+            v2_comment(
+                "20005",
+                "csmith",
+                "Chris Smith",
+                "PR #442 addresses this. Review requested.",
+                "2026-02-02T08:15:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20003", "acc-bwilson", "Bob Wilson", "Pool size is hardcoded to 5 in the Docker config. Need to increase.", "2026-02-01T09:00:00.000+0000"),
-            v3_comment("20004", "acc-jdoe", "Jane Doe", "Increasing pool size to 50 and adding connection timeout logic.", "2026-02-01T11:30:00.000+0000"),
-            v3_comment("20005", "acc-csmith", "Chris Smith", "PR #442 addresses this. Review requested.", "2026-02-02T08:15:00.000+0000")
+            v3_comment(
+                "20003",
+                "acc-bwilson",
+                "Bob Wilson",
+                "Pool size is hardcoded to 5 in the Docker config. Need to increase.",
+                "2026-02-01T09:00:00.000+0000"
+            ),
+            v3_comment(
+                "20004",
+                "acc-jdoe",
+                "Jane Doe",
+                "Increasing pool size to 50 and adding connection timeout logic.",
+                "2026-02-01T11:30:00.000+0000"
+            ),
+            v3_comment(
+                "20005",
+                "acc-csmith",
+                "Chris Smith",
+                "PR #442 addresses this. Review requested.",
+                "2026-02-02T08:15:00.000+0000"
+            )
         ]);
 
         v2.insert(key.to_string(), JiraIssue {
@@ -419,46 +494,52 @@ pub fn build_fixtures() -> SharedFixtures {
             }
         }]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Open", "1"),
-                "priority": priority("High", "2"),
-                "assignee": v2_user("csmith", "Chris Smith"),
-                "reporter": v2_user("bwilson", "Bob Wilson"),
-                "description": desc_text,
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": issuelinks,
-                "labels": ["bug"],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [{"name": "4.3.0"}],
-                "updated": "2026-02-26T08:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Open", "new"),
-                "priority": priority("High", "2"),
-                "assignee": v3_user("acc-csmith", "Chris Smith"),
-                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": issuelinks_v3,
-                "labels": ["bug"],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [{"name": "4.3.0"}],
-                "updated": "2026-02-26T08:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Open", "1"),
+                    "priority": priority("High", "2"),
+                    "assignee": v2_user("csmith", "Chris Smith"),
+                    "reporter": v2_user("bwilson", "Bob Wilson"),
+                    "description": desc_text,
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": issuelinks,
+                    "labels": ["bug"],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [{"name": "4.3.0"}],
+                    "updated": "2026-02-26T08:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Open", "new"),
+                    "priority": priority("High", "2"),
+                    "assignee": v3_user("acc-csmith", "Chris Smith"),
+                    "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": issuelinks_v3,
+                    "labels": ["bug"],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [{"name": "4.3.0"}],
+                    "updated": "2026-02-26T08:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-4: Resolved, Medium priority, with attachment
@@ -483,53 +564,67 @@ pub fn build_fixtures() -> SharedFixtures {
             "content": "http://localhost:8081/secure/attachment/10101/malformed-export.csv"
         }]);
 
-        let comments_v2 = json!([
-            v2_comment("20006", "jdoe", "Jane Doe", "Fixed by forcing UTF-8 BOM in CSV header. PR #401 merged.", "2026-01-20T16:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20006", "acc-jdoe", "Jane Doe", "Fixed by forcing UTF-8 BOM in CSV header. PR #401 merged.", "2026-01-20T16:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20006",
+            "jdoe",
+            "Jane Doe",
+            "Fixed by forcing UTF-8 BOM in CSV header. PR #401 merged.",
+            "2026-01-20T16:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20006",
+            "acc-jdoe",
+            "Jane Doe",
+            "Fixed by forcing UTF-8 BOM in CSV header. PR #401 merged.",
+            "2026-01-20T16:00:00.000+0000"
+        )]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Resolved", "5"),
-                "priority": priority("Medium", "3"),
-                "assignee": v2_user("jdoe", "Jane Doe"),
-                "reporter": v2_user("csmith", "Chris Smith"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": attachment,
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [{"name": "4.2.1"}],
-                "updated": "2026-01-20T16:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Resolved", "done"),
-                "priority": priority("Medium", "3"),
-                "assignee": v3_user("acc-jdoe", "Jane Doe"),
-                "reporter": v3_user("acc-csmith", "Chris Smith"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": attachment_v3,
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [{"name": "4.2.1"}],
-                "updated": "2026-01-20T16:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Resolved", "5"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v2_user("jdoe", "Jane Doe"),
+                    "reporter": v2_user("csmith", "Chris Smith"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": attachment,
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [{"name": "4.2.1"}],
+                    "updated": "2026-01-20T16:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Resolved", "done"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v3_user("acc-jdoe", "Jane Doe"),
+                    "reporter": v3_user("acc-csmith", "Chris Smith"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": attachment_v3,
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [{"name": "4.2.1"}],
+                    "updated": "2026-01-20T16:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-5: Closed, Low priority, minimal fields
@@ -539,53 +634,67 @@ pub fn build_fixtures() -> SharedFixtures {
         let summary = "Update footer copyright year to 2026";
         let desc_text = "The footer displays copyright 2024. Update to 2026.";
 
-        let comments_v2 = json!([
-            v2_comment("20007", "bwilson", "Bob Wilson", "Done in commit a3f9b2c.", "2026-01-02T10:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20007", "acc-bwilson", "Bob Wilson", "Done in commit a3f9b2c.", "2026-01-02T10:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20007",
+            "bwilson",
+            "Bob Wilson",
+            "Done in commit a3f9b2c.",
+            "2026-01-02T10:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20007",
+            "acc-bwilson",
+            "Bob Wilson",
+            "Done in commit a3f9b2c.",
+            "2026-01-02T10:00:00.000+0000"
+        )]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Closed", "6"),
-                "priority": priority("Low", "4"),
-                "assignee": v2_user("bwilson", "Bob Wilson"),
-                "reporter": v2_user("jdoe", "Jane Doe"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [{"name": "4.2.1"}],
-                "updated": "2026-01-02T10:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Closed", "done"),
-                "priority": priority("Low", "4"),
-                "assignee": v3_user("acc-bwilson", "Bob Wilson"),
-                "reporter": v3_user("acc-jdoe", "Jane Doe"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [{"name": "4.2.1"}],
-                "updated": "2026-01-02T10:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Closed", "6"),
+                    "priority": priority("Low", "4"),
+                    "assignee": v2_user("bwilson", "Bob Wilson"),
+                    "reporter": v2_user("jdoe", "Jane Doe"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [{"name": "4.2.1"}],
+                    "updated": "2026-01-02T10:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Closed", "done"),
+                    "priority": priority("Low", "4"),
+                    "assignee": v3_user("acc-bwilson", "Bob Wilson"),
+                    "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [{"name": "4.2.1"}],
+                    "updated": "2026-01-02T10:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-6: Reopened, High priority, with attachment and comments
@@ -611,54 +720,84 @@ pub fn build_fixtures() -> SharedFixtures {
         }]);
 
         let comments_v2 = json!([
-            v2_comment("20008", "csmith", "Chris Smith", "The permission check was removed in PR #389 by mistake.", "2026-02-10T09:30:00.000+0000"),
-            v2_comment("20009", "jdoe", "Jane Doe", "Fix verified in staging. Reopening because prod deployment failed.", "2026-02-15T17:00:00.000+0000")
+            v2_comment(
+                "20008",
+                "csmith",
+                "Chris Smith",
+                "The permission check was removed in PR #389 by mistake.",
+                "2026-02-10T09:30:00.000+0000"
+            ),
+            v2_comment(
+                "20009",
+                "jdoe",
+                "Jane Doe",
+                "Fix verified in staging. Reopening because prod deployment failed.",
+                "2026-02-15T17:00:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20008", "acc-csmith", "Chris Smith", "The permission check was removed in PR #389 by mistake.", "2026-02-10T09:30:00.000+0000"),
-            v3_comment("20009", "acc-jdoe", "Jane Doe", "Fix verified in staging. Reopening because prod deployment failed.", "2026-02-15T17:00:00.000+0000")
+            v3_comment(
+                "20008",
+                "acc-csmith",
+                "Chris Smith",
+                "The permission check was removed in PR #389 by mistake.",
+                "2026-02-10T09:30:00.000+0000"
+            ),
+            v3_comment(
+                "20009",
+                "acc-jdoe",
+                "Jane Doe",
+                "Fix verified in staging. Reopening because prod deployment failed.",
+                "2026-02-15T17:00:00.000+0000"
+            )
         ]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Reopened", "4"),
-                "priority": priority("High", "2"),
-                "assignee": v2_user("csmith", "Chris Smith"),
-                "reporter": v2_user("bwilson", "Bob Wilson"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": attachment,
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["bug"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-15T17:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Reopened", "new"),
-                "priority": priority("High", "2"),
-                "assignee": v3_user("acc-csmith", "Chris Smith"),
-                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": attachment_v3,
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["bug"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-15T17:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Reopened", "4"),
+                    "priority": priority("High", "2"),
+                    "assignee": v2_user("csmith", "Chris Smith"),
+                    "reporter": v2_user("bwilson", "Bob Wilson"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": attachment,
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["bug"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-15T17:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Reopened", "new"),
+                    "priority": priority("High", "2"),
+                    "assignee": v3_user("acc-csmith", "Chris Smith"),
+                    "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": attachment_v3,
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["bug"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-15T17:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-7: In Progress (subtask of PROJ-1)
@@ -668,53 +807,67 @@ pub fn build_fixtures() -> SharedFixtures {
         let summary = "Investigate session token expiry";
         let desc_text = "Track down why session tokens are expiring immediately. Check auth service config and JWT TTL settings.";
 
-        let comments_v2 = json!([
-            v2_comment("20010", "jdoe", "Jane Doe", "JWT_TTL env var is set to 0 in prod config. This is the bug.", "2026-01-16T09:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20010", "acc-jdoe", "Jane Doe", "JWT_TTL env var is set to 0 in prod config. This is the bug.", "2026-01-16T09:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20010",
+            "jdoe",
+            "Jane Doe",
+            "JWT_TTL env var is set to 0 in prod config. This is the bug.",
+            "2026-01-16T09:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20010",
+            "acc-jdoe",
+            "Jane Doe",
+            "JWT_TTL env var is set to 0 in prod config. This is the bug.",
+            "2026-01-16T09:00:00.000+0000"
+        )]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("In Progress", "3"),
-                "priority": priority("High", "2"),
-                "assignee": v2_user("jdoe", "Jane Doe"),
-                "reporter": v2_user("jdoe", "Jane Doe"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": [],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [],
-                "updated": "2026-01-16T09:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("In Progress", "indeterminate"),
-                "priority": priority("High", "2"),
-                "assignee": v3_user("acc-jdoe", "Jane Doe"),
-                "reporter": v3_user("acc-jdoe", "Jane Doe"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": [],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [],
-                "updated": "2026-01-16T09:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("In Progress", "3"),
+                    "priority": priority("High", "2"),
+                    "assignee": v2_user("jdoe", "Jane Doe"),
+                    "reporter": v2_user("jdoe", "Jane Doe"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": [],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [],
+                    "updated": "2026-01-16T09:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("In Progress", "indeterminate"),
+                    "priority": priority("High", "2"),
+                    "assignee": v3_user("acc-jdoe", "Jane Doe"),
+                    "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": [],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [],
+                    "updated": "2026-01-16T09:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-8: Open (subtask of PROJ-1)
@@ -724,46 +877,52 @@ pub fn build_fixtures() -> SharedFixtures {
         let summary = "Write regression test for login flow";
         let desc_text = "Add integration test that covers the full login flow including session token validation to prevent regression of PROJ-1.";
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Open", "1"),
-                "priority": priority("Medium", "3"),
-                "assignee": v2_user("csmith", "Chris Smith"),
-                "reporter": v2_user("jdoe", "Jane Doe"),
-                "description": desc_text,
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [],
-                "updated": "2026-01-15T08:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Open", "new"),
-                "priority": priority("Medium", "3"),
-                "assignee": v3_user("acc-csmith", "Chris Smith"),
-                "reporter": v3_user("acc-jdoe", "Jane Doe"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [],
-                "updated": "2026-01-15T08:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Open", "1"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v2_user("csmith", "Chris Smith"),
+                    "reporter": v2_user("jdoe", "Jane Doe"),
+                    "description": desc_text,
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [],
+                    "updated": "2026-01-15T08:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Open", "new"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v3_user("acc-csmith", "Chris Smith"),
+                    "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [],
+                    "updated": "2026-01-15T08:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-9: Open, Medium priority, with subtasks
@@ -782,53 +941,67 @@ pub fn build_fixtures() -> SharedFixtures {
             { "key": "PROJ-11", "fields": { "summary": "Migrate deploy-staging job", "status": { "name": "Open", "statusCategory": { "key": "new" } } } }
         ]);
 
-        let comments_v2 = json!([
-            v2_comment("20011", "bwilson", "Bob Wilson", "Using reusable workflow pattern for deploy jobs to avoid duplication.", "2026-02-20T10:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20011", "acc-bwilson", "Bob Wilson", "Using reusable workflow pattern for deploy jobs to avoid duplication.", "2026-02-20T10:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20011",
+            "bwilson",
+            "Bob Wilson",
+            "Using reusable workflow pattern for deploy jobs to avoid duplication.",
+            "2026-02-20T10:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20011",
+            "acc-bwilson",
+            "Bob Wilson",
+            "Using reusable workflow pattern for deploy jobs to avoid duplication.",
+            "2026-02-20T10:00:00.000+0000"
+        )]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("In Progress", "3"),
-                "priority": priority("Medium", "3"),
-                "assignee": v2_user("bwilson", "Bob Wilson"),
-                "reporter": v2_user("csmith", "Chris Smith"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": [],
-                "subtasks": subtasks_v2,
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-25T10:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("In Progress", "indeterminate"),
-                "priority": priority("Medium", "3"),
-                "assignee": v3_user("acc-bwilson", "Bob Wilson"),
-                "reporter": v3_user("acc-csmith", "Chris Smith"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": [],
-                "subtasks": subtasks_v3,
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-25T10:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("In Progress", "3"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v2_user("bwilson", "Bob Wilson"),
+                    "reporter": v2_user("csmith", "Chris Smith"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": [],
+                    "subtasks": subtasks_v2,
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-25T10:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("In Progress", "indeterminate"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v3_user("acc-bwilson", "Bob Wilson"),
+                    "reporter": v3_user("acc-csmith", "Chris Smith"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": [],
+                    "subtasks": subtasks_v3,
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-25T10:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-10: In Progress (subtask of PROJ-9)
@@ -839,54 +1012,84 @@ pub fn build_fixtures() -> SharedFixtures {
         let desc_text = "Set up GitHub Actions workflow for build (Rust + frontend) and test (cargo test + vitest) stages.";
 
         let comments_v2 = json!([
-            v2_comment("20012", "bwilson", "Bob Wilson", "Build job done. Tests failing due to missing env vars in Actions secrets.", "2026-02-22T14:00:00.000+0000"),
-            v2_comment("20013", "csmith", "Chris Smith", "Added JIRA_TOKEN and DB_URL to repo secrets. Tests should pass now.", "2026-02-23T09:30:00.000+0000")
+            v2_comment(
+                "20012",
+                "bwilson",
+                "Bob Wilson",
+                "Build job done. Tests failing due to missing env vars in Actions secrets.",
+                "2026-02-22T14:00:00.000+0000"
+            ),
+            v2_comment(
+                "20013",
+                "csmith",
+                "Chris Smith",
+                "Added JIRA_TOKEN and DB_URL to repo secrets. Tests should pass now.",
+                "2026-02-23T09:30:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20012", "acc-bwilson", "Bob Wilson", "Build job done. Tests failing due to missing env vars in Actions secrets.", "2026-02-22T14:00:00.000+0000"),
-            v3_comment("20013", "acc-csmith", "Chris Smith", "Added JIRA_TOKEN and DB_URL to repo secrets. Tests should pass now.", "2026-02-23T09:30:00.000+0000")
+            v3_comment(
+                "20012",
+                "acc-bwilson",
+                "Bob Wilson",
+                "Build job done. Tests failing due to missing env vars in Actions secrets.",
+                "2026-02-22T14:00:00.000+0000"
+            ),
+            v3_comment(
+                "20013",
+                "acc-csmith",
+                "Chris Smith",
+                "Added JIRA_TOKEN and DB_URL to repo secrets. Tests should pass now.",
+                "2026-02-23T09:30:00.000+0000"
+            )
         ]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("In Progress", "3"),
-                "priority": priority("Medium", "3"),
-                "assignee": v2_user("bwilson", "Bob Wilson"),
-                "reporter": v2_user("bwilson", "Bob Wilson"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [],
-                "updated": "2026-02-23T09:30:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("In Progress", "indeterminate"),
-                "priority": priority("Medium", "3"),
-                "assignee": v3_user("acc-bwilson", "Bob Wilson"),
-                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Backend"}],
-                "fixVersions": [],
-                "updated": "2026-02-23T09:30:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("In Progress", "3"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v2_user("bwilson", "Bob Wilson"),
+                    "reporter": v2_user("bwilson", "Bob Wilson"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-23T09:30:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("In Progress", "indeterminate"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v3_user("acc-bwilson", "Bob Wilson"),
+                    "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Backend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-23T09:30:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-11: Open (subtask of PROJ-9)
@@ -896,46 +1099,52 @@ pub fn build_fixtures() -> SharedFixtures {
         let summary = "Migrate deploy-staging job";
         let desc_text = "Create GitHub Actions workflow for deploy-staging that triggers on merge to main. Must include smoke test after deploy.";
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Open", "1"),
-                "priority": priority("Medium", "3"),
-                "assignee": v2_user("csmith", "Chris Smith"),
-                "reporter": v2_user("bwilson", "Bob Wilson"),
-                "description": desc_text,
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-20T08:00:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Open", "new"),
-                "priority": priority("Medium", "3"),
-                "assignee": v3_user("acc-csmith", "Chris Smith"),
-                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": [] },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["enhancement"],
-                "components": [{"name": "Frontend"}],
-                "fixVersions": [],
-                "updated": "2026-02-20T08:00:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Open", "1"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v2_user("csmith", "Chris Smith"),
+                    "reporter": v2_user("bwilson", "Bob Wilson"),
+                    "description": desc_text,
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-20T08:00:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Open", "new"),
+                    "priority": priority("Medium", "3"),
+                    "assignee": v3_user("acc-csmith", "Chris Smith"),
+                    "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": [] },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["enhancement"],
+                    "components": [{"name": "Frontend"}],
+                    "fixVersions": [],
+                    "updated": "2026-02-20T08:00:00.000+0000"
+                }),
+            },
+        );
     }
 
     // PROJ-12: Closed, Low priority, with multiple comments
@@ -946,54 +1155,84 @@ pub fn build_fixtures() -> SharedFixtures {
         let desc_text = "Public API endpoints have no rate limiting. Add 100 req/min per API key limit to prevent abuse. Use token bucket algorithm.";
 
         let comments_v2 = json!([
-            v2_comment("20014", "csmith", "Chris Smith", "Implemented with tower middleware. Rate limit: 100/min sliding window.", "2026-01-28T11:00:00.000+0000"),
-            v2_comment("20015", "jdoe", "Jane Doe", "Load test confirms limits are enforced correctly. Closing.", "2026-01-29T16:30:00.000+0000")
+            v2_comment(
+                "20014",
+                "csmith",
+                "Chris Smith",
+                "Implemented with tower middleware. Rate limit: 100/min sliding window.",
+                "2026-01-28T11:00:00.000+0000"
+            ),
+            v2_comment(
+                "20015",
+                "jdoe",
+                "Jane Doe",
+                "Load test confirms limits are enforced correctly. Closing.",
+                "2026-01-29T16:30:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20014", "acc-csmith", "Chris Smith", "Implemented with tower middleware. Rate limit: 100/min sliding window.", "2026-01-28T11:00:00.000+0000"),
-            v3_comment("20015", "acc-jdoe", "Jane Doe", "Load test confirms limits are enforced correctly. Closing.", "2026-01-29T16:30:00.000+0000")
+            v3_comment(
+                "20014",
+                "acc-csmith",
+                "Chris Smith",
+                "Implemented with tower middleware. Rate limit: 100/min sliding window.",
+                "2026-01-28T11:00:00.000+0000"
+            ),
+            v3_comment(
+                "20015",
+                "acc-jdoe",
+                "Jane Doe",
+                "Load test confirms limits are enforced correctly. Closing.",
+                "2026-01-29T16:30:00.000+0000"
+            )
         ]);
 
-        v2.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v2_status("Closed", "6"),
-                "priority": priority("Low", "4"),
-                "assignee": v2_user("csmith", "Chris Smith"),
-                "reporter": v2_user("jdoe", "Jane Doe"),
-                "description": desc_text,
-                "comment": { "comments": comments_v2 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [],
-                "updated": "2026-01-29T16:30:00.000+0000"
-            }),
-        });
-        v3.insert(key.to_string(), JiraIssue {
-            id: id.to_string(),
-            key: key.to_string(),
-            fields: json!({
-                "summary": summary,
-                "status": v3_status("Closed", "done"),
-                "priority": priority("Low", "4"),
-                "assignee": v3_user("acc-csmith", "Chris Smith"),
-                "reporter": v3_user("acc-jdoe", "Jane Doe"),
-                "description": adf_paragraph(desc_text),
-                "comment": { "comments": comments_v3 },
-                "attachment": [],
-                "subtasks": [],
-                "issuelinks": [],
-                "labels": ["maintenance"],
-                "components": [],
-                "fixVersions": [],
-                "updated": "2026-01-29T16:30:00.000+0000"
-            }),
-        });
+        v2.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v2_status("Closed", "6"),
+                    "priority": priority("Low", "4"),
+                    "assignee": v2_user("csmith", "Chris Smith"),
+                    "reporter": v2_user("jdoe", "Jane Doe"),
+                    "description": desc_text,
+                    "comment": { "comments": comments_v2 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [],
+                    "updated": "2026-01-29T16:30:00.000+0000"
+                }),
+            },
+        );
+        v3.insert(
+            key.to_string(),
+            JiraIssue {
+                id: id.to_string(),
+                key: key.to_string(),
+                fields: json!({
+                    "summary": summary,
+                    "status": v3_status("Closed", "done"),
+                    "priority": priority("Low", "4"),
+                    "assignee": v3_user("acc-csmith", "Chris Smith"),
+                    "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                    "description": adf_paragraph(desc_text),
+                    "comment": { "comments": comments_v3 },
+                    "attachment": [],
+                    "subtasks": [],
+                    "issuelinks": [],
+                    "labels": ["maintenance"],
+                    "components": [],
+                    "fixVersions": [],
+                    "updated": "2026-01-29T16:30:00.000+0000"
+                }),
+            },
+        );
     }
 
     Arc::new(Mutex::new(FixtureState {

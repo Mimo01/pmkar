@@ -1,13 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use pmkar_lib::{audit::AuditDb, commands, fixtures::build_fixtures, triage_db::TriageDb};
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
-use pmkar_lib::{
-    audit::AuditDb,
-    fixtures::build_fixtures,
-    triage_db::TriageDb,
-    commands,
-};
 
 fn main() {
     let fixtures = build_fixtures();
@@ -15,18 +10,19 @@ fn main() {
     tauri::Builder::default()
         .setup(move |app| {
             // Open audit database in app data directory
-            let app_dir = app.path().app_data_dir()
+            let app_dir = app
+                .path()
+                .app_data_dir()
                 .expect("Failed to resolve app data directory");
             std::fs::create_dir_all(&app_dir).ok();
             let db_path = app_dir.join("audit.db");
-            let audit_db = AuditDb::open(&db_path)
-                .expect("Failed to open audit database");
+            let audit_db = AuditDb::open(&db_path).expect("Failed to open audit database");
 
             app.manage(Arc::new(Mutex::new(audit_db)));
 
             let triage_db_path = app_dir.join("triage.db");
-            let triage_db = TriageDb::open(&triage_db_path)
-                .expect("Failed to open triage database");
+            let triage_db =
+                TriageDb::open(&triage_db_path).expect("Failed to open triage database");
             app.manage(Arc::new(Mutex::new(triage_db)));
 
             app.manage(fixtures.clone());
@@ -36,8 +32,9 @@ fn main() {
             {
                 let fixtures_clone = fixtures.clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Err(e) = pmkar_lib::mock_server::start_mock_servers(fixtures_clone).await {
-                        eprintln!("Failed to start mock servers: {}", e);
+                    if let Err(e) = pmkar_lib::mock_server::start_mock_servers(fixtures_clone).await
+                    {
+                        eprintln!("Failed to start mock servers: {e}");
                     }
                 });
             }

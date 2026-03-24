@@ -1,13 +1,17 @@
-use tauri::State;
+// Tauri command functions receive owned types by design — the framework serializes arguments
+// from the frontend and passes them as owned values. Using references is not possible here.
+#![allow(clippy::needless_pass_by_value)]
+
+use crate::audit::{build_audited_client, AuditDb, AuditEntry};
+use crate::error::AppError;
+use crate::fixtures::SharedFixtures;
+use crate::keychain;
+use crate::mock_server;
+use crate::triage_db::{ConnectionMeta, FetchConfig, TriageDb};
+use base64::Engine as _;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use crate::error::AppError;
-use crate::audit::{AuditDb, AuditEntry, build_audited_client};
-use crate::keychain;
-use crate::fixtures::SharedFixtures;
-use crate::mock_server;
-use crate::triage_db::{TriageDb, FetchConfig, ConnectionMeta};
-use base64::Engine as _;
+use tauri::State;
 
 #[tauri::command]
 pub fn get_os_locale() -> Option<String> {
@@ -18,7 +22,9 @@ pub fn get_os_locale() -> Option<String> {
 pub fn get_app_language(
     triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<Option<String>, AppError> {
-    let db = triage_db.lock().map_err(|_| AppError::Internal("Lock poisoned".into()))?;
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Lock poisoned".into()))?;
     db.get_app_language()
 }
 
@@ -27,12 +33,14 @@ pub fn set_app_language(
     triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
     language: String,
 ) -> Result<(), AppError> {
-    let db = triage_db.lock().map_err(|_| AppError::Internal("Lock poisoned".into()))?;
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Lock poisoned".into()))?;
     db.set_app_language(&language)
 }
 
 /// Retrieve the Jira Server PAT from the OS keychain using the
-/// connection_meta table to look up the stored username.
+/// `connection_meta` table to look up the stored username.
 fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> {
     let db = triage_db
         .lock()
@@ -47,7 +55,7 @@ fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> 
     ))
 }
 
-/// Retrieve Cloud credentials (base_url, email, api_token) from connection_meta and keychain.
+/// Retrieve Cloud credentials (`base_url`, email, `api_token`) from `connection_meta` and keychain.
 fn get_cloud_credentials(
     triage_db: &Arc<Mutex<TriageDb>>,
 ) -> Result<(String, String, String), AppError> {
@@ -121,12 +129,12 @@ pub async fn fetch_cloud_meta(
 
     let auth = format!(
         "Basic {}",
-        base64::engine::general_purpose::STANDARD.encode(format!("{}:{}", email, api_token))
+        base64::engine::general_purpose::STANDARD.encode(format!("{email}:{api_token}"))
     );
 
     // Fetch current user accountId
     let myself_resp = client
-        .get(format!("{}/rest/api/3/myself", base_url))
+        .get(format!("{base_url}/rest/api/3/myself"))
         .header("Authorization", &auth)
         .send()
         .await
@@ -141,14 +149,11 @@ pub async fn fetch_cloud_meta(
         .json()
         .await
         .map_err(|_| AppError::Http("Failed to parse /myself response".into()))?;
-    let account_id = myself_body["accountId"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
+    let account_id = myself_body["accountId"].as_str().unwrap_or("").to_string();
 
     // Fetch priorities
     let prio_resp = client
-        .get(format!("{}/rest/api/3/priority", base_url))
+        .get(format!("{base_url}/rest/api/3/priority"))
         .header("Authorization", &auth)
         .send()
         .await
@@ -178,7 +183,7 @@ pub async fn fetch_cloud_meta(
     // Fetch project statuses — use hardcoded project key for now
     // (cloud_project_key not yet in settings; mock server responds to any key)
     let status_resp = client
-        .get(format!("{}/rest/api/3/project/MYPROJ/statuses", base_url))
+        .get(format!("{base_url}/rest/api/3/project/MYPROJ/statuses"))
         .header("Authorization", &auth)
         .send()
         .await
@@ -227,53 +232,45 @@ pub fn store_credential(
 }
 
 #[tauri::command]
-pub fn get_credential(
-    connection_type: String,
-    username: String,
-) -> Result<String, AppError> {
+pub fn get_credential(connection_type: String, username: String) -> Result<String, AppError> {
     keychain::get_credential(&connection_type, &username)
 }
 
 #[tauri::command]
-pub fn delete_credential(
-    connection_type: String,
-    username: String,
-) -> Result<(), AppError> {
+pub fn delete_credential(connection_type: String, username: String) -> Result<(), AppError> {
     keychain::delete_credential(&connection_type, &username)
 }
 
 // --- Audit commands ---
 
 #[tauri::command]
-pub fn get_audit_logs(
-    db: State<'_, Arc<Mutex<AuditDb>>>,
-) -> Result<Vec<AuditEntry>, AppError> {
-    let db = db.lock().map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
-    db.get_all().map_err(Into::into)
+pub fn get_audit_logs(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<Vec<AuditEntry>, AppError> {
+    let db = db
+        .lock()
+        .map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
+    db.get_all()
 }
 
 #[tauri::command]
-pub fn clear_audit_logs(
-    db: State<'_, Arc<Mutex<AuditDb>>>,
-) -> Result<(), AppError> {
-    let db = db.lock().map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
-    db.clear_logs().map_err(Into::into)
+pub fn clear_audit_logs(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<(), AppError> {
+    let db = db
+        .lock()
+        .map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
+    db.clear_logs()
 }
 
 #[tauri::command]
-pub fn get_audit_count(
-    db: State<'_, Arc<Mutex<AuditDb>>>,
-) -> Result<i64, AppError> {
-    let db = db.lock().map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
-    db.count().map_err(Into::into)
+pub fn get_audit_count(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<i64, AppError> {
+    let db = db
+        .lock()
+        .map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
+    db.count()
 }
 
 // --- Mock server commands ---
 
 #[tauri::command]
-pub async fn start_mock_servers_cmd(
-    fixtures: State<'_, SharedFixtures>,
-) -> Result<(), AppError> {
+pub async fn start_mock_servers_cmd(fixtures: State<'_, SharedFixtures>) -> Result<(), AppError> {
     mock_server::start_mock_servers(fixtures.inner().clone()).await
 }
 
@@ -282,14 +279,20 @@ pub async fn start_mock_servers_cmd(
 #[tauri::command]
 pub async fn ping_mock_servers() -> Result<serde_json::Value, AppError> {
     let client = reqwest::Client::new();
-    let v2_ok = client.get("http://127.0.0.1:8080/rest/api/2/search")
+    let v2_ok = client
+        .get("http://127.0.0.1:8080/rest/api/2/search")
         .header("authorization", "Bearer ping")
-        .send().await.is_ok();
-    let v3_ok = client.post("http://127.0.0.1:8081/rest/api/3/search/jql")
+        .send()
+        .await
+        .is_ok();
+    let v3_ok = client
+        .post("http://127.0.0.1:8081/rest/api/3/search/jql")
         .header("authorization", "Bearer ping")
         .header("content-type", "application/json")
         .body(r#"{"jql":"order by created"}"#)
-        .send().await.is_ok();
+        .send()
+        .await
+        .is_ok();
     Ok(serde_json::json!({
         "server_v2": v2_ok,
         "cloud_v3": v3_ok
@@ -338,7 +341,7 @@ async fn fetch_server_version(
     auth_header: &str,
     api_version: u8,
 ) -> Option<String> {
-    let url = format!("{}/rest/api/{}/serverInfo", base_url, api_version);
+    let url = format!("{base_url}/rest/api/{api_version}/serverInfo");
     let resp = client
         .get(&url)
         .header("Authorization", auth_header)
@@ -347,7 +350,9 @@ async fn fetch_server_version(
         .ok()?;
     if resp.status().is_success() {
         let body: serde_json::Value = resp.json().await.ok()?;
-        body["version"].as_str().map(|s| s.to_string())
+        body["version"]
+            .as_str()
+            .map(std::string::ToString::to_string)
     } else {
         None
     }
@@ -364,22 +369,19 @@ pub async fn test_jira_server_connection(
     let trimmed_url = base_url.trim_end_matches('/');
 
     let myself_resp = client
-        .get(format!("{}/rest/api/2/myself", trimmed_url))
-        .header("Authorization", format!("Bearer {}", pat))
+        .get(format!("{trimmed_url}/rest/api/2/myself"))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await;
 
-    let myself_resp = match myself_resp {
-        Ok(r) => r,
-        Err(_) => {
-            return Ok(ConnectionTestResult {
-                success: false,
-                username: None,
-                server_version: None,
-                error_kind: Some("network".into()),
-                retry_after_secs: None,
-            });
-        }
+    let Ok(myself_resp) = myself_resp else {
+        return Ok(ConnectionTestResult {
+            success: false,
+            username: None,
+            server_version: None,
+            error_kind: Some("network".into()),
+            retry_after_secs: None,
+        });
     };
 
     let status = myself_resp.status().as_u16();
@@ -387,14 +389,18 @@ pub async fn test_jira_server_connection(
         return Ok(map_error_status(status, &myself_resp));
     }
 
-    let myself_body: serde_json::Value = myself_resp.json().await
+    let myself_body: serde_json::Value = myself_resp
+        .json()
+        .await
         .map_err(|_| AppError::Http("Failed to parse /myself response".into()))?;
-    let username = myself_body["name"].as_str()
+    let username = myself_body["name"]
+        .as_str()
         .or_else(|| myself_body["displayName"].as_str())
         .unwrap_or("unknown")
         .to_string();
 
-    let server_version = fetch_server_version(&client, trimmed_url, &format!("Bearer {}", pat), 2).await;
+    let server_version =
+        fetch_server_version(&client, trimmed_url, &format!("Bearer {pat}"), 2).await;
 
     Ok(ConnectionTestResult {
         success: true,
@@ -416,27 +422,24 @@ pub async fn test_jira_cloud_connection(
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
 
-    let credentials = base64::engine::general_purpose::STANDARD
-        .encode(format!("{}:{}", email, api_token));
-    let auth_header = format!("Basic {}", credentials);
+    let credentials =
+        base64::engine::general_purpose::STANDARD.encode(format!("{email}:{api_token}"));
+    let auth_header = format!("Basic {credentials}");
 
     let myself_resp = client
-        .get(format!("{}/rest/api/3/myself", trimmed_url))
+        .get(format!("{trimmed_url}/rest/api/3/myself"))
         .header("Authorization", auth_header.clone())
         .send()
         .await;
 
-    let myself_resp = match myself_resp {
-        Ok(r) => r,
-        Err(_) => {
-            return Ok(ConnectionTestResult {
-                success: false,
-                username: None,
-                server_version: None,
-                error_kind: Some("network".into()),
-                retry_after_secs: None,
-            });
-        }
+    let Ok(myself_resp) = myself_resp else {
+        return Ok(ConnectionTestResult {
+            success: false,
+            username: None,
+            server_version: None,
+            error_kind: Some("network".into()),
+            retry_after_secs: None,
+        });
     };
 
     let status = myself_resp.status().as_u16();
@@ -444,9 +447,12 @@ pub async fn test_jira_cloud_connection(
         return Ok(map_error_status(status, &myself_resp));
     }
 
-    let myself_body: serde_json::Value = myself_resp.json().await
+    let myself_body: serde_json::Value = myself_resp
+        .json()
+        .await
         .map_err(|_| AppError::Http("Failed to parse /myself response".into()))?;
-    let username = myself_body["displayName"].as_str()
+    let username = myself_body["displayName"]
+        .as_str()
         .unwrap_or("unknown")
         .to_string();
 
@@ -472,7 +478,7 @@ pub fn open_external_url(url: String) -> Result<(), AppError> {
         std::process::Command::new("open")
             .arg(&url)
             .spawn()
-            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {e}")))?;
     }
     #[cfg(target_os = "windows")]
     {
@@ -497,7 +503,7 @@ pub fn ping_keychain() -> Result<bool, AppError> {
     let test_type = "pmkar-health-check";
     let test_user = "ping";
     match keychain::store_credential(test_type, test_user, "ping") {
-        Ok(_) => {
+        Ok(()) => {
             let _ = keychain::delete_credential(test_type, test_user);
             Ok(true)
         }
@@ -529,13 +535,12 @@ pub async fn fetch_tickets(
 
     let encoded_jql = urlencoding::encode(&jql);
     let url = format!(
-        "{}/rest/api/2/search?jql={}&fields=summary,status,priority,assignee,updated,labels,components,fixVersions&maxResults=50",
-        trimmed_url, encoded_jql
+        "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,updated,labels,components,fixVersions&maxResults=50"
     );
 
     let resp = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch tickets".into()))?;
@@ -552,10 +557,7 @@ pub async fn fetch_tickets(
         .await
         .map_err(|_| AppError::Http("Failed to parse search response".into()))?;
 
-    let issues = body["issues"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
+    let issues = body["issues"].as_array().cloned().unwrap_or_default();
     let total = body["total"].as_u64().unwrap_or(0);
 
     // Update triage state for new tickets
@@ -607,13 +609,12 @@ pub async fn fetch_ticket_detail(
     let trimmed_url = base_url.trim_end_matches('/');
 
     let url = format!(
-        "{}/rest/api/2/issue/{}?expand=renderedFields,changelog&fields=*all",
-        trimmed_url, issue_key
+        "{trimmed_url}/rest/api/2/issue/{issue_key}?expand=renderedFields,changelog&fields=*all"
     );
 
     let resp = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch ticket detail".into()))?;
@@ -645,14 +646,11 @@ pub async fn fetch_worklog(
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
 
-    let url = format!(
-        "{}/rest/api/2/issue/{}/worklog",
-        trimmed_url, issue_key
-    );
+    let url = format!("{trimmed_url}/rest/api/2/issue/{issue_key}/worklog");
 
     let resp = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch worklog".into()))?;
@@ -684,14 +682,11 @@ pub async fn fetch_changelog(
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
 
-    let url = format!(
-        "{}/rest/api/2/issue/{}?expand=changelog",
-        trimmed_url, issue_key
-    );
+    let url = format!("{trimmed_url}/rest/api/2/issue/{issue_key}?expand=changelog");
 
     let resp = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch changelog".into()))?;
@@ -709,7 +704,10 @@ pub async fn fetch_changelog(
         .map_err(|_| AppError::Http("Failed to parse changelog response".into()))?;
 
     // Extract just the changelog portion
-    let changelog = body.get("changelog").cloned().unwrap_or(serde_json::json!({"histories": []}));
+    let changelog = body
+        .get("changelog")
+        .cloned()
+        .unwrap_or(serde_json::json!({"histories": []}));
     Ok(changelog)
 }
 
@@ -734,7 +732,7 @@ pub async fn fetch_jira_image(
 
     let resp = client
         .get(&image_url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch image".into()))?;
@@ -759,7 +757,7 @@ pub async fn fetch_jira_image(
         .map_err(|_| AppError::Http("Failed to read image bytes".into()))?;
 
     let encoded = base64::engine::general_purpose::STANDARD.encode(&bytes);
-    Ok(format!("data:{};base64,{}", mime, encoded))
+    Ok(format!("data:{mime};base64,{encoded}"))
 }
 
 // --- Triage state commands ---
@@ -781,9 +779,7 @@ pub fn get_triage_state(
     let raw = db.get_all_triage()?;
     let result = raw
         .into_iter()
-        .map(|(key, (state, copied_key))| {
-            (key, TriageEntryResponse { state, copied_key })
-        })
+        .map(|(key, (state, copied_key))| (key, TriageEntryResponse { state, copied_key }))
         .collect();
     Ok(result)
 }
@@ -799,8 +795,7 @@ pub fn set_triage_state(
         "new" | "seen" | "ignored" | "copied" => {}
         _ => {
             return Err(AppError::Internal(format!(
-                "Invalid triage state: '{}'. Must be one of: new, seen, ignored, copied",
-                state
+                "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, copied"
             )));
         }
     }
@@ -848,14 +843,11 @@ pub async fn search_jira_users(
     let trimmed_url = base_url.trim_end_matches('/');
 
     let encoded_query = urlencoding::encode(&query);
-    let url = format!(
-        "{}/rest/api/2/user/search?username={}",
-        trimmed_url, encoded_query
-    );
+    let url = format!("{trimmed_url}/rest/api/2/user/search?username={encoded_query}");
 
     let resp = client
         .get(&url)
-        .header("Authorization", format!("Bearer {}", pat))
+        .header("Authorization", format!("Bearer {pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to search users".into()))?;
@@ -864,10 +856,7 @@ pub async fn search_jira_users(
         return Ok(vec![]);
     }
 
-    let users: Vec<serde_json::Value> = resp
-        .json()
-        .await
-        .unwrap_or_default();
+    let users: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
 
     Ok(users)
 }
@@ -907,7 +896,7 @@ fn rewrite_image_urls(html: &str, url_map: &HashMap<String, String>) -> String {
     result
 }
 
-/// Extract (src_url, filename) pairs for all `<img` tags in HTML.
+/// Extract (`src_url`, filename) pairs for all `<img` tags in HTML.
 /// Uses simple string parsing — no regex dependency needed.
 fn extract_image_urls(html: &str) -> Vec<(String, String)> {
     let mut results = Vec::new();
@@ -926,7 +915,7 @@ fn extract_image_urls(html: &str) -> Vec<(String, String)> {
                     // Extract filename from URL path
                     let filename = url
                         .split('/')
-                        .last()
+                        .next_back()
                         .and_then(|f| f.split('?').next())
                         .unwrap_or("image.png")
                         .to_string();
@@ -939,6 +928,10 @@ fn extract_image_urls(html: &str) -> Vec<(String, String)> {
     results
 }
 
+// copy_ticket has 11 args — all required by the Tauri frontend call site.
+// Refactoring into a struct would require frontend changes and is deferred.
+#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_lines)]
 #[tauri::command]
 pub async fn copy_ticket(
     source_key: String,
@@ -946,7 +939,7 @@ pub async fn copy_ticket(
     target_base_url: String,
     target_summary: String,
     target_description: Option<String>,
-    target_status: String,       // informational only — status transitions not supported at creation
+    target_status: String, // informational only — status transitions not supported at creation
     target_priority_id: String,
     target_labels: Vec<String>,
     current_account_id: String,
@@ -964,22 +957,19 @@ pub async fn copy_ticket(
     let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
     let cloud_auth = format!(
         "Basic {}",
-        base64::engine::general_purpose::STANDARD.encode(
-            format!("{}:{}", cloud_email, cloud_api_token)
-        )
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{cloud_api_token}"))
     );
 
     // Get Server PAT for source API calls
     let server_pat = get_server_pat(triage_db.inner())?;
 
     // Step 1: Fetch source issue with renderedFields
-    let source_url = format!(
-        "{}/rest/api/2/issue/{}?expand=renderedFields&fields=*all",
-        trimmed_source, source_key
-    );
+    let source_url =
+        format!("{trimmed_source}/rest/api/2/issue/{source_key}?expand=renderedFields&fields=*all");
     let source_resp = client
         .get(&source_url)
-        .header("Authorization", format!("Bearer {}", server_pat))
+        .header("Authorization", format!("Bearer {server_pat}"))
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to fetch source issue".into()))?;
@@ -1040,9 +1030,9 @@ pub async fn copy_ticket(
     let _ = &target_status;
 
     let create_body_str = serde_json::to_string(&create_body)
-        .map_err(|e| AppError::Serialization(format!("Failed to serialize create body: {}", e)))?;
+        .map_err(|e| AppError::Serialization(format!("Failed to serialize create body: {e}")))?;
     let create_resp = client
-        .post(format!("{}/rest/api/3/issue", trimmed_target))
+        .post(format!("{trimmed_target}/rest/api/3/issue"))
         .header("Authorization", &cloud_auth)
         .header("Content-Type", "application/json")
         .body(create_body_str)
@@ -1055,7 +1045,7 @@ pub async fn copy_ticket(
         steps.push(CopyStepResult {
             step: "create_issue".to_string(),
             success: false,
-            detail: Some(format!("Cloud issue creation returned status {}", status)),
+            detail: Some(format!("Cloud issue creation returned status {status}")),
         });
         return Ok(CopyTicketResult {
             target_key: None,
@@ -1088,7 +1078,7 @@ pub async fn copy_ticket(
         // Download image bytes from source Jira using Server PAT
         let img_resp = client
             .get(old_url)
-            .header("Authorization", format!("Bearer {}", server_pat))
+            .header("Authorization", format!("Bearer {server_pat}"))
             .send()
             .await;
 
@@ -1117,8 +1107,7 @@ pub async fn copy_ticket(
 
                         let upload_resp = plain_client
                             .post(format!(
-                                "{}/rest/api/3/issue/{}/attachments",
-                                trimmed_target, target_key
+                                "{trimmed_target}/rest/api/3/issue/{target_key}/attachments"
                             ))
                             .header("Authorization", &cloud_auth)
                             .header("X-Atlassian-Token", "no-check")
@@ -1141,7 +1130,7 @@ pub async fn copy_ticket(
                                     url_map.insert(old_url.clone(), new_url.clone());
                                 }
                                 steps.push(CopyStepResult {
-                                    step: format!("upload_image:{}", filename),
+                                    step: format!("upload_image:{filename}"),
                                     success: true,
                                     detail: Some(new_url),
                                 });
@@ -1149,17 +1138,14 @@ pub async fn copy_ticket(
                             Ok(up_resp) => {
                                 let up_status = up_resp.status().as_u16();
                                 steps.push(CopyStepResult {
-                                    step: format!("upload_image:{}", filename),
+                                    step: format!("upload_image:{filename}"),
                                     success: false,
-                                    detail: Some(format!(
-                                        "Upload returned status {}",
-                                        up_status
-                                    )),
+                                    detail: Some(format!("Upload returned status {up_status}")),
                                 });
                             }
                             Err(_) => {
                                 steps.push(CopyStepResult {
-                                    step: format!("upload_image:{}", filename),
+                                    step: format!("upload_image:{filename}"),
                                     success: false,
                                     detail: Some("Network error during upload".to_string()),
                                 });
@@ -1168,7 +1154,7 @@ pub async fn copy_ticket(
                     }
                     Err(_) => {
                         steps.push(CopyStepResult {
-                            step: format!("upload_image:{}", filename),
+                            step: format!("upload_image:{filename}"),
                             success: false,
                             detail: Some("Failed to read image bytes".to_string()),
                         });
@@ -1177,7 +1163,7 @@ pub async fn copy_ticket(
             }
             _ => {
                 steps.push(CopyStepResult {
-                    step: format!("upload_image:{}", filename),
+                    step: format!("upload_image:{filename}"),
                     success: false,
                     detail: Some("Failed to download source image".to_string()),
                 });
@@ -1207,9 +1193,8 @@ pub async fn copy_ticket(
             // Use source HTML → rewrite images → convert to ADF
             let rewritten_html = rewrite_image_urls(&html_description, &url_map);
             let adf_str = htmltoadf::convert_html_str_to_adf_str(rewritten_html);
-            serde_json::from_str(&adf_str).map_err(|e| {
-                AppError::Serialization(format!("Failed to parse ADF JSON: {}", e))
-            })?
+            serde_json::from_str(&adf_str)
+                .map_err(|e| AppError::Serialization(format!("Failed to parse ADF JSON: {e}")))?
         }
     };
 
@@ -1225,17 +1210,20 @@ pub async fn copy_ticket(
                 "attrs": { "level": 3 },
                 "content": [{ "type": "text", "text": "Sub-tasks" }]
             }));
-            let items: Vec<serde_json::Value> = subtasks.iter().map(|st| {
-                let key = st["key"].as_str().unwrap_or("?");
-                let summary = st["fields"]["summary"].as_str().unwrap_or("?");
-                serde_json::json!({
-                    "type": "listItem",
-                    "content": [{
-                        "type": "paragraph",
-                        "content": [{ "type": "text", "text": format!("{}: {}", key, summary) }]
-                    }]
+            let items: Vec<serde_json::Value> = subtasks
+                .iter()
+                .map(|st| {
+                    let key = st["key"].as_str().unwrap_or("?");
+                    let summary = st["fields"]["summary"].as_str().unwrap_or("?");
+                    serde_json::json!({
+                        "type": "listItem",
+                        "content": [{
+                            "type": "paragraph",
+                            "content": [{ "type": "text", "text": format!("{}: {}", key, summary) }]
+                        }]
+                    })
                 })
-            }).collect();
+                .collect();
             content.push(serde_json::json!({
                 "type": "bulletList",
                 "content": items
@@ -1308,10 +1296,10 @@ pub async fn copy_ticket(
         }
     });
     let update_body_str = serde_json::to_string(&update_body)
-        .map_err(|e| AppError::Serialization(format!("Failed to serialize update body: {}", e)))?;
+        .map_err(|e| AppError::Serialization(format!("Failed to serialize update body: {e}")))?;
 
     let update_resp = client
-        .put(format!("{}/rest/api/3/issue/{}", trimmed_target, target_key))
+        .put(format!("{trimmed_target}/rest/api/3/issue/{target_key}"))
         .header("Authorization", &cloud_auth)
         .header("Content-Type", "application/json")
         .body(update_body_str)
@@ -1328,8 +1316,7 @@ pub async fn copy_ticket(
             None
         } else {
             Some(format!(
-                "Description update returned status {}",
-                update_status
+                "Description update returned status {update_status}"
             ))
         },
     });
@@ -1344,13 +1331,13 @@ pub async fn copy_ticket(
         },
         "relationship": "copied from"
     });
-    let remote_link_body_str = serde_json::to_string(&remote_link_body)
-        .map_err(|e| AppError::Serialization(format!("Failed to serialize remotelink body: {}", e)))?;
+    let remote_link_body_str = serde_json::to_string(&remote_link_body).map_err(|e| {
+        AppError::Serialization(format!("Failed to serialize remotelink body: {e}"))
+    })?;
 
     let remotelink_resp = client
         .post(format!(
-            "{}/rest/api/3/issue/{}/remotelink",
-            trimmed_target, target_key
+            "{trimmed_target}/rest/api/3/issue/{target_key}/remotelink"
         ))
         .header("Authorization", &cloud_auth)
         .header("Content-Type", "application/json")
@@ -1368,8 +1355,7 @@ pub async fn copy_ticket(
             None
         } else {
             Some(format!(
-                "Remote link creation returned status {}",
-                remotelink_status
+                "Remote link creation returned status {remotelink_status}"
             ))
         },
     });
@@ -1383,11 +1369,14 @@ pub async fn copy_ticket(
     for att in &attachments {
         let download_url = att["content"].as_str().unwrap_or("");
         let filename = att["filename"].as_str().unwrap_or("file").to_string();
-        let mime = att["mimeType"].as_str().unwrap_or("application/octet-stream").to_string();
+        let mime = att["mimeType"]
+            .as_str()
+            .unwrap_or("application/octet-stream")
+            .to_string();
 
         if download_url.is_empty() {
             steps.push(CopyStepResult {
-                step: format!("attach:{}", filename),
+                step: format!("attach:{filename}"),
                 success: false,
                 detail: Some("No download URL".to_string()),
             });
@@ -1397,85 +1386,83 @@ pub async fn copy_ticket(
         // Download from source
         let dl_resp = client
             .get(download_url)
-            .header("Authorization", format!("Bearer {}", server_pat))
+            .header("Authorization", format!("Bearer {server_pat}"))
             .send()
             .await;
 
         match dl_resp {
-            Ok(resp) if resp.status().is_success() => {
-                match resp.bytes().await {
-                    Ok(file_bytes) => {
-                        let plain_client = reqwest::Client::new();
-                        let part = reqwest::multipart::Part::bytes(file_bytes.to_vec())
-                            .file_name(filename.clone())
-                            .mime_str(&mime)
-                            .unwrap_or_else(|_| {
-                                reqwest::multipart::Part::bytes(file_bytes.to_vec())
-                                    .file_name(filename.clone())
+            Ok(resp) if resp.status().is_success() => match resp.bytes().await {
+                Ok(file_bytes) => {
+                    let plain_client = reqwest::Client::new();
+                    let part = reqwest::multipart::Part::bytes(file_bytes.to_vec())
+                        .file_name(filename.clone())
+                        .mime_str(&mime)
+                        .unwrap_or_else(|_| {
+                            reqwest::multipart::Part::bytes(file_bytes.to_vec())
+                                .file_name(filename.clone())
+                        });
+                    let form = reqwest::multipart::Form::new().part("file", part);
+
+                    let up_resp = plain_client
+                        .post(format!(
+                            "{trimmed_target}/rest/api/3/issue/{target_key}/attachments"
+                        ))
+                        .header("Authorization", &cloud_auth)
+                        .header("X-Atlassian-Token", "no-check")
+                        .multipart(form)
+                        .send()
+                        .await;
+
+                    match up_resp {
+                        Ok(r) if r.status().is_success() => {
+                            steps.push(CopyStepResult {
+                                step: format!("attach:{filename}"),
+                                success: true,
+                                detail: None,
                             });
-                        let form = reqwest::multipart::Form::new().part("file", part);
-
-                        let up_resp = plain_client
-                            .post(format!(
-                                "{}/rest/api/3/issue/{}/attachments",
-                                trimmed_target, target_key
-                            ))
-                            .header("Authorization", &cloud_auth)
-                            .header("X-Atlassian-Token", "no-check")
-                            .multipart(form)
-                            .send()
-                            .await;
-
-                        match up_resp {
-                            Ok(r) if r.status().is_success() => {
-                                steps.push(CopyStepResult {
-                                    step: format!("attach:{}", filename),
-                                    success: true,
-                                    detail: None,
-                                });
-                            }
-                            Ok(r) => {
-                                let status = r.status().as_u16();
-                                steps.push(CopyStepResult {
-                                    step: format!("attach:{}", filename),
-                                    success: false,
-                                    detail: Some(format!("{} upload error", status)),
-                                });
-                            }
-                            Err(_) => {
-                                steps.push(CopyStepResult {
-                                    step: format!("attach:{}", filename),
-                                    success: false,
-                                    detail: Some("Network error during upload".to_string()),
-                                });
-                            }
+                        }
+                        Ok(r) => {
+                            let status = r.status().as_u16();
+                            steps.push(CopyStepResult {
+                                step: format!("attach:{filename}"),
+                                success: false,
+                                detail: Some(format!("{status} upload error")),
+                            });
+                        }
+                        Err(_) => {
+                            steps.push(CopyStepResult {
+                                step: format!("attach:{filename}"),
+                                success: false,
+                                detail: Some("Network error during upload".to_string()),
+                            });
                         }
                     }
-                    Err(_) => {
-                        steps.push(CopyStepResult {
-                            step: format!("attach:{}", filename),
-                            success: false,
-                            detail: Some("Failed to read attachment bytes".to_string()),
-                        });
-                    }
                 }
-            }
+                Err(_) => {
+                    steps.push(CopyStepResult {
+                        step: format!("attach:{filename}"),
+                        success: false,
+                        detail: Some("Failed to read attachment bytes".to_string()),
+                    });
+                }
+            },
             Ok(resp) => {
                 let status = resp.status().as_u16();
                 let detail = if status == 302 {
-                    "Failed to download attachment (server may require Jira Server 8.17+)".to_string()
+                    "Failed to download attachment (server may require Jira Server 8.17+)"
+                        .to_string()
                 } else {
-                    format!("Download returned status {}", status)
+                    format!("Download returned status {status}")
                 };
                 steps.push(CopyStepResult {
-                    step: format!("attach:{}", filename),
+                    step: format!("attach:{filename}"),
                     success: false,
                     detail: Some(detail),
                 });
             }
             Err(_) => {
                 steps.push(CopyStepResult {
-                    step: format!("attach:{}", filename),
+                    step: format!("attach:{filename}"),
                     success: false,
                     detail: Some("Failed to download attachment".to_string()),
                 });
@@ -1511,13 +1498,15 @@ pub async fn copy_ticket(
         } else {
             created.to_string()
         };
-        let attribution = format!("{} \u{2014} {}", author_name, date_formatted);
+        let attribution = format!("{author_name} \u{2014} {date_formatted}");
 
         // Get HTML body from renderedFields if available, otherwise use raw body as text
         let comment_id = raw_comment["id"].as_str().unwrap_or("");
         let html_body: Option<String> = rendered_comments.as_ref().and_then(|rendered| {
-            rendered.iter().find(|rc| rc["id"].as_str() == Some(comment_id))
-                .and_then(|rc| rc["body"].as_str().map(|s| s.to_string()))
+            rendered
+                .iter()
+                .find(|rc| rc["id"].as_str() == Some(comment_id))
+                .and_then(|rc| rc["body"].as_str().map(std::string::ToString::to_string))
         });
 
         let mut adf_doc: serde_json::Value = if let Some(html) = html_body {
@@ -1555,8 +1544,7 @@ pub async fn copy_ticket(
         let comment_body_str = serde_json::json!({ "body": adf_doc }).to_string();
         let comment_resp = client
             .post(format!(
-                "{}/rest/api/3/issue/{}/comment",
-                trimmed_target, target_key
+                "{trimmed_target}/rest/api/3/issue/{target_key}/comment"
             ))
             .header("Authorization", &cloud_auth)
             .header("Content-Type", "application/json")
@@ -1577,7 +1565,7 @@ pub async fn copy_ticket(
                 steps.push(CopyStepResult {
                     step: format!("comment:{}", idx + 1),
                     success: false,
-                    detail: Some(format!("Comment POST returned {}", status)),
+                    detail: Some(format!("Comment POST returned {status}")),
                 });
             }
             Err(_) => {
@@ -1591,34 +1579,31 @@ pub async fn copy_ticket(
     }
 
     // Work log copy (per D-07, D-08)
-    let worklog_url = format!(
-        "{}/rest/api/2/issue/{}/worklog",
-        trimmed_source, source_key
-    );
+    let worklog_url = format!("{trimmed_source}/rest/api/2/issue/{source_key}/worklog");
     let wl_resp = client
         .get(&worklog_url)
-        .header("Authorization", format!("Bearer {}", server_pat))
+        .header("Authorization", format!("Bearer {server_pat}"))
         .send()
         .await;
 
     if let Ok(wl_response) = wl_resp {
         if wl_response.status().is_success() {
             if let Ok(wl_body) = wl_response.json::<serde_json::Value>().await {
-                let worklogs = wl_body["worklogs"]
-                    .as_array()
-                    .cloned()
-                    .unwrap_or_default();
+                let worklogs = wl_body["worklogs"].as_array().cloned().unwrap_or_default();
 
                 for (idx, wl) in worklogs.iter().enumerate() {
-                    let author_name = wl["author"]["displayName"]
-                        .as_str()
-                        .unwrap_or("Unknown");
+                    let author_name = wl["author"]["displayName"].as_str().unwrap_or("Unknown");
                     let started = wl["started"].as_str().unwrap_or("");
-                    let started_date = if started.len() >= 10 { &started[..10] } else { started };
+                    let started_date = if started.len() >= 10 {
+                        &started[..10]
+                    } else {
+                        started
+                    };
                     let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
                     let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
 
-                    let attribution = format!("{} \u{2014} {} ({})", author_name, started_date, time_spent);
+                    let attribution =
+                        format!("{author_name} \u{2014} {started_date} ({time_spent})");
 
                     let wl_comment_adf = serde_json::json!({
                         "version": 1,
@@ -1641,8 +1626,7 @@ pub async fn copy_ticket(
 
                     let wl_post_resp = client
                         .post(format!(
-                            "{}/rest/api/3/issue/{}/worklog",
-                            trimmed_target, target_key
+                            "{trimmed_target}/rest/api/3/issue/{target_key}/worklog"
                         ))
                         .header("Authorization", &cloud_auth)
                         .header("Content-Type", "application/json")
@@ -1663,7 +1647,7 @@ pub async fn copy_ticket(
                             steps.push(CopyStepResult {
                                 step: format!("worklog:{}", idx + 1),
                                 success: false,
-                                detail: Some(format!("Worklog POST returned {}", status)),
+                                detail: Some(format!("Worklog POST returned {status}")),
                             });
                         }
                         Err(_) => {
@@ -1695,7 +1679,7 @@ pub async fn copy_ticket(
         });
 
         let st_create_resp = client
-            .post(format!("{}/rest/api/3/issue", trimmed_target))
+            .post(format!("{trimmed_target}/rest/api/3/issue"))
             .header("Authorization", &cloud_auth)
             .header("Content-Type", "application/json")
             .body(serde_json::to_string(&st_create_body).unwrap_or_default())
@@ -1705,26 +1689,26 @@ pub async fn copy_ticket(
         match st_create_resp {
             Ok(r) if r.status().is_success() => {
                 let resp_text = r.text().await.unwrap_or_default();
-                let resp_json: serde_json::Value = serde_json::from_str(&resp_text)
-                    .unwrap_or(serde_json::json!({}));
+                let resp_json: serde_json::Value =
+                    serde_json::from_str(&resp_text).unwrap_or(serde_json::json!({}));
                 let child_key = resp_json["key"].as_str().unwrap_or("?");
                 steps.push(CopyStepResult {
-                    step: format!("subtask:{}", st_source_key),
+                    step: format!("subtask:{st_source_key}"),
                     success: true,
-                    detail: Some(format!("Created as {}", child_key)),
+                    detail: Some(format!("Created as {child_key}")),
                 });
             }
             Ok(r) => {
                 let status = r.status().as_u16();
                 steps.push(CopyStepResult {
-                    step: format!("subtask:{}", st_source_key),
+                    step: format!("subtask:{st_source_key}"),
                     success: false,
-                    detail: Some(format!("Sub-task creation returned {}", status)),
+                    detail: Some(format!("Sub-task creation returned {status}")),
                 });
             }
             Err(_) => {
                 steps.push(CopyStepResult {
-                    step: format!("subtask:{}", st_source_key),
+                    step: format!("subtask:{st_source_key}"),
                     success: false,
                     detail: Some("Network error creating sub-task".to_string()),
                 });
@@ -1748,7 +1732,7 @@ pub async fn copy_ticket(
 
     Ok(CopyTicketResult {
         target_key: Some(target_key.clone()),
-        target_url: Some(format!("{}/browse/{}", trimmed_target, target_key)),
+        target_url: Some(format!("{trimmed_target}/browse/{target_key}")),
         steps,
     })
 }

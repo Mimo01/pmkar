@@ -40,3 +40,11 @@ tauri-build = { version = "2.0", features = [] }
 [features]
 default = ["mock-server"]
 mock-server = []
+
+[lints.clippy]
+pedantic = "warn"
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+missing_docs_in_private_items = "allow"

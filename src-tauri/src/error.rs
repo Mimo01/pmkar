@@ -46,7 +46,7 @@ impl From<keyring::Error> for AppError {
 
 impl From<rusqlite::Error> for AppError {
     fn from(e: rusqlite::Error) -> Self {
-        AppError::Database(format!("Database operation failed: {}", e))
+        AppError::Database(format!("Database operation failed: {e}"))
     }
 }
 
@@ -59,7 +59,7 @@ impl From<reqwest::Error> for AppError {
 
 impl From<serde_json::Error> for AppError {
     fn from(e: serde_json::Error) -> Self {
-        AppError::Serialization(format!("JSON error: {}", e))
+        AppError::Serialization(format!("JSON error: {e}"))
     }
 }
 
