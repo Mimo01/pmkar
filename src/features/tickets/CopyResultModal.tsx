@@ -100,6 +100,7 @@ export function CopyResultModal() {
             <ScrollArea className="max-h-64">
               <div className="space-y-1">
                 {result.steps.map((step, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: steps are immutable copy result items, index is stable
                   <div key={i} className="flex items-center gap-2 py-1.5 px-1">
                     {step.success ? (
                       <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />

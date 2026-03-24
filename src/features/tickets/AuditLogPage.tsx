@@ -114,6 +114,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             </thead>
             <tbody>
               {Array.from({ length: 5 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows are static, index is stable
                 <tr key={i} className="border-b border-brand-border-subtle/50 animate-pulse">
                   <td className="w-40 px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-28" />
@@ -173,6 +174,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               {entries.map((entry) => (
                 <Fragment key={entry.id}>
                   {/* Summary row */}
+                  {/* biome-ignore lint/a11y/useSemanticElements: tr with role="button" is correct for expandable table rows — cannot use <button> inside <tbody> */}
                   <tr
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                     onKeyDown={(e) => {

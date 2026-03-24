@@ -101,9 +101,7 @@ export function AppShell({
           ))}
         </nav>
       )}
-      <div className="flex-1 flex flex-col overflow-hidden" role="main">
-        {children}
-      </div>
+      <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
     </div>
   );
 }

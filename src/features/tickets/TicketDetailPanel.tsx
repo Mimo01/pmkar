@@ -126,7 +126,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     : [];
 
   return (
-    <div className="flex flex-col h-full" role="complementary" aria-label="Ticket detail">
+    <aside className="flex flex-col h-full" aria-label="Ticket detail">
       {/* Panel header */}
       <div className="px-5 py-4 border-b border-brand-border">
         {loading ? (
@@ -279,6 +279,6 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
       <CopyPreviewModal />
       {/* Copy result modal — overlays after copy completes (z-[60] > z-50 preview) */}
       <CopyResultModal />
-    </div>
+    </aside>
   );
 }

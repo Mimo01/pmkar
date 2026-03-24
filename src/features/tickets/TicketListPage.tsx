@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -55,27 +55,7 @@ export function TicketListPage() {
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
 
-  // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
-  useEffect(() => {
-    Promise.all([
-      invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
-        .then((map) => useTicketStore.getState().hydrateTriageMap(map))
-        .catch(() => {}),
-      invoke<import('./types').FetchConfig>('get_fetch_config')
-        .then((config) => {
-          useTicketStore.getState().hydrateFetchConfig(config);
-          return config;
-        })
-        .catch(() => null),
-    ]).then(([, config]) => {
-      // Auto-refetch if user has previously fetched (tickets are in-memory only)
-      if (config?.lastFetchedAt) {
-        handleFetch();
-      }
-    });
-  }, [handleFetch]);
-
-  async function handleFetch() {
+  const handleFetch = useCallback(async () => {
     const store = useTicketStore.getState();
     store.setFetchStatus('loading');
     try {
@@ -96,7 +76,27 @@ export function TicketListPage() {
     } catch (err) {
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
     }
-  }
+  }, []);
+
+  // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
+  useEffect(() => {
+    Promise.all([
+      invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
+        .then((map) => useTicketStore.getState().hydrateTriageMap(map))
+        .catch(() => {}),
+      invoke<import('./types').FetchConfig>('get_fetch_config')
+        .then((config) => {
+          useTicketStore.getState().hydrateFetchConfig(config);
+          return config;
+        })
+        .catch(() => null),
+    ]).then(([, config]) => {
+      // Auto-refetch if user has previously fetched (tickets are in-memory only)
+      if (config?.lastFetchedAt) {
+        handleFetch();
+      }
+    });
+  }, [handleFetch]);
 
   function handleSelectTicket(key: string) {
     const store = useTicketStore.getState();

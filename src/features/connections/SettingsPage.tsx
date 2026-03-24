@@ -351,6 +351,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           <SectionCard title={t('settings.section.jqlPresets')}>
             <div className="space-y-1.5" role="radiogroup" aria-label="JQL presets">
               {PRESET_OPTIONS.map((opt) => (
+                // biome-ignore lint/a11y/useSemanticElements: visual radio buttons using button+aria-checked pattern inside radiogroup div
                 <button
                   key={opt.value}
                   type="button"
@@ -425,6 +426,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 <input
                   ref={inputRef}
                   type="text"
+                  role="combobox"
                   value={userQuery}
                   onChange={(e) => setUserQuery(e.target.value)}
                   onKeyDown={handleKeyDown}

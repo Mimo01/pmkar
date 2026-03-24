@@ -12,7 +12,7 @@ const mockInvoke = vi.mocked(invoke);
 
 vi.mock('../connections/connectionStore', () => ({
   useConnectionStore: Object.assign(
-    (selector: any) =>
+    (selector: (s: unknown) => unknown) =>
       selector({
         serverConnection: {
           baseUrl: 'http://127.0.0.1:8080',

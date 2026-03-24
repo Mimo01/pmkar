@@ -83,7 +83,8 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
           </div>
           <div className="space-y-1">
             {entry.items.map((item, idx) => (
-              <div key={idx} className="text-xs text-brand-text-secondary">
+              // biome-ignore lint/suspicious/noArrayIndexKey: changelog items have no unique ID; index within a stable entry is safe
+              <div key={`${entry.id}-${idx}`} className="text-xs text-brand-text-secondary">
                 <span className="font-semibold">{item.field}</span>
                 {': '}
                 {item.fromString && <span className="text-brand-muted">{item.fromString}</span>}

@@ -2,9 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import './i18n/index';
 
 // jsdom lacks WebCrypto — polyfill using globalThis.crypto (available in Node 19+/jsdom)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-if (typeof (window as any).crypto === 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+if (typeof (window as Window & typeof globalThis).crypto === 'undefined') {
   const { randomFillSync } = require('node:crypto') as {
     randomFillSync: (buf: ArrayBufferView) => ArrayBufferView;
   };

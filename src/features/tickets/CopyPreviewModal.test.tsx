@@ -9,7 +9,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 // Mock connectionStore
 vi.mock('../connections/connectionStore', () => ({
   useConnectionStore: Object.assign(
-    (selector: (s: any) => any) =>
+    (selector: (s: unknown) => unknown) =>
       selector({
         serverConnection: { baseUrl: 'http://server.example.com' },
         cloudConnection: { baseUrl: 'https://cloud.example.com' },
@@ -98,7 +98,7 @@ function buildStoreState(overrides: Record<string, unknown> = {}) {
 
 // Mock copyStore using a factory so per-test state overrides work
 vi.mock('./copyStore', () => ({
-  useCopyStore: Object.assign((selector: (s: any) => any) => selector(currentStoreState), {
+  useCopyStore: Object.assign((selector: (s: unknown) => unknown) => selector(currentStoreState), {
     getState: () => currentStoreState,
   }),
 }));

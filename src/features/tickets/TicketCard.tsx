@@ -52,18 +52,11 @@ interface TicketCardProps {
 
 export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      tabIndex={0}
-      role="button"
       aria-label={ticket.fields.summary}
-      className="px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
+      className="w-full text-left px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
     >
       {/* Line 1: ticket key + relative time */}
       <div className="flex items-center justify-between mb-1">
@@ -87,7 +80,7 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
           {ticket.fields.assignee?.displayName ?? ''}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -95,8 +88,9 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
 
 export function SkeletonCards({ count = 3 }: { count?: number }) {
   return (
-    <div aria-busy="true" aria-label="Loading tickets">
+    <div aria-busy="true" aria-label="Loading tickets" role="status">
       {Array.from({ length: count }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading rows are static, index is stable
         <div key={i} className="px-4 py-3 border-b border-brand-border">
           <div className="flex justify-between mb-1">
             <Skeleton className="h-3 w-16" />

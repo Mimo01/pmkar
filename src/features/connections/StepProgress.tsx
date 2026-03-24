@@ -41,14 +41,13 @@ export function StepProgress({ currentStep }: StepProgressProps) {
   ];
 
   return (
-    <div className="flex items-center justify-center gap-0 mb-8" role="list">
+    <ul className="flex items-center justify-center gap-0 mb-8 list-none p-0 m-0">
       {STEPS.map((step, i) => {
         const state = getStepState(step.index, currentStep);
         return (
-          <div
+          <li
             key={step.index}
             className="flex items-center"
-            role="listitem"
             aria-label={`Step ${step.index}: ${step.label} — ${state}`}
           >
             <div className="flex flex-col items-center gap-1.5">
@@ -87,9 +86,9 @@ export function StepProgress({ currentStep }: StepProgressProps) {
                 ].join(' ')}
               />
             )}
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

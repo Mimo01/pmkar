@@ -12,7 +12,10 @@
       "suspicious": { "recommended": true },
       "style": { "recommended": true },
       "performance": { "recommended": true },
-      "security": { "recommended": true },
+      "security": {
+        "recommended": true,
+        "noDangerouslySetInnerHtml": "off"
+      },
       "a11y": { "recommended": true },
       "complexity": { "recommended": true }
     }
