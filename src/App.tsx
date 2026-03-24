@@ -8,9 +8,11 @@ import { TicketListPage } from './features/tickets/TicketListPage';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
 import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
+import { TicketDetailPage } from './features/tickets/TicketDetailPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { useConnectionStore } from './features/connections/connectionStore';
+import { useTicketStore } from './features/tickets/ticketStore';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import type { ConnectionType, ConnectionMeta } from './features/connections/types';
 
@@ -58,6 +60,23 @@ function App() {
   const [currentTab, setCurrentTab] = useState<'new' | 'not-mine' | 'linked'>('new');
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditCount, setAuditCount] = useState(0);
+  const [showDetail, setShowDetail] = useState(false);
+  const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
+
+  const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
+
+  useEffect(() => {
+    if (selectedTicketKey) {
+      setDetailTicketKey(selectedTicketKey);
+      setShowDetail(true);
+    }
+  }, [selectedTicketKey]);
+
+  const handleDetailBack = useCallback(() => {
+    setShowDetail(false);
+    setDetailTicketKey(null);
+    useTicketStore.getState().selectTicket(null);
+  }, []);
 
   useEffect(() => {
     if (hydrated && hasSetup) {
@@ -113,14 +132,37 @@ function App() {
     );
   }
 
+  if (showDetail && detailTicketKey) {
+    return (
+      <ErrorBoundary>
+        <AppShell>
+          <TicketDetailPage
+            issueKey={detailTicketKey}
+            onBack={handleDetailBack}
+          />
+        </AppShell>
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <AppShell
-        onGearClick={() => setShowSettings(true)}
+        onGearClick={() => {
+          setShowDetail(false);
+          setDetailTicketKey(null);
+          useTicketStore.getState().selectTicket(null);
+          setShowSettings(true);
+        }}
         activeTab={currentTab}
         onTabChange={setCurrentTab}
         auditCount={auditCount}
-        onAuditClick={() => setShowAuditLog(true)}
+        onAuditClick={() => {
+          setShowDetail(false);
+          setDetailTicketKey(null);
+          useTicketStore.getState().selectTicket(null);
+          setShowAuditLog(true);
+        }}
       >
         {currentTab === 'new' && <TicketListPage />}
         {currentTab === 'not-mine' && <IgnoredTicketsPage />}
