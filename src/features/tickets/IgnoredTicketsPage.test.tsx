@@ -108,7 +108,7 @@ describe('IgnoredTicketsPage', () => {
     setupStore([ticket3], { 'TEST-3': { state: 'seen', copiedKey: null } });
     render(<IgnoredTicketsPage />);
     expect(screen.getByText('No ignored tickets')).toBeInTheDocument();
-    expect(screen.getByText(/not mine/)).toBeInTheDocument();
+    expect(screen.getByText(/Not for me/)).toBeInTheDocument();
   });
 
   it('only ignored tickets are shown', () => {

@@ -1,3 +1,4 @@
+// DEPRECATED: Replaced by TicketCard in Phase 8 redesign. Retained for reference.
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../lib/format';

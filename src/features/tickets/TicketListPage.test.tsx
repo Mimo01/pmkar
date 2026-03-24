@@ -140,7 +140,7 @@ describe('TicketListPage', () => {
     });
   });
 
-  it('renders ticket rows after fetch', async () => {
+  it('renders ticket cards after fetch', async () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
@@ -170,7 +170,7 @@ describe('TicketListPage', () => {
     });
   });
 
-  it('shows triage new indicator', async () => {
+  it('renders ticket key in card layout', async () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
@@ -194,7 +194,10 @@ describe('TicketListPage', () => {
     fireEvent.click(screen.getByText('Fetch Tickets'));
 
     await waitFor(() => {
-      expect(screen.getByLabelText('New ticket')).toBeInTheDocument();
+      // Cards show ticket key as monospace text
+      expect(screen.getByText('PROJ-1')).toBeInTheDocument();
+      // Cards show ticket summary as heading line
+      expect(screen.getByText('First ticket summary')).toBeInTheDocument();
     });
   });
 
@@ -222,7 +225,7 @@ describe('TicketListPage', () => {
     fireEvent.click(screen.getByText('Fetch Tickets'));
 
     await waitFor(() => {
-      expect(screen.getByText('No candidates found')).toBeInTheDocument();
+      expect(screen.getByText('No new tickets')).toBeInTheDocument();
     });
   });
 });
