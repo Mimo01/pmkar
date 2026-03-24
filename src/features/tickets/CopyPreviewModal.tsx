@@ -91,7 +91,7 @@ export function CopyPreviewModal() {
         {phase === 'copying' && (
           <div className="space-y-2 px-6 pt-4">
             <Progress value={progressPercent} className="h-1 transition-all duration-300" />
-            <p className="text-xs text-brand-muted">{progressStep}</p>
+            <p className="text-xs text-brand-muted" aria-live="polite" aria-atomic="true">{progressStep}</p>
           </div>
         )}
 
@@ -186,10 +186,11 @@ export function CopyPreviewModal() {
 
               {/* Summary (editable) */}
               <div className="mb-3">
-                <label className="text-xs text-brand-muted block mb-1">
+                <label htmlFor="copy-target-summary" className="text-xs text-brand-muted block mb-1">
                   Summary
                 </label>
                 <input
+                  id="copy-target-summary"
                   type="text"
                   value={targetSummary}
                   onChange={(e) => setTargetSummary(e.target.value)}
@@ -202,10 +203,11 @@ export function CopyPreviewModal() {
 
               {/* Status dropdown */}
               <div className="mb-3">
-                <label className="text-xs text-brand-muted block mb-1">
+                <label htmlFor="copy-target-status" className="text-xs text-brand-muted block mb-1">
                   Status
                 </label>
                 <select
+                  id="copy-target-status"
                   value={targetStatus}
                   onChange={(e) => setTargetStatus(e.target.value)}
                   className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
@@ -220,10 +222,11 @@ export function CopyPreviewModal() {
 
               {/* Priority dropdown */}
               <div className="mb-3">
-                <label className="text-xs text-brand-muted block mb-1">
+                <label htmlFor="copy-target-priority" className="text-xs text-brand-muted block mb-1">
                   Priority
                 </label>
                 <select
+                  id="copy-target-priority"
                   value={targetPriorityId}
                   onChange={(e) => setTargetPriorityId(e.target.value)}
                   className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
@@ -238,9 +241,9 @@ export function CopyPreviewModal() {
 
               {/* Labels checkboxes */}
               <div className="mb-3">
-                <label className="text-xs text-brand-muted block mb-1">
+                <span className="text-xs text-brand-muted block mb-1">
                   Labels
-                </label>
+                </span>
                 {targetLabels.length === 0 ? (
                   <p className="text-sm text-brand-muted">
                     No labels on source ticket
@@ -264,10 +267,11 @@ export function CopyPreviewModal() {
 
               {/* Description (editable) */}
               <div className="mt-4">
-                <label className="text-xs text-brand-muted block mb-1">
+                <label htmlFor="copy-target-description" className="text-xs text-brand-muted block mb-1">
                   Description
                 </label>
                 <textarea
+                  id="copy-target-description"
                   value={targetDescription}
                   onChange={(e) => setTargetDescription(e.target.value)}
                   rows={8}
