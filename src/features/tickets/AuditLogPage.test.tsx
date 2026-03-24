@@ -66,8 +66,10 @@ describe('AuditLogPage', () => {
     await waitFor(() => {
       expect(screen.getByText('POST')).toBeTruthy();
     });
-    const postRow = screen.getByLabelText('Expand row for POST https://jira.example.com/rest/api/2/search');
-    fireEvent.click(postRow);
+    const rows = screen.getAllByRole('button');
+    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    expect(postRow).toBeTruthy();
+    fireEvent.click(postRow!);
     expect(screen.getByText('Request Headers')).toBeTruthy();
     expect(screen.getByText(/\[REDACTED\]/)).toBeTruthy();
   });
@@ -78,10 +80,12 @@ describe('AuditLogPage', () => {
     await waitFor(() => {
       expect(screen.getByText('POST')).toBeTruthy();
     });
-    const postRow = screen.getByLabelText('Expand row for POST https://jira.example.com/rest/api/2/search');
-    fireEvent.click(postRow);
+    const rows = screen.getAllByRole('button');
+    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    expect(postRow).toBeTruthy();
+    fireEvent.click(postRow!);
     expect(screen.getByText('Request Headers')).toBeTruthy();
-    fireEvent.click(postRow);
+    fireEvent.click(postRow!);
     expect(screen.queryByText('Request Headers')).toBeNull();
   });
 
@@ -91,15 +95,18 @@ describe('AuditLogPage', () => {
     await waitFor(() => {
       expect(screen.getByText('POST')).toBeTruthy();
     });
-    const postRow = screen.getByLabelText('Expand row for POST https://jira.example.com/rest/api/2/search');
-    const getRow = screen.getByLabelText('Expand row for GET https://jira.example.com/rest/api/2/myself');
-    fireEvent.click(postRow);
+    const rows = screen.getAllByRole('button');
+    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    const getRow = rows.find((r) => r.textContent?.includes('GET'));
+    expect(postRow).toBeTruthy();
+    expect(getRow).toBeTruthy();
+    fireEvent.click(postRow!);
     expect(screen.getAllByText('Request Headers').length).toBe(1);
-    fireEvent.click(getRow);
+    fireEvent.click(getRow!);
     // After clicking GET row, only one expanded section should exist
     expect(screen.getAllByText('Request Headers').length).toBe(1);
-    // The GET row should now be expanded
-    expect(screen.getByLabelText('Expand row for GET https://jira.example.com/rest/api/2/myself')).toBeTruthy();
+    // The GET row should now be expanded (aria-expanded=true)
+    expect(getRow!.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('Test 5: empty state shows heading and body text', async () => {
@@ -117,8 +124,10 @@ describe('AuditLogPage', () => {
     await waitFor(() => {
       expect(screen.getByText('POST')).toBeTruthy();
     });
-    const postRow = screen.getByLabelText('Expand row for POST https://jira.example.com/rest/api/2/search');
-    fireEvent.click(postRow);
+    const rows = screen.getAllByRole('button');
+    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    expect(postRow).toBeTruthy();
+    fireEvent.click(postRow!);
     // Pretty-printed JSON has newlines and indentation
     const responseSection = screen.getByText(/Response Body/i, { selector: 'span' });
     expect(responseSection).toBeTruthy();
@@ -136,8 +145,10 @@ describe('AuditLogPage', () => {
     await waitFor(() => {
       expect(screen.getByText('GET')).toBeTruthy();
     });
-    const getRow = screen.getByLabelText('Expand row for GET https://jira.example.com/rest/api/2/myself');
-    fireEvent.click(getRow);
+    const rows = screen.getAllByRole('button');
+    const getRow = rows.find((r) => r.textContent?.includes('GET'));
+    expect(getRow).toBeTruthy();
+    fireEvent.click(getRow!);
     expect(screen.getByText('Response body not recorded')).toBeTruthy();
   });
 
