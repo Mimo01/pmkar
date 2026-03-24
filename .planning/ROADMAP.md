@@ -199,3 +199,25 @@ Plans:
 - [ ] 09-02-PLAN.md — TicketCard keyboard access, PriorityDot text pairing, TriageIndicator semantics, AuditLogPage keyboard rows
 - [x] 09-03-PLAN.md — CopyPreviewModal form labeling, ConnectionForm error linking, live regions for copy progress and fetch status
 - [x] 09-04-PLAN.md — SettingsPage nav label, JQL radiogroup semantics, watched users combobox ARIA
+
+### Phase 10: Improve codebase quality: add linting, increase test coverage, apply best practices, fix tech debt, update dependencies, and improve overall app quality
+
+**Goal:** Production-grade code quality — Biome linting with zero warnings, clippy pedantic with zero warnings, 80% frontend test coverage with threshold enforcement, all dependencies at latest versions, dead code removed, and GitHub Actions CI automating all quality gates
+**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11
+**Depends on:** Phase 9
+**Success Criteria** (what must be TRUE):
+  1. `npm run lint` (Biome check) exits 0 with zero errors on all frontend code
+  2. `cargo clippy -- -D warnings` exits 0 with pedantic rules in src-tauri/
+  3. `npm run test:coverage` exits 0 with >= 80% line coverage enforced
+  4. All npm dependencies are at latest major versions (Vite 8, TypeScript 6)
+  5. All Rust crates are updated within semver ranges
+  6. Zero `any` types remain in TypeScript source or test files
+  7. GitHub Actions CI runs lint + type-check + test + clippy + fmt on every push/PR
+**Plans:** 5 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Biome setup, fix all lint violations, eliminate `any` types, remove dead code
+- [ ] 10-02-PLAN.md — Rust clippy pedantic + rustfmt configuration, fix violations, add Rust unit tests
+- [ ] 10-03-PLAN.md — Dependency upgrades (npm: Vite 8, TS 6, plugin-react 6; Rust: cargo update)
+- [ ] 10-04-PLAN.md — Vitest coverage tooling, write store/utility tests, enforce 80% threshold
+- [ ] 10-05-PLAN.md — GitHub Actions CI workflow (frontend + Rust jobs)
