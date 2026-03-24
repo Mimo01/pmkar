@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: "Completed 08-01-PLAN.md: shadcn/ui foundation, AppShell redesign"
-last_updated: "2026-03-23T23:58:32.676Z"
-last_activity: 2026-03-23
+stopped_at: Completed 08-03-PLAN.md (TicketDetailPage + App.tsx routing)
+last_updated: "2026-03-24T00:04:04.238Z"
+last_activity: 2026-03-24
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 31
-  completed_plans: 27
+  completed_plans: 28
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 08 (fully-redesign-the-app-ui-modern-sleek-easy-to-use) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Plan: 2 of 5
 | Phase 07-internationalization P01 | 20 | 2 tasks | 14 files |
 | Phase 07-internationalization P02 | 16 | 2 tasks | 26 files |
 | Phase 08 P01 | 9 | 2 tasks | 20 files |
+| Phase 08 P03 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -139,6 +140,8 @@ Recent decisions affecting current work:
 - [Phase 08]: Use relative import in AppShell.tsx for tooltip components instead of @/ alias to avoid vitest test resolution issues
 - [Phase 08]: Add @/ alias to vitest.config.ts separately — separate vitest config overrides vite.config.ts test settings
 - [Phase 08]: shadcn/ui components use CSS variable token bridge pattern — brand tokens aliased to shadcn semantic variables in @theme block
+- [Phase 08-03]: TicketDetailPage derives baseUrl and cloudBaseUrl from connectionStore directly, not as props — store-first pattern
+- [Phase 08-03]: Detail page routing in App.tsx as priority 4 branch preserving all existing route priorities and currentTab state
 
 ### Roadmap Evolution
 
@@ -164,7 +167,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-23
-Last session: 2026-03-23T23:58:32.671Z
-Stopped at: Completed 08-01-PLAN.md: shadcn/ui foundation, AppShell redesign
+Last activity: 2026-03-24
+Last session: 2026-03-24T00:04:04.232Z
+Stopped at: Completed 08-03-PLAN.md (TicketDetailPage + App.tsx routing)
 Resume file: None
