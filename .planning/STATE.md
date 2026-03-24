@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 08-03-PLAN.md (TicketDetailPage + App.tsx routing)
-last_updated: "2026-03-24T00:04:04.238Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-24T00:05:32.298Z"
 last_activity: 2026-03-24
 progress:
   total_phases: 8
   completed_phases: 7
   total_plans: 31
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 08 (fully-redesign-the-app-ui-modern-sleek-easy-to-use) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ Plan: 3 of 5
 | Phase 07-internationalization P02 | 16 | 2 tasks | 26 files |
 | Phase 08 P01 | 9 | 2 tasks | 20 files |
 | Phase 08 P03 | 3 | 2 tasks | 2 files |
+| Phase 08-fully-redesign-the-app-ui-modern-sleek-easy-to-use P02 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,8 @@ Recent decisions affecting current work:
 - [Phase 08]: shadcn/ui components use CSS variable token bridge pattern — brand tokens aliased to shadcn semantic variables in @theme block
 - [Phase 08-03]: TicketDetailPage derives baseUrl and cloudBaseUrl from connectionStore directly, not as props — store-first pattern
 - [Phase 08-03]: Detail page routing in App.tsx as priority 4 branch preserving all existing route priorities and currentTab state
+- [Phase 08-02]: actionSlot prop on TicketCard enables tab-specific actions (Restore button, linked key badge) without component forking
+- [Phase 08-02]: TicketTable retained as deprecated reference rather than deleted to preserve sort/compare logic
 
 ### Roadmap Evolution
 
@@ -168,6 +171,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-24
-Last session: 2026-03-24T00:04:04.232Z
-Stopped at: Completed 08-03-PLAN.md (TicketDetailPage + App.tsx routing)
+Last session: 2026-03-24T00:05:32.292Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
