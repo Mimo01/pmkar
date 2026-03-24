@@ -240,13 +240,15 @@ export function ConnectionForm({
           onChange={(e) => handleBaseUrlChange(e.target.value)}
           onBlur={handleUrlBlur}
           disabled={testing}
+          aria-invalid={!!urlError}
+          aria-describedby={urlError ? "base-url-error" : undefined}
           placeholder={connectionType === 'server'
             ? t('connection.baseUrl.placeholder.server')
             : t('connection.baseUrl.placeholder.cloud')}
           className={inputClass}
         />
         {urlError && (
-          <p className="text-xs text-red-400">{urlError}</p>
+          <p id="base-url-error" role="alert" className="text-xs text-red-400">{urlError}</p>
         )}
       </div>
 

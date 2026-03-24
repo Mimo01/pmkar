@@ -136,7 +136,7 @@ export function TicketListPage() {
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
-        <span className="text-xs text-brand-muted">
+        <span className="text-xs text-brand-muted" aria-live="polite">
           {lastFetchedAt ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) }) : t('tickets.notYetFetched')}
         </span>
         {totalCount > 0 && (
