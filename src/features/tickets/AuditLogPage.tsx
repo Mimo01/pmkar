@@ -1,6 +1,10 @@
 import { Fragment, useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { formatTimestamp } from '../../lib/format';
 import type { AuditEntry } from './types';
 
@@ -46,8 +50,11 @@ function statusColor(code: number | null): string {
 }
 
 function methodColor(method: string): string {
-  if (method === 'GET') return 'text-brand-muted';
-  return 'text-brand-text-secondary';
+  if (method === 'GET') return 'text-green-600';
+  if (method === 'POST') return 'text-blue-600';
+  if (method === 'PUT') return 'text-yellow-600';
+  if (method === 'DELETE') return 'text-red-600';
+  return 'text-brand-muted';
 }
 
 export function AuditLogPage({ onClose }: AuditLogPageProps) {
@@ -71,43 +78,30 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header bar with title and close button */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-brand-border">
-        <h1 className="text-xl font-semibold text-brand-text">{t('audit.heading')}</h1>
+      {/* Header bar with back button and title */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-brand-border bg-brand-surface">
         <button
           type="button"
           onClick={onClose}
-          className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text hover:bg-brand-surface-hover rounded-lg transition-colors duration-150"
+          className="flex items-center gap-1 text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
           aria-label={t('audit.close')}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          {t('audit.back')}
         </button>
+        <h1 className="text-base font-semibold text-brand-text">{t('audit.heading')}</h1>
       </div>
 
       {/* Loading state */}
       {loading && (
-        <div className="overflow-y-auto flex-1">
+        <ScrollArea className="flex-1">
           <table className="w-full table-fixed">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.time')}
                 </th>
-                <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
+                <th className="w-20 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.method')}
                 </th>
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
@@ -124,8 +118,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   <td className="w-40 px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-28" />
                   </td>
-                  <td className="w-16 px-4 py-2">
-                    <div className="h-3 bg-brand-surface-hover rounded w-8" />
+                  <td className="w-20 px-4 py-2">
+                    <div className="h-3 bg-brand-surface-hover rounded w-10" />
                   </td>
                   <td className="px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-full" />
@@ -137,7 +131,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       )}
 
       {/* Error state */}
@@ -152,21 +146,21 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {/* Empty state */}
       {!loading && !error && entries.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text-secondary mb-1">{t('audit.empty')}</p>
-          <p className="text-xs text-brand-muted">{t('audit.empty.hint')}</p>
+          <p className="text-sm font-semibold text-brand-text mb-1">{t('audit.empty.heading')}</p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">{t('audit.empty.body')}</p>
         </div>
       )}
 
       {/* Populated table */}
       {!loading && !error && entries.length > 0 && (
-        <div className="overflow-y-auto flex-1">
+        <ScrollArea className="flex-1">
           <table className="w-full table-fixed">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
               <tr>
                 <th className="w-40 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.time')}
                 </th>
-                <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
+                <th className="w-20 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.method')}
                 </th>
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
@@ -183,14 +177,16 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   {/* Summary row */}
                   <tr
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
-                    className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-100"
+                    className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-150"
                     aria-label={`Expand row for ${entry.method} ${entry.url}`}
                   >
                     <td className="w-40 px-4 py-2 text-xs text-brand-text-secondary">
                       {formatTimestamp(entry.timestamp)}
                     </td>
-                    <td className={`w-16 px-4 py-2 text-xs font-semibold ${methodColor(entry.method)}`}>
-                      {entry.method}
+                    <td className="w-20 px-4 py-2">
+                      <Badge variant="outline" className={cn("text-xs font-mono", methodColor(entry.method))}>
+                        {entry.method}
+                      </Badge>
                     </td>
                     <td className="max-w-0 px-4 py-2 text-xs text-brand-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">{entry.url}</td>
                     <td className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}>
@@ -203,6 +199,11 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     <tr>
                       <td colSpan={4} className="bg-brand-surface-raised px-4 py-3">
                         <div className="space-y-3">
+                          {/* Expand/collapse indicator */}
+                          <div className="flex items-center gap-1 text-xs text-brand-muted">
+                            <ChevronUp className="w-3 h-3" aria-hidden="true" />
+                          </div>
+
                           {/* Full URL */}
                           <div>
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
@@ -267,7 +268,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       )}
     </div>
   );

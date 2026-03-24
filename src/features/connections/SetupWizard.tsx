@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from 'react-i18next';
+import { ChevronRight } from 'lucide-react';
 import { StepProgress } from './StepProgress';
 import { WizardStep } from './WizardStep';
 import { ConnectionForm } from './ConnectionForm';
@@ -137,12 +138,10 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-brand-text font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
+                  className="flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                   {t('wizard.next')}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -165,12 +164,10 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="flex items-center gap-2 bg-brand-surface-hover hover:bg-brand-surface-hover text-brand-text font-medium rounded-lg py-2.5 px-5 text-sm transition-all duration-200 border border-brand-border"
+                  className="flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                 >
                   {t('wizard.next')}
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             )}

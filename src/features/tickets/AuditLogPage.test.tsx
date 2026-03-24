@@ -102,12 +102,12 @@ describe('AuditLogPage', () => {
     expect(screen.getByLabelText('Expand row for GET https://jira.example.com/rest/api/2/myself')).toBeTruthy();
   });
 
-  it('Test 5: empty state shows "No API calls recorded" heading and body', async () => {
+  it('Test 5: empty state shows heading and body text', async () => {
     mockInvoke.mockResolvedValue([]);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('No API calls recorded')).toBeTruthy();
-      expect(screen.getByText('API calls made during this session will appear here.')).toBeTruthy();
+      expect(screen.getByText('No API calls recorded yet')).toBeTruthy();
+      expect(screen.getByText('Fetch or copy a ticket to see activity.')).toBeTruthy();
     });
   });
 
@@ -153,7 +153,7 @@ describe('AuditLogPage', () => {
     expect(status401.className).toContain('text-red-400');
   });
 
-  it('Test 9: close button calls onClose callback', async () => {
+  it('Test 9: back/close button calls onClose callback', async () => {
     mockInvoke.mockResolvedValue([]);
     const onClose = vi.fn();
     render(<AuditLogPage onClose={onClose} />);
