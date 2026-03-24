@@ -1,21 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!-- Rounded square background -->
-  <rect width="1024" height="1024" rx="220" ry="220" fill="#c02232"/>
-  <!-- Bold "P" letterform with a subtle forward-motion tail -->
-  <!-- Main vertical stem -->
-  <rect x="248" y="220" width="110" height="584" rx="10" ry="10" fill="white"/>
-  <!-- Top bowl of P -->
-  <path d="
-    M 248,220 h 310
-    a 200,200 0 0 1 0,330
-    h -310 z
-  " fill="white"/>
-  <!-- Cutout for bowl interior -->
-  <path d="
-    M 358,280 h 200
-    a 130,130 0 0 1 0,210
-    h -200 z
-  " fill="#c02232"/>
-  <!-- Forward-motion arrow element: a small chevron at bottom right of stem -->
-  <path d="M 390,660 L 520,730 L 390,800 L 420,730 Z" fill="white" opacity="0.85"/>
+  <defs>
+    <linearGradient id="bg-gradient" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#a01c2a"/>
+      <stop offset="100%" stop-color="#c02232"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background with gradient -->
+  <rect width="1024" height="1024" rx="220" ry="220" fill="url(#bg-gradient)"/>
+  <!-- Vertical stem of P -->
+  <rect x="288" y="220" width="108" height="584" rx="8" ry="8" fill="#ffffff"/>
+  <!-- Bowl of P (outer) -->
+  <path d="M 288,220 h 300 a 195,195 0 0 1 0,320 h -300 z" fill="#ffffff"/>
+  <!-- Bowl interior cutout -->
+  <path d="M 396,282 h 185 a 133,133 0 0 1 0,196 h -185 z" fill="url(#bg-gradient)"/>
 </svg>
