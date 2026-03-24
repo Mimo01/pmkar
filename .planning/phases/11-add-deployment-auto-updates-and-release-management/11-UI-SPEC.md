@@ -60,13 +60,15 @@ Inherits the 4-size, 2-weight scale already in use across the codebase.
 |------|------|--------|-------------|
 | Body | 14px (text-sm) | 400 (font-normal) | 1.5 |
 | Label / metadata | 11px (text-[11px]) | 600 (font-semibold) | 1.4 |
-| Subheading | 13px (text-[13px]) | 500 (font-medium) | 1.5 |
+| Subheading | 13px (text-[13px]) | 400 (font-normal) | 1.5 |
 | Section heading | 20px (text-xl) | 600 (font-semibold) | 1.2 |
+
+Declared weights: 400 (font-normal) and 600 (font-semibold). Subheading is distinguished from body by size alone (13px vs 14px).
 
 Source: confirmed via SettingsPage.tsx, TicketDetailPanel.tsx, OverviewTab.tsx patterns
 
 **Phase 11 specifics:**
-- Version number: displayed at 13px / font-medium / color: text-brand-muted
+- Version number: displayed at 13px / font-normal / color: text-brand-muted
 - Update available badge: displayed at 11px / font-semibold / color: text-brand (accent red)
 - Changelog text in modal: 14px / font-normal / line-height 1.5 / color: text-brand-text-secondary
 - Section nav label "About": 11px / font-semibold / uppercase / tracking-wider / text-brand-muted (matches existing settings sidebar group labels)
