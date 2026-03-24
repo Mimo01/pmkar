@@ -213,11 +213,11 @@ Plans:
   5. All Rust crates are updated within semver ranges
   6. Zero `any` types remain in TypeScript source or test files
   7. GitHub Actions CI runs lint + type-check + test + clippy + fmt on every push/PR
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 10-01-PLAN.md — Biome setup, fix all lint violations, eliminate `any` types, remove dead code
 - [x] 10-02-PLAN.md — Rust clippy pedantic + rustfmt configuration, fix violations, add Rust unit tests
 - [x] 10-03-PLAN.md — Dependency upgrades (npm: Vite 8, TS 6, plugin-react 6; Rust: cargo update)
 - [x] 10-04-PLAN.md — Vitest coverage tooling, write store/utility tests, enforce 80% threshold
-- [ ] 10-05-PLAN.md — GitHub Actions CI workflow (frontend + Rust jobs)
+- [x] 10-05-PLAN.md — GitHub Actions CI workflow (frontend + Rust jobs)
