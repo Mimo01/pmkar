@@ -185,11 +185,12 @@ None yet.
 | 260323-plu | Redesign settings page | 2026-03-23 | 17cabc8 | Needs Review | [260323-plu-i-want-to-redesign-settings](./quick/260323-plu-i-want-to-redesign-settings/) |
 | 260323-w2c | 3-tab homepage: New / Not Mine / Already Linked | 2026-03-23 | 8269805 | | [260323-w2c-homepage-shows-only-new-tickets-with-not](./quick/260323-w2c-homepage-shows-only-new-tickets-with-not/) |
 | 260323-wcw | Debug logs triggered as icon next to settings | 2026-03-23 | 6d3dbe3 | | [260323-wcw-i-want-the-debug-logs-to-be-triggered-as](./quick/260323-wcw-i-want-the-debug-logs-to-be-triggered-as/) |
-| 260324-p39 | Fix Slovak translation diacritics and errors | 2026-03-24 | | | [260324-p39-check-slovak-translation-for-spelling-er](./quick/260324-p39-check-slovak-translation-for-spelling-er/) |
+| 260324-p39 | Fix Slovak translation diacritics and errors | 2026-03-24 | 7145f57 | | [260324-p39-check-slovak-translation-for-spelling-er](./quick/260324-p39-check-slovak-translation-for-spelling-er/) |
+| 260324-pjx | The app is missing icon, add it | 2026-03-24 | 295c1ba | | [260324-pjx-the-app-is-missing-icon-add-it](./quick/260324-pjx-the-app-is-missing-icon-add-it/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-24 - Completed quick task 260324-p39: Fix Slovak translation diacritics and errors
+Last activity: 2026-03-24 - Completed quick task 260324-pjx: The app is missing icon, add it
 Last session: 2026-03-24T09:15:52.030Z
 Stopped at: Completed 09-04-PLAN.md: SettingsPage ARIA semantics
 Resume file: None
