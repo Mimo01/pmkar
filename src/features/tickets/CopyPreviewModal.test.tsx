@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Tauri invoke
 vi.mock('@tauri-apps/api/core', () => ({
@@ -98,10 +98,9 @@ function buildStoreState(overrides: Record<string, unknown> = {}) {
 
 // Mock copyStore using a factory so per-test state overrides work
 vi.mock('./copyStore', () => ({
-  useCopyStore: Object.assign(
-    (selector: (s: any) => any) => selector(currentStoreState),
-    { getState: () => currentStoreState },
-  ),
+  useCopyStore: Object.assign((selector: (s: any) => any) => selector(currentStoreState), {
+    getState: () => currentStoreState,
+  }),
 }));
 
 import { CopyPreviewModal } from './CopyPreviewModal';
@@ -228,8 +227,20 @@ describe('CopyPreviewModal', () => {
         fields: {
           ...mockSourceTicket.fields,
           attachment: [
-            { id: '1', filename: 'screenshot.png', size: 1024, mimeType: 'image/png', content: 'http://example.com/att/1' },
-            { id: '2', filename: 'log.txt', size: 512, mimeType: 'text/plain', content: 'http://example.com/att/2' },
+            {
+              id: '1',
+              filename: 'screenshot.png',
+              size: 1024,
+              mimeType: 'image/png',
+              content: 'http://example.com/att/1',
+            },
+            {
+              id: '2',
+              filename: 'log.txt',
+              size: 512,
+              mimeType: 'text/plain',
+              content: 'http://example.com/att/2',
+            },
           ],
         },
       },
@@ -239,7 +250,7 @@ describe('CopyPreviewModal', () => {
   });
 
   it('hides attachment row when source has no attachments (COPY-02)', () => {
-    currentStoreState = buildStoreState();  // mockSourceTicket.attachment is []
+    currentStoreState = buildStoreState(); // mockSourceTicket.attachment is []
     render(<CopyPreviewModal />);
     expect(screen.queryByText(/file\(s\) will be copied/)).not.toBeInTheDocument();
   });
@@ -252,9 +263,24 @@ describe('CopyPreviewModal', () => {
           ...mockSourceTicket.fields,
           comment: {
             comments: [
-              { id: '1', author: { displayName: 'Jane' }, body: 'First comment', created: '2026-01-01T10:00:00.000+0000' },
-              { id: '2', author: { displayName: 'John' }, body: 'Second comment', created: '2026-01-02T10:00:00.000+0000' },
-              { id: '3', author: { displayName: 'Jane' }, body: 'Third comment', created: '2026-01-03T10:00:00.000+0000' },
+              {
+                id: '1',
+                author: { displayName: 'Jane' },
+                body: 'First comment',
+                created: '2026-01-01T10:00:00.000+0000',
+              },
+              {
+                id: '2',
+                author: { displayName: 'John' },
+                body: 'Second comment',
+                created: '2026-01-02T10:00:00.000+0000',
+              },
+              {
+                id: '3',
+                author: { displayName: 'Jane' },
+                body: 'Third comment',
+                created: '2026-01-03T10:00:00.000+0000',
+              },
             ],
           },
         },
@@ -293,7 +319,10 @@ describe('CopyPreviewModal', () => {
             {
               id: '1',
               type: { name: 'Blocks', inward: 'is blocked by', outward: 'Blocks' },
-              outwardIssue: { key: 'CUST-200', fields: { summary: 'API rate limiting', status: { name: 'Open' } } },
+              outwardIssue: {
+                key: 'CUST-200',
+                fields: { summary: 'API rate limiting', status: { name: 'Open' } },
+              },
             },
           ],
         },
@@ -305,7 +334,7 @@ describe('CopyPreviewModal', () => {
   });
 
   it('hides sub-tasks and linked issues rows when arrays are empty (COPY-05, COPY-06)', () => {
-    currentStoreState = buildStoreState();  // mockSourceTicket has empty subtasks and issuelinks
+    currentStoreState = buildStoreState(); // mockSourceTicket has empty subtasks and issuelinks
     render(<CopyPreviewModal />);
     expect(screen.queryByText('Sub-tasks')).not.toBeInTheDocument();
     expect(screen.queryByText('Linked Issues')).not.toBeInTheDocument();

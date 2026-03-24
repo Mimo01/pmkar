@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '../../lib/format';
 import type { JiraTicket, TriageEntry } from './types';
@@ -9,7 +9,8 @@ function StatusDot({ status }: { status: string }) {
   const lower = status.toLowerCase();
   let colorClass = 'bg-brand-muted'; // default: To Do / Open
   if (lower.includes('progress') || lower.includes('review')) colorClass = 'bg-blue-600';
-  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed')) colorClass = 'bg-green-600';
+  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
+    colorClass = 'bg-green-600';
   if (lower.includes('blocked')) colorClass = 'bg-red-600';
   return (
     <span className="flex items-center gap-1">
@@ -53,7 +54,12 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   return (
     <div
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }}}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       tabIndex={0}
       role="button"
       aria-label={ticket.fields.summary}
@@ -64,7 +70,9 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
         <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
         <div className="flex items-center gap-2">
           {actionSlot}
-          <span className="text-xs text-brand-muted">{formatRelativeTime(ticket.fields.updated)}</span>
+          <span className="text-xs text-brand-muted">
+            {formatRelativeTime(ticket.fields.updated)}
+          </span>
         </div>
       </div>
       {/* Line 2: summary */}

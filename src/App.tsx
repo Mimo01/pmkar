@@ -1,20 +1,20 @@
 import './i18n/index';
-import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { hydrateLanguage } from './i18n/languageStore';
+import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
-import { TicketListPage } from './features/tickets/TicketListPage';
+import { useConnectionStore } from './features/connections/connectionStore';
+import { SettingsPage } from './features/connections/SettingsPage';
+import { SetupWizard } from './features/connections/SetupWizard';
+import type { ConnectionMeta, ConnectionType } from './features/connections/types';
+import { useApplyTheme } from './features/theme/useApplyTheme';
+import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
 import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
-import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { TicketDetailPage } from './features/tickets/TicketDetailPage';
-import { SetupWizard } from './features/connections/SetupWizard';
-import { SettingsPage } from './features/connections/SettingsPage';
-import { useConnectionStore } from './features/connections/connectionStore';
+import { TicketListPage } from './features/tickets/TicketListPage';
 import { useTicketStore } from './features/tickets/ticketStore';
-import { useApplyTheme } from './features/theme/useApplyTheme';
-import type { ConnectionType, ConnectionMeta } from './features/connections/types';
+import { hydrateLanguage } from './i18n/languageStore';
 
 interface StoredConnectionMeta {
   connectionType: string;
@@ -31,10 +31,7 @@ function App() {
   useApplyTheme();
 
   useEffect(() => {
-    Promise.all([
-      invoke<StoredConnectionMeta[]>('get_all_connection_meta'),
-      hydrateLanguage(),
-    ])
+    Promise.all([invoke<StoredConnectionMeta[]>('get_all_connection_meta'), hydrateLanguage()])
       .then(([metas]) => {
         for (const m of metas) {
           const meta: ConnectionMeta = {
@@ -80,12 +77,16 @@ function App() {
 
   useEffect(() => {
     if (hydrated && hasSetup) {
-      invoke<number>('get_audit_count').then(setAuditCount).catch(() => {});
+      invoke<number>('get_audit_count')
+        .then(setAuditCount)
+        .catch(() => {});
     }
   }, [hydrated, hasSetup]);
 
   const refreshAuditCount = useCallback(() => {
-    invoke<number>('get_audit_count').then(setAuditCount).catch(() => {});
+    invoke<number>('get_audit_count')
+      .then(setAuditCount)
+      .catch(() => {});
   }, []);
 
   // Wait for hydration before deciding what to show
@@ -98,10 +99,7 @@ function App() {
     const initialStep = editStep === 'cloud' ? 2 : 1;
     return (
       <ErrorBoundary>
-        <SetupWizard
-          initialStep={initialStep}
-          onComplete={() => setEditStep(null)}
-        />
+        <SetupWizard initialStep={initialStep} onComplete={() => setEditStep(null)} />
       </ErrorBoundary>
     );
   }
@@ -126,7 +124,12 @@ function App() {
     return (
       <ErrorBoundary>
         <AppShell>
-          <AuditLogPage onClose={() => { setShowAuditLog(false); refreshAuditCount(); }} />
+          <AuditLogPage
+            onClose={() => {
+              setShowAuditLog(false);
+              refreshAuditCount();
+            }}
+          />
         </AppShell>
       </ErrorBoundary>
     );
@@ -136,10 +139,7 @@ function App() {
     return (
       <ErrorBoundary>
         <AppShell>
-          <TicketDetailPage
-            issueKey={detailTicketKey}
-            onBack={handleDetailBack}
-          />
+          <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
         </AppShell>
       </ErrorBoundary>
     );

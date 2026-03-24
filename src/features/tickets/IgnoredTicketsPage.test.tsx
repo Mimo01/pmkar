@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IgnoredTicketsPage } from './IgnoredTicketsPage';
 import { useTicketStore } from './ticketStore';
 
@@ -8,6 +8,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const ticket1: Parameters<typeof useTicketStore.getState>['length'] extends never

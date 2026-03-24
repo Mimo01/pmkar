@@ -1,10 +1,10 @@
 // DEPRECATED: Replaced by TicketCard in Phase 8 redesign. Retained for reference.
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../lib/format';
-import type { JiraTicket, TriageEntry } from './types';
-import { TriageIndicator } from './TriageIndicator';
 import { useConnectionStore } from '../connections/connectionStore';
+import { TriageIndicator } from './TriageIndicator';
+import type { JiraTicket, TriageEntry } from './types';
 
 type SortColumn = 'key' | 'summary' | 'status' | 'priority' | 'assignee' | 'updated';
 type SortDirection = 'asc' | 'desc';
@@ -79,20 +79,33 @@ function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 8 }).map((_, i) => (
-        <tr key={i} className="border-b border-brand-border-subtle" aria-hidden="true">
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-3" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-full" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-14" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-12" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-20" /></td>
-          <td className="px-4 py-3"><div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" /></td>
+        <tr key={i} className="border-b border-brand-border-subtle">
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-3" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-full" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-14" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-12" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-20" />
+          </td>
+          <td className="px-4 py-3">
+            <div className="animate-pulse bg-brand-surface-hover rounded h-3 w-16" />
+          </td>
         </tr>
       ))}
     </>
   );
 }
-
 
 export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }: TicketTableProps) {
   const { t } = useTranslation();
@@ -164,7 +177,6 @@ export function TicketTable({ tickets, triageMap, selectedKey, onSelectTicket }:
               return (
                 <tr
                   key={ticket.key}
-                  role="row"
                   aria-selected={isSelected}
                   className={`border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover cursor-pointer transition-colors duration-100 border-l-2 ${
                     isSelected ? 'bg-brand-surface border-l-brand' : 'border-l-transparent'

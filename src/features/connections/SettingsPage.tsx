@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { ArrowLeft, Monitor, Moon, Search, Sun, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Search, X, Sun, Moon, Monitor } from 'lucide-react';
-import { useConnectionStore } from './connectionStore';
-import { ConnectionCard } from './ConnectionCard';
-import { ConnectionForm } from './ConnectionForm';
-import { useTicketStore } from '../tickets/ticketStore';
-import { useThemeStore, type ThemeMode } from '../theme/themeStore';
-import { useLanguageStore, type Language } from '../../i18n/languageStore';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import type { ConnectionType, ConnectionMeta, ConnectionTestResult } from './types';
-import type { JqlPreset, FetchConfig } from '../tickets/types';
+import { type Language, useLanguageStore } from '../../i18n/languageStore';
+import { type ThemeMode, useThemeStore } from '../theme/themeStore';
+import { useTicketStore } from '../tickets/ticketStore';
+import type { FetchConfig, JqlPreset } from '../tickets/types';
+import { ConnectionCard } from './ConnectionCard';
+import { ConnectionForm } from './ConnectionForm';
+import { useConnectionStore } from './connectionStore';
+import type { ConnectionMeta, ConnectionTestResult, ConnectionType } from './types';
 
 interface SettingsPageProps {
   onClose: () => void;
@@ -38,9 +38,21 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const [activeSection, setActiveSection] = useState<ActiveSection>('source');
 
   const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
-    { value: 'assigned', label: t('settings.preset.assigned'), jql: 'assignee = currentUser() ORDER BY updated DESC' },
-    { value: 'mentioned', label: t('settings.preset.mentioned'), jql: 'text ~ currentUser() ORDER BY updated DESC' },
-    { value: 'all_watched', label: t('settings.preset.allWatched'), jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC' },
+    {
+      value: 'assigned',
+      label: t('settings.preset.assigned'),
+      jql: 'assignee = currentUser() ORDER BY updated DESC',
+    },
+    {
+      value: 'mentioned',
+      label: t('settings.preset.mentioned'),
+      jql: 'text ~ currentUser() ORDER BY updated DESC',
+    },
+    {
+      value: 'all_watched',
+      label: t('settings.preset.allWatched'),
+      jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC',
+    },
     { value: 'custom', label: t('settings.preset.custom'), jql: 'You write the JQL' },
   ];
 
@@ -75,7 +87,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
         query: userQuery.trim(),
       })
         .then((users) => {
-          const filtered = users.filter(u => !safeWatchedUsers.includes(u.name));
+          const filtered = users.filter((u) => !safeWatchedUsers.includes(u.name));
           setSuggestions(filtered);
           setShowSuggestions(filtered.length > 0);
           setNoResults(filtered.length === 0);
@@ -87,7 +99,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           setNoResults(true);
         });
     }, 250);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [userQuery, serverConn, safeWatchedUsers]);
 
   function handlePresetChange(preset: JqlPreset) {
@@ -119,7 +133,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   }
 
   function handleRemoveUser(username: string) {
-    const updated = safeWatchedUsers.filter(u => u !== username);
+    const updated = safeWatchedUsers.filter((u) => u !== username);
     useTicketStore.getState().setWatchedUsers(updated);
     persistFetchConfigWith(updated);
   }
@@ -127,10 +141,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIdx(i => Math.min(i + 1, suggestions.length - 1));
+      setSelectedIdx((i) => Math.min(i + 1, suggestions.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIdx(i => Math.max(i - 1, 0));
+      setSelectedIdx((i) => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (selectedIdx >= 0 && suggestions[selectedIdx]) {
@@ -193,7 +207,14 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     }
 
     invoke('set_connection_meta', {
-      meta: { connectionType: connectionType === 'server' ? 'server' : 'cloud', baseUrl: credentials.baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+      meta: {
+        connectionType: connectionType === 'server' ? 'server' : 'cloud',
+        baseUrl: credentials.baseUrl,
+        username,
+        serverVersion,
+        lastTestedAt: meta.lastTestedAt,
+        status: 'ok',
+      },
     }).catch(() => {});
 
     setEditingConnection(null);
@@ -209,10 +230,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
         type="button"
         onClick={() => setActiveSection(section)}
         className={cn(
-          "w-full text-left px-3 py-1.5 text-sm rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none",
+          'w-full text-left px-3 py-1.5 text-sm rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:outline-none',
           isActive
-            ? "font-semibold text-brand-text border-l-2 border-brand"
-            : "font-normal text-brand-muted hover:text-brand-text border-l-2 border-transparent"
+            ? 'font-semibold text-brand-text border-l-2 border-brand'
+            : 'font-normal text-brand-muted hover:text-brand-text border-l-2 border-transparent',
         )}
       >
         {label}
@@ -224,10 +245,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
       <div>
-        <h2 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3">{title}</h2>
-        <div className="rounded-xl border border-brand-border bg-brand-surface p-5">
-          {children}
-        </div>
+        <h2 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3">
+          {title}
+        </h2>
+        <div className="rounded-xl border border-brand-border bg-brand-surface p-5">{children}</div>
       </div>
     );
   }
@@ -239,9 +260,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           <p className="text-brand-text-secondary text-sm font-semibold mb-1">
             {t('settings.noConnections')}
           </p>
-          <p className="text-brand-muted text-xs">
-            {t('settings.noConnections.hint')}
-          </p>
+          <p className="text-brand-muted text-xs">{t('settings.noConnections.hint')}</p>
         </div>
       );
     }
@@ -253,7 +272,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             {editingConnection === 'server' ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[13px] font-medium text-brand-text">{t('settings.editSource')}</span>
+                  <span className="text-[13px] font-medium text-brand-text">
+                    {t('settings.editSource')}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
@@ -265,7 +286,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 <ConnectionForm
                   connectionType="server"
                   initialValues={{ baseUrl: serverConn?.baseUrl, username: serverConn?.username }}
-                  onTestSuccess={(result, creds) => handleEditTestSuccess('server', result, creds as unknown as { baseUrl: string; [key: string]: string })}
+                  onTestSuccess={(result, creds) =>
+                    handleEditTestSuccess(
+                      'server',
+                      result,
+                      creds as unknown as { baseUrl: string; [key: string]: string },
+                    )
+                  }
                   onTestInvalidated={() => {}}
                 />
               </div>
@@ -285,7 +312,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             {editingConnection === 'cloud' ? (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[13px] font-medium text-brand-text">{t('settings.editDestination')}</span>
+                  <span className="text-[13px] font-medium text-brand-text">
+                    {t('settings.editDestination')}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setEditingConnection(null)}
@@ -297,7 +326,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 <ConnectionForm
                   connectionType="cloud"
                   initialValues={{ baseUrl: cloudConn?.baseUrl, username: cloudConn?.username }}
-                  onTestSuccess={(result, creds) => handleEditTestSuccess('cloud', result, creds as unknown as { baseUrl: string; [key: string]: string })}
+                  onTestSuccess={(result, creds) =>
+                    handleEditTestSuccess(
+                      'cloud',
+                      result,
+                      creds as unknown as { baseUrl: string; [key: string]: string },
+                    )
+                  }
                   onTestInvalidated={() => {}}
                 />
               </div>
@@ -328,18 +363,29 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                       : 'hover:bg-brand-surface-hover'
                   }`}
                 >
-                  <span className={`flex-shrink-0 w-[15px] h-[15px] rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
-                    jqlPreset === opt.value ? 'border-brand' : 'border-brand-border'
-                  }`} aria-hidden="true">
+                  <span
+                    className={`flex-shrink-0 w-[15px] h-[15px] rounded-full border-2 flex items-center justify-center transition-colors duration-150 ${
+                      jqlPreset === opt.value ? 'border-brand' : 'border-brand-border'
+                    }`}
+                    aria-hidden="true"
+                  >
                     {jqlPreset === opt.value && (
                       <span className="w-[7px] h-[7px] rounded-full bg-brand" />
                     )}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className={`text-[13px] block ${
-                      jqlPreset === opt.value ? 'text-brand-text font-medium' : 'text-brand-text-secondary'
-                    }`}>{opt.label}</span>
-                    <span className="text-[11px] text-brand-muted block truncate font-mono mt-0.5">{opt.jql}</span>
+                    <span
+                      className={`text-[13px] block ${
+                        jqlPreset === opt.value
+                          ? 'text-brand-text font-medium'
+                          : 'text-brand-text-secondary'
+                      }`}
+                    >
+                      {opt.label}
+                    </span>
+                    <span className="text-[11px] text-brand-muted block truncate font-mono mt-0.5">
+                      {opt.jql}
+                    </span>
                   </div>
                 </button>
               ))}
@@ -352,7 +398,6 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   onChange={(e) => handleJqlCustomChange(e.target.value)}
                   className="w-full rounded-lg border border-brand-border bg-brand-bg text-brand-text px-3 py-2.5 resize-none h-20 font-mono text-xs focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15 transition-colors duration-200"
                   placeholder={t('settings.jql.placeholder')}
-                  autoFocus
                 />
                 <div className="flex justify-end mt-1.5">
                   <button
@@ -371,9 +416,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       case 'watched-users':
         return (
           <SectionCard title={t('settings.section.watchedUsers')}>
-            <p className="text-[12px] text-brand-muted mb-4">
-              {t('settings.watchedUsers.hint')}
-            </p>
+            <p className="text-[12px] text-brand-muted mb-4">{t('settings.watchedUsers.hint')}</p>
 
             {/* Search input */}
             <div className="relative mb-4">
@@ -385,7 +428,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   value={userQuery}
                   onChange={(e) => setUserQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                  onFocus={() => {
+                    if (suggestions.length > 0) setShowSuggestions(true);
+                  }}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
                   placeholder={t('settings.watchedUsers.searchPlaceholder')}
@@ -399,20 +444,28 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
               {/* No results feedback */}
               {noResults && userQuery.trim() && !showSuggestions && (
                 <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg px-3.5 py-2.5">
-                  <p className="text-[11px] text-brand-muted">{t('settings.watchedUsers.noResults', { query: userQuery.trim() })}</p>
+                  <p className="text-[11px] text-brand-muted">
+                    {t('settings.watchedUsers.noResults', { query: userQuery.trim() })}
+                  </p>
                 </div>
               )}
 
               {/* Dropdown suggestions */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden" role="listbox">
+                <div
+                  className="absolute left-0 right-0 top-full mt-1 z-10 border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden"
+                  role="listbox"
+                >
                   {suggestions.map((user, i) => (
                     <button
                       key={user.name}
                       type="button"
                       role="option"
                       aria-selected={i === selectedIdx}
-                      onMouseDown={(e) => { e.preventDefault(); handleAddUser(user.name); }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleAddUser(user.name);
+                      }}
                       className={`w-full text-left flex items-center gap-2.5 px-3.5 py-2 transition-colors duration-100 ${
                         i > 0 ? 'border-t border-brand-border-subtle' : ''
                       } ${i === selectedIdx ? 'bg-brand/10' : 'hover:bg-brand-surface-hover'}`}
@@ -421,7 +474,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                         {user.displayName.charAt(0).toUpperCase()}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[13px] text-brand-text block">{user.displayName}</span>
+                        <span className="text-[13px] text-brand-text block">
+                          {user.displayName}
+                        </span>
                         <span className="text-[11px] text-brand-muted block">{user.name}</span>
                       </div>
                     </button>
@@ -497,7 +552,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       {/* Content: sidebar + main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar nav — 160px fixed */}
-        <nav className="w-40 flex-shrink-0 border-r border-brand-border bg-brand-surface py-4 px-2 overflow-y-auto" aria-label="Settings navigation">
+        <nav
+          className="w-40 flex-shrink-0 border-r border-brand-border bg-brand-surface py-4 px-2 overflow-y-auto"
+          aria-label="Settings navigation"
+        >
           {/* Connections group */}
           <div className="mb-4">
             <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
@@ -538,9 +596,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
 
         {/* Section content — scrollable */}
         <div className="flex-1 overflow-y-auto px-8 py-6">
-          <div className="max-w-[560px]">
-            {renderContent()}
-          </div>
+          <div className="max-w-[560px]">{renderContent()}</div>
         </div>
       </div>
     </div>
@@ -583,7 +639,11 @@ function ThemeSection() {
               : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
           }`}
         >
-          <span className={`transition-colors duration-200 ${mode === opt.value ? 'text-brand' : ''}`}>{opt.icon}</span>
+          <span
+            className={`transition-colors duration-200 ${mode === opt.value ? 'text-brand' : ''}`}
+          >
+            {opt.icon}
+          </span>
           {opt.label}
         </button>
       ))}

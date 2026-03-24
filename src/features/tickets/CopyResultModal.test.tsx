@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CopyResultModal } from './CopyResultModal';
 
 const mockReset = vi.fn();
@@ -117,7 +117,7 @@ describe('CopyResultModal', () => {
 
     // The shadcn Dialog has a built-in sr-only "Close" text; use getAllByText and pick visible button
     const closeButtons = screen.getAllByText('Close');
-    const visibleCloseBtn = closeButtons.find(el => !el.classList.contains('sr-only'));
+    const visibleCloseBtn = closeButtons.find((el) => !el.classList.contains('sr-only'));
     fireEvent.click(visibleCloseBtn!);
 
     // reset is called after get_triage_state resolves (in finally)
@@ -177,10 +177,7 @@ describe('CopyResultModal', () => {
     mockStoreState({
       result: {
         ...allSuccessResult,
-        steps: [
-          ...allSuccessResult.steps,
-          { step: 'worklog:1', success: true, detail: null },
-        ],
+        steps: [...allSuccessResult.steps, { step: 'worklog:1', success: true, detail: null }],
       },
     });
     render(<CopyResultModal />);

@@ -1,20 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import type { JiraTicketDetail } from './types';
-import { OverviewTab } from './tabs/OverviewTab';
-import { CommentsTab } from './tabs/CommentsTab';
-import { WorkLogTab } from './tabs/WorkLogTab';
-import { AttachmentsTab } from './tabs/AttachmentsTab';
-import { HistoryTab } from './tabs/HistoryTab';
-import { useCopyStore } from './copyStore';
-import { useTicketStore } from './ticketStore';
+import { cn } from '@/lib/utils';
 import { useConnectionStore } from '../connections/connectionStore';
 import { CopyPreviewModal } from './CopyPreviewModal';
 import { CopyResultModal } from './CopyResultModal';
+import { useCopyStore } from './copyStore';
+import { AttachmentsTab } from './tabs/AttachmentsTab';
+import { CommentsTab } from './tabs/CommentsTab';
+import { HistoryTab } from './tabs/HistoryTab';
+import { OverviewTab } from './tabs/OverviewTab';
+import { WorkLogTab } from './tabs/WorkLogTab';
+import { useTicketStore } from './ticketStore';
+import type { JiraTicketDetail } from './types';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
 
@@ -30,9 +30,12 @@ function StatusBadge({ status }: { status: string }) {
     className = 'bg-blue-600/10 text-blue-600 dark:text-blue-400';
   if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
     className = 'bg-green-600/10 text-green-600 dark:text-green-400';
-  if (lower.includes('blocked'))
-    className = 'bg-red-600/10 text-red-600 dark:text-red-400';
-  return <Badge variant="outline" className={cn('text-xs', className)}>{status}</Badge>;
+  if (lower.includes('blocked')) className = 'bg-red-600/10 text-red-600 dark:text-red-400';
+  return (
+    <Badge variant="outline" className={cn('text-xs', className)}>
+      {status}
+    </Badge>
+  );
 }
 
 export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
@@ -188,7 +191,9 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
         </button>
         <span className="text-xs font-mono text-brand-muted">{issueKey}</span>
         {isCopied && triageEntry?.copiedKey && (
-          <Badge variant="outline" className="text-xs font-mono">{triageEntry.copiedKey}</Badge>
+          <Badge variant="outline" className="text-xs font-mono">
+            {triageEntry.copiedKey}
+          </Badge>
         )}
       </div>
 
@@ -225,11 +230,12 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             )}
             {isCopied && (
               <Badge className="bg-green-600/10 text-green-600 border-green-600/20">
-                {t('detail.copied')}{triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
+                {t('detail.copied')}
+                {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
               </Badge>
             )}
-            {!isCopied && (
-              isIgnored ? (
+            {!isCopied &&
+              (isIgnored ? (
                 <button
                   type="button"
                   onClick={handleUnignore}
@@ -245,13 +251,10 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 >
                   {t('detail.ignore')}
                 </button>
-              )
-            )}
+              ))}
           </div>
 
-          {copyError && (
-            <p className="text-xs text-red-400 mb-4">{copyError}</p>
-          )}
+          {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
 
           {/* Tab bar */}
           <div className="flex border-b border-brand-border mb-6" role="tablist">
@@ -276,22 +279,14 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           </div>
 
           {/* Tab content */}
-          <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
-            {activeTab === 'overview' && (
-              <OverviewTab detail={detail} baseUrl={baseUrl} />
-            )}
-            {activeTab === 'comments' && (
-              <CommentsTab comments={detail.fields.comment.comments} />
-            )}
-            {activeTab === 'worklog' && (
-              <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />
-            )}
+          <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+            {activeTab === 'overview' && <OverviewTab detail={detail} baseUrl={baseUrl} />}
+            {activeTab === 'comments' && <CommentsTab comments={detail.fields.comment.comments} />}
+            {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
             {activeTab === 'attachments' && (
               <AttachmentsTab attachments={detail.fields.attachment} />
             )}
-            {activeTab === 'history' && (
-              <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />
-            )}
+            {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
           </div>
         </div>
       </div>

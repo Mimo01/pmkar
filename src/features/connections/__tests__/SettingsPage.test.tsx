@@ -1,16 +1,17 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { SettingsPage } from '../SettingsPage';
-import { useConnectionStore } from '../connectionStore';
-import { useLanguageStore } from '../../../i18n/languageStore';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n/index';
+import { useLanguageStore } from '../../../i18n/languageStore';
+import { renderWithI18n } from '../../../test-utils/renderWithI18n';
+import { useConnectionStore } from '../connectionStore';
+import { SettingsPage } from '../SettingsPage';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const mockConnection = {

@@ -29,16 +29,10 @@ export function AttachmentsTab({ attachments }: AttachmentsTabProps) {
       {attachments.map((attachment) => (
         <div key={attachment.id} className="flex items-center gap-3 py-3">
           <div className="flex-1 min-w-0">
-            <div className="text-sm text-brand-text-secondary truncate">
-              {attachment.filename}
-            </div>
+            <div className="text-sm text-brand-text-secondary truncate">{attachment.filename}</div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-brand-muted">
-                {formatSize(attachment.size)}
-              </span>
-              <span className="text-xs text-brand-muted">
-                {attachment.mimeType}
-              </span>
+              <span className="text-xs text-brand-muted">{formatSize(attachment.size)}</span>
+              <span className="text-xs text-brand-muted">{attachment.mimeType}</span>
             </div>
           </div>
         </div>

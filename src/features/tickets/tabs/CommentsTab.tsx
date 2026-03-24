@@ -25,9 +25,7 @@ export function CommentsTab({ comments }: CommentsTabProps) {
             <span className="text-xs font-semibold text-brand-text-secondary">
               {comment.author.displayName}
             </span>
-            <span className="text-xs text-brand-muted">
-              {formatRelativeTime(comment.created)}
-            </span>
+            <span className="text-xs text-brand-muted">{formatRelativeTime(comment.created)}</span>
           </div>
           <div className="text-sm text-brand-text-secondary pb-3">
             {typeof comment.body === 'string' ? (

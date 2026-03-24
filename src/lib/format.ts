@@ -2,15 +2,17 @@ import { useLanguageStore } from '../i18n/languageStore';
 
 const LOCALE_MAP = { en: 'en-US', sk: 'sk-SK' } as const;
 
-export function formatDate(
-  iso: string,
-  options?: Intl.DateTimeFormatOptions,
-): string {
+export function formatDate(iso: string, options?: Intl.DateTimeFormatOptions): string {
   const lang = useLanguageStore.getState().language;
   const locale = LOCALE_MAP[lang];
-  return new Intl.DateTimeFormat(locale, options ?? {
-    day: 'numeric', month: 'long', year: 'numeric',
-  }).format(new Date(iso));
+  return new Intl.DateTimeFormat(
+    locale,
+    options ?? {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    },
+  ).format(new Date(iso));
 }
 
 export function formatRelativeTime(iso: string): string {
@@ -31,7 +33,10 @@ export function formatTimestamp(iso: string): string {
   const lang = useLanguageStore.getState().language;
   const locale = LOCALE_MAP[lang];
   return new Intl.DateTimeFormat(locale, {
-    month: 'short', day: 'numeric', year: 'numeric',
-    hour: 'numeric', minute: '2-digit',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
   }).format(new Date(iso));
 }

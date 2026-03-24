@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTicketStore } from './ticketStore';
-import { TicketCard } from './TicketCard';
 import { Badge } from '@/components/ui/badge';
+import { TicketCard } from './TicketCard';
+import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
 
 export function LinkedTicketsPage() {

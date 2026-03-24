@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import type {
-  JiraTicket,
-  TriageState,
-  TriageEntry,
-  FetchStatus,
   FetchConfig,
+  FetchStatus,
+  JiraTicket,
   JqlPreset,
+  TriageEntry,
+  TriageState,
 } from './types';
 
 interface TicketState {
@@ -25,7 +25,11 @@ interface TicketState {
   watchedUsers: string[];
 
   // Actions — ticket data
-  setTickets: (tickets: JiraTicket[], triageMap: Record<string, TriageEntry>, total: number) => void;
+  setTickets: (
+    tickets: JiraTicket[],
+    triageMap: Record<string, TriageEntry>,
+    total: number,
+  ) => void;
   selectTicket: (key: string | null) => void;
   markSeen: (key: string) => void;
   setFetchStatus: (status: FetchStatus, error?: string) => void;
@@ -81,8 +85,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
     }
   },
 
-  setFetchStatus: (status, error) =>
-    set({ fetchStatus: status, fetchError: error ?? null }),
+  setFetchStatus: (status, error) => set({ fetchStatus: status, fetchError: error ?? null }),
 
   setLastFetchedAt: (timestamp) => set({ lastFetchedAt: timestamp }),
 

@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 interface WizardStepProps {
   title: string;
@@ -10,14 +10,8 @@ export function WizardStep({ title, subtitle, children }: WizardStepProps) {
   return (
     <div className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight text-brand-text">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-sm text-brand-muted">
-            {subtitle}
-          </p>
-        )}
+        <h1 className="text-xl font-semibold tracking-tight text-brand-text">{title}</h1>
+        {subtitle && <p className="text-sm text-brand-muted">{subtitle}</p>}
       </div>
       {children}
     </div>

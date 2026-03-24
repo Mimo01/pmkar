@@ -14,10 +14,7 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
   if (state === 'new') {
     return (
       <span className="inline-flex items-center">
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full bg-brand"
-          aria-hidden="true"
-        />
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand" aria-hidden="true" />
         <span className="sr-only">New</span>
       </span>
     );

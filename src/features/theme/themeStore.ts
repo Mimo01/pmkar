@@ -19,7 +19,9 @@ function resolveTheme(mode: ThemeMode): 'light' | 'dark' {
 }
 
 function persistMode(mode: ThemeMode) {
-  try { localStorage.setItem('pmkar-theme', mode); } catch {}
+  try {
+    localStorage.setItem('pmkar-theme', mode);
+  } catch {}
 }
 
 function loadMode(): ThemeMode {

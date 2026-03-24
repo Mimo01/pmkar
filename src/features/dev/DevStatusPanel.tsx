@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { StatusBadge, type BadgeStatus } from '../../components/ui/StatusBadge';
+import { useEffect, useState } from 'react';
+import { type BadgeStatus, StatusBadge } from '../../components/ui/StatusBadge';
 
 interface MockServerStatus {
   server_v2: boolean;
@@ -37,12 +37,8 @@ export function DevStatusPanel() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-49px)]">
       <div className="w-full max-w-[440px] p-6 rounded-xl border border-slate-800 bg-slate-900/60">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-100 mb-1">
-          pmkar
-        </h1>
-        <p className="text-sm text-slate-500 mb-6">
-          Development scaffold
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-slate-100 mb-1">pmkar</h1>
+        <p className="text-sm text-slate-500 mb-6">Development scaffold</p>
         <div className="space-y-1">
           <StatusBadge
             label="Jira Server mock (:8080)"

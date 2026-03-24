@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { SetupWizard } from './SetupWizard';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConnectionStore } from './connectionStore';
+import { SetupWizard } from './SetupWizard';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const serverSuccessResult = {
@@ -69,9 +70,12 @@ describe('SetupWizard', () => {
     const nextBtn = await screen.findByRole('button', { name: 'Next' }, { timeout: 5000 });
     fireEvent.click(nextBtn);
 
-    await waitFor(() => {
-      expect(screen.getByText('Destination Connection')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('Destination Connection')).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('renders Summary step after both connections tested', async () => {

@@ -1,11 +1,6 @@
-import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
-import type {
-  CopyPhase,
-  CopyTicketResult,
-  CloudMeta,
-  JiraTicketDetail,
-} from './types';
+import { create } from 'zustand';
+import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
 
 interface CopyState {
   phase: CopyPhase;
@@ -31,7 +26,11 @@ interface CopyState {
   progressStep: string;
 
   // Actions
-  startPreview: (ticket: JiraTicketDetail, sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
+  startPreview: (
+    ticket: JiraTicketDetail,
+    sourceBaseUrl: string,
+    cloudBaseUrl: string,
+  ) => Promise<void>;
   setTargetSummary: (summary: string) => void;
   setTargetDescription: (description: string) => void;
   setTargetStatus: (status: string) => void;
@@ -66,7 +65,8 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       sourceTicket: ticket,
       sourceKey: ticket.key,
       targetSummary: ticket.fields.summary,
-      targetDescription: typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
+      targetDescription:
+        typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
       error: null,
     });
 
@@ -80,18 +80,20 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       // Prefill status: map source status name to target if possible
       const sourceStatusName = ticket.fields.status.name;
       const matchedStatus = meta.availableStatuses.find(
-        s => s.name.toLowerCase() === sourceStatusName.toLowerCase()
+        (s) => s.name.toLowerCase() === sourceStatusName.toLowerCase(),
       );
       const defaultStatus = matchedStatus?.name || meta.availableStatuses[0]?.name || '';
 
       // Prefill priority: map source priority name to target if possible
       const sourcePriorityName = ticket.fields.priority.name;
       const matchedPriority = meta.availablePriorities.find(
-        p => p.name.toLowerCase() === sourcePriorityName.toLowerCase()
+        (p) => p.name.toLowerCase() === sourcePriorityName.toLowerCase(),
       );
-      const defaultPriorityId = matchedPriority?.id
-        || meta.availablePriorities.find(p => p.name === 'Medium')?.id
-        || meta.availablePriorities[0]?.id || '';
+      const defaultPriorityId =
+        matchedPriority?.id ||
+        meta.availablePriorities.find((p) => p.name === 'Medium')?.id ||
+        meta.availablePriorities[0]?.id ||
+        '';
 
       set({
         phase: 'previewing',
@@ -101,7 +103,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetStatus: defaultStatus,
         targetPriorityId: defaultPriorityId,
       });
-    } catch (err) {
+    } catch (_err) {
       set({
         phase: 'idle',
         error: 'Could not load target fields. Check your Company Jira connection in Settings.',
@@ -117,7 +119,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   toggleLabel: (label) => {
     const current = get().selectedLabels;
     if (current.includes(label)) {
-      set({ selectedLabels: current.filter(l => l !== label) });
+      set({ selectedLabels: current.filter((l) => l !== label) });
     } else {
       set({ selectedLabels: [...current, label] });
     }
@@ -127,7 +129,10 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     const state = get();
     if (!state.sourceKey || !state.cloudMeta) return;
 
-    set({ phase: 'copying', progressStep: 'Copying ticket with attachments, comments, and work log...' });
+    set({
+      phase: 'copying',
+      progressStep: 'Copying ticket with attachments, comments, and work log...',
+    });
 
     try {
       const result = await invoke<CopyTicketResult>('copy_ticket', {
@@ -139,7 +144,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetStatus: state.targetStatus,
         targetPriorityId: state.targetPriorityId,
         targetLabels: state.selectedLabels,
-        currentAccountId: state.cloudMeta!.currentAccountId,
+        currentAccountId: state.cloudMeta?.currentAccountId,
       });
 
       set({ phase: 'result', result, progressStep: '' });

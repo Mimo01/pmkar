@@ -1,5 +1,5 @@
-import type { JiraTicketDetail } from '../types';
 import { DescriptionRenderer } from '../DescriptionRenderer';
+import type { JiraTicketDetail } from '../types';
 
 interface OverviewTabProps {
   detail: JiraTicketDetail;
@@ -22,14 +22,8 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
     <div>
       {/* Field grid */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-3 px-5 py-4">
-        <FieldItem
-          label="Assignee"
-          value={fields.assignee?.displayName ?? 'Unassigned'}
-        />
-        <FieldItem
-          label="Reporter"
-          value={fields.reporter?.displayName ?? 'Unknown'}
-        />
+        <FieldItem label="Assignee" value={fields.assignee?.displayName ?? 'Unassigned'} />
+        <FieldItem label="Reporter" value={fields.reporter?.displayName ?? 'Unknown'} />
         <FieldItem label="Status" value={fields.status.name} />
         <FieldItem label="Priority" value={fields.priority.name} />
         <FieldItem
@@ -39,9 +33,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
         <FieldItem
           label="Components"
           value={
-            fields.components.length > 0
-              ? fields.components.map((c) => c.name).join(', ')
-              : 'None'
+            fields.components.length > 0 ? fields.components.map((c) => c.name).join(', ') : 'None'
           }
         />
         <FieldItem
@@ -56,9 +48,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
 
       {/* Description */}
       <div className="px-5 py-4 border-t border-brand-border-subtle">
-        <div className="text-xs font-semibold text-brand-muted mb-3">
-          Description
-        </div>
+        <div className="text-xs font-semibold text-brand-muted mb-3">Description</div>
         <DescriptionRenderer
           description={fields.description}
           renderedHtml={detail.renderedFields?.description}
@@ -69,20 +59,12 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
       {/* Sub-tasks */}
       {fields.subtasks.length > 0 && (
         <div className="px-5 py-4 border-t border-brand-border-subtle">
-          <div className="text-xs font-semibold text-brand-muted mb-2">
-            Sub-tasks
-          </div>
+          <div className="text-xs font-semibold text-brand-muted mb-2">Sub-tasks</div>
           {fields.subtasks.map((subtask) => (
             <div key={subtask.key} className="flex items-center gap-2 py-1">
-              <span className="text-xs font-semibold text-brand-text-secondary">
-                {subtask.key}
-              </span>
-              <span className="text-sm text-brand-text-secondary">
-                {subtask.fields.summary}
-              </span>
-              <span className="text-xs text-brand-muted">
-                {subtask.fields.status.name}
-              </span>
+              <span className="text-xs font-semibold text-brand-text-secondary">{subtask.key}</span>
+              <span className="text-sm text-brand-text-secondary">{subtask.fields.summary}</span>
+              <span className="text-xs text-brand-muted">{subtask.fields.status.name}</span>
             </div>
           ))}
         </div>
@@ -91,17 +73,11 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
       {/* Linked Issues */}
       {fields.issuelinks.length > 0 && (
         <div className="px-5 py-4 border-t border-brand-border-subtle">
-          <div className="text-xs font-semibold text-brand-muted mb-2">
-            Linked Issues
-          </div>
+          <div className="text-xs font-semibold text-brand-muted mb-2">Linked Issues</div>
           {fields.issuelinks.map((link) => {
             const isOutward = !!link.outwardIssue;
-            const linkedIssue = isOutward
-              ? link.outwardIssue
-              : link.inwardIssue;
-            const direction = isOutward
-              ? link.type.outward
-              : link.type.inward;
+            const linkedIssue = isOutward ? link.outwardIssue : link.inwardIssue;
+            const direction = isOutward ? link.type.outward : link.type.inward;
 
             if (!linkedIssue) return null;
 
@@ -114,9 +90,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
                 <span className="text-sm text-brand-text-secondary">
                   {linkedIssue.fields.summary}
                 </span>
-                <span className="text-xs text-brand-muted">
-                  {linkedIssue.fields.status.name}
-                </span>
+                <span className="text-xs text-brand-muted">{linkedIssue.fields.status.name}</span>
               </div>
             );
           })}

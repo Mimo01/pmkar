@@ -5,7 +5,9 @@ import './i18n/index';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 if (typeof (window as any).crypto === 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { randomFillSync } = require('crypto') as { randomFillSync: (buf: ArrayBufferView) => ArrayBufferView };
+  const { randomFillSync } = require('node:crypto') as {
+    randomFillSync: (buf: ArrayBufferView) => ArrayBufferView;
+  };
   Object.defineProperty(window, 'crypto', {
     value: {
       getRandomValues: (buf: ArrayBufferView) => randomFillSync(buf),

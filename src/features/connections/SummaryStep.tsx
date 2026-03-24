@@ -33,15 +33,9 @@ function ConnectionSummaryCard({ label, connection }: ConnectionSummaryCardProps
     <div className="flex items-center gap-3 rounded-lg border border-brand-border bg-brand-surface p-4">
       <CheckIcon />
       <div className="min-w-0">
-        <p className="text-sm font-medium text-brand-text">
-          {label}
-        </p>
-        <p className="text-xs text-brand-muted truncate">
-          {connection.baseUrl}
-        </p>
-        <p className="text-xs text-brand-text-secondary">
-          {connection.username}
-        </p>
+        <p className="text-sm font-medium text-brand-text">{label}</p>
+        <p className="text-xs text-brand-muted truncate">{connection.baseUrl}</p>
+        <p className="text-xs text-brand-text-secondary">{connection.username}</p>
       </div>
     </div>
   );
@@ -57,19 +51,11 @@ export function SummaryStep({ serverConnection, cloudConnection, onDone }: Summa
   const { t } = useTranslation();
   return (
     <div className="space-y-4">
-      <p className="text-sm text-brand-text-secondary">
-        {t('wizard.bothConfigured')}
-      </p>
+      <p className="text-sm text-brand-text-secondary">{t('wizard.bothConfigured')}</p>
 
       <div className="space-y-3">
-        <ConnectionSummaryCard
-          label={t('settings.sourceLabel')}
-          connection={serverConnection}
-        />
-        <ConnectionSummaryCard
-          label={t('settings.destLabel')}
-          connection={cloudConnection}
-        />
+        <ConnectionSummaryCard label={t('settings.sourceLabel')} connection={serverConnection} />
+        <ConnectionSummaryCard label={t('settings.destLabel')} connection={cloudConnection} />
       </div>
 
       <div className="flex justify-end pt-2">

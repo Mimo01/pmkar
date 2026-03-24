@@ -1,12 +1,18 @@
-import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
-import { useConnectionStore } from '../connections/connectionStore';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 
 function SourceFieldRow({ label, value }: { label: string; value: string }) {
   return (
@@ -33,7 +39,12 @@ function getProgressPercent(progressStep: string): number {
   if (progressStep.includes('description')) return 40;
   if (progressStep.includes('attachment') || progressStep.includes('image')) return 60;
   if (progressStep.includes('comment') || progressStep.includes('worklog')) return 80;
-  if (progressStep.includes('done') || progressStep.includes('complete') || progressStep.includes('link')) return 100;
+  if (
+    progressStep.includes('done') ||
+    progressStep.includes('complete') ||
+    progressStep.includes('link')
+  )
+    return 100;
   return 20;
 }
 
@@ -70,8 +81,7 @@ export function CopyPreviewModal() {
 
   const isOpen = phase === 'loading_preview' || phase === 'previewing' || phase === 'copying';
 
-  const renderedDescription =
-    sourceTicket?.renderedFields?.description ?? null;
+  const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
 
   const progressPercent = getProgressPercent(progressStep);
 
@@ -91,7 +101,9 @@ export function CopyPreviewModal() {
         {phase === 'copying' && (
           <div className="space-y-2 px-6 pt-4">
             <Progress value={progressPercent} className="h-1 transition-all duration-300" />
-            <p className="text-xs text-brand-muted" aria-live="polite" aria-atomic="true">{progressStep}</p>
+            <p className="text-xs text-brand-muted" aria-live="polite" aria-atomic="true">
+              {progressStep}
+            </p>
           </div>
         )}
 
@@ -106,18 +118,9 @@ export function CopyPreviewModal() {
             <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
               <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
 
-              <SourceFieldRow
-                label="Summary"
-                value={sourceTicket.fields.summary}
-              />
-              <SourceFieldRow
-                label="Status"
-                value={sourceTicket.fields.status.name}
-              />
-              <SourceFieldRow
-                label="Priority"
-                value={sourceTicket.fields.priority.name}
-              />
+              <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
+              <SourceFieldRow label="Status" value={sourceTicket.fields.status.name} />
+              <SourceFieldRow label="Priority" value={sourceTicket.fields.priority.name} />
               <SourceFieldRow
                 label="Assignee"
                 value={sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
@@ -145,28 +148,29 @@ export function CopyPreviewModal() {
               {sourceTicket.fields.subtasks.length > 0 && (
                 <SourceFieldRow
                   label="Sub-tasks"
-                  value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map(s => `${s.key}: ${s.fields.summary}`).join(', ')}`}
+                  value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map((s) => `${s.key}: ${s.fields.summary}`).join(', ')}`}
                 />
               )}
               {sourceTicket.fields.issuelinks.length > 0 && (
                 <SourceFieldRow
                   label="Linked Issues"
-                  value={sourceTicket.fields.issuelinks.map(link => {
-                    if (link.outwardIssue) {
-                      return `${link.type.outward}: ${link.outwardIssue.key} \u2014 ${link.outwardIssue.fields.summary}`;
-                    }
-                    if (link.inwardIssue) {
-                      return `${link.type.inward}: ${link.inwardIssue.key} \u2014 ${link.inwardIssue.fields.summary}`;
-                    }
-                    return '';
-                  }).filter(Boolean).join(', ')}
+                  value={sourceTicket.fields.issuelinks
+                    .map((link) => {
+                      if (link.outwardIssue) {
+                        return `${link.type.outward}: ${link.outwardIssue.key} \u2014 ${link.outwardIssue.fields.summary}`;
+                      }
+                      if (link.inwardIssue) {
+                        return `${link.type.inward}: ${link.inwardIssue.key} \u2014 ${link.inwardIssue.fields.summary}`;
+                      }
+                      return '';
+                    })
+                    .filter(Boolean)
+                    .join(', ')}
                 />
               )}
 
               <div className="mt-4">
-                <span className="text-xs text-brand-muted">
-                  Description
-                </span>
+                <span className="text-xs text-brand-muted">Description</span>
                 <div className="mt-2">
                   <DescriptionRenderer
                     description={sourceTicket.fields.description}
@@ -186,7 +190,10 @@ export function CopyPreviewModal() {
 
               {/* Summary (editable) */}
               <div className="mb-3">
-                <label htmlFor="copy-target-summary" className="text-xs text-brand-muted block mb-1">
+                <label
+                  htmlFor="copy-target-summary"
+                  className="text-xs text-brand-muted block mb-1"
+                >
                   Summary
                 </label>
                 <input
@@ -222,7 +229,10 @@ export function CopyPreviewModal() {
 
               {/* Priority dropdown */}
               <div className="mb-3">
-                <label htmlFor="copy-target-priority" className="text-xs text-brand-muted block mb-1">
+                <label
+                  htmlFor="copy-target-priority"
+                  className="text-xs text-brand-muted block mb-1"
+                >
                   Priority
                 </label>
                 <select
@@ -241,19 +251,12 @@ export function CopyPreviewModal() {
 
               {/* Labels checkboxes */}
               <div className="mb-3">
-                <span className="text-xs text-brand-muted block mb-1">
-                  Labels
-                </span>
+                <span className="text-xs text-brand-muted block mb-1">Labels</span>
                 {targetLabels.length === 0 ? (
-                  <p className="text-sm text-brand-muted">
-                    No labels on source ticket
-                  </p>
+                  <p className="text-sm text-brand-muted">No labels on source ticket</p>
                 ) : (
                   targetLabels.map((label) => (
-                    <label
-                      key={label}
-                      className="flex items-center gap-2 py-1 text-sm"
-                    >
+                    <label key={label} className="flex items-center gap-2 py-1 text-sm">
                       <input
                         type="checkbox"
                         checked={selectedLabels.includes(label)}
@@ -267,7 +270,10 @@ export function CopyPreviewModal() {
 
               {/* Description (editable) */}
               <div className="mt-4">
-                <label htmlFor="copy-target-description" className="text-xs text-brand-muted block mb-1">
+                <label
+                  htmlFor="copy-target-description"
+                  className="text-xs text-brand-muted block mb-1"
+                >
                   Description
                 </label>
                 <textarea
@@ -285,17 +291,10 @@ export function CopyPreviewModal() {
         <Separator />
 
         <DialogFooter className="px-6 py-4">
-          <Button
-            variant="ghost"
-            onClick={handleDiscard}
-            disabled={phase === 'copying'}
-          >
+          <Button variant="ghost" onClick={handleDiscard} disabled={phase === 'copying'}>
             {t('copy.preview.discard')}
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={phase === 'copying'}
-          >
+          <Button onClick={handleConfirm} disabled={phase === 'copying'}>
             {phase === 'copying' ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />

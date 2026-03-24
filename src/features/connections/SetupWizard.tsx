@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
-import { StepProgress } from './StepProgress';
-import { WizardStep } from './WizardStep';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ConnectionForm } from './ConnectionForm';
-import { SummaryStep } from './SummaryStep';
 import { useConnectionStore } from './connectionStore';
-import type { ConnectionTestResult, ConnectionMeta } from './types';
+import { StepProgress } from './StepProgress';
+import { SummaryStep } from './SummaryStep';
+import type { ConnectionMeta, ConnectionTestResult } from './types';
+import { WizardStep } from './WizardStep';
 
 interface ServerCredentials {
   baseUrl: string;
@@ -60,7 +60,14 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
     };
     setServerConnection(meta);
     invoke('set_connection_meta', {
-      meta: { connectionType: 'server', baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+      meta: {
+        connectionType: 'server',
+        baseUrl,
+        username,
+        serverVersion,
+        lastTestedAt: meta.lastTestedAt,
+        status: 'ok',
+      },
     }).catch((err) => console.error('Failed to persist server connection meta:', err));
     setTestPassed(true);
   }
@@ -92,7 +99,14 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
     };
     setCloudConnection(meta);
     invoke('set_connection_meta', {
-      meta: { connectionType: 'cloud', baseUrl, username, serverVersion, lastTestedAt: meta.lastTestedAt, status: 'ok' },
+      meta: {
+        connectionType: 'cloud',
+        baseUrl,
+        username,
+        serverVersion,
+        lastTestedAt: meta.lastTestedAt,
+        status: 'ok',
+      },
     }).catch((err) => console.error('Failed to persist cloud connection meta:', err));
     setTestPassed(true);
   }
@@ -150,7 +164,10 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
 
         {currentStep === 2 && (
           <>
-            <WizardStep title={t('wizard.destination.title')} subtitle={t('wizard.destination.subtitle')}>
+            <WizardStep
+              title={t('wizard.destination.title')}
+              subtitle={t('wizard.destination.subtitle')}
+            >
               <ConnectionForm
                 connectionType="cloud"
                 onTestSuccess={(result, creds) =>
