@@ -1,14 +1,14 @@
-import { useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
-import type { FetchTicketsResult, JqlPreset } from './types';
-import { useTicketStore } from './ticketStore';
-import { useConnectionStore } from '../connections/connectionStore';
-import { TicketCard, SkeletonCards } from './TicketCard';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { formatRelativeTime } from '../../lib/format';
 import { cn } from '@/lib/utils';
+import { formatRelativeTime } from '../../lib/format';
+import { useConnectionStore } from '../connections/connectionStore';
+import { SkeletonCards, TicketCard } from './TicketCard';
+import { useTicketStore } from './ticketStore';
+import type { FetchTicketsResult, JqlPreset } from './types';
 
 // --- Helpers ---
 
@@ -55,6 +55,29 @@ export function TicketListPage() {
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
 
+  const handleFetch = useCallback(async () => {
+    const store = useTicketStore.getState();
+    store.setFetchStatus('loading');
+    try {
+      const serverConn = useConnectionStore.getState().serverConnection;
+      if (!serverConn) throw new Error('No server connection');
+      const jql = buildJql(
+        store.jqlPreset,
+        store.jqlCustom,
+        store.watchedUsers,
+        serverConn.username,
+      );
+      const result = await invoke<FetchTicketsResult>('fetch_tickets', {
+        baseUrl: serverConn.baseUrl,
+        jql,
+      });
+      store.setTickets(result.issues, result.triageMap, result.total);
+      store.setLastFetchedAt(new Date().toISOString());
+    } catch (err) {
+      store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
+    }
+  }, []);
+
   // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
   useEffect(() => {
     Promise.all([
@@ -69,29 +92,11 @@ export function TicketListPage() {
         .catch(() => null),
     ]).then(([, config]) => {
       // Auto-refetch if user has previously fetched (tickets are in-memory only)
-      if (config && config.lastFetchedAt) {
+      if (config?.lastFetchedAt) {
         handleFetch();
       }
     });
-  }, []);
-
-  async function handleFetch() {
-    const store = useTicketStore.getState();
-    store.setFetchStatus('loading');
-    try {
-      const serverConn = useConnectionStore.getState().serverConnection;
-      if (!serverConn) throw new Error('No server connection');
-      const jql = buildJql(store.jqlPreset, store.jqlCustom, store.watchedUsers, serverConn.username);
-      const result = await invoke<FetchTicketsResult>('fetch_tickets', {
-        baseUrl: serverConn.baseUrl,
-        jql,
-      });
-      store.setTickets(result.issues, result.triageMap, result.total);
-      store.setLastFetchedAt(new Date().toISOString());
-    } catch (err) {
-      store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
-    }
-  }
+  }, [handleFetch]);
 
   function handleSelectTicket(key: string) {
     const store = useTicketStore.getState();
@@ -129,20 +134,26 @@ export function TicketListPage() {
           disabled={isLoading}
           onClick={handleFetch}
           className={cn(
-            "flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150",
-            isLoading && "opacity-40 cursor-not-allowed"
+            'flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150',
+            isLoading && 'opacity-40 cursor-not-allowed',
           )}
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
         <span className="text-xs text-brand-muted" aria-live="polite">
-          {lastFetchedAt ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) }) : t('tickets.notYetFetched')}
+          {lastFetchedAt
+            ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) })
+            : t('tickets.notYetFetched')}
         </span>
         {totalCount > 0 && (
           <span className="text-xs text-brand-text-secondary">
             {t('tickets.candidates', { count: candidateTickets.length })}
-            {newCount > 0 && <Badge variant="secondary" className="ml-1 text-brand">{t('tickets.new', { count: newCount })}</Badge>}
+            {newCount > 0 && (
+              <Badge variant="secondary" className="ml-1 text-brand">
+                {t('tickets.new', { count: newCount })}
+              </Badge>
+            )}
           </span>
         )}
       </div>

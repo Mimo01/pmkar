@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { TestResult } from './TestResult';
 import type { ConnectionTestResult } from './types';
 
@@ -21,9 +21,7 @@ const successCloud: ConnectionTestResult = {
 
 describe('TestResult', () => {
   it('renders nothing when result is null', () => {
-    const { container } = render(
-      <TestResult result={null} connectionType="server" />,
-    );
+    const { container } = render(<TestResult result={null} connectionType="server" />);
     expect(container).toBeEmptyDOMElement();
   });
 

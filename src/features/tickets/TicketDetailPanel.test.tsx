@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketDetailPanel } from './TicketDetailPanel';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -7,6 +7,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const mockDetail = {
@@ -71,11 +72,7 @@ describe('TicketDetailPanel', () => {
 
   it('renders ticket summary in panel header', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {
@@ -85,11 +82,7 @@ describe('TicketDetailPanel', () => {
 
   it('renders Overview tab by default', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {
@@ -99,11 +92,7 @@ describe('TicketDetailPanel', () => {
 
   it('renders Comments tab when clicked', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {
@@ -119,11 +108,7 @@ describe('TicketDetailPanel', () => {
 
   it('renders Attachments tab with filename', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {
@@ -139,11 +124,7 @@ describe('TicketDetailPanel', () => {
 
   it('renders sub-tasks in Overview tab', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {
@@ -154,11 +135,7 @@ describe('TicketDetailPanel', () => {
 
   it('calls fetch_ticket_detail on mount', async () => {
     render(
-      <TicketDetailPanel
-        issueKey="PROJ-1"
-        baseUrl="http://127.0.0.1:8080"
-        onClose={onClose}
-      />,
+      <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
     );
 
     await waitFor(() => {

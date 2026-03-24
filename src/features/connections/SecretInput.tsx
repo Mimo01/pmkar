@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface SecretInputProps {
@@ -36,10 +36,7 @@ export function SecretInput({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label
-          htmlFor={id}
-          className="text-sm font-medium text-brand-text-secondary"
-        >
+        <label htmlFor={id} className="text-sm font-medium text-brand-text-secondary">
           {label}
         </label>
         <button

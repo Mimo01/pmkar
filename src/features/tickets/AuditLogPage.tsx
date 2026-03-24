@@ -1,9 +1,9 @@
-import { Fragment, useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ChevronUp } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Fragment, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { formatTimestamp } from '../../lib/format';
 import type { AuditEntry } from './types';
@@ -114,6 +114,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             </thead>
             <tbody>
               {Array.from({ length: 5 }).map((_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows are static, index is stable
                 <tr key={i} className="border-b border-brand-border-subtle/50 animate-pulse">
                   <td className="w-40 px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-28" />
@@ -137,9 +138,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       {/* Error state */}
       {error && (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-red-400">
-            {t('audit.loadError')}
-          </p>
+          <p className="text-sm text-red-400">{t('audit.loadError')}</p>
         </div>
       )}
 
@@ -175,6 +174,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               {entries.map((entry) => (
                 <Fragment key={entry.id}>
                   {/* Summary row */}
+                  {/* biome-ignore lint/a11y/useSemanticElements: tr with role="button" is correct for expandable table rows — cannot use <button> inside <tbody> */}
                   <tr
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                     onKeyDown={(e) => {
@@ -192,12 +192,19 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                       {formatTimestamp(entry.timestamp)}
                     </td>
                     <td className="w-20 px-4 py-2">
-                      <Badge variant="outline" className={cn("text-xs font-mono", methodColor(entry.method))}>
+                      <Badge
+                        variant="outline"
+                        className={cn('text-xs font-mono', methodColor(entry.method))}
+                      >
                         {entry.method}
                       </Badge>
                     </td>
-                    <td className="max-w-0 px-4 py-2 text-xs text-brand-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">{entry.url}</td>
-                    <td className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}>
+                    <td className="max-w-0 px-4 py-2 text-xs text-brand-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
+                      {entry.url}
+                    </td>
+                    <td
+                      className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}
+                    >
                       {entry.statusCode ?? '\u2014'}
                     </td>
                   </tr>
@@ -217,7 +224,9 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
                               {t('audit.url')}
                             </span>
-                            <p className="break-all font-mono text-xs text-brand-text mt-1">{entry.url}</p>
+                            <p className="break-all font-mono text-xs text-brand-text mt-1">
+                              {entry.url}
+                            </p>
                           </div>
 
                           {/* Request headers as key/value rows */}
@@ -230,12 +239,20 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                               if (parsed) {
                                 const keys = Object.keys(parsed);
                                 return keys.length === 0 ? (
-                                  <p className="text-xs text-brand-muted mt-1">{t('audit.headersEmpty')}</p>
+                                  <p className="text-xs text-brand-muted mt-1">
+                                    {t('audit.headersEmpty')}
+                                  </p>
                                 ) : (
                                   <div className="mt-1 rounded border border-brand-border divide-y divide-brand-border-subtle/50">
                                     {keys.map((key) => (
-                                      <div key={key} className="flex items-baseline gap-2 px-2 py-1">
-                                        <span className="shrink-0 font-mono text-[11px] font-semibold text-brand-text-secondary w-40 truncate" title={key}>
+                                      <div
+                                        key={key}
+                                        className="flex items-baseline gap-2 px-2 py-1"
+                                      >
+                                        <span
+                                          className="shrink-0 font-mono text-[11px] font-semibold text-brand-text-secondary w-40 truncate"
+                                          title={key}
+                                        >
                                           {key}
                                         </span>
                                         <span className="font-mono text-[11px] text-brand-text break-all min-w-0">
@@ -262,10 +279,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                             </span>
                             {entry.responseBody ? (
                               <div className="mt-1 rounded border border-brand-border bg-black/20 px-3 py-2 overflow-x-auto">
-                                <pre className="font-mono text-xs text-brand-text whitespace-pre">{formatResponseBody(entry.responseBody)}</pre>
+                                <pre className="font-mono text-xs text-brand-text whitespace-pre">
+                                  {formatResponseBody(entry.responseBody)}
+                                </pre>
                               </div>
                             ) : (
-                              <p className="text-xs text-brand-muted mt-1">{t('audit.responseBodyEmpty')}</p>
+                              <p className="text-xs text-brand-muted mt-1">
+                                {t('audit.responseBodyEmpty')}
+                              </p>
                             )}
                           </div>
                         </div>

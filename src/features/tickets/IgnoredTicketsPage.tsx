@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useTicketStore } from './ticketStore';
 import { TicketCard } from './TicketCard';
+import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
 
 function handleRestore(issueKey: string) {
@@ -58,7 +58,10 @@ export function IgnoredTicketsPage() {
               actionSlot={
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); handleRestore(ticket.key); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRestore(ticket.key);
+                  }}
                   className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
                 >
                   {t('ignored.restore')}

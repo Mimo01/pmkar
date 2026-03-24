@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IgnoredTicketsPage } from './IgnoredTicketsPage';
 import { useTicketStore } from './ticketStore';
+import type { JiraTicket, TriageEntry } from './types';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
-const ticket1: Parameters<typeof useTicketStore.getState>['length'] extends never
-  ? never
-  : ReturnType<typeof useTicketStore.getState>['tickets'][number] = {
+const ticket1: JiraTicket = {
   id: '1',
   key: 'TEST-1',
   fields: {
@@ -24,7 +24,7 @@ const ticket1: Parameters<typeof useTicketStore.getState>['length'] extends neve
   },
 };
 
-const ticket2 = {
+const ticket2: JiraTicket = {
   id: '2',
   key: 'TEST-2',
   fields: {
@@ -36,7 +36,7 @@ const ticket2 = {
   },
 };
 
-const ticket3 = {
+const ticket3: JiraTicket = {
   id: '3',
   key: 'TEST-3',
   fields: {
@@ -49,19 +49,14 @@ const ticket3 = {
 };
 
 function setupStore(
-  tickets = [ticket1, ticket2, ticket3],
-  triageMap: Record<string, { state: string; copiedKey: string | null }> = {
+  tickets: JiraTicket[] = [ticket1, ticket2, ticket3],
+  triageMap: Record<string, TriageEntry> = {
     'TEST-1': { state: 'ignored', copiedKey: null },
     'TEST-2': { state: 'ignored', copiedKey: null },
     'TEST-3': { state: 'seen', copiedKey: null },
   },
 ) {
-  useTicketStore.setState({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tickets: tickets as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    triageMap: triageMap as any,
-  });
+  useTicketStore.setState({ tickets, triageMap });
 }
 
 describe('IgnoredTicketsPage', () => {

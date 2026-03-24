@@ -9,8 +9,8 @@ export type FetchStatus = 'idle' | 'loading' | 'error';
 
 // Jira user (camelCase — Tauri serializes Rust snake_case to camelCase)
 export interface JiraUser {
-  name?: string;        // Server v2
-  accountId?: string;   // Cloud v3
+  name?: string; // Server v2
+  accountId?: string; // Cloud v3
   displayName: string;
 }
 
@@ -31,8 +31,8 @@ export interface JiraPriority {
 export interface JiraComment {
   id: string;
   author: JiraUser;
-  body: string | Record<string, unknown>;  // string for v2, ADF object for v3
-  created: string;  // ISO 8601
+  body: string | Record<string, unknown>; // string for v2, ADF object for v3
+  created: string; // ISO 8601
 }
 
 // Jira attachment
@@ -41,7 +41,7 @@ export interface JiraAttachment {
   filename: string;
   size: number;
   mimeType: string;
-  content: string;  // download URL
+  content: string; // download URL
 }
 
 // Jira issue link
@@ -73,8 +73,8 @@ export interface JiraWorklog {
   id: string;
   author: JiraUser;
   comment: string;
-  started: string;     // ISO 8601
-  timeSpent: string;   // e.g. "2h"
+  started: string; // ISO 8601
+  timeSpent: string; // e.g. "2h"
   timeSpentSeconds: number;
 }
 
@@ -89,7 +89,7 @@ export interface ChangelogItem {
 export interface ChangelogEntry {
   id: string;
   author: JiraUser;
-  created: string;  // ISO 8601
+  created: string; // ISO 8601
   items: ChangelogItem[];
 }
 
@@ -102,7 +102,7 @@ export interface JiraTicket {
     status: JiraStatus;
     priority: JiraPriority;
     assignee: JiraUser | null;
-    updated: string;  // ISO 8601
+    updated: string; // ISO 8601
   };
 }
 
@@ -116,7 +116,7 @@ export interface JiraTicketDetail {
     priority: JiraPriority;
     assignee: JiraUser | null;
     reporter: JiraUser | null;
-    description: string | Record<string, unknown> | null;  // string for v2, ADF for v3
+    description: string | Record<string, unknown> | null; // string for v2, ADF for v3
     labels: string[];
     components: JiraComponent[];
     fixVersions: JiraFixVersion[];
@@ -127,7 +127,7 @@ export interface JiraTicketDetail {
     updated: string;
   };
   renderedFields?: {
-    description?: string;  // HTML from expand=renderedFields (v2 only)
+    description?: string; // HTML from expand=renderedFields (v2 only)
   };
   changelog?: {
     histories: ChangelogEntry[];
@@ -154,7 +154,7 @@ export interface FetchTicketsResult {
 export type CopyPhase = 'idle' | 'loading_preview' | 'previewing' | 'copying' | 'result';
 
 export interface CopyStepResult {
-  step: string;        // "create_issue" | "convert_description" | "upload_images" | "add_remote_link"
+  step: string; // "create_issue" | "convert_description" | "upload_images" | "add_remote_link"
   success: boolean;
   detail: string | null; // error message or created key
 }
@@ -181,10 +181,10 @@ export interface TriageEntry {
 
 export interface AuditEntry {
   id: number | null;
-  timestamp: string;      // ISO 8601 UTC
-  method: string;         // GET, POST, etc.
+  timestamp: string; // ISO 8601 UTC
+  method: string; // GET, POST, etc.
   url: string;
-  headers: string;        // JSON string, Authorization = "[REDACTED]"
-  statusCode: number | null;  // camelCase from Rust snake_case
+  headers: string; // JSON string, Authorization = "[REDACTED]"
+  statusCode: number | null; // camelCase from Rust snake_case
   responseBody: string | null; // Truncated at 10KB, often null
 }

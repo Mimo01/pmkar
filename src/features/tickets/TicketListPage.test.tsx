@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketListPage } from './TicketListPage';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -7,11 +7,12 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 vi.mock('../connections/connectionStore', () => ({
   useConnectionStore: Object.assign(
-    (selector: any) =>
+    (selector: (s: unknown) => unknown) =>
       selector({
         serverConnection: {
           baseUrl: 'http://127.0.0.1:8080',

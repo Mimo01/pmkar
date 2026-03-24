@@ -1,19 +1,25 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { Check, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCopyStore } from './copyStore';
 import { useTicketStore } from './ticketStore';
 import type { CopyStepResult } from './types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function CopyResultModal() {
   const { t } = useTranslation();
   const { phase, result, reset } = useCopyStore();
 
-  const allPassed = result?.steps.every(s => s.success) ?? false;
-  const issueCreated = result?.steps.some(s => s.step === 'create_issue' && s.success) ?? false;
+  const allPassed = result?.steps.every((s) => s.success) ?? false;
+  const issueCreated = result?.steps.some((s) => s.step === 'create_issue' && s.success) ?? false;
 
   function stepLabel(step: CopyStepResult): string {
     if (step.step === 'create_issue') {
@@ -76,7 +82,12 @@ export function CopyResultModal() {
   };
 
   return (
-    <Dialog open={phase === 'result'} onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Dialog
+      open={phase === 'result'}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="max-w-[560px]">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold">
@@ -89,6 +100,7 @@ export function CopyResultModal() {
             <ScrollArea className="max-h-64">
               <div className="space-y-1">
                 {result.steps.map((step, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: steps are immutable copy result items, index is stable
                   <div key={i} className="flex items-center gap-2 py-1.5 px-1">
                     {step.success ? (
                       <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />

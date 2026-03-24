@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../../lib/format';
 import type { ChangelogEntry } from '../types';
@@ -19,18 +19,16 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
 
     async function fetchChangelog() {
       try {
-        const result = await invoke<{ histories: ChangelogEntry[] }>(
-          'fetch_changelog',
-          { baseUrl, issueKey },
-        );
+        const result = await invoke<{ histories: ChangelogEntry[] }>('fetch_changelog', {
+          baseUrl,
+          issueKey,
+        });
         if (!cancelled) {
           setHistories(result.histories);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : 'Failed to load history',
-          );
+          setError(err instanceof Error ? err.message : 'Failed to load history');
         }
       }
     }
@@ -81,18 +79,15 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
             <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.author.displayName}
             </span>
-            <span className="text-xs text-brand-muted">
-              {formatDate(entry.created)}
-            </span>
+            <span className="text-xs text-brand-muted">{formatDate(entry.created)}</span>
           </div>
           <div className="space-y-1">
             {entry.items.map((item, idx) => (
-              <div key={idx} className="text-xs text-brand-text-secondary">
+              // biome-ignore lint/suspicious/noArrayIndexKey: changelog items have no unique ID; index within a stable entry is safe
+              <div key={`${entry.id}-${idx}`} className="text-xs text-brand-text-secondary">
                 <span className="font-semibold">{item.field}</span>
                 {': '}
-                {item.fromString && (
-                  <span className="text-brand-muted">{item.fromString}</span>
-                )}
+                {item.fromString && <span className="text-brand-muted">{item.fromString}</span>}
                 {item.fromString && ' \u2192 '}
                 {item.toString && (
                   <span className="text-brand-text-secondary">{item.toString}</span>

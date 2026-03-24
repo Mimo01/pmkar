@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuditLogPage } from './AuditLogPage';
 import type { AuditEntry } from './types';
 
@@ -8,6 +8,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const mockEntries: AuditEntry[] = [
@@ -106,7 +107,7 @@ describe('AuditLogPage', () => {
     // After clicking GET row, only one expanded section should exist
     expect(screen.getAllByText('Request Headers').length).toBe(1);
     // The GET row should now be expanded (aria-expanded=true)
-    expect(getRow!.getAttribute('aria-expanded')).toBe('true');
+    expect(getRow?.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('Test 5: empty state shows heading and body text', async () => {

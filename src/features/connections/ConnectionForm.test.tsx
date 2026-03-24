@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConnectionForm } from './ConnectionForm';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -7,6 +7,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+
 const mockInvoke = vi.mocked(invoke);
 
 const noop = () => {};
@@ -18,24 +19,14 @@ describe('ConnectionForm', () => {
 
   it('renders Base URL and PAT fields for server type', () => {
     render(
-      <ConnectionForm
-        connectionType="server"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
+      <ConnectionForm connectionType="server" onTestSuccess={noop} onTestInvalidated={noop} />,
     );
     expect(screen.getByLabelText('Base URL')).toBeInTheDocument();
     expect(screen.getByLabelText('Personal Access Token')).toBeInTheDocument();
   });
 
   it('renders Base URL, Email, and API Token fields for cloud type', () => {
-    render(
-      <ConnectionForm
-        connectionType="cloud"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
-    );
+    render(<ConnectionForm connectionType="cloud" onTestSuccess={noop} onTestInvalidated={noop} />);
     expect(screen.getByLabelText('Base URL')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('API Token')).toBeInTheDocument();
@@ -43,11 +34,7 @@ describe('ConnectionForm', () => {
 
   it('shows URL validation error on blur for non-https URL', () => {
     render(
-      <ConnectionForm
-        connectionType="server"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
+      <ConnectionForm connectionType="server" onTestSuccess={noop} onTestInvalidated={noop} />,
     );
     const urlInput = screen.getByLabelText('Base URL');
     fireEvent.change(urlInput, { target: { value: 'http://example.com' } });
@@ -57,11 +44,7 @@ describe('ConnectionForm', () => {
 
   it('strips trailing slash on blur', () => {
     render(
-      <ConnectionForm
-        connectionType="server"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
+      <ConnectionForm connectionType="server" onTestSuccess={noop} onTestInvalidated={noop} />,
     );
     const urlInput = screen.getByLabelText('Base URL');
     fireEvent.change(urlInput, { target: { value: 'https://jira.example.com/' } });
@@ -80,11 +63,7 @@ describe('ConnectionForm', () => {
     mockInvoke.mockResolvedValueOnce(successResult);
 
     render(
-      <ConnectionForm
-        connectionType="server"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
+      <ConnectionForm connectionType="server" onTestSuccess={noop} onTestInvalidated={noop} />,
     );
 
     const urlInput = screen.getByLabelText('Base URL');
@@ -115,13 +94,7 @@ describe('ConnectionForm', () => {
     };
     mockInvoke.mockResolvedValueOnce(successResult);
 
-    render(
-      <ConnectionForm
-        connectionType="cloud"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
-    );
+    render(<ConnectionForm connectionType="cloud" onTestSuccess={noop} onTestInvalidated={noop} />);
 
     const urlInput = screen.getByLabelText('Base URL');
     fireEvent.change(urlInput, { target: { value: 'https://mycompany.atlassian.net' } });
@@ -153,11 +126,7 @@ describe('ConnectionForm', () => {
     mockInvoke.mockReturnValueOnce(pendingPromise);
 
     render(
-      <ConnectionForm
-        connectionType="server"
-        onTestSuccess={noop}
-        onTestInvalidated={noop}
-      />,
+      <ConnectionForm connectionType="server" onTestSuccess={noop} onTestInvalidated={noop} />,
     );
 
     const urlInput = screen.getByLabelText('Base URL');

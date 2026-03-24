@@ -1,10 +1,10 @@
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
 import { invoke } from '@tauri-apps/api/core';
-import { useLanguageStore, hydrateLanguage } from '../languageStore';
 import i18n from '../index';
+import { hydrateLanguage, useLanguageStore } from '../languageStore';
 
 const mockInvoke = vi.mocked(invoke);
 

@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SecretInput } from './SecretInput';
 import { TestResult } from './TestResult';
@@ -69,14 +69,17 @@ export function ConnectionForm({
   const [pat, setPat] = useState('');
 
   // Cloud-only
-  const [email, setEmail] = useState(connectionType === 'cloud' ? (initialValues?.username ?? '') : '');
+  const [email, setEmail] = useState(
+    connectionType === 'cloud' ? (initialValues?.username ?? '') : '',
+  );
   const [apiToken, setApiToken] = useState('');
 
   // Pre-fill secret from keychain when editing
   useEffect(() => {
     if (!initialValues?.username) return;
     const keychainType = connectionType === 'server' ? 'jira-server' : 'jira-cloud';
-    const keychainUser = connectionType === 'cloud' ? (initialValues.username ?? '') : (initialValues.username ?? '');
+    const keychainUser =
+      connectionType === 'cloud' ? (initialValues.username ?? '') : (initialValues.username ?? '');
     invoke<string>('get_credential', { connectionType: keychainType, username: keychainUser })
       .then((secret) => {
         if (connectionType === 'server') {
@@ -85,8 +88,10 @@ export function ConnectionForm({
           setApiToken(secret);
         }
       })
-      .catch(() => { /* credential not found — leave empty */ });
-  }, []);
+      .catch(() => {
+        /* credential not found — leave empty */
+      });
+  }, [connectionType, initialValues.username]);
 
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
@@ -128,7 +133,7 @@ export function ConnectionForm({
   }
 
   function handleUrlBlur() {
-    let trimmed = baseUrl.trimEnd().replace(/\/+$/, '');
+    const trimmed = baseUrl.trimEnd().replace(/\/+$/, '');
     setBaseUrl(trimmed);
     if (!trimmed) {
       setUrlError('');
@@ -168,7 +173,9 @@ export function ConnectionForm({
     }, 0);
   }
 
-  const hasValidUrl = !urlError && (baseUrl.startsWith('https://') || (baseUrl.startsWith('http://') && isLocalhost(baseUrl)));
+  const hasValidUrl =
+    !urlError &&
+    (baseUrl.startsWith('https://') || (baseUrl.startsWith('http://') && isLocalhost(baseUrl)));
   const canTest = hasValidUrl && !testing;
 
   async function handleTest() {
@@ -221,16 +228,15 @@ export function ConnectionForm({
     'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/50',
     'transition-all duration-200',
     testing ? 'opacity-40 cursor-not-allowed' : '',
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-surface p-5 space-y-4 backdrop-blur-sm">
       {/* Base URL field */}
       <div className="space-y-2">
-        <label
-          htmlFor="base-url"
-          className="text-sm font-medium text-brand-text-secondary"
-        >
+        <label htmlFor="base-url" className="text-sm font-medium text-brand-text-secondary">
           {t('connection.baseUrl')}
         </label>
         <input
@@ -241,14 +247,18 @@ export function ConnectionForm({
           onBlur={handleUrlBlur}
           disabled={testing}
           aria-invalid={!!urlError}
-          aria-describedby={urlError ? "base-url-error" : undefined}
-          placeholder={connectionType === 'server'
-            ? t('connection.baseUrl.placeholder.server')
-            : t('connection.baseUrl.placeholder.cloud')}
+          aria-describedby={urlError ? 'base-url-error' : undefined}
+          placeholder={
+            connectionType === 'server'
+              ? t('connection.baseUrl.placeholder.server')
+              : t('connection.baseUrl.placeholder.cloud')
+          }
           className={inputClass}
         />
         {urlError && (
-          <p id="base-url-error" role="alert" className="text-xs text-red-400">{urlError}</p>
+          <p id="base-url-error" role="alert" className="text-xs text-red-400">
+            {urlError}
+          </p>
         )}
       </div>
 
@@ -268,10 +278,7 @@ export function ConnectionForm({
       {connectionType === 'cloud' && (
         <>
           <div className="space-y-2">
-            <label
-              htmlFor="email"
-              className="text-sm font-medium text-brand-text-secondary"
-            >
+            <label htmlFor="email" className="text-sm font-medium text-brand-text-secondary">
               {t('connection.email')}
             </label>
             <input

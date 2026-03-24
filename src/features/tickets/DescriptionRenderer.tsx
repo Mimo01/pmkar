@@ -1,5 +1,5 @@
-import { useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useEffect, useRef } from 'react';
 
 interface DescriptionRendererProps {
   description: string | Record<string, unknown> | null;
@@ -59,9 +59,7 @@ export function DescriptionRenderer({
   // Plain text string description
   if (typeof description === 'string' && description.trim().length > 0) {
     return (
-      <pre className="text-sm text-brand-text-secondary whitespace-pre-wrap">
-        {description}
-      </pre>
+      <pre className="text-sm text-brand-text-secondary whitespace-pre-wrap">{description}</pre>
     );
   }
 

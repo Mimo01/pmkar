@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '../../lib/format';
 import type { JiraTicket, TriageEntry } from './types';
@@ -9,7 +9,8 @@ function StatusDot({ status }: { status: string }) {
   const lower = status.toLowerCase();
   let colorClass = 'bg-brand-muted'; // default: To Do / Open
   if (lower.includes('progress') || lower.includes('review')) colorClass = 'bg-blue-600';
-  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed')) colorClass = 'bg-green-600';
+  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
+    colorClass = 'bg-green-600';
   if (lower.includes('blocked')) colorClass = 'bg-red-600';
   return (
     <span className="flex items-center gap-1">
@@ -51,20 +52,20 @@ interface TicketCardProps {
 
 export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); }}}
-      tabIndex={0}
-      role="button"
       aria-label={ticket.fields.summary}
-      className="px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
+      className="w-full text-left px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
     >
       {/* Line 1: ticket key + relative time */}
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
         <div className="flex items-center gap-2">
           {actionSlot}
-          <span className="text-xs text-brand-muted">{formatRelativeTime(ticket.fields.updated)}</span>
+          <span className="text-xs text-brand-muted">
+            {formatRelativeTime(ticket.fields.updated)}
+          </span>
         </div>
       </div>
       {/* Line 2: summary */}
@@ -79,7 +80,7 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
           {ticket.fields.assignee?.displayName ?? ''}
         </span>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -87,8 +88,9 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
 
 export function SkeletonCards({ count = 3 }: { count?: number }) {
   return (
-    <div aria-busy="true" aria-label="Loading tickets">
+    <div aria-busy="true" aria-label="Loading tickets" role="status">
       {Array.from({ length: count }).map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading rows are static, index is stable
         <div key={i} className="px-4 py-3 border-b border-brand-border">
           <div className="flex justify-between mb-1">
             <Skeleton className="h-3 w-16" />

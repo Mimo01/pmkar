@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import en from '../locales/en.json';
 import sk from '../locales/sk.json';
 

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../../lib/format';
 import type { JiraWorklog } from '../types';
@@ -19,18 +19,16 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
 
     async function fetchWorklogs() {
       try {
-        const result = await invoke<{ worklogs: JiraWorklog[] }>(
-          'fetch_worklog',
-          { baseUrl, issueKey },
-        );
+        const result = await invoke<{ worklogs: JiraWorklog[] }>('fetch_worklog', {
+          baseUrl,
+          issueKey,
+        });
         if (!cancelled) {
           setWorklogs(result.worklogs);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(
-            err instanceof Error ? err.message : 'Failed to load work log',
-          );
+          setError(err instanceof Error ? err.message : 'Failed to load work log');
         }
       }
     }
@@ -81,9 +79,7 @@ export function WorkLogTab({ issueKey, baseUrl }: WorkLogTabProps) {
             <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.author.displayName}
             </span>
-            <span className="text-xs text-brand-muted">
-              {formatDate(entry.started)}
-            </span>
+            <span className="text-xs text-brand-muted">{formatDate(entry.started)}</span>
             <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.timeSpent}
             </span>

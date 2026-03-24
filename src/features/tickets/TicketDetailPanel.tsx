@@ -1,17 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { JiraTicketDetail } from './types';
-import { OverviewTab } from './tabs/OverviewTab';
-import { CommentsTab } from './tabs/CommentsTab';
-import { WorkLogTab } from './tabs/WorkLogTab';
-import { AttachmentsTab } from './tabs/AttachmentsTab';
-import { HistoryTab } from './tabs/HistoryTab';
-import { useCopyStore } from './copyStore';
-import { useTicketStore } from './ticketStore';
 import { useConnectionStore } from '../connections/connectionStore';
 import { CopyPreviewModal } from './CopyPreviewModal';
 import { CopyResultModal } from './CopyResultModal';
+import { useCopyStore } from './copyStore';
+import { AttachmentsTab } from './tabs/AttachmentsTab';
+import { CommentsTab } from './tabs/CommentsTab';
+import { HistoryTab } from './tabs/HistoryTab';
+import { OverviewTab } from './tabs/OverviewTab';
+import { WorkLogTab } from './tabs/WorkLogTab';
+import { useTicketStore } from './ticketStore';
+import type { JiraTicketDetail } from './types';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
 
@@ -21,11 +21,7 @@ interface TicketDetailPanelProps {
   onClose: () => void;
 }
 
-export function TicketDetailPanel({
-  issueKey,
-  baseUrl,
-  onClose,
-}: TicketDetailPanelProps) {
+export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPanelProps) {
   const { t } = useTranslation();
   const [detail, setDetail] = useState<JiraTicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +126,7 @@ export function TicketDetailPanel({
     : [];
 
   return (
-    <div className="flex flex-col h-full" role="complementary" aria-label="Ticket detail">
+    <aside className="flex flex-col h-full" aria-label="Ticket detail">
       {/* Panel header */}
       <div className="px-5 py-4 border-b border-brand-border">
         {loading ? (
@@ -173,9 +169,7 @@ export function TicketDetailPanel({
                 </svg>
               </button>
             </div>
-            <div className="text-xs font-semibold text-brand-muted mb-1">
-              {detail.key}
-            </div>
+            <div className="text-xs font-semibold text-brand-muted mb-1">{detail.key}</div>
             <div className="text-xl font-semibold text-brand-text leading-tight line-clamp-2">
               {detail.fields.summary}
             </div>
@@ -206,7 +200,8 @@ export function TicketDetailPanel({
                 )}
                 {isCopied ? (
                   <span className="px-3 py-1 rounded text-sm font-semibold text-emerald-400 border border-emerald-400/30">
-                    {t('detail.copied')}{triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
+                    {t('detail.copied')}
+                    {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
                   </span>
                 ) : (
                   <button
@@ -216,11 +211,7 @@ export function TicketDetailPanel({
                     className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                   >
                     {copyPhase === 'loading_preview' ? (
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
+                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -243,9 +234,7 @@ export function TicketDetailPanel({
                 )}
               </div>
             </div>
-            {copyError && (
-              <p className="text-xs text-red-400 mt-1">{copyError}</p>
-            )}
+            {copyError && <p className="text-xs text-red-400 mt-1">{copyError}</p>}
           </>
         ) : (
           <div className="text-xs text-red-400">{t('detail.failedToLoad')}</div>
@@ -277,26 +266,12 @@ export function TicketDetailPanel({
 
       {/* Tab content */}
       {detail && (
-        <div
-          className="overflow-y-auto flex-1"
-          role="tabpanel"
-          id={`tabpanel-${activeTab}`}
-        >
-          {activeTab === 'overview' && (
-            <OverviewTab detail={detail} baseUrl={baseUrl} />
-          )}
-          {activeTab === 'comments' && (
-            <CommentsTab comments={detail.fields.comment.comments} />
-          )}
-          {activeTab === 'worklog' && (
-            <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />
-          )}
-          {activeTab === 'attachments' && (
-            <AttachmentsTab attachments={detail.fields.attachment} />
-          )}
-          {activeTab === 'history' && (
-            <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />
-          )}
+        <div className="overflow-y-auto flex-1" role="tabpanel" id={`tabpanel-${activeTab}`}>
+          {activeTab === 'overview' && <OverviewTab detail={detail} baseUrl={baseUrl} />}
+          {activeTab === 'comments' && <CommentsTab comments={detail.fields.comment.comments} />}
+          {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
+          {activeTab === 'attachments' && <AttachmentsTab attachments={detail.fields.attachment} />}
+          {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
         </div>
       )}
 
@@ -304,6 +279,6 @@ export function TicketDetailPanel({
       <CopyPreviewModal />
       {/* Copy result modal — overlays after copy completes (z-[60] > z-50 preview) */}
       <CopyResultModal />
-    </div>
+    </aside>
   );
 }

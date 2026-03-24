@@ -15,7 +15,6 @@ function getStatusDotClass(connection: ConnectionMeta | null): string {
       return 'bg-emerald-400';
     case 'error':
       return 'bg-red-400';
-    case 'unconfigured':
     default:
       return 'bg-brand-muted';
   }
@@ -34,18 +33,12 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
-            <span className="text-sm font-medium text-brand-text">
-              {label}
-            </span>
+            <span className="text-sm font-medium text-brand-text">{label}</span>
           </div>
           {connection?.baseUrl && (
-            <p className="text-xs text-brand-muted ml-4 truncate">
-              {connection.baseUrl}
-            </p>
+            <p className="text-xs text-brand-muted ml-4 truncate">{connection.baseUrl}</p>
           )}
-          <p className="text-xs text-brand-muted ml-4 mt-0.5">
-            {lastTestedText}
-          </p>
+          <p className="text-xs text-brand-muted ml-4 mt-0.5">{lastTestedText}</p>
         </div>
         <button
           type="button"

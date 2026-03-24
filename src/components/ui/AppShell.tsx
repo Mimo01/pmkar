@@ -1,6 +1,6 @@
-import { type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Settings, Terminal } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 interface AppShellProps {
@@ -12,7 +12,14 @@ interface AppShellProps {
   onAuditClick?: () => void;
 }
 
-export function AppShell({ children, onGearClick, activeTab, onTabChange, auditCount, onAuditClick }: AppShellProps) {
+export function AppShell({
+  children,
+  onGearClick,
+  activeTab,
+  onTabChange,
+  auditCount,
+  onAuditClick,
+}: AppShellProps) {
   const { t } = useTranslation();
 
   const NAV_TABS: { id: 'new' | 'not-mine' | 'linked'; label: string }[] = [
@@ -73,7 +80,10 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-brand via-brand/60 to-transparent" />
       </header>
       {onTabChange && (
-        <nav className="flex px-4 bg-brand-surface border-b border-brand-border" aria-label="Main navigation">
+        <nav
+          className="flex px-4 bg-brand-surface border-b border-brand-border"
+          aria-label="Main navigation"
+        >
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -91,9 +101,7 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
           ))}
         </nav>
       )}
-      <div className="flex-1 flex flex-col overflow-hidden" role="main">
-        {children}
-      </div>
+      <main className="flex-1 flex flex-col overflow-hidden">{children}</main>
     </div>
   );
 }
