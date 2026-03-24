@@ -55,7 +55,7 @@ body.dark {
   --color-brand-surface-raised: #1a1a1c;
   --color-brand-border: #2e2e30;
   --color-brand-border-subtle: #252527;
-  --color-brand-muted: #6b6b6f;
+  --color-brand-muted: #7f7f7f;
   --color-brand-text: #e4e4e6;
   --color-brand-text-secondary: #95959a;
   background-color: #161617;
@@ -73,7 +73,7 @@ body.dark {
   --secondary: #28282a;
   --secondary-foreground: #e4e4e6;
   --muted: #28282a;
-  --muted-foreground: #6b6b6f;
+  --muted-foreground: #7f7f7f;
   --accent: #28282a;
   --accent-foreground: #e4e4e6;
   --destructive: #dc2626;

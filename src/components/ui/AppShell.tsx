@@ -48,7 +48,7 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>{t('audit.open')}</TooltipContent>
+                <TooltipContent aria-hidden="true">{t('audit.open')}</TooltipContent>
               </Tooltip>
             )}
             {onGearClick && (
@@ -63,7 +63,7 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
                     <Settings className="w-[15px] h-[15px]" aria-hidden="true" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>{t('common.settings')}</TooltipContent>
+                <TooltipContent aria-hidden="true">{t('common.settings')}</TooltipContent>
               </Tooltip>
             )}
           </TooltipProvider>
@@ -91,7 +91,7 @@ export function AppShell({ children, onGearClick, activeTab, onTabChange, auditC
           ))}
         </nav>
       )}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden" role="main">
         {children}
       </div>
     </div>
