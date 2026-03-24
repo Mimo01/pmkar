@@ -56,7 +56,9 @@ describe('Tabs components', () => {
         <TabsList>
           <TabsTrigger value="tab1">Tab 1</TabsTrigger>
         </TabsList>
-        <TabsContent value="tab1" className="custom-content">Content</TabsContent>
+        <TabsContent value="tab1" className="custom-content">
+          Content
+        </TabsContent>
       </Tabs>,
     );
     expect(container.querySelector('.custom-content')).toBeTruthy();
@@ -78,7 +80,9 @@ describe('Tabs components', () => {
     render(
       <Tabs defaultValue="tab1">
         <TabsList>
-          <TabsTrigger value="tab1" className="custom-trigger">Tab 1</TabsTrigger>
+          <TabsTrigger value="tab1" className="custom-trigger">
+            Tab 1
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="tab1">Content</TabsContent>
       </Tabs>,

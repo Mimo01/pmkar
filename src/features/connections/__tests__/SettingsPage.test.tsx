@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n/index';
 import { useLanguageStore } from '../../../i18n/languageStore';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { useConnectionStore } from '../connectionStore';
-import { useTicketStore } from '../../tickets/ticketStore';
 import { useThemeStore } from '../../theme/themeStore';
+import { useTicketStore } from '../../tickets/ticketStore';
+import { useConnectionStore } from '../connectionStore';
 import { SettingsPage } from '../SettingsPage';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -230,7 +230,9 @@ describe('SettingsPage — JQL Presets section', () => {
   });
 
   it('shows custom textarea when custom preset is selected', () => {
-    useTicketStore.setState({ jqlPreset: 'custom' } as Parameters<typeof useTicketStore.setState>[0]);
+    useTicketStore.setState({ jqlPreset: 'custom' } as Parameters<
+      typeof useTicketStore.setState
+    >[0]);
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
     expect(screen.getByRole('textbox')).toBeInTheDocument();

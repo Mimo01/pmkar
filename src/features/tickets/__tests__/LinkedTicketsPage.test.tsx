@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { LinkedTicketsPage } from '../LinkedTicketsPage';
 import { useTicketStore } from '../ticketStore';
 import type { JiraTicket, TriageEntry } from '../types';

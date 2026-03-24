@@ -10,7 +10,7 @@
       "recommended": true,
       "correctness": { "recommended": true },
       "suspicious": { "recommended": true },
-      "style": { "recommended": true },
+      "style": { "recommended": true, "noNonNullAssertion": "off" },
       "performance": { "recommended": true },
       "security": {
         "recommended": true,

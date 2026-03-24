@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { useThemeStore } from '../themeStore';
 import type { ThemeMode } from '../themeStore';
+import { useThemeStore } from '../themeStore';
 
 describe('themeStore', () => {
   beforeEach(() => {
@@ -8,9 +8,15 @@ describe('themeStore', () => {
     const storage: Record<string, string> = {};
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage[key] ?? null,
-      setItem: (key: string, value: string) => { storage[key] = value; },
-      removeItem: (key: string) => { delete storage[key]; },
-      clear: () => { Object.keys(storage).forEach((k) => delete storage[k]); },
+      setItem: (key: string, value: string) => {
+        storage[key] = value;
+      },
+      removeItem: (key: string) => {
+        delete storage[key];
+      },
+      clear: () => {
+        for (const k of Object.keys(storage)) delete storage[k];
+      },
     });
     useThemeStore.setState({
       mode: 'system',

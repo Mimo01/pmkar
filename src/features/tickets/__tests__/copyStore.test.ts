@@ -91,7 +91,9 @@ describe('copyStore', () => {
       mockInvoke.mockResolvedValue(makeCloudMeta());
       const ticket = makeTicketDetail('PROJ-1');
 
-      const promise = useCopyStore.getState().startPreview(ticket, 'http://server', 'https://cloud');
+      const promise = useCopyStore
+        .getState()
+        .startPreview(ticket, 'http://server', 'https://cloud');
       expect(useCopyStore.getState().phase).toBe('loading_preview');
       await promise;
     });

@@ -57,11 +57,7 @@ describe('DescriptionRenderer', () => {
 
   it('falls back to plain text when renderedHtml is empty', () => {
     render(
-      <DescriptionRenderer
-        description="Fallback text"
-        renderedHtml=""
-        baseUrl="http://server"
-      />,
+      <DescriptionRenderer description="Fallback text" renderedHtml="" baseUrl="http://server" />,
     );
     expect(screen.getByText('Fallback text')).toBeInTheDocument();
   });

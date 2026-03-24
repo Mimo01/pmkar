@@ -14,17 +14,13 @@ const makeHistories = (): ChangelogEntry[] => [
     id: 'h1',
     author: { displayName: 'Alice' },
     created: '2024-06-01T10:00:00.000Z',
-    items: [
-      { field: 'status', fromString: 'Open', toString: 'In Progress' },
-    ],
+    items: [{ field: 'status', fromString: 'Open', toString: 'In Progress' }],
   },
   {
     id: 'h2',
     author: { displayName: 'Bob' },
     created: '2024-06-02T09:00:00.000Z',
-    items: [
-      { field: 'priority', fromString: 'Low', toString: 'High' },
-    ],
+    items: [{ field: 'priority', fromString: 'Low', toString: 'High' }],
   },
 ];
 
