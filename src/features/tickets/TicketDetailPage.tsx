@@ -27,11 +27,11 @@ function StatusBadge({ status }: { status: string }) {
   const lower = status.toLowerCase();
   let className = 'bg-brand-surface-hover text-brand-text-secondary'; // To Do / Open
   if (lower.includes('progress') || lower.includes('review'))
-    className = 'bg-blue-600/10 text-blue-600';
+    className = 'bg-blue-600/10 text-blue-600 dark:text-blue-400';
   if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
-    className = 'bg-green-600/10 text-green-600';
+    className = 'bg-green-600/10 text-green-600 dark:text-green-400';
   if (lower.includes('blocked'))
-    className = 'bg-red-600/10 text-red-600';
+    className = 'bg-red-600/10 text-red-600 dark:text-red-400';
   return <Badge variant="outline" className={cn('text-xs', className)}>{status}</Badge>;
 }
 
@@ -258,6 +258,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                id={`tab-${tab.id}`}
                 type="button"
                 role="tab"
                 aria-selected={activeTab === tab.id}
@@ -275,7 +276,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           </div>
 
           {/* Tab content */}
-          <div role="tabpanel" id={`tabpanel-${activeTab}`}>
+          <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
             {activeTab === 'overview' && (
               <OverviewTab detail={detail} baseUrl={baseUrl} />
             )}
