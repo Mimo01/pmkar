@@ -259,7 +259,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                   <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
                 </Tooltip>
               )}
-              {isCopied ? null : (
+              {isCopied || isIgnored ? null : (
                 <button
                   type="button"
                   onClick={handleStartCopy}

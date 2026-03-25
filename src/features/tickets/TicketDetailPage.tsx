@@ -212,7 +212,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {/* Action buttons */}
           <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
-            {!isCopied && (
+            {!isCopied && !isIgnored && (
               <Button
                 variant="default"
                 size="lg"
