@@ -29,7 +29,7 @@ jobs:
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          repository: AurelianSpowormo/pmkar-releases
+          repository: Mimo01/pmkar-releases
           tag_name: ${{ github.ref_name }}
           name: 'pmkar ${{ github.ref_name }}'
           body: ${{ steps.changelog.outputs.content || 'See release assets for download.' }}
@@ -86,7 +86,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          owner: AurelianSpowormo
+          owner: Mimo01
           repo: pmkar-releases
           tagName: ${{ github.ref_name }}
           releaseName: 'pmkar ${{ github.ref_name }}'

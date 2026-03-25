@@ -38,7 +38,7 @@
     "updater": {
       "pubkey": "PLACEHOLDER_GENERATE_WITH_tauri_signer_generate",
       "endpoints": [
-        "https://github.com/AurelianSpowormo/pmkar-releases/releases/latest/download/latest.json"
+        "https://github.com/Mimo01/pmkar-releases/releases/latest/download/latest.json"
       ]
     }
   }
