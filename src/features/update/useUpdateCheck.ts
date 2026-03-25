@@ -20,9 +20,9 @@ export function useUpdateCheck() {
             rawUpdate: update,
           });
         }
-      } catch {
-        // Silently ignore on launch check per D-04
-        console.warn('Update check failed silently on launch');
+      } catch (err) {
+        // Silently ignore on launch — endpoint may 404 between releases
+        console.debug('Update check skipped:', err instanceof Error ? err.message : err);
       }
     };
 

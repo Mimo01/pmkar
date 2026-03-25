@@ -53,8 +53,15 @@ export function AboutSection() {
       } else {
         store.setUpToDate();
       }
-    } catch {
-      store.setError(t('update.modal.errorCheck'));
+    } catch (err) {
+      // If the release endpoint is unreachable or returns 404 (no release yet),
+      // treat as up-to-date rather than showing a scary error
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes('Could not fetch') || msg.includes('404') || msg.includes('Network')) {
+        store.setUpToDate();
+      } else {
+        store.setError(t('update.modal.errorCheck'));
+      }
     }
   }
 
