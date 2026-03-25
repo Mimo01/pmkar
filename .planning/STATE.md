@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-dom
-last_updated: "2026-03-25T09:29:49.672Z"
+stopped_at: Completed quick task 260325-jxu
+last_updated: "2026-03-25T14:28:00.000Z"
 last_activity: 2026-03-25
 progress:
   total_phases: 11
@@ -213,6 +213,7 @@ None yet.
 | 260324-q5o | Redesign icon with proper macOS padding | 2026-03-24 | b41a5ef | | [260324-q5o-redesign-icon-with-proper-macos-padding-](./quick/260324-q5o-redesign-icon-with-proper-macos-padding-/) |
 | 260325-dd7 | Open issues in external Jira from the app | 2026-03-25 | 2291b68 | | [260325-dd7-open-issues-in-external-jira-from-the-ap](./quick/260325-dd7-open-issues-in-external-jira-from-the-ap/) |
 | 260325-dom | Copied tickets open in both Jiras with more visible buttons | 2026-03-25 | 9ea47bc | | [260325-dom-copied-tickets-open-in-both-jiras-with-m](./quick/260325-dom-copied-tickets-open-in-both-jiras-with-m/) |
+| 260325-jxu | Add ticket list filters for key and assignee with sort toggle | 2026-03-25 | 959c2ab | | [260325-jxu-add-ticket-list-filters-for-ticket-numbe](./quick/260325-jxu-add-ticket-list-filters-for-ticket-numbe/) |
 
 ## Session Continuity
 
