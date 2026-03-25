@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-sk0
-last_updated: "2026-03-25T19:39:34.075Z"
-last_activity: "2026-03-25 - Completed quick task 260325-sa2: Custom About modal triggered from native macOS app menu"
+stopped_at: Completed quick task 260325-sxj
+last_updated: "2026-03-25T19:50:00.000Z"
+last_activity: "2026-03-25 - Completed quick task 260325-sxj: Hide Copy to Company Jira button on dismissed tickets"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -236,6 +236,7 @@ None yet.
 | 260325-sa2 | Custom About modal from native macOS menu | 2026-03-25 | 40dfb7d | | [260325-sa2-add-a-custom-about-the-app-modal-that-wi](./quick/260325-sa2-add-a-custom-about-the-app-modal-that-wi/) |
 | 260325-sjh | Redesign Jira linked ticket state UI with compact badge and inline links | 2026-03-25 | 73aa8db | | [260325-sjh-redesign-jira-linked-ticket-state-ui](./quick/260325-sjh-redesign-jira-linked-ticket-state-ui/) |
 | 260325-sk0 | Version history and changelog viewer in About modal | 2026-03-25 | 1c5994f | | [260325-sk0-i-want-the-user-to-be-able-to-see-versio](./quick/260325-sk0-i-want-the-user-to-be-able-to-see-versio/) |
+| 260325-sxj | Hide Copy to Company Jira button on dismissed tickets | 2026-03-25 | b68ed1c | | [260325-sxj-hide-copy-to-company-jira-button-on-dism](./quick/260325-sxj-hide-copy-to-company-jira-button-on-dism/) |
 
 ## Session Continuity
 
