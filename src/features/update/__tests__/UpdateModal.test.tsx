@@ -89,4 +89,67 @@ describe('UpdateModal', () => {
     renderWithI18n(<UpdateModal open={true} />);
     expect(screen.getByText(/no release notes available/i)).toBeInTheDocument();
   });
+
+  it('shows installing state text when status is installing', () => {
+    useUpdateStore.setState({ status: 'installing', updateInfo: mockUpdateInfo, progress: 100 });
+    renderWithI18n(<UpdateModal open={true} />);
+    // Progress bar should exist
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    // Installing text
+    expect(screen.getByText(/installing/i)).toBeInTheDocument();
+  });
+
+  it('shows "Try Again" button when status is error', () => {
+    useUpdateStore.setState({
+      status: 'error',
+      updateInfo: mockUpdateInfo,
+      errorMessage: 'Download failed',
+    });
+    renderWithI18n(<UpdateModal open={true} />);
+    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
+  });
+
+  it('shows error message text when status is error', () => {
+    useUpdateStore.setState({
+      status: 'error',
+      updateInfo: mockUpdateInfo,
+      errorMessage: 'Could not download the update',
+    });
+    renderWithI18n(<UpdateModal open={true} />);
+    expect(screen.getByText('Could not download the update')).toBeInTheDocument();
+  });
+
+  it('"Try Again" button is enabled when status is error (not downloading/installing)', async () => {
+    useUpdateStore.setState({
+      status: 'error',
+      updateInfo: mockUpdateInfo,
+      errorMessage: 'Failed',
+    });
+    const user = userEvent.setup();
+    renderWithI18n(<UpdateModal open={true} />);
+    const tryAgainBtn = screen.getByRole('button', { name: /try again/i });
+    expect(tryAgainBtn).not.toBeDisabled();
+    // Click should not throw
+    await user.click(tryAgainBtn);
+  });
+
+  it('dialog subtitle shows version number from updateInfo', () => {
+    useUpdateStore.setState({ status: 'available', updateInfo: mockUpdateInfo });
+    renderWithI18n(<UpdateModal open={true} />);
+    expect(screen.getByText(/1\.2\.3/)).toBeInTheDocument();
+  });
+
+  it('does not show changelog when status is downloading', () => {
+    useUpdateStore.setState({ status: 'downloading', updateInfo: mockUpdateInfo, progress: 30 });
+    renderWithI18n(<UpdateModal open={true} />);
+    // Changelog ScrollArea not rendered in downloading state
+    expect(screen.queryByText('Bug fixes and performance improvements')).not.toBeInTheDocument();
+  });
+
+  it('"Later" button is disabled during installing state', () => {
+    useUpdateStore.setState({ status: 'installing', updateInfo: mockUpdateInfo, progress: 100 });
+    renderWithI18n(<UpdateModal open={true} />);
+    const laterBtn = screen.getByRole('button', { name: /later/i });
+    expect(laterBtn).toBeDisabled();
+  });
 });

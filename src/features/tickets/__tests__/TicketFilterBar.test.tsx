@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { useConnectionStore } from '../../connections/connectionStore';
 import { TicketFilterBar } from '../TicketFilterBar';
 import { TicketListPage } from '../TicketListPage';
 import { useTicketStore } from '../ticketStore';
-import type { JiraTicket } from '../types';
+import type { JiraTicket, JiraUser } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
@@ -209,6 +210,328 @@ describe('TicketFilterBar', () => {
     );
     fireEvent.click(screen.getByLabelText('Clear assignee filter'));
     expect(onAssigneeChange).toHaveBeenCalledWith('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// TicketFilterBar — Assignee autocomplete
+// ---------------------------------------------------------------------------
+
+describe('TicketFilterBar — Assignee autocomplete', () => {
+  const mockUsers: JiraUser[] = [
+    { displayName: 'Alice Smith', accountId: 'user-1' },
+    { displayName: 'Bob Jones', accountId: 'user-2' },
+  ];
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockInvoke.mockReset();
+    useConnectionStore.setState({
+      serverConnection: {
+        baseUrl: 'https://jira.example.com',
+        username: 'jdoe',
+        serverVersion: '8.20.0',
+        lastTestedAt: new Date().toISOString(),
+        status: 'ok',
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('triggers invoke search_jira_users after debounce when typing', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    // Before debounce fires — no invoke yet
+    expect(mockInvoke).not.toHaveBeenCalledWith('search_jira_users', expect.anything());
+
+    // Advance timers past 250ms debounce AND flush microtasks (promise callbacks)
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users', {
+      baseUrl: 'https://jira.example.com',
+      query: 'ali',
+    });
+  });
+
+  it('shows suggestion dropdown after users returned', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+    expect(screen.getByText('Bob Jones')).toBeInTheDocument();
+  });
+
+  it('shows "no users found" when search returns empty array', async () => {
+    mockInvoke.mockResolvedValue([]);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'xyz' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText(/no users found/i)).toBeInTheDocument();
+  });
+
+  it('selecting user via click calls onAssigneeChange with displayName', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+    const onAssigneeChange = vi.fn();
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={onAssigneeChange}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByText('Alice Smith').closest('button')!);
+    expect(onAssigneeChange).toHaveBeenCalledWith('Alice Smith');
+  });
+
+  it('ArrowDown key navigates down in suggestions', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    // Press ArrowDown to select first item
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    const firstOption = screen.getByRole('option', { name: /alice smith/i });
+    expect(firstOption).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('Escape key closes suggestions dropdown', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  it('Enter key selects highlighted suggestion', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+    const onAssigneeChange = vi.fn();
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={onAssigneeChange}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    // Navigate to first item and select
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onAssigneeChange).toHaveBeenCalledWith('Alice Smith');
+  });
+
+  it('clears suggestions when query is empty', async () => {
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+
+    // Clear the input
+    fireEvent.change(input, { target: { value: '' } });
+
+    expect(screen.queryByText('Alice Smith')).not.toBeInTheDocument();
+  });
+
+  it('does not invoke when serverConnection is null', async () => {
+    useConnectionStore.setState({ serverConnection: null });
+    mockInvoke.mockResolvedValue(mockUsers);
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    expect(mockInvoke).not.toHaveBeenCalledWith('search_jira_users', expect.anything());
+  });
+
+  it('handles invoke error gracefully — closes dropdown', async () => {
+    mockInvoke.mockRejectedValue(new Error('Network error'));
+
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+
+    const input = screen.getByPlaceholderText('Filter by assignee...');
+    fireEvent.change(input, { target: { value: 'ali' } });
+
+    await act(async () => {
+      vi.advanceTimersByTime(300);
+      await vi.runAllTimersAsync();
+    });
+
+    // After error, suggestions dropdown should not be visible
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 });
 
