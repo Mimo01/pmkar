@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
@@ -178,7 +179,13 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                 </svg>
               </button>
             </div>
-            <div className="text-xs font-semibold text-brand-muted mb-1">{detail.key}</div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-semibold text-brand-muted">{detail.key}</span>
+              <span className="text-[10px] text-brand-muted/60">·</span>
+              <span className="text-[10px] text-brand-muted/60">
+                {t('tickets.card.updated', { time: formatRelativeTime(detail.fields.updated) })}
+              </span>
+            </div>
             <div className="text-xl font-semibold text-brand-text leading-tight line-clamp-2">
               {detail.fields.summary}
             </div>
