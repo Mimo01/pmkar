@@ -80,6 +80,8 @@
   "detail.copy": "Copy to Company Jira",
   "detail.copied": "Copied",
   "detail.openInJira": "Open in Jira",
+  "detail.openInSourceJira": "Open in Source Jira",
+  "detail.openInCompanyJira": "Open in Company Jira",
   "detail.ignore": "Not for me",
   "detail.ignored": "Ignored",
   "detail.loading": "Loading...",
