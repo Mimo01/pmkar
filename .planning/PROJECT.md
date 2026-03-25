@@ -12,25 +12,25 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Validated
 
-- ✓ Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service) — v1.0
-- ✓ All REST API calls logged with full request/response for audit, with credential redaction — v1.0
-- ✓ Mock Jira server (Server v2 + Cloud v3) for development and testing without real PATs — v1.0
-- ✓ Setup wizard for configuring two Jira connections with test/validation feedback — v1.0
-- ✓ Fetch candidate tickets from customer Jira (assigned, mentioned, watched users) with configurable JQL — v1.0
-- ✓ Full ticket detail view: summary, description, status, priority, assignee, reporter, labels, components, fix versions, comments, work log, attachments, sub-tasks, linked issues, change history — v1.0
-- ✓ Copy ticket core fields with wiki markup → ADF translation and diff preview — v1.0
-- ✓ Copy binary attachments, comment threads with attribution, work log entries, sub-tasks as child issues — v1.0
-- ✓ Origin tracking via remote link back to source ticket — v1.0
-- ✓ Triage workflow: ignore/restore tickets, persistent state across sessions — v1.0
-- ✓ In-app audit log viewer with expandable REST API call details — v1.0
-- ✓ UI available in English and Slovak, switchable at runtime with persistent preference — v1.0
-- ✓ Modern UI with shadcn/ui, Lucide icons, card-based layouts, Linear-inspired aesthetic — v1.0
-- ✓ WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, ARIA semantics, live regions — v1.0
-- ✓ Cross-platform binary distribution with tag-triggered CI (macOS, Windows, Linux) — v1.0
-- ✓ Auto-update via Tauri updater plugin with blocking modal — v1.0
-- ✓ Changelog generation from conventional commits and version sync tooling — v1.0
-- ✓ Biome + clippy pedantic linting, 80% test coverage with threshold enforcement — v1.0
-- ✓ GitHub Actions CI (lint + type-check + test + clippy + fmt) — v1.0
+- ✓ Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service) — v0.1.0
+- ✓ All REST API calls logged with full request/response for audit, with credential redaction — v0.1.0
+- ✓ Mock Jira server (Server v2 + Cloud v3) for development and testing without real PATs — v0.1.0
+- ✓ Setup wizard for configuring two Jira connections with test/validation feedback — v0.1.0
+- ✓ Fetch candidate tickets from customer Jira (assigned, mentioned, watched users) with configurable JQL — v0.1.0
+- ✓ Full ticket detail view: summary, description, status, priority, assignee, reporter, labels, components, fix versions, comments, work log, attachments, sub-tasks, linked issues, change history — v0.1.0
+- ✓ Copy ticket core fields with wiki markup → ADF translation and diff preview — v0.1.0
+- ✓ Copy binary attachments, comment threads with attribution, work log entries, sub-tasks as child issues — v0.1.0
+- ✓ Origin tracking via remote link back to source ticket — v0.1.0
+- ✓ Triage workflow: ignore/restore tickets, persistent state across sessions — v0.1.0
+- ✓ In-app audit log viewer with expandable REST API call details — v0.1.0
+- ✓ UI available in English and Slovak, switchable at runtime with persistent preference — v0.1.0
+- ✓ Modern UI with shadcn/ui, Lucide icons, card-based layouts, Linear-inspired aesthetic — v0.1.0
+- ✓ WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, ARIA semantics, live regions — v0.1.0
+- ✓ Cross-platform binary distribution with tag-triggered CI (macOS, Windows, Linux) — v0.1.0
+- ✓ Auto-update via Tauri updater plugin with blocking modal — v0.1.0
+- ✓ Changelog generation from conventional commits and version sync tooling — v0.1.0
+- ✓ Biome + clippy pedantic linting, 80% test coverage with threshold enforcement — v0.1.0
+- ✓ GitHub Actions CI (lint + type-check + test + clippy + fmt) — v0.1.0
 
 ### Active
 
@@ -49,7 +49,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ## Context
 
-Shipped v1.0 with 16,284 LOC (11,711 TypeScript + 4,573 Rust).
+Shipped v0.1.0 with 16,284 LOC (11,711 TypeScript + 4,573 Rust).
 Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf).
 389 frontend tests (Vitest), 28 Rust tests, 80.11% line coverage.
 GitHub Actions CI with parallel frontend + Rust jobs.
@@ -67,15 +67,15 @@ Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v1.0 |
-| OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v1.0 |
-| One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v1.0 |
-| Mock server from day one | No test PATs available, dev independence | ✓ Good — v1.0 |
-| shadcn/ui + Lucide for UI | Consistent design system, accessible by default | ✓ Good — v1.0 |
-| i18next for internationalization | Runtime switching, persistent preference via SQLite | ✓ Good — v1.0 |
-| Public releases repo for binaries | Keep source private, publish to Mimo01/pmkar-releases | ✓ Good — v1.0 |
-| Tauri updater plugin for auto-updates | Native mechanism with signed artifacts | ✓ Good — v1.0 |
+| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v0.1.0 |
+| OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v0.1.0 |
+| One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v0.1.0 |
+| Mock server from day one | No test PATs available, dev independence | ✓ Good — v0.1.0 |
+| shadcn/ui + Lucide for UI | Consistent design system, accessible by default | ✓ Good — v0.1.0 |
+| i18next for internationalization | Runtime switching, persistent preference via SQLite | ✓ Good — v0.1.0 |
+| Public releases repo for binaries | Keep source private, publish to Mimo01/pmkar-releases | ✓ Good — v0.1.0 |
+| Tauri updater plugin for auto-updates | Native mechanism with signed artifacts | ✓ Good — v0.1.0 |
 | Excel export deferred | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-25 after v1.0 milestone*
+*Last updated: 2026-03-25 after v0.1.0 milestone*

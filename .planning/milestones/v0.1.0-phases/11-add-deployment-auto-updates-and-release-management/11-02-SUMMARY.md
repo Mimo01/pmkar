@@ -41,7 +41,7 @@ key-decisions:
   - "scripts/bump-version.mjs uses JSON.parse/JSON.stringify for .json files (preserves field order, 2-space indent) and regex for Cargo.toml [package] section only"
 
 patterns-established:
-  - "Release pattern: git tag v1.0.0 -> push tag -> release.yml builds all platforms -> publishes to AurelianSpowormo/pmkar-releases"
+  - "Release pattern: git tag v0.1.0.0 -> push tag -> release.yml builds all platforms -> publishes to AurelianSpowormo/pmkar-releases"
   - "Version sync: always run node scripts/bump-version.mjs <version> before tagging to keep package.json + tauri.conf.json + Cargo.toml in sync"
   - "Conventional commits map to cliff.toml groups: feat->Features, fix->Bug Fixes, refactor->Refactoring, etc."
 

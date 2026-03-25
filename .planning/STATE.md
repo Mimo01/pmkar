@@ -1,8 +1,8 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v0.1.0
 milestone_name: milestone
-status: v1.0 milestone complete
+status: v0.1.0 milestone complete
 stopped_at: Completed quick task 260325-t3p
 last_updated: "2026-03-25T20:01:17.932Z"
 last_activity: "2026-03-25 - Completed quick task 260325-sxj: Hide copy to company Jira button on dismissed tickets"
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v1.0 shipped — planning next milestone
+**Current focus:** v0.1.0 shipped — planning next milestone
 
 ## Current Position
 

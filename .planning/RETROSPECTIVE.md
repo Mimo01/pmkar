@@ -2,7 +2,7 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
-## Milestone: v1.0 — MVP
+## Milestone: v0.1.0 — MVP
 
 **Shipped:** 2026-03-25
 **Phases:** 11 | **Plans:** 45 | **Tasks:** 84
@@ -55,13 +55,13 @@
 
 | Milestone | Phases | Plans | Key Change |
 |-----------|--------|-------|------------|
-| v1.0 | 11 | 45 | Baseline established — mock-first, phase-gated, Zustand-centric |
+| v0.1.0 | 11 | 45 | Baseline established — mock-first, phase-gated, Zustand-centric |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | LOC |
 |-----------|-------|----------|-----|
-| v1.0 | 389 + 28 Rust | 80.11% | 16,284 |
+| v0.1.0 | 389 + 28 Rust | 80.11% | 16,284 |
 
 ### Top Lessons (Verified Across Milestones)
 

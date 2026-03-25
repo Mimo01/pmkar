@@ -1,6 +1,6 @@
 # Milestones
 
-## v1.0 MVP (Shipped: 2026-03-25)
+## v0.1.0 MVP (Shipped: 2026-03-25)
 
 **Phases:** 11 | **Plans:** 45 | **Tasks:** 84
 **Timeline:** 6 days (2026-03-19 → 2026-03-25)
@@ -25,12 +25,12 @@ Per milestone audit (tech_debt status):
 - INT-02: Hardcoded `MYPROJ` cloud project key — copy fails against real Jira Cloud with different project key
 - INT-01: `CopyResultModal` step label mismatch (cosmetic)
 - INT-03: Attachment upload HTTP calls bypass audit middleware
-- 19 tech debt items documented in `.planning/milestones/v1.0-MILESTONE-AUDIT.md`
+- 19 tech debt items documented in `.planning/milestones/v0.1.0-MILESTONE-AUDIT.md`
 
 ### Archives
 
-- [Roadmap](milestones/v1.0-ROADMAP.md)
-- [Requirements](milestones/v1.0-REQUIREMENTS.md)
-- [Audit](milestones/v1.0-MILESTONE-AUDIT.md)
+- [Roadmap](milestones/v0.1.0-ROADMAP.md)
+- [Requirements](milestones/v0.1.0-REQUIREMENTS.md)
+- [Audit](milestones/v0.1.0-MILESTONE-AUDIT.md)
 
 ---

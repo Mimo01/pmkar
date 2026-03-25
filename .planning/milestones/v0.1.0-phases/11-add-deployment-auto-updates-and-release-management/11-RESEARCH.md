@@ -16,7 +16,7 @@
 - **D-04:** Check for updates automatically on app launch (silent check, non-blocking)
 - **D-05:** When an update is found, show a **modal dialog** with changelog and "Update" / "Later" buttons — blocking to ensure user sees the update
 - **D-06:** Add an "About / Updates" section in Settings with current version info and a "Check for updates" button for manual checks
-- **D-07:** Releases triggered by **git tag push** (e.g., `v1.0.0`) on the private source repo — CI builds all platforms, then publishes to the public releases repo
+- **D-07:** Releases triggered by **git tag push** (e.g., `v0.1.0.0`) on the private source repo — CI builds all platforms, then publishes to the public releases repo
 - **D-08:** Workflow generates the Tauri updater JSON manifest alongside binaries
 - **D-09:** Skip Apple notarization for now — macOS users see Gatekeeper "unidentified developer" warning. Workflow structured so notarization can be added later via secrets.
 - **D-10:** Skip Windows code signing for now — SmartScreen warning on first run. Add signing cert via secrets later.

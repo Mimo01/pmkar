@@ -90,7 +90,7 @@
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Git tag push | Push v1.0.0 tag → CI builds + publishes to public repo | ✓ |
+| Git tag push | Push v0.1.0.0 tag → CI builds + publishes to public repo | ✓ |
 | Manual workflow dispatch | Click 'Run workflow' in GitHub Actions | |
 | Both | Tag push for normal, manual for hotfixes | |
 

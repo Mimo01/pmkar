@@ -24,7 +24,7 @@ Build, distribute, and auto-update the Tauri desktop app across macOS, Windows, 
 - **D-06:** Add an "About / Updates" section in Settings with current version info and a "Check for updates" button for manual checks
 
 ### Release Workflow
-- **D-07:** Releases triggered by **git tag push** (e.g., `v1.0.0`) on the private source repo — CI builds all platforms, then publishes to the public releases repo
+- **D-07:** Releases triggered by **git tag push** (e.g., `v0.1.0.0`) on the private source repo — CI builds all platforms, then publishes to the public releases repo
 - **D-08:** Workflow generates the Tauri updater JSON manifest alongside binaries
 
 ### Code Signing
