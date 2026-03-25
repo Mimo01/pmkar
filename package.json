@@ -14,7 +14,8 @@
     "tauri:dev": "tauri dev -- --features mock-server",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "format": "biome format --write src/",
+    "changelog": "git cliff --config cliff.toml -o CHANGELOG.md"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
