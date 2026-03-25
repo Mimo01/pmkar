@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock Tauri invoke
 vi.mock('@tauri-apps/api/core', () => ({
-  invoke: vi.fn(),
+  invoke: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock connectionStore
@@ -92,6 +92,8 @@ function buildStoreState(overrides: Record<string, unknown> = {}) {
     setTargetPriorityId: mockSetTargetPriorityId,
     toggleLabel: mockToggleLabel,
     startPreview: vi.fn(),
+    targetProjectKey: '',
+    setTargetProjectKey: vi.fn(),
     ...overrides,
   };
 }
@@ -190,7 +192,7 @@ describe('CopyPreviewModal', () => {
   it('Confirm button invokes copy_ticket with selected values (COPY-01)', () => {
     render(<CopyPreviewModal />);
 
-    fireEvent.click(screen.getByText('Copy to Company Jira'));
+    fireEvent.click(screen.getByText(/copy to/i));
 
     expect(mockConfirmCopy).toHaveBeenCalledWith(
       'http://server.example.com',

@@ -105,8 +105,8 @@ describe('IgnoredTicketsPage', () => {
   it('shows empty state when no ignored tickets', () => {
     setupStore([ticket3], { 'TEST-3': { state: 'seen', copiedKey: null } });
     render(<IgnoredTicketsPage />);
-    expect(screen.getByText('No ignored tickets')).toBeInTheDocument();
-    expect(screen.getByText(/Not for me/)).toBeInTheDocument();
+    expect(screen.getByText('No dismissed tickets')).toBeInTheDocument();
+    expect(screen.getByText(/Tickets you dismiss will appear here/)).toBeInTheDocument();
   });
 
   it('only ignored tickets are shown', () => {

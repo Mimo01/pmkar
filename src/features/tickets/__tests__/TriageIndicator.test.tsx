@@ -57,8 +57,8 @@ describe('TriageIndicator', () => {
 
   it('renders ignored indicator for ignored state', () => {
     render(<TriageIndicator state="ignored" />);
-    // The ignored indicator shows 'Not for me' (en translation of 'detail.ignore')
-    expect(screen.getByText(/not for me|detail\.ignore/i)).toBeInTheDocument();
+    // The ignored indicator shows 'Dismiss' (en translation of 'detail.ignore')
+    expect(screen.getByText(/dismiss|detail\.ignore/i)).toBeInTheDocument();
   });
 
   it('renders empty span for seen state', () => {

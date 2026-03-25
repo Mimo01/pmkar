@@ -164,8 +164,8 @@ describe('TicketDetailPage', () => {
     render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
 
     await waitFor(() => {
-      // "Not for me" is the en translation for detail.ignore
-      expect(screen.getByText(/not for me|detail\.ignore/i)).toBeInTheDocument();
+      // "Dismiss" is the en translation for detail.ignore
+      expect(screen.getByText(/dismiss|detail\.ignore/i)).toBeInTheDocument();
     });
   });
 

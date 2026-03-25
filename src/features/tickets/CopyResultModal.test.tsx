@@ -101,7 +101,7 @@ describe('CopyResultModal', () => {
     mockStoreState();
     render(<CopyResultModal />);
 
-    const openBtn = screen.getByText('Open in Company Jira');
+    const openBtn = screen.getByText('Open in Company Jira Cloud');
     expect(openBtn).toBeInTheDocument();
 
     fireEvent.click(openBtn);
@@ -227,7 +227,7 @@ describe('CopyResultModal', () => {
     });
     render(<CopyResultModal />);
     expect(screen.getByText('Copy Finished with Errors')).toBeInTheDocument();
-    // Should still show Open in Company Jira since create_issue succeeded
-    expect(screen.getByText('Open in Company Jira')).toBeInTheDocument();
+    // Should still show Open in Company Jira Cloud since create_issue succeeded
+    expect(screen.getByText('Open in Company Jira Cloud')).toBeInTheDocument();
   });
 });

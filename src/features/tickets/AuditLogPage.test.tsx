@@ -160,7 +160,7 @@ describe('AuditLogPage', () => {
       expect(screen.getByText('200')).toBeTruthy();
     });
     const status200 = screen.getByText('200');
-    expect(status200.className).toContain('text-green-400');
+    expect(status200.className).toContain('text-emerald-400');
     const status401 = screen.getByText('401');
     expect(status401.className).toContain('text-red-400');
   });

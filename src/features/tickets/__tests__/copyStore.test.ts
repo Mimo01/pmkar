@@ -158,7 +158,7 @@ describe('copyStore', () => {
       const state = useCopyStore.getState();
       expect(state.phase).toBe('idle');
       expect(state.error).toBe(
-        'Could not load target fields. Check your Company Jira connection in Settings.',
+        'Could not load target fields. Check your destination connection in Settings.',
       );
     });
   });
