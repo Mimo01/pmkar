@@ -209,6 +209,8 @@
   "ignored.confirm.action": "Ignorovať tiket",
   "audit.empty.heading": "Zatiaľ žiadne API volania",
   "audit.empty.body": "Načítajte alebo skopírujte tiket pre zobrazenie aktivity.",
+  "audit.loadMore": "Načítať viac",
+  "audit.loadingMore": "Načítava sa...",
   "error.fetchFailed": "Nepodarilo sa načítať tikety. Skontrolujte pripojenie v Nastaveniach a skúste znova.",
   "error.copyFailed": "Kopírovanie sa nedokončilo. Skontrolujte audit log pre detaily.",
   "settings.group.about": "O aplikácii",

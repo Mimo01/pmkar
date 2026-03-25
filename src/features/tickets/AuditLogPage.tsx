@@ -103,17 +103,26 @@ function methodColor(method: string): string {
   return 'text-brand-muted';
 }
 
+const PAGE_SIZE = 50;
+
 export function AuditLogPage({ onClose }: AuditLogPageProps) {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    invoke<AuditEntry[]>('get_audit_logs')
+    invoke<AuditEntry[]>('get_audit_logs_page', { offset: 0, limit: PAGE_SIZE })
       .then((data) => {
         setEntries(data);
+        setOffset(data.length);
+        if (data.length < PAGE_SIZE) {
+          setHasMore(false);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -121,6 +130,23 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
         setLoading(false);
       });
   }, []);
+
+  async function loadMore() {
+    setLoadingMore(true);
+    try {
+      const data = await invoke<AuditEntry[]>('get_audit_logs_page', {
+        offset,
+        limit: PAGE_SIZE,
+      });
+      setEntries((prev) => [...prev, ...data]);
+      setOffset((prev) => prev + data.length);
+      if (data.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -341,6 +367,18 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               ))}
             </tbody>
           </table>
+          {hasMore && entries.length > 0 && (
+            <div className="flex justify-center py-4">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-4 py-2 text-sm font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded-md transition-colors duration-150 disabled:opacity-50"
+              >
+                {loadingMore ? t('audit.loadingMore') : t('audit.loadMore')}
+              </button>
+            </div>
+          )}
         </ScrollArea>
       )}
     </div>

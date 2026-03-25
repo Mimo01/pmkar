@@ -26,6 +26,19 @@ fn main() {
             let db_path = app_dir.join("audit.db");
             let audit_db = AuditDb::open(&db_path).expect("Failed to open audit database");
 
+            // Retention: delete entries older than 30 days
+            if let Err(e) = audit_db.prune_old_entries(30) {
+                eprintln!("Audit prune failed: {e}");
+            }
+            // Drop response bodies older than 7 days
+            if let Err(e) = audit_db.prune_response_bodies(7) {
+                eprintln!("Audit body prune failed: {e}");
+            }
+            // Reclaim disk space
+            if let Err(e) = audit_db.vacuum() {
+                eprintln!("Audit vacuum failed: {e}");
+            }
+
             app.manage(Arc::new(Mutex::new(audit_db)));
 
             let triage_db_path = app_dir.join("triage.db");
@@ -55,6 +68,7 @@ fn main() {
             commands::delete_credential,
             commands::start_mock_servers_cmd,
             commands::get_audit_logs,
+            commands::get_audit_logs_page,
             commands::clear_audit_logs,
             commands::get_audit_count,
             commands::ping_mock_servers,
