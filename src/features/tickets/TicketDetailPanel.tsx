@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -53,6 +54,10 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
       ...useTicketStore.getState().triageMap,
       [issueKey]: { state: 'seen', copiedKey: null },
     });
+  };
+
+  const handleOpenInJira = () => {
+    invoke('open_external_url', { url: `${baseUrl}/browse/${issueKey}` });
   };
 
   // Fetch detail on mount or key change
@@ -179,6 +184,14 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                 {detail.fields.priority.name}
               </span>
               <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleOpenInJira}
+                  className="px-3 py-1 rounded text-sm text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors flex items-center gap-1"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t('detail.openInJira')}
+                </button>
                 {isCopied ? null : isIgnored ? (
                   <button
                     type="button"

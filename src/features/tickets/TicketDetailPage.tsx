@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -71,6 +71,10 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       [issueKey]: { state: 'seen', copiedKey: null },
     });
   }, [issueKey]);
+
+  const handleOpenInJira = () => {
+    invoke('open_external_url', { url: `${baseUrl}/browse/${issueKey}` });
+  };
 
   // Fetch detail on mount or key change
   useEffect(() => {
@@ -250,6 +254,14 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                   {t('detail.ignore')}
                 </button>
               ))}
+            <button
+              type="button"
+              onClick={handleOpenInJira}
+              className="text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 flex items-center gap-1"
+            >
+              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+              {t('detail.openInJira')}
+            </button>
           </div>
 
           {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
