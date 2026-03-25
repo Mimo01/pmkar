@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-qq8
-last_updated: "2026-03-25T19:20:00Z"
-last_activity: "2026-03-25 - Completed quick task 260325-qq8: Add created date to issue detail header"
+stopped_at: Completed quick task 260325-sk0
+last_updated: "2026-03-25T19:39:34.075Z"
+last_activity: "2026-03-25 - Completed quick task 260325-sa2: Custom About modal triggered from native macOS app menu"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -234,10 +234,12 @@ None yet.
 | 260325-qw2 | Rename Not Mine to Dismissed, add info card, show project names in labels | 2026-03-25 | 0707ea4 | Verified | [260325-qw2-make-not-mine-ignored-clearer-to-users-a](./quick/260325-qw2-make-not-mine-ignored-clearer-to-users-a/) |
 | 260325-s97 | Redesign Jira links section with grouped layout and direction icons | 2026-03-25 | 252a065 | | [260325-s97-redesign-jira-links-section-on-ticket-de](./quick/260325-s97-redesign-jira-links-section-on-ticket-de/) |
 | 260325-sa2 | Custom About modal from native macOS menu | 2026-03-25 | 40dfb7d | | [260325-sa2-add-a-custom-about-the-app-modal-that-wi](./quick/260325-sa2-add-a-custom-about-the-app-modal-that-wi/) |
+| 260325-sjh | Redesign Jira linked ticket state UI with compact badge and inline links | 2026-03-25 | 73aa8db | | [260325-sjh-redesign-jira-linked-ticket-state-ui](./quick/260325-sjh-redesign-jira-linked-ticket-state-ui/) |
+| 260325-sk0 | Version history and changelog viewer in About modal | 2026-03-25 | 1c5994f | | [260325-sk0-i-want-the-user-to-be-able-to-see-versio](./quick/260325-sk0-i-want-the-user-to-be-able-to-see-versio/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-sa2: Custom About modal triggered from native macOS app menu
-Last session: 2026-03-25T19:31:00Z
-Stopped at: Completed quick task 260325-sa2
+Last activity: 2026-03-25 - Completed quick task 260325-sk0: Version history and changelog viewer in About modal
+Last session: 2026-03-25T19:43:00Z
+Stopped at: Completed quick task 260325-sk0
 Resume file: None
