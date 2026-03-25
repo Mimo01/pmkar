@@ -221,3 +221,23 @@ Plans:
 - [x] 10-03-PLAN.md — Dependency upgrades (npm: Vite 8, TS 6, plugin-react 6; Rust: cargo update)
 - [x] 10-04-PLAN.md — Vitest coverage tooling, write store/utility tests, enforce 80% threshold
 - [x] 10-05-PLAN.md — GitHub Actions CI workflow (frontend + Rust jobs)
+
+### Phase 11: Add deployment, auto-updates, and release management
+
+**Goal:** Cross-platform binary distribution with auto-update — tag-triggered CI builds macOS universal, Windows, and Linux binaries, publishes to a public releases repo, and the app checks for updates on launch with a blocking modal for user notification
+**Requirements**: D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11
+**Depends on:** Phase 10
+**Success Criteria** (what must be TRUE):
+  1. A git tag push triggers a multi-platform build that produces macOS universal DMG, Windows MSI, and Linux deb + AppImage binaries
+  2. Built binaries and Tauri updater manifest (latest.json) are published to a separate public GitHub releases repo
+  3. The app checks for updates silently on launch and shows a blocking modal when an update is available
+  4. Settings page has an About section with current version, last-checked timestamp, and manual Check for updates button
+  5. Changelog is auto-generated from conventional commits for each release
+  6. Updater artifacts are signed (public key in tauri.conf.json, private key in CI secrets)
+**Plans:** 4 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Tauri updater + process plugin registration, capabilities file, tauri.conf.json updater config
+- [ ] 11-02-PLAN.md — GitHub Actions release workflow, git-cliff changelog config, version bump script
+- [ ] 11-03-PLAN.md — Update Zustand store, About/Updates settings section, blocking update modal, i18n keys, tests
+- [ ] 11-04-PLAN.md — Quality gate checks and visual verification checkpoint
