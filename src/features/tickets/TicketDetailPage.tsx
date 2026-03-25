@@ -3,6 +3,8 @@ import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
@@ -213,28 +215,22 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           <div className="flex items-center gap-3 mb-6 text-xs text-brand-muted flex-wrap">
             <StatusBadge status={detail.fields.status.name} />
             <span>{detail.fields.priority.name}</span>
-            {detail.fields.assignee?.displayName && (
-              <span>{detail.fields.assignee.displayName}</span>
-            )}
-            {detail.fields.reporter?.displayName && (
-              <span>{detail.fields.reporter.displayName}</span>
-            )}
           </div>
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 mb-6 flex-wrap">
+          <div className="inline-flex items-center gap-2 flex-wrap rounded-lg border border-brand-border bg-brand-surface/50 px-3 py-2 mb-6">
             {!isCopied && (
-              <button
-                type="button"
+              <Button
+                variant="default"
+                size="sm"
                 onClick={handleStartCopy}
                 disabled={copyPhase === 'loading_preview'}
-                className="bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150 flex items-center gap-1.5"
               >
                 {copyPhase === 'loading_preview' ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                 ) : null}
                 {t('detail.copy')}
-              </button>
+              </Button>
             )}
             {isCopied && (
               <Badge className="bg-green-600/10 text-green-600 border-green-600/20">
@@ -244,50 +240,31 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             )}
             {!isCopied &&
               (isIgnored ? (
-                <button
-                  type="button"
-                  onClick={handleUnignore}
-                  className="text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 px-3 py-1 rounded border border-brand-border hover:border-brand-text"
-                >
+                <Button variant="ghost" size="sm" onClick={handleUnignore}>
                   {t('detail.ignored')}
-                </button>
+                </Button>
               ) : (
-                <button
-                  type="button"
-                  onClick={handleIgnore}
-                  className="text-sm text-brand-muted hover:text-brand-text transition-colors duration-150"
-                >
+                <Button variant="ghost" size="sm" onClick={handleIgnore}>
                   {t('detail.ignore')}
-                </button>
+                </Button>
               ))}
+            <Separator orientation="vertical" className="h-5" />
             {isCopied && triageEntry?.copiedKey ? (
               <>
-                <button
-                  type="button"
-                  onClick={handleOpenInJira}
-                  className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-                >
+                <Button variant="outline" size="sm" onClick={handleOpenInJira}>
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   {t('detail.openInSourceJira')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleOpenInCloudJira}
-                  className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-                >
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   {t('detail.openInCompanyJira')}
-                </button>
+                </Button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={handleOpenInJira}
-                className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-              >
+              <Button variant="outline" size="sm" onClick={handleOpenInJira}>
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                 {t('detail.openInJira')}
-              </button>
+              </Button>
             )}
           </div>
 
