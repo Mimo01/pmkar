@@ -197,7 +197,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
               {isCopied && triageEntry?.copiedKey ? (
                 <>
                   {/* Primary: linked status badge with copied key */}
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
                     <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                     {t('detail.copied')} → {triageEntry.copiedKey}
                   </span>

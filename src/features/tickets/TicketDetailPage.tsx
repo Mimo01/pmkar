@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -225,48 +225,48 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
               </Button>
             )}
-            {isCopied && (
-              <Badge className="bg-green-600/10 text-green-600 border-green-600/20 px-4 py-2 text-sm">
-                {t('detail.copied')}
-                {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
-              </Badge>
-            )}
-            {!isCopied &&
-              (isIgnored ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="secondary" size="lg" onClick={handleUnignore}>
-                      {t('detail.ignored')}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.ignored.tooltip')}</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="secondary" size="lg" onClick={handleIgnore}>
-                      {t('detail.ignore')}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
-                </Tooltip>
-              ))}
             {isCopied && triageEntry?.copiedKey ? (
               <>
-                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
+                {/* Linked status badge */}
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
+                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.copied')} → {triageEntry.copiedKey}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {sourceProjectName || t('wizard.source.subtitle')}
                 </Button>
-                <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {triageEntry.copiedKey}
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                {t('detail.openInJira')}
-              </Button>
+              <>
+                {isIgnored ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" size="lg" onClick={handleUnignore}>
+                        {t('detail.ignored')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent aria-hidden="true">{t('detail.ignored.tooltip')}</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                        {t('detail.ignore')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
+                  </Tooltip>
+                )}
+                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.openInJira')}
+                </Button>
+              </>
             )}
           </div>
           </TooltipProvider>
