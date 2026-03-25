@@ -234,10 +234,10 @@ Plans:
   4. Settings page has an About section with current version, last-checked timestamp, and manual Check for updates button
   5. Changelog is auto-generated from conventional commits for each release
   6. Updater artifacts are signed (public key in tauri.conf.json, private key in CI secrets)
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 - [ ] 11-01-PLAN.md — Tauri updater + process plugin registration, capabilities file, tauri.conf.json updater config
-- [ ] 11-02-PLAN.md — GitHub Actions release workflow, git-cliff changelog config, version bump script
+- [x] 11-02-PLAN.md — GitHub Actions release workflow, git-cliff changelog config, version bump script
 - [ ] 11-03-PLAN.md — Update Zustand store, About/Updates settings section, blocking update modal, i18n keys, tests
 - [ ] 11-04-PLAN.md — Quality gate checks and visual verification checkpoint
