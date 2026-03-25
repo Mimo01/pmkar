@@ -214,6 +214,7 @@ impl TriageDb {
         Ok(())
     }
 
+    #[allow(clippy::type_complexity)]
     pub fn get_project_keys(
         &self,
     ) -> AppResult<(

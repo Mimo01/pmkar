@@ -6,6 +6,7 @@ use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Emitter;
 use tauri::Manager;
 
+#[allow(clippy::too_many_lines)]
 fn main() {
     let fixtures = build_fixtures();
 
