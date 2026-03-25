@@ -1,4 +1,10 @@
 
+## [Unreleased]
+
+### Documentation
+
+- complete deploy v0.2.0 release plan summary and state update
+## [0.2.0]
 
 ### Bug Fixes
 
@@ -101,6 +107,7 @@
 
 ### Miscellaneous
 
+- bump version to 0.2.0
 - generate CHANGELOG.md and add changelog npm script
 
 ### Refactoring
@@ -110,6 +117,7 @@
 ### Testing
 
 - add TicketFilterBar unit and integration tests
+## [1.0]
 
 ### Bug Fixes
 
