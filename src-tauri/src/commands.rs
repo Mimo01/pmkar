@@ -396,14 +396,6 @@ pub fn clear_audit_logs(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<(), AppErr
 }
 
 #[tauri::command]
-pub fn get_audit_count(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<i64, AppError> {
-    let db = db
-        .lock()
-        .map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
-    db.count()
-}
-
-#[tauri::command]
 pub fn get_audit_logs_page(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     offset: i64,

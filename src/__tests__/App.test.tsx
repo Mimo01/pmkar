@@ -37,7 +37,6 @@ describe('App', () => {
       if (cmd === 'get_all_connection_meta') return Promise.resolve([]);
       if (cmd === 'get_app_language') return Promise.resolve('en');
       if (cmd === 'get_os_locale') return Promise.resolve('en-US');
-      if (cmd === 'get_audit_count') return Promise.resolve(0);
       return Promise.resolve(null);
     });
   });
@@ -68,7 +67,6 @@ describe('App', () => {
       }
       if (cmd === 'get_app_language') return Promise.resolve('en');
       if (cmd === 'get_os_locale') return Promise.resolve('en-US');
-      if (cmd === 'get_audit_count') return Promise.resolve(0);
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config') {
         return Promise.resolve({
@@ -143,7 +141,6 @@ describe('App', () => {
       }
       if (cmd === 'get_app_language') return Promise.resolve('en');
       if (cmd === 'get_os_locale') return Promise.resolve('en-US');
-      if (cmd === 'get_audit_count') return Promise.resolve(0);
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config') {
         return Promise.resolve({

@@ -64,7 +64,6 @@ function App() {
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
   const [currentTab, setCurrentTab] = useState<'new' | 'not-mine' | 'linked'>('new');
   const [showAuditLog, setShowAuditLog] = useState(false);
-  const [auditCount, setAuditCount] = useState(0);
   const [showDetail, setShowDetail] = useState(false);
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
 
@@ -82,20 +81,6 @@ function App() {
     setShowDetail(false);
     setDetailTicketKey(null);
     useTicketStore.getState().selectTicket(null);
-  }, []);
-
-  useEffect(() => {
-    if (hydrated && hasSetup) {
-      invoke<number>('get_audit_count')
-        .then(setAuditCount)
-        .catch(() => {});
-    }
-  }, [hydrated, hasSetup]);
-
-  const refreshAuditCount = useCallback(() => {
-    invoke<number>('get_audit_count')
-      .then(setAuditCount)
-      .catch(() => {});
   }, []);
 
   // Wait for hydration before deciding what to show
@@ -144,10 +129,7 @@ function App() {
       <ErrorBoundary>
         <AppShell>
           <AuditLogPage
-            onClose={() => {
-              setShowAuditLog(false);
-              refreshAuditCount();
-            }}
+            onClose={() => setShowAuditLog(false)}
           />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
@@ -186,7 +168,6 @@ function App() {
         }}
         activeTab={currentTab}
         onTabChange={setCurrentTab}
-        auditCount={auditCount}
         onAuditClick={() => {
           setShowDetail(false);
           setDetailTicketKey(null);

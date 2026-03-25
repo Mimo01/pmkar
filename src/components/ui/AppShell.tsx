@@ -8,7 +8,6 @@ interface AppShellProps {
   onGearClick?: () => void;
   activeTab?: 'new' | 'not-mine' | 'linked';
   onTabChange?: (tab: 'new' | 'not-mine' | 'linked') => void;
-  auditCount?: number;
   onAuditClick?: () => void;
 }
 
@@ -17,7 +16,6 @@ export function AppShell({
   onGearClick,
   activeTab,
   onTabChange,
-  auditCount,
   onAuditClick,
 }: AppShellProps) {
   const { t } = useTranslation();
@@ -48,11 +46,6 @@ export function AppShell({
                     className="relative flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
                   >
                     <Terminal className="w-[15px] h-[15px]" aria-hidden="true" />
-                    {(auditCount ?? 0) > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 text-[9px] bg-brand text-white rounded-full min-w-[14px] h-[14px] flex items-center justify-center pointer-events-none">
-                        {auditCount}
-                      </span>
-                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent aria-hidden="true">{t('audit.open')}</TooltipContent>
