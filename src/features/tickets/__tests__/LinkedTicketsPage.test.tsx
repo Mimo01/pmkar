@@ -12,6 +12,7 @@ const makeTicket = (key: string, updated = '2024-01-01T00:00:00.000Z'): JiraTick
     status: { name: 'Done' },
     priority: { name: 'Medium', id: '3' },
     assignee: null,
+    created: updated,
     updated,
   },
 });

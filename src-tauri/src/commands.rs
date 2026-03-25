@@ -672,7 +672,7 @@ pub async fn fetch_tickets(
 
     let encoded_jql = urlencoding::encode(&jql);
     let url = format!(
-        "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,updated,labels,components,fixVersions&maxResults=50"
+        "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions&maxResults=50"
     );
 
     let resp = client

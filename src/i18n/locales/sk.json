@@ -232,6 +232,8 @@
   "update.modal.errorDownload": "Sťahovanie zlyhalo. Skúste znova alebo navštívte stránku vydaní.",
   "update.modal.tryAgain": "Skúsiť znova",
   "tickets.filter.placeholder": "Filtrovať podľa kľúča alebo priradenia...",
+  "tickets.card.created": "Vytvorené {{time}}",
+  "tickets.card.updated": "Aktualizované {{time}}",
   "tickets.filter.keyPlaceholder": "Filtrovať podľa kľúča...",
   "tickets.filter.assigneePlaceholder": "Filtrovať podľa riešiteľa...",
   "tickets.filter.noUsersFound": "Žiadni používatelia",

@@ -232,6 +232,8 @@
   "update.modal.errorDownload": "Download failed. Try again or visit the releases page.",
   "update.modal.tryAgain": "Try again",
   "tickets.filter.placeholder": "Filter by key or assignee...",
+  "tickets.card.created": "Created {{time}}",
+  "tickets.card.updated": "Updated {{time}}",
   "tickets.filter.keyPlaceholder": "Filter by key...",
   "tickets.filter.assigneePlaceholder": "Filter by assignee...",
   "tickets.filter.noUsersFound": "No users found",

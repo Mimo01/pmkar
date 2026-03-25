@@ -309,6 +309,7 @@ mod v2 {
                 "attachment": [],
                 "subtasks": [],
                 "issuelinks": [],
+                "created": now,
                 "updated": now
             }),
         };
@@ -587,6 +588,7 @@ mod v3 {
                 "attachment": [],
                 "subtasks": [],
                 "issuelinks": [],
+                "created": now,
                 "updated": now
             }),
         };

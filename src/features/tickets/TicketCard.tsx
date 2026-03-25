@@ -1,4 +1,5 @@
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '../../lib/format';
 import type { JiraTicket, TriageEntry } from './types';
@@ -51,6 +52,7 @@ interface TicketCardProps {
 // --- TicketCard component ---
 
 export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -58,21 +60,27 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
       aria-label={ticket.fields.summary}
       className="w-full text-left px-4 py-3 cursor-pointer transition-colors duration-150 hover:bg-brand-surface-hover border-b border-brand-border focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
     >
-      {/* Line 1: ticket key + relative time */}
+      {/* Line 1: ticket key + dates on right */}
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
         <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
           {actionSlot}
-          <span className="text-xs text-brand-muted">
-            {formatRelativeTime(ticket.fields.updated)}
-          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-brand-muted">
+          {ticket.fields.created && (
+            <>
+              <span>{t('tickets.card.created', { time: formatRelativeTime(ticket.fields.created) })}</span>
+              <span className="text-brand-muted/40">·</span>
+            </>
+          )}
+          <span>{t('tickets.card.updated', { time: formatRelativeTime(ticket.fields.updated) })}</span>
         </div>
       </div>
       {/* Line 2: summary */}
       <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-1 mb-1">
         {ticket.fields.summary}
       </p>
-      {/* Line 3: metadata row */}
+      {/* Line 4: metadata row */}
       <div className="flex items-center gap-2">
         <StatusDot status={ticket.fields.status.name} />
         <PriorityDot priority={ticket.fields.priority.name} />

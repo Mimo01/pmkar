@@ -102,6 +102,7 @@ export interface JiraTicket {
     status: JiraStatus;
     priority: JiraPriority;
     assignee: JiraUser | null;
+    created?: string; // ISO 8601 — may be absent for older cached tickets
     updated: string; // ISO 8601
   };
 }

@@ -20,6 +20,7 @@ const ticket1: JiraTicket = {
     status: { name: 'Open', id: '1' },
     priority: { name: 'High', id: '2' },
     assignee: { displayName: 'Alice' },
+    created: '2026-01-10T10:00:00.000Z',
     updated: '2026-01-10T10:00:00.000Z',
   },
 };
@@ -32,6 +33,7 @@ const ticket2: JiraTicket = {
     status: { name: 'In Progress', id: '3' },
     priority: { name: 'Medium', id: '3' },
     assignee: { displayName: 'Bob' },
+    created: '2026-01-11T10:00:00.000Z',
     updated: '2026-01-11T10:00:00.000Z',
   },
 };
@@ -44,6 +46,7 @@ const ticket3: JiraTicket = {
     status: { name: 'Done', id: '5' },
     priority: { name: 'Low', id: '4' },
     assignee: null,
+    created: '2026-01-12T10:00:00.000Z',
     updated: '2026-01-12T10:00:00.000Z',
   },
 };

@@ -27,6 +27,7 @@ const makeTicket = (
     status: { name: 'Open' },
     priority: { name: 'Medium', id: '3' },
     assignee: assigneeName ? { displayName: assigneeName } : null,
+    created: updated,
     updated,
   },
 });
