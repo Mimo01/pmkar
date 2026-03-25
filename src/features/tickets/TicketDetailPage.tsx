@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate, formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
@@ -209,19 +210,25 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           </p>
 
           {/* Action buttons */}
+          <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
             {!isCopied && (
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleStartCopy}
-                disabled={copyPhase === 'loading_preview'}
-              >
-                {copyPhase === 'loading_preview' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                ) : null}
-                {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    onClick={handleStartCopy}
+                    disabled={copyPhase === 'loading_preview'}
+                  >
+                    {copyPhase === 'loading_preview' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    ) : null}
+                    {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent aria-hidden="true">{t('detail.copy.tooltip')}</TooltipContent>
+              </Tooltip>
             )}
             {isCopied && (
               <Badge className="bg-green-600/10 text-green-600 border-green-600/20 px-4 py-2 text-sm">
@@ -231,32 +238,58 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             )}
             {!isCopied &&
               (isIgnored ? (
-                <Button variant="secondary" size="lg" onClick={handleUnignore}>
-                  {t('detail.ignored')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="secondary" size="lg" onClick={handleUnignore}>
+                      {t('detail.ignored')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">{t('detail.ignored.tooltip')}</TooltipContent>
+                </Tooltip>
               ) : (
-                <Button variant="secondary" size="lg" onClick={handleIgnore}>
-                  {t('detail.ignore')}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                      {t('detail.ignore')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
+                </Tooltip>
               ))}
             {isCopied && triageEntry?.copiedKey ? (
               <>
-                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
-                </Button>
-                <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                      {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
+                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                      {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
+                </Tooltip>
               </>
             ) : (
-              <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                {t('detail.openInJira')}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                    <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                    {t('detail.openInJira')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
+              </Tooltip>
             )}
           </div>
+          </TooltipProvider>
 
           {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
 
