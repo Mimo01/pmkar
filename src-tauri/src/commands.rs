@@ -98,6 +98,22 @@ pub struct PriorityOption {
     pub name: String,
 }
 
+// --- Project structs ---
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct JiraProject {
+    pub key: String,
+    pub name: String,
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectConfig {
+    pub source_project_key: Option<String>,
+    pub target_project_key: Option<String>,
+}
+
 // --- Copy ticket structs ---
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -180,10 +196,16 @@ pub async fn fetch_cloud_meta(
         })
         .collect();
 
-    // Fetch project statuses — use hardcoded project key for now
-    // (cloud_project_key not yet in settings; mock server responds to any key)
+    // Fetch project statuses using the configured target project key (falls back to "MYPROJ" for backwards compat)
+    let project_key_for_statuses = {
+        let db = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let (_, target_key) = db.get_project_keys()?;
+        target_key.unwrap_or_else(|| "MYPROJ".to_string())
+    };
     let status_resp = client
-        .get(format!("{base_url}/rest/api/3/project/MYPROJ/statuses"))
+        .get(format!("{base_url}/rest/api/3/project/{project_key_for_statuses}/statuses"))
         .header("Authorization", &auth)
         .send()
         .await
@@ -218,6 +240,129 @@ pub async fn fetch_cloud_meta(
         current_account_id: account_id,
         cloud_base_url: base_url,
     })
+}
+
+// --- Project commands ---
+
+#[tauri::command]
+pub async fn fetch_server_projects(
+    base_url: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<JiraProject>, AppError> {
+    let pat = get_server_pat(triage_db.inner())?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
+
+    let resp = client
+        .get(format!("{trimmed_url}/rest/api/2/project"))
+        .header("Authorization", format!("Bearer {pat}"))
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch projects from Server Jira".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Server /project returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse server projects response".into()))?;
+
+    let projects: Vec<JiraProject> = body
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .filter_map(|p| {
+            Some(JiraProject {
+                key: p["key"].as_str()?.to_string(),
+                name: p["name"].as_str()?.to_string(),
+            })
+        })
+        .collect();
+
+    Ok(projects)
+}
+
+#[tauri::command]
+pub async fn fetch_cloud_projects(
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<JiraProject>, AppError> {
+    let (base_url, email, api_token) = get_cloud_credentials(triage_db.inner())?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+
+    let auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD.encode(format!("{email}:{api_token}"))
+    );
+
+    let resp = client
+        .get(format!("{base_url}/rest/api/3/project"))
+        .header("Authorization", &auth)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to fetch projects from Cloud Jira".into()))?;
+
+    if !resp.status().is_success() {
+        return Err(AppError::Http(format!(
+            "Cloud /project returned status {}",
+            resp.status().as_u16()
+        )));
+    }
+
+    let body: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|_| AppError::Http("Failed to parse cloud projects response".into()))?;
+
+    let projects: Vec<JiraProject> = body
+        .as_array()
+        .unwrap_or(&vec![])
+        .iter()
+        .filter_map(|p| {
+            Some(JiraProject {
+                key: p["key"].as_str()?.to_string(),
+                name: p["name"].as_str()?.to_string(),
+            })
+        })
+        .collect();
+
+    Ok(projects)
+}
+
+#[tauri::command]
+pub fn get_project_config(
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<ProjectConfig, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    let (source_project_key, target_project_key) = db.get_project_keys()?;
+    Ok(ProjectConfig {
+        source_project_key,
+        target_project_key,
+    })
+}
+
+#[tauri::command]
+pub fn set_project_config(
+    source_project_key: Option<String>,
+    target_project_key: Option<String>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<(), AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.set_source_project_key(source_project_key.as_deref())?;
+    db.set_target_project_key(target_project_key.as_deref())?;
+    Ok(())
 }
 
 // --- Credential commands ---
@@ -943,6 +1088,7 @@ pub async fn copy_ticket(
     target_priority_id: String,
     target_labels: Vec<String>,
     current_account_id: String,
+    target_project_key: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<CopyTicketResult, AppError> {
@@ -1016,7 +1162,7 @@ pub async fn copy_ticket(
     // Step 4: Create issue in Cloud with placeholder description (two-pass approach per D-03)
     let create_body = serde_json::json!({
         "fields": {
-            "project": { "key": "MYPROJ" },
+            "project": { "key": target_project_key },
             "issuetype": { "name": "Task" },
             "summary": target_summary,
             "priority": { "id": target_priority_id },
@@ -1671,7 +1817,7 @@ pub async fn copy_ticket(
 
         let st_create_body = serde_json::json!({
             "fields": {
-                "project": { "key": "MYPROJ" },
+                "project": { "key": target_project_key },
                 "issuetype": { "name": "Sub-task" },
                 "summary": st_summary,
                 "parent": { "key": target_key }

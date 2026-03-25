@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
+import { useConnectionStore } from '../connections/connectionStore';
 import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
 
 interface CopyState {
@@ -14,6 +15,7 @@ interface CopyState {
   targetPriorityId: string;
   targetLabels: string[];
   selectedLabels: string[];
+  targetProjectKey: string;
 
   // Cloud metadata (populated from fetch_cloud_meta)
   cloudMeta: CloudMeta | null;
@@ -35,6 +37,7 @@ interface CopyState {
   setTargetDescription: (description: string) => void;
   setTargetStatus: (status: string) => void;
   setTargetPriorityId: (priorityId: string) => void;
+  setTargetProjectKey: (key: string) => void;
   toggleLabel: (label: string) => void;
   confirmCopy: (sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
   reset: () => void;
@@ -50,6 +53,7 @@ const initialState = {
   targetPriorityId: '',
   targetLabels: [],
   selectedLabels: [],
+  targetProjectKey: '',
   cloudMeta: null,
   result: null,
   error: null,
@@ -60,6 +64,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   ...initialState,
 
   startPreview: async (ticket, _sourceBaseUrl, cloudBaseUrl) => {
+    const savedTargetProjectKey = useConnectionStore.getState().targetProjectKey ?? '';
     set({
       phase: 'loading_preview',
       sourceTicket: ticket,
@@ -67,6 +72,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       targetSummary: ticket.fields.summary,
       targetDescription:
         typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
+      targetProjectKey: savedTargetProjectKey,
       error: null,
     });
 
@@ -115,6 +121,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   setTargetDescription: (description) => set({ targetDescription: description }),
   setTargetStatus: (status) => set({ targetStatus: status }),
   setTargetPriorityId: (priorityId) => set({ targetPriorityId: priorityId }),
+  setTargetProjectKey: (key) => set({ targetProjectKey: key }),
 
   toggleLabel: (label) => {
     const current = get().selectedLabels;
@@ -145,6 +152,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetPriorityId: state.targetPriorityId,
         targetLabels: state.selectedLabels,
         currentAccountId: state.cloudMeta?.currentAccountId,
+        targetProjectKey: state.targetProjectKey,
       });
 
       set({ phase: 'result', result, progressStep: '' });

@@ -234,5 +234,12 @@
   "tickets.filter.sortUpdated": "Aktualizované",
   "tickets.filter.showing": "{{count}} zobrazených",
   "tickets.filter.searchLabel": "Filtrovať tikety podľa kľúča alebo priradenia",
-  "tickets.filter.clearSearch": "Vymazať vyhľadávanie"
+  "tickets.filter.clearSearch": "Vymazať vyhľadávanie",
+  "settings.project": "Predvolený projekt",
+  "settings.project.source": "Zdrojový projekt",
+  "settings.project.target": "Cieľový projekt",
+  "settings.project.select": "Vybrať projekt...",
+  "settings.project.loading": "Načítavam projekty...",
+  "settings.project.error": "Nepodarilo sa načítať projekty",
+  "copy.targetProject": "Cieľový projekt"
 }

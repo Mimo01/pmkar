@@ -234,5 +234,12 @@
   "tickets.filter.sortUpdated": "Updated",
   "tickets.filter.showing": "{{count}} shown",
   "tickets.filter.searchLabel": "Filter tickets by key or assignee",
-  "tickets.filter.clearSearch": "Clear search"
+  "tickets.filter.clearSearch": "Clear search",
+  "settings.project": "Default Project",
+  "settings.project.source": "Source Project",
+  "settings.project.target": "Target Project",
+  "settings.project.select": "Select project...",
+  "settings.project.loading": "Loading projects...",
+  "settings.project.error": "Failed to load projects",
+  "copy.targetProject": "Target Project"
 }

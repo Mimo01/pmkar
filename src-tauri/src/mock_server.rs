@@ -382,6 +382,14 @@ mod v2 {
         }
     }
 
+    pub async fn get_projects() -> impl IntoResponse {
+        Json(json!([
+            { "key": "CUSTPROJ", "name": "Customer Project" },
+            { "key": "SUPPORT", "name": "Support Queue" },
+            { "key": "PLATFORM", "name": "Platform Team" }
+        ]))
+    }
+
     /// Serve mock attachment binary content for download
     pub async fn download_attachment(
         Path((_id, filename)): Path<(String, String)>,
@@ -675,6 +683,14 @@ mod v3 {
         ]))
     }
 
+    pub async fn get_projects() -> impl IntoResponse {
+        Json(json!([
+            { "key": "MYPROJ", "name": "My Company Project" },
+            { "key": "DEVOPS", "name": "DevOps" },
+            { "key": "INFRA", "name": "Infrastructure" }
+        ]))
+    }
+
     pub async fn get_project_statuses(Path(_key): Path<String>) -> impl IntoResponse {
         Json(json!([{
             "id": "10001",
@@ -712,6 +728,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
             "/secure/attachment/{id}/{filename}",
             get(v2::download_attachment),
         )
+        .route("/rest/api/2/project", get(v2::get_projects))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
@@ -740,6 +757,7 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
             post(v3::create_remotelink),
         )
         .route("/rest/api/3/priority", get(v3::get_priorities))
+        .route("/rest/api/3/project", get(v3::get_projects))
         .route(
             "/rest/api/3/project/{key}/statuses",
             get(v3::get_project_statuses),
