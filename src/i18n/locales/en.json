@@ -229,5 +229,12 @@
   "update.modal.noChangelog": "No release notes available",
   "update.modal.errorCheck": "Could not check for updates. Check your connection and try again.",
   "update.modal.errorDownload": "Download failed. Try again or visit the releases page.",
-  "update.modal.tryAgain": "Try again"
+  "update.modal.tryAgain": "Try again",
+  "settings.project": "Default Project",
+  "settings.project.source": "Source Project",
+  "settings.project.target": "Target Project",
+  "settings.project.select": "Select project...",
+  "settings.project.loading": "Loading projects...",
+  "settings.project.error": "Failed to load projects",
+  "copy.targetProject": "Target Project"
 }

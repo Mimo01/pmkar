@@ -1,4 +1,6 @@
+import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,16 +62,27 @@ export function CopyPreviewModal() {
   const targetLabels = useCopyStore((s) => s.targetLabels);
   const selectedLabels = useCopyStore((s) => s.selectedLabels);
   const progressStep = useCopyStore((s) => s.progressStep);
+  const targetProjectKey = useCopyStore((s) => s.targetProjectKey);
   const setTargetSummary = useCopyStore((s) => s.setTargetSummary);
   const setTargetDescription = useCopyStore((s) => s.setTargetDescription);
   const setTargetStatus = useCopyStore((s) => s.setTargetStatus);
   const setTargetPriorityId = useCopyStore((s) => s.setTargetPriorityId);
+  const setTargetProjectKey = useCopyStore((s) => s.setTargetProjectKey);
   const toggleLabel = useCopyStore((s) => s.toggleLabel);
   const reset = useCopyStore((s) => s.reset);
   const confirmCopy = useCopyStore((s) => s.confirmCopy);
 
   const sourceBaseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+
+  const [cloudProjects, setCloudProjects] = useState<Array<{ key: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (phase !== 'previewing') return;
+    invoke<Array<{ key: string; name: string }>>('fetch_cloud_projects')
+      .then(setCloudProjects)
+      .catch(() => setCloudProjects([]));
+  }, [phase]);
 
   const handleDiscard = () => {
     reset();
@@ -187,6 +200,29 @@ export function CopyPreviewModal() {
             {/* Right: Target (editable) */}
             <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
               <h3 className="text-base font-semibold mb-4">{t('copy.preview.target')}</h3>
+
+              {/* Target project dropdown */}
+              <div className="mb-3">
+                <label
+                  htmlFor="copy-target-project"
+                  className="text-xs text-brand-muted block mb-1"
+                >
+                  {t('copy.targetProject')}
+                </label>
+                <select
+                  id="copy-target-project"
+                  value={targetProjectKey}
+                  onChange={(e) => setTargetProjectKey(e.target.value)}
+                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
+                >
+                  {!targetProjectKey && <option value="">{t('settings.project.select')}</option>}
+                  {cloudProjects.map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.name} ({p.key})
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Summary (editable) */}
               <div className="mb-3">

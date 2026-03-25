@@ -14,6 +14,70 @@ import { ConnectionForm } from './ConnectionForm';
 import { useConnectionStore } from './connectionStore';
 import type { ConnectionMeta, ConnectionTestResult, ConnectionType } from './types';
 
+interface JiraProject {
+  key: string;
+  name: string;
+}
+
+interface ProjectSelectorProps {
+  connectionType: 'server' | 'cloud';
+  baseUrl: string;
+  currentKey: string | null;
+  onSelect: (key: string) => void;
+}
+
+function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: ProjectSelectorProps) {
+  const { t } = useTranslation();
+  const [projects, setProjects] = useState<JiraProject[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!baseUrl) return;
+    setLoading(true);
+    setError(false);
+    const command = connectionType === 'server' ? 'fetch_server_projects' : 'fetch_cloud_projects';
+    const args = connectionType === 'server' ? { baseUrl } : {};
+    invoke<JiraProject[]>(command, args)
+      .then((list) => {
+        setProjects(list);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  }, [connectionType, baseUrl]);
+
+  return (
+    <div className="mt-3">
+      <span className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider block mb-1.5">
+        {connectionType === 'server' ? t('settings.project.source') : t('settings.project.target')}
+      </span>
+      {loading ? (
+        <p className="text-[12px] text-brand-muted">{t('settings.project.loading')}</p>
+      ) : error ? (
+        <p className="text-[12px] text-red-400">{t('settings.project.error')}</p>
+      ) : (
+        <select
+          value={currentKey ?? ''}
+          onChange={(e) => {
+            if (e.target.value) onSelect(e.target.value);
+          }}
+          className="w-full rounded-lg border border-brand-border bg-brand-bg text-brand-text px-3 py-2 text-[13px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15 transition-colors duration-200"
+        >
+          <option value="">{t('settings.project.select')}</option>
+          {projects.map((p) => (
+            <option key={p.key} value={p.key}>
+              {p.name} ({p.key})
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
 interface SettingsPageProps {
   onClose: () => void;
   onEdit?: (connectionType: ConnectionType) => void;
@@ -60,6 +124,12 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
 
   const serverConn = useConnectionStore((s) => s.serverConnection);
   const cloudConn = useConnectionStore((s) => s.cloudConnection);
+  const sourceProjectKey = useConnectionStore((s) => s.sourceProjectKey);
+  const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
+  const setSourceProjectKey = useConnectionStore((s) => s.setSourceProjectKey);
+  const setTargetProjectKey = useConnectionStore((s) => s.setTargetProjectKey);
+  const loadProjectConfig = useConnectionStore((s) => s.loadProjectConfig);
+  const saveProjectConfig = useConnectionStore((s) => s.saveProjectConfig);
 
   const jqlPreset = useTicketStore((s) => s.jqlPreset);
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
@@ -74,6 +144,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const [selectedIdx, setSelectedIdx] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    loadProjectConfig();
+  }, [loadProjectConfig]);
 
   useEffect(() => {
     if (!userQuery.trim() || !serverConn) {
@@ -299,11 +373,24 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 />
               </div>
             ) : (
-              <ConnectionCard
-                label={t('settings.sourceLabel')}
-                connection={serverConn}
-                onEdit={() => handleEdit('server')}
-              />
+              <>
+                <ConnectionCard
+                  label={t('settings.sourceLabel')}
+                  connection={serverConn}
+                  onEdit={() => handleEdit('server')}
+                />
+                {serverConn && (
+                  <ProjectSelector
+                    connectionType="server"
+                    baseUrl={serverConn.baseUrl}
+                    currentKey={sourceProjectKey}
+                    onSelect={(key) => {
+                      setSourceProjectKey(key);
+                      saveProjectConfig(key, targetProjectKey);
+                    }}
+                  />
+                )}
+              </>
             )}
           </SectionCard>
         );
@@ -339,11 +426,24 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                 />
               </div>
             ) : (
-              <ConnectionCard
-                label={t('settings.destLabel')}
-                connection={cloudConn}
-                onEdit={() => handleEdit('cloud')}
-              />
+              <>
+                <ConnectionCard
+                  label={t('settings.destLabel')}
+                  connection={cloudConn}
+                  onEdit={() => handleEdit('cloud')}
+                />
+                {cloudConn && (
+                  <ProjectSelector
+                    connectionType="cloud"
+                    baseUrl={cloudConn.baseUrl}
+                    currentKey={targetProjectKey}
+                    onSelect={(key) => {
+                      setTargetProjectKey(key);
+                      saveProjectConfig(sourceProjectKey, key);
+                    }}
+                  />
+                )}
+              </>
             )}
           </SectionCard>
         );
