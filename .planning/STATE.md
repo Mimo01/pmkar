@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-ppv
-last_updated: "2026-03-25T17:39:36.154Z"
-last_activity: "2026-03-25 - Completed quick task 260325-pp3: Remove duplicated footer buttons from copy preview page"
+stopped_at: Completed quick task 260325-qcl
+last_updated: "2026-03-25T19:04:20Z"
+last_activity: "2026-03-25 - Completed quick task 260325-qcl: Remove duplicate status/priority/assignee/reporter from issue detail headers"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -227,6 +227,7 @@ None yet.
 | 260325-pp3 | Remove duplicated footer buttons from copy preview page | 2026-03-25 | 0ce321a | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pv3 | Make the copy/notmine/open in jira strip look a little nicer | 2026-03-25 | d269c6c | | [260325-pv3-make-the-copy-notmine-open-in-jira-strip](./quick/260325-pv3-make-the-copy-notmine-open-in-jira-strip/) |
 | 260325-ppv | Consistently display status and priority with colored badges and priority icons like Jira | 2026-03-25 | 1ca9083 | | [260325-ppv-consistently-display-status-and-priority](./quick/260325-ppv-consistently-display-status-and-priority/) |
+| 260325-qcl | Remove duplicate status/priority/assignee/reporter from issue detail headers | 2026-03-25 | d08d256 | | [260325-qcl-remove-status-priority-and-other-metadat](./quick/260325-qcl-remove-status-priority-and-other-metadat/) |
 
 ## Session Continuity
 
