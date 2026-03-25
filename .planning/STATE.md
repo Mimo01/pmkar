@@ -236,7 +236,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25
+Last activity: 2026-03-25 - Completed quick task 260325-s97: Redesign Jira links section on ticket detail when ticket is linked
 Last session: 2026-03-25T00:00:00Z
 Stopped at: Completed quick task 260325-s97
 Resume file: None
