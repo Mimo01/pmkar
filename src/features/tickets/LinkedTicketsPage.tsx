@@ -9,6 +9,7 @@ import type { JiraTicket } from './types';
 export function LinkedTicketsPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
@@ -19,20 +20,25 @@ export function LinkedTicketsPage() {
   );
 
   const sorted = useMemo(() => {
-    const lower = searchText.toLowerCase();
-    const filtered =
-      searchText.length > 0
-        ? copiedTickets.filter(
-            (ticket: JiraTicket) =>
-              ticket.key.toLowerCase().includes(lower) ||
-              (ticket.fields.assignee?.displayName ?? '').toLowerCase().includes(lower),
-          )
-        : copiedTickets;
+    let filtered = copiedTickets;
+    if (searchText.length > 0) {
+      const lower = searchText.toLowerCase();
+      filtered = filtered.filter((ticket: JiraTicket) =>
+        ticket.key.toLowerCase().includes(lower),
+      );
+    }
+    if (assigneeFilter.length > 0) {
+      const assigneeLower = assigneeFilter.toLowerCase();
+      filtered = filtered.filter(
+        (ticket: JiraTicket) =>
+          (ticket.fields.assignee?.displayName ?? '').toLowerCase() === assigneeLower,
+      );
+    }
     return [...filtered].sort((a: JiraTicket, b: JiraTicket) => {
       const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
       return sortDirection === 'desc' ? diff : -diff;
     });
-  }, [copiedTickets, searchText, sortDirection]);
+  }, [copiedTickets, searchText, assigneeFilter, sortDirection]);
 
   function handleSelectTicket(key: string) {
     useTicketStore.getState().selectTicket(key);
@@ -44,6 +50,8 @@ export function LinkedTicketsPage() {
       <TicketFilterBar
         searchText={searchText}
         onSearchChange={setSearchText}
+        assigneeFilter={assigneeFilter}
+        onAssigneeChange={setAssigneeFilter}
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sorted.length}

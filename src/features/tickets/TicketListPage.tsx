@@ -49,6 +49,7 @@ function getErrorDetail(error: string, t: (key: string) => string): string {
 export function TicketListPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
@@ -115,20 +116,23 @@ export function TicketListPage() {
   });
 
   const sortedCandidates = useMemo(() => {
-    const lower = searchText.toLowerCase();
-    const filtered =
-      searchText.length > 0
-        ? candidateTickets.filter(
-            (ticket) =>
-              ticket.key.toLowerCase().includes(lower) ||
-              (ticket.fields.assignee?.displayName ?? '').toLowerCase().includes(lower),
-          )
-        : candidateTickets;
+    let filtered = candidateTickets;
+    if (searchText.length > 0) {
+      const lower = searchText.toLowerCase();
+      filtered = filtered.filter((ticket) => ticket.key.toLowerCase().includes(lower));
+    }
+    if (assigneeFilter.length > 0) {
+      const assigneeLower = assigneeFilter.toLowerCase();
+      filtered = filtered.filter(
+        (ticket) =>
+          (ticket.fields.assignee?.displayName ?? '').toLowerCase() === assigneeLower,
+      );
+    }
     return [...filtered].sort((a, b) => {
       const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
       return sortDirection === 'desc' ? diff : -diff;
     });
-  }, [candidateTickets, searchText, sortDirection]);
+  }, [candidateTickets, searchText, assigneeFilter, sortDirection]);
 
   const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
@@ -172,6 +176,8 @@ export function TicketListPage() {
       <TicketFilterBar
         searchText={searchText}
         onSearchChange={setSearchText}
+        assigneeFilter={assigneeFilter}
+        onAssigneeChange={setAssigneeFilter}
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sortedCandidates.length}
