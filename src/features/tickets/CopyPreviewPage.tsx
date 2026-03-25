@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
@@ -309,33 +308,6 @@ export function CopyPreviewPage() {
               />
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Thin separator before footer */}
-      {!isLoading && <Separator className="flex-shrink-0" />}
-
-      {/* Footer action row */}
-      {!isLoading && (
-        <div className="flex items-center justify-between px-6 py-4 bg-brand-surface flex-shrink-0">
-          <Button variant="outline" size="lg" onClick={handleDiscard} disabled={isCopying}>
-            {t('copy.preview.discard')}
-          </Button>
-          <Button
-            size="lg"
-            onClick={handleConfirm}
-            disabled={isCopying || isLoading}
-            className="bg-brand hover:bg-brand/90 text-white font-semibold px-6"
-          >
-            {isCopying ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin mr-2" aria-hidden="true" />
-                {t('copy.preview.copying')}
-              </>
-            ) : (
-              t('copy.preview.confirm')
-            )}
-          </Button>
         </div>
       )}
     </div>
