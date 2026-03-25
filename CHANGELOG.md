@@ -3,7 +3,17 @@
 
 ### Bug Fixes
 
+- remove redundant try again link from update error state
+- merge unreleased into latest version and make changelog collapsible
+## [0.2.2]
+
+### Bug Fixes
+
 - treat unreachable update endpoint as up-to-date
+
+### Miscellaneous
+
+- bump version to 0.2.2
 ## [0.2.1]
 
 ### Bug Fixes
