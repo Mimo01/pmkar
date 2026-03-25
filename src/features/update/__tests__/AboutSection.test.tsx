@@ -75,4 +75,112 @@ describe('AboutSection', () => {
     renderWithI18n(<AboutSection />);
     expect(screen.getByText(/could not check for updates/i)).toBeInTheDocument();
   });
+
+  it('shows "update available" badge when status is available', () => {
+    useUpdateStore.setState({ status: 'available', updateInfo: null });
+    renderWithI18n(<AboutSection />);
+    expect(screen.getByText(/update available/i)).toBeInTheDocument();
+  });
+
+  it('does NOT show "Check for updates" button when status is available', () => {
+    useUpdateStore.setState({ status: 'available', updateInfo: null });
+    renderWithI18n(<AboutSection />);
+    expect(screen.queryByRole('button', { name: /check for updates/i })).not.toBeInTheDocument();
+  });
+
+  it('shows last checked time when lastCheckedAt is set', () => {
+    const oneHourAgo = new Date(Date.now() - 3600 * 1000).toISOString();
+    useUpdateStore.setState({ status: 'idle', lastCheckedAt: oneHourAgo });
+    renderWithI18n(<AboutSection />);
+    // formatRelativeTime should show "1 hour ago" or similar
+    expect(screen.getByText(/hour/i)).toBeInTheDocument();
+  });
+
+  it('shows "Never" when lastCheckedAt is null', () => {
+    useUpdateStore.setState({ status: 'idle', lastCheckedAt: null });
+    renderWithI18n(<AboutSection />);
+    expect(screen.getByText(/never/i)).toBeInTheDocument();
+  });
+
+  it('shows version history link button', async () => {
+    renderWithI18n(<AboutSection />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /version history/i })).toBeInTheDocument();
+    });
+  });
+
+  it('clicking "Version History" opens the version history modal', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /version history/i })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole('button', { name: /version history/i }));
+    // VersionHistoryModal should open
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('check for updates sets up-to-date when no update available', async () => {
+    mockCheck.mockResolvedValue(null);
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('up-to-date');
+    });
+  });
+
+  it('check for updates sets available when update found', async () => {
+    mockCheck.mockResolvedValue({
+      version: '2.0.0',
+      body: 'Major release',
+      downloadAndInstall: vi.fn(),
+    });
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('available');
+    });
+  });
+
+  it('check for updates handles "Could not fetch" error as up-to-date', async () => {
+    mockCheck.mockRejectedValue(new Error('Could not fetch the release info'));
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('up-to-date');
+    });
+  });
+
+  it('check for updates handles 404 error as up-to-date', async () => {
+    mockCheck.mockRejectedValue(new Error('Request failed with status 404'));
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('up-to-date');
+    });
+  });
+
+  it('check for updates handles Network error as up-to-date', async () => {
+    mockCheck.mockRejectedValue(new Error('Network error occurred'));
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('up-to-date');
+    });
+  });
+
+  it('check for updates handles unexpected error as error state', async () => {
+    mockCheck.mockRejectedValue(new Error('Something unexpected went wrong'));
+    const user = userEvent.setup();
+    renderWithI18n(<AboutSection />);
+    await user.click(screen.getByRole('button', { name: /check for updates/i }));
+    await waitFor(() => {
+      expect(useUpdateStore.getState().status).toBe('error');
+    });
+  });
 });

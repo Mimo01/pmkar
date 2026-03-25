@@ -77,6 +77,65 @@ describe('connectionStore', () => {
     });
   });
 
+  describe('setSourceProjectKey', () => {
+    it('sets sourceProjectKey to the provided key', () => {
+      useConnectionStore.getState().setSourceProjectKey('MYPROJ');
+      expect(useConnectionStore.getState().sourceProjectKey).toBe('MYPROJ');
+    });
+
+    it('sets sourceProjectKey to null', () => {
+      useConnectionStore.getState().setSourceProjectKey('MYPROJ');
+      useConnectionStore.getState().setSourceProjectKey(null);
+      expect(useConnectionStore.getState().sourceProjectKey).toBeNull();
+    });
+
+    it('does not affect cloudConnection', () => {
+      const cloud = makeConnectionMeta('https://cloud.atlassian.net');
+      useConnectionStore.getState().setCloudConnection(cloud);
+      useConnectionStore.getState().setSourceProjectKey('MYPROJ');
+      expect(useConnectionStore.getState().cloudConnection).toEqual(cloud);
+    });
+  });
+
+  describe('setTargetProjectKey', () => {
+    it('sets targetProjectKey to the provided key', () => {
+      useConnectionStore.getState().setTargetProjectKey('DESTPROJ');
+      expect(useConnectionStore.getState().targetProjectKey).toBe('DESTPROJ');
+    });
+
+    it('sets targetProjectKey to null', () => {
+      useConnectionStore.getState().setTargetProjectKey('DESTPROJ');
+      useConnectionStore.getState().setTargetProjectKey(null);
+      expect(useConnectionStore.getState().targetProjectKey).toBeNull();
+    });
+  });
+
+  describe('setSourceProjectName', () => {
+    it('sets sourceProjectName', () => {
+      useConnectionStore.getState().setSourceProjectName('My Source Project');
+      expect(useConnectionStore.getState().sourceProjectName).toBe('My Source Project');
+    });
+
+    it('sets sourceProjectName to null', () => {
+      useConnectionStore.getState().setSourceProjectName('Name');
+      useConnectionStore.getState().setSourceProjectName(null);
+      expect(useConnectionStore.getState().sourceProjectName).toBeNull();
+    });
+  });
+
+  describe('setTargetProjectName', () => {
+    it('sets targetProjectName', () => {
+      useConnectionStore.getState().setTargetProjectName('My Target Project');
+      expect(useConnectionStore.getState().targetProjectName).toBe('My Target Project');
+    });
+
+    it('sets targetProjectName to null', () => {
+      useConnectionStore.getState().setTargetProjectName('Name');
+      useConnectionStore.getState().setTargetProjectName(null);
+      expect(useConnectionStore.getState().targetProjectName).toBeNull();
+    });
+  });
+
   describe('hasCompletedSetup', () => {
     it('returns false when both connections are null', () => {
       expect(useConnectionStore.getState().hasCompletedSetup()).toBe(false);

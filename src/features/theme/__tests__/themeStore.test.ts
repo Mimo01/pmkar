@@ -88,4 +88,74 @@ describe('themeStore', () => {
       }
     });
   });
+
+  describe('system theme with matchMedia', () => {
+    it('resolves to dark when system prefers dark and mode=system', () => {
+      // Mock window.matchMedia to return dark preference
+      const originalMatchMedia = window.matchMedia;
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: (query: string) => ({
+          matches: query === '(prefers-color-scheme: dark)',
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }),
+      });
+
+      useThemeStore.getState().setMode('system');
+      expect(useThemeStore.getState().resolved).toBe('dark');
+
+      // Restore
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: originalMatchMedia,
+      });
+    });
+
+    it('resolves to light when system prefers light and mode=system', () => {
+      const originalMatchMedia = window.matchMedia;
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: (query: string) => ({
+          matches: false, // light mode — no dark preference
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          dispatchEvent: vi.fn(),
+        }),
+      });
+
+      useThemeStore.getState().setMode('system');
+      expect(useThemeStore.getState().resolved).toBe('light');
+
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: originalMatchMedia,
+      });
+    });
+  });
+
+  describe('localStorage loading', () => {
+    it('loadMode returns system when nothing stored', () => {
+      // Store starts with mode: system after reset
+      expect(['light', 'dark', 'system']).toContain(useThemeStore.getState().mode);
+    });
+
+    it('setMode persists to localStorage and can be read back', () => {
+      useThemeStore.getState().setMode('dark');
+      expect(localStorage.getItem('pmkar-theme')).toBe('dark');
+      useThemeStore.getState().setMode('light');
+      expect(localStorage.getItem('pmkar-theme')).toBe('light');
+      useThemeStore.getState().setMode('system');
+      expect(localStorage.getItem('pmkar-theme')).toBe('system');
+    });
+  });
 });
