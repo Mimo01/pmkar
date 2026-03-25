@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-pcb
-last_updated: "2026-03-25T17:25:23.149Z"
-last_activity: "2026-03-25 - Completed quick task 260325-p8e: When users are shown in the app, always present them with their avatars"
+stopped_at: Completed quick task 260325-pp3
+last_updated: "2026-03-25T17:30:07.366Z"
+last_activity: "2026-03-25 - Completed quick task 260325-pp3: On the issue copy page, the buttons are both on top and bottom. Keep only one set"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -223,6 +223,7 @@ None yet.
 | 260325-ksf | Redesign project selector with searchable dropdown and All Projects | 2026-03-25 | 4103018 | | [260325-ksf-make-the-project-selector-nicer-also-add](./quick/260325-ksf-make-the-project-selector-nicer-also-add/) |
 | 260325-p8e | User avatars shown everywhere users appear in the app | 2026-03-25 | 82cb0f0 | | [260325-p8e-when-users-are-shown-in-the-app-always-p](./quick/260325-p8e-when-users-are-shown-in-the-app-always-p/) |
 | 260325-pcb | Fix watched users input losing focus on keystroke | 2026-03-25 | 4c3888c | | [260325-pcb-in-settings-when-editing-watched-users-a](./quick/260325-pcb-in-settings-when-editing-watched-users-a/) |
+| 260325-pp3 | Remove duplicate buttons from issue copy page | 2026-03-25 | b85d0f8 | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pp3 | Remove duplicated footer buttons from copy preview page | 2026-03-25 | 0ce321a | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 
 ## Session Continuity
