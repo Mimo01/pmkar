@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-03-25T07:05:41.984Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-03-25T07:39:55.220Z"
 last_activity: 2026-03-25
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 45
-  completed_plans: 42
+  completed_plans: 44
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-19)
 ## Current Position
 
 Phase: 11 (add-deployment-auto-updates-and-release-management) — EXECUTING
-Plan: 2 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -85,6 +85,8 @@ Plan: 2 of 4
 | Phase 10-improve-codebase-quality P04 | 180 | 2 tasks | 28 files |
 | Phase 10-improve-codebase-quality P05 | 5 | 1 tasks | 1 files |
 | Phase 11-add-deployment-auto-updates-and-release-management P02 | 2 | 2 tasks | 3 files |
+| Phase 11-add-deployment-auto-updates-and-release-management P01 | 4 | 2 tasks | 9 files |
+| Phase 11-add-deployment-auto-updates-and-release-management P03 | 12 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -175,6 +177,11 @@ Recent decisions affecting current work:
 - [Phase 10-improve-codebase-quality]: CI uses two parallel jobs (frontend + rust) with quality checks only — no full Tauri binary build keeps CI fast
 - [Phase 11-add-deployment-auto-updates-and-release-management]: Two-job release structure: create-release generates changelog once, build-tauri matrix uploads artifacts — avoids changelog race condition
 - [Phase 11-add-deployment-auto-updates-and-release-management]: scripts/bump-version.mjs synchronizes package.json + tauri.conf.json + Cargo.toml atomically before tagging
+- [Phase 11]: Plugin registration gated with #[cfg(desktop)] in Tauri setup closure — desktop-only feature, safe for future mobile targets
+- [Phase 11]: Placeholder pubkey in tauri.conf.json — user generates real keypair with tauri signer generate before first release
+- [Phase 11]: Committed generated ACL schemas from cargo check — these are deterministic and must stay in sync with plugin registration
+- [Phase 11-add-deployment-auto-updates-and-release-management]: UpdateModal rendered in every App.tsx routing branch since Dialog uses a portal — no layout disruption and avoids complex state threading
+- [Phase 11-add-deployment-auto-updates-and-release-management]: Slovak translations include full diacritics for correctness, matching existing sk.json style
 
 ### Roadmap Evolution
 
@@ -208,6 +215,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-25
-Last session: 2026-03-25T07:05:41.975Z
-Stopped at: Completed 11-02-PLAN.md
+Last session: 2026-03-25T07:39:55.214Z
+Stopped at: Completed 11-03-PLAN.md
 Resume file: None
