@@ -9,6 +9,14 @@ fn main() {
 
     tauri::Builder::default()
         .setup(move |app| {
+            // Register desktop-only plugins
+            #[cfg(desktop)]
+            {
+                app.handle()
+                    .plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
+
             // Open audit database in app data directory
             let app_dir = app
                 .path()
