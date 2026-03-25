@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatRelativeTime } from '../../lib/format';
+import { formatDate, formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
@@ -197,6 +197,12 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {/* Ticket header: summary + updated time */}
           <h1 className="text-base font-semibold text-brand-text mb-1">{detail.fields.summary}</h1>
           <p className="text-xs text-brand-muted mb-6">
+            {detail.fields.created && (
+              <>
+                {t('tickets.card.created', { time: formatDate(detail.fields.created) })}
+                {' · '}
+              </>
+            )}
             {t('tickets.card.updated', { time: formatRelativeTime(detail.fields.updated) })}
           </p>
 

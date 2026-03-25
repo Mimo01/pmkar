@@ -126,6 +126,7 @@ export interface JiraTicketDetail {
     attachment: JiraAttachment[];
     subtasks: JiraSubTask[];
     issuelinks: JiraIssueLink[];
+    created?: string; // ISO 8601
     updated: string;
   };
   renderedFields?: {
