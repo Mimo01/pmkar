@@ -1,7 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TicketCard } from './TicketCard';
+import { TicketFilterBar } from './TicketFilterBar';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
 
@@ -15,6 +16,8 @@ function handleRestore(issueKey: string) {
 
 export function IgnoredTicketsPage() {
   const { t } = useTranslation();
+  const [searchText, setSearchText] = useState('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
 
@@ -23,14 +26,21 @@ export function IgnoredTicketsPage() {
     [tickets, triageMap],
   );
 
-  const sorted = useMemo(
-    () =>
-      [...ignoredTickets].sort(
-        (a: JiraTicket, b: JiraTicket) =>
-          new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime(),
-      ),
-    [ignoredTickets],
-  );
+  const sorted = useMemo(() => {
+    const lower = searchText.toLowerCase();
+    const filtered =
+      searchText.length > 0
+        ? ignoredTickets.filter(
+            (ticket: JiraTicket) =>
+              ticket.key.toLowerCase().includes(lower) ||
+              (ticket.fields.assignee?.displayName ?? '').toLowerCase().includes(lower),
+          )
+        : ignoredTickets;
+    return [...filtered].sort((a: JiraTicket, b: JiraTicket) => {
+      const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
+      return sortDirection === 'desc' ? diff : -diff;
+    });
+  }, [ignoredTickets, searchText, sortDirection]);
 
   function handleSelectTicket(key: string) {
     useTicketStore.getState().selectTicket(key);
@@ -38,6 +48,15 @@ export function IgnoredTicketsPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Filter bar */}
+      <TicketFilterBar
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        sortDirection={sortDirection}
+        onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+        resultCount={sorted.length}
+      />
+
       {/* Empty state */}
       {ignoredTickets.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">

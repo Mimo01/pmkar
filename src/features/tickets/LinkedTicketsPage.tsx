@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { TicketCard } from './TicketCard';
+import { TicketFilterBar } from './TicketFilterBar';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
 
 export function LinkedTicketsPage() {
   const { t } = useTranslation();
+  const [searchText, setSearchText] = useState('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
 
@@ -15,14 +18,21 @@ export function LinkedTicketsPage() {
     [tickets, triageMap],
   );
 
-  const sorted = useMemo(
-    () =>
-      [...copiedTickets].sort(
-        (a: JiraTicket, b: JiraTicket) =>
-          new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime(),
-      ),
-    [copiedTickets],
-  );
+  const sorted = useMemo(() => {
+    const lower = searchText.toLowerCase();
+    const filtered =
+      searchText.length > 0
+        ? copiedTickets.filter(
+            (ticket: JiraTicket) =>
+              ticket.key.toLowerCase().includes(lower) ||
+              (ticket.fields.assignee?.displayName ?? '').toLowerCase().includes(lower),
+          )
+        : copiedTickets;
+    return [...filtered].sort((a: JiraTicket, b: JiraTicket) => {
+      const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
+      return sortDirection === 'desc' ? diff : -diff;
+    });
+  }, [copiedTickets, searchText, sortDirection]);
 
   function handleSelectTicket(key: string) {
     useTicketStore.getState().selectTicket(key);
@@ -30,6 +40,15 @@ export function LinkedTicketsPage() {
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Filter bar */}
+      <TicketFilterBar
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        sortDirection={sortDirection}
+        onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+        resultCount={sorted.length}
+      />
+
       {/* Empty state */}
       {copiedTickets.length === 0 && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">

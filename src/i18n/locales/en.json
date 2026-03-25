@@ -229,5 +229,10 @@
   "update.modal.noChangelog": "No release notes available",
   "update.modal.errorCheck": "Could not check for updates. Check your connection and try again.",
   "update.modal.errorDownload": "Download failed. Try again or visit the releases page.",
-  "update.modal.tryAgain": "Try again"
+  "update.modal.tryAgain": "Try again",
+  "tickets.filter.placeholder": "Filter by key or assignee...",
+  "tickets.filter.sortUpdated": "Updated",
+  "tickets.filter.showing": "{{count}} shown",
+  "tickets.filter.searchLabel": "Filter tickets by key or assignee",
+  "tickets.filter.clearSearch": "Clear search"
 }

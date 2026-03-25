@@ -229,5 +229,10 @@
   "update.modal.noChangelog": "Poznámky k vydaniu nie sú k dispozícii",
   "update.modal.errorCheck": "Nepodarilo sa skontrolovať aktualizácie. Skontrolujte pripojenie a skúste znova.",
   "update.modal.errorDownload": "Sťahovanie zlyhalo. Skúste znova alebo navštívte stránku vydaní.",
-  "update.modal.tryAgain": "Skúsiť znova"
+  "update.modal.tryAgain": "Skúsiť znova",
+  "tickets.filter.placeholder": "Filtrovať podľa kľúča alebo priradenia...",
+  "tickets.filter.sortUpdated": "Aktualizované",
+  "tickets.filter.showing": "{{count}} zobrazených",
+  "tickets.filter.searchLabel": "Filtrovať tikety podľa kľúča alebo priradenia",
+  "tickets.filter.clearSearch": "Vymazať vyhľadávanie"
 }

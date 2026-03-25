@@ -1,12 +1,13 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { SkeletonCards, TicketCard } from './TicketCard';
+import { TicketFilterBar } from './TicketFilterBar';
 import { useTicketStore } from './ticketStore';
 import type { FetchTicketsResult, JqlPreset } from './types';
 
@@ -47,6 +48,8 @@ function getErrorDetail(error: string, t: (key: string) => string): string {
 
 export function TicketListPage() {
   const { t } = useTranslation();
+  const [searchText, setSearchText] = useState('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
   const fetchStatus = useTicketStore((s) => s.fetchStatus);
@@ -111,14 +114,21 @@ export function TicketListPage() {
     return s !== 'ignored' && s !== 'copied';
   });
 
-  // Sort by updated DESC (no user-selectable sort — cards don't have column headers)
-  const sortedCandidates = useMemo(
-    () =>
-      [...candidateTickets].sort(
-        (a, b) => new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime(),
-      ),
-    [candidateTickets],
-  );
+  const sortedCandidates = useMemo(() => {
+    const lower = searchText.toLowerCase();
+    const filtered =
+      searchText.length > 0
+        ? candidateTickets.filter(
+            (ticket) =>
+              ticket.key.toLowerCase().includes(lower) ||
+              (ticket.fields.assignee?.displayName ?? '').toLowerCase().includes(lower),
+          )
+        : candidateTickets;
+    return [...filtered].sort((a, b) => {
+      const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
+      return sortDirection === 'desc' ? diff : -diff;
+    });
+  }, [candidateTickets, searchText, sortDirection]);
 
   const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
@@ -157,6 +167,15 @@ export function TicketListPage() {
           </span>
         )}
       </div>
+
+      {/* Filter bar */}
+      <TicketFilterBar
+        searchText={searchText}
+        onSearchChange={setSearchText}
+        sortDirection={sortDirection}
+        onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+        resultCount={sortedCandidates.length}
+      />
 
       {/* Error state */}
       {fetchStatus === 'error' && fetchError && (
