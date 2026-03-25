@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ExternalLink } from 'lucide-react';
+import { CheckCircle2, ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -192,21 +192,30 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
               <div className="ml-auto flex items-center gap-2">
                 {isCopied && triageEntry?.copiedKey ? (
                   <>
+                    {/* Primary: linked status badge with copied key */}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      {t('detail.copied')} → {triageEntry.copiedKey}
+                    </span>
+
+                    {/* Secondary: compact text links to open in each Jira */}
+                    <span className="text-brand-muted text-xs">·</span>
                     <button
                       type="button"
                       onClick={handleOpenInJira}
-                      className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                      className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 flex items-center gap-1"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                      {t('detail.openInSourceJira')}
+                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                      {t('wizard.source.subtitle')}
                     </button>
+                    <span className="text-brand-muted text-xs">·</span>
                     <button
                       type="button"
                       onClick={handleOpenInCloudJira}
-                      className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                      className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 flex items-center gap-1"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                      {t('detail.openInCompanyJira')}
+                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                      {triageEntry.copiedKey}
                     </button>
                   </>
                 ) : (
@@ -236,12 +245,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     {t('detail.ignore')}
                   </button>
                 )}
-                {isCopied ? (
-                  <span className="px-3 py-1 rounded text-sm font-semibold text-emerald-400 border border-emerald-400/30">
-                    {t('detail.copied')}
-                    {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
-                  </span>
-                ) : (
+                {isCopied ? null : (
                   <button
                     type="button"
                     onClick={handleStartCopy}
