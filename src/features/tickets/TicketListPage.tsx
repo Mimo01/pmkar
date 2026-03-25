@@ -10,6 +10,7 @@ import { SkeletonCards, TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import { useTicketStore } from './ticketStore';
 import type { FetchTicketsResult, JqlPreset } from './types';
+import { isDoneTicket } from './utils';
 
 // --- Helpers ---
 
@@ -112,7 +113,7 @@ export function TicketListPage() {
 
   const candidateTickets = tickets.filter((t) => {
     const s = triageMap[t.key]?.state;
-    return s !== 'ignored' && s !== 'copied';
+    return s !== 'ignored' && s !== 'copied' && !isDoneTicket(t);
   });
 
   const sortedCandidates = useMemo(() => {

@@ -240,6 +240,19 @@ impl TriageDb {
         Ok(())
     }
 
+    /// Delete triage entries for the given ticket keys (bulk delete).
+    /// Returns the number of rows deleted.
+    pub fn delete_triage_entries(&self, keys: &[String]) -> AppResult<usize> {
+        if keys.is_empty() {
+            return Ok(0);
+        }
+        let placeholders = keys.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect::<Vec<_>>().join(", ");
+        let sql = format!("DELETE FROM triage_state WHERE ticket_key IN ({placeholders})");
+        let params: Vec<&dyn rusqlite::ToSql> = keys.iter().map(|k| k as &dyn rusqlite::ToSql).collect();
+        let count = self.conn.execute(&sql, params.as_slice())?;
+        Ok(count)
+    }
+
     pub fn get_all_connection_meta(&self) -> AppResult<Vec<ConnectionMeta>> {
         let mut stmt = self.conn.prepare(
             "SELECT connection_type, base_url, username, server_version, last_tested_at, status FROM connection_meta",
@@ -338,5 +351,36 @@ mod tests {
             result.is_err(),
             "invalid state should be rejected by CHECK constraint"
         );
+    }
+
+    #[test]
+    fn test_delete_triage_entries_removes_keys() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "new").expect("set failed");
+        db.set_triage("PROJ-2", "seen").expect("set failed");
+        db.set_triage("PROJ-3", "ignored").expect("set failed");
+        let deleted = db
+            .delete_triage_entries(&[
+                "PROJ-1".to_string(),
+                "PROJ-2".to_string(),
+            ])
+            .expect("delete failed");
+        assert_eq!(deleted, 2, "should have deleted 2 entries");
+        let all = db.get_all_triage().expect("get failed");
+        assert!(!all.contains_key("PROJ-1"), "PROJ-1 should be deleted");
+        assert!(!all.contains_key("PROJ-2"), "PROJ-2 should be deleted");
+        assert!(all.contains_key("PROJ-3"), "PROJ-3 should remain");
+    }
+
+    #[test]
+    fn test_delete_triage_entries_empty_input() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "new").expect("set failed");
+        let deleted = db
+            .delete_triage_entries(&[])
+            .expect("delete with empty keys failed");
+        assert_eq!(deleted, 0, "empty input should delete nothing");
+        let all = db.get_all_triage().expect("get failed");
+        assert_eq!(all.len(), 1, "PROJ-1 should remain");
     }
 }

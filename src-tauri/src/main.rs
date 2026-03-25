@@ -69,6 +69,7 @@ fn main() {
             commands::fetch_jira_image,
             commands::get_triage_state,
             commands::set_triage_state,
+            commands::delete_done_triage,
             commands::get_fetch_config,
             commands::set_fetch_config,
             commands::search_jira_users,
