@@ -225,10 +225,11 @@ None yet.
 | 260325-pcb | Fix watched users input losing focus on keystroke | 2026-03-25 | 4c3888c | | [260325-pcb-in-settings-when-editing-watched-users-a](./quick/260325-pcb-in-settings-when-editing-watched-users-a/) |
 | 260325-pp3 | Remove duplicate buttons from issue copy page | 2026-03-25 | b85d0f8 | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pp3 | Remove duplicated footer buttons from copy preview page | 2026-03-25 | 0ce321a | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
+| 260325-pv3 | Make the copy/notmine/open in jira strip look a little nicer | 2026-03-25 | d269c6c | | [260325-pv3-make-the-copy-notmine-open-in-jira-strip](./quick/260325-pv3-make-the-copy-notmine-open-in-jira-strip/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-pp3: Remove duplicated footer buttons from copy preview page
+Last activity: 2026-03-25 - Completed quick task 260325-pv3: Make the copy/notmine/open in jira strip look a little nicer
 Last session: 2026-03-25T17:39:36.148Z
 Stopped at: Completed quick task 260325-ppv
 Resume file: None
