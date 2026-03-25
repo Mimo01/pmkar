@@ -17,26 +17,28 @@
   --color-brand-text: #231f20;
   --color-brand-text-secondary: #5c585a;
 
-  /* shadcn semantic aliases — pointing to brand tokens */
-  --background: var(--color-brand-bg);
-  --foreground: var(--color-brand-text);
-  --card: var(--color-brand-surface);
-  --card-foreground: var(--color-brand-text);
-  --popover: var(--color-brand-surface);
-  --popover-foreground: var(--color-brand-text);
-  --primary: var(--color-brand);
-  --primary-foreground: #ffffff;
-  --secondary: var(--color-brand-surface-hover);
-  --secondary-foreground: var(--color-brand-text);
-  --muted: var(--color-brand-surface-hover);
-  --muted-foreground: var(--color-brand-muted);
-  --accent: var(--color-brand-surface-hover);
-  --accent-foreground: var(--color-brand-text);
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: var(--color-brand-border);
-  --input: var(--color-brand-border);
-  --ring: var(--color-brand);
+  /* shadcn semantic aliases — pointing to brand tokens
+     Tailwind v4 maps bg-X / text-X to --color-X, so every
+     token that shadcn utilities reference needs a --color- prefixed entry. */
+  --color-background: var(--color-brand-bg);
+  --color-foreground: var(--color-brand-text);
+  --color-card: var(--color-brand-surface);
+  --color-card-foreground: var(--color-brand-text);
+  --color-popover: var(--color-brand-surface);
+  --color-popover-foreground: var(--color-brand-text);
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--color-brand-surface-hover);
+  --color-secondary-foreground: var(--color-brand-text);
+  --color-muted: var(--color-brand-surface-hover);
+  --color-muted-foreground: var(--color-brand-muted);
+  --color-accent: var(--color-brand-surface-hover);
+  --color-accent-foreground: var(--color-brand-text);
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--color-brand-border);
+  --color-input: var(--color-brand-border);
+  --color-ring: var(--color-brand);
   --radius: 0.5rem;
 }
 
@@ -61,26 +63,26 @@ body.dark {
   background-color: #161617;
   color: #e4e4e6;
 
-  /* shadcn semantic dark overrides */
-  --background: #161617;
-  --foreground: #e4e4e6;
-  --card: #1e1e20;
-  --card-foreground: #e4e4e6;
-  --popover: #1e1e20;
-  --popover-foreground: #e4e4e6;
-  --primary: #c02232;
-  --primary-foreground: #ffffff;
-  --secondary: #28282a;
-  --secondary-foreground: #e4e4e6;
-  --muted: #28282a;
-  --muted-foreground: #7f7f7f;
-  --accent: #28282a;
-  --accent-foreground: #e4e4e6;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #2e2e30;
-  --input: #2e2e30;
-  --ring: #c02232;
+  /* shadcn semantic dark overrides (--color- prefix for Tailwind v4) */
+  --color-background: #161617;
+  --color-foreground: #e4e4e6;
+  --color-card: #1e1e20;
+  --color-card-foreground: #e4e4e6;
+  --color-popover: #1e1e20;
+  --color-popover-foreground: #e4e4e6;
+  --color-primary: #c02232;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #28282a;
+  --color-secondary-foreground: #e4e4e6;
+  --color-muted: #28282a;
+  --color-muted-foreground: #7f7f7f;
+  --color-accent: #28282a;
+  --color-accent-foreground: #e4e4e6;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #2e2e30;
+  --color-input: #2e2e30;
+  --color-ring: #c02232;
 }
 
 ::-webkit-scrollbar {

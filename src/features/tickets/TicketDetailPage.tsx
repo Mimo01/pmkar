@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { PriorityIcon } from './PriorityIcon';
@@ -210,11 +209,11 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           </div>
 
           {/* Action buttons */}
-          <div className="inline-flex items-center gap-2 flex-wrap rounded-lg border border-brand-border bg-brand-surface/50 px-3 py-2 mb-6">
+          <div className="flex items-center gap-3 flex-wrap mb-6">
             {!isCopied && (
               <Button
                 variant="default"
-                size="sm"
+                size="lg"
                 onClick={handleStartCopy}
                 disabled={copyPhase === 'loading_preview'}
               >
@@ -225,36 +224,35 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
               </Button>
             )}
             {isCopied && (
-              <Badge className="bg-green-600/10 text-green-600 border-green-600/20">
+              <Badge className="bg-green-600/10 text-green-600 border-green-600/20 px-4 py-2 text-sm">
                 {t('detail.copied')}
                 {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
               </Badge>
             )}
             {!isCopied &&
               (isIgnored ? (
-                <Button variant="ghost" size="sm" onClick={handleUnignore}>
+                <Button variant="secondary" size="lg" onClick={handleUnignore}>
                   {t('detail.ignored')}
                 </Button>
               ) : (
-                <Button variant="ghost" size="sm" onClick={handleIgnore}>
+                <Button variant="secondary" size="lg" onClick={handleIgnore}>
                   {t('detail.ignore')}
                 </Button>
               ))}
-            <Separator orientation="vertical" className="h-5" />
             {isCopied && triageEntry?.copiedKey ? (
               <>
-                <Button variant="outline" size="sm" onClick={handleOpenInJira}>
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
                   {t('detail.openInSourceJira')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
                   {t('detail.openInCompanyJira')}
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={handleOpenInJira}>
-                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+              <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 {t('detail.openInJira')}
               </Button>
             )}
