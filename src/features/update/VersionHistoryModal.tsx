@@ -1,4 +1,5 @@
-import { History } from 'lucide-react';
+import { ChevronDown, History } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -21,6 +22,9 @@ const categoryKeys: Record<string, string> = {
   'CI/CD': 'changelog.cicd',
 };
 
+/** Categories to hide from user-facing changelog (internal noise) */
+const hiddenCategories = new Set(['Documentation', 'Miscellaneous', 'Testing', 'CI/CD']);
+
 interface VersionEntry {
   version: string;
   body: string;
@@ -32,7 +36,6 @@ interface CategorySection {
 }
 
 function parseChangelog(raw: string): VersionEntry[] {
-  // Split on version headings: ## [vX.Y.Z] or ## [X.Y.Z]
   const versionHeadingRegex = /^## \[([^\]]+)\]/m;
   const parts = raw.split(/(?=^## \[[^\]]+\])/m);
 
@@ -45,11 +48,26 @@ function parseChangelog(raw: string): VersionEntry[] {
     if (!match) continue;
 
     const version = match[1];
-    // Get the body after the heading line
     const headingEnd = trimmed.indexOf('\n');
     const body = headingEnd >= 0 ? trimmed.slice(headingEnd + 1).trim() : '';
 
     entries.push({ version, body });
+  }
+
+  // Merge "Unreleased" into the next version entry — those commits are part
+  // of the current build even though they landed after the last git tag.
+  const unreleasedIdx = entries.findIndex(
+    (e) => e.version.toLowerCase() === 'unreleased',
+  );
+  if (unreleasedIdx !== -1) {
+    const unreleased = entries[unreleasedIdx];
+    const nextVersionIdx = unreleasedIdx + 1;
+    if (nextVersionIdx < entries.length) {
+      entries[nextVersionIdx].body =
+        unreleased.body + '\n' + entries[nextVersionIdx].body;
+    }
+    // Drop the Unreleased entry either way
+    entries.splice(unreleasedIdx, 1);
   }
 
   return entries;
@@ -65,7 +83,7 @@ function parseSections(body: string): CategorySection[] {
     const trimmed = line.trim();
 
     if (trimmed.startsWith('### ')) {
-      if (currentCategory !== null) {
+      if (currentCategory !== null && currentItems.length > 0) {
         sections.push({ category: currentCategory, items: currentItems });
       }
       currentCategory = trimmed.slice(4).trim();
@@ -82,12 +100,21 @@ function parseSections(body: string): CategorySection[] {
   return sections;
 }
 
-// For changelog without version headings (unreleased section at top)
-function parseUnversionedSections(raw: string): CategorySection[] {
-  // Get the portion before the first version heading
-  const firstVersionIdx = raw.search(/^## \[[^\]]+\]/m);
-  const topContent = firstVersionIdx >= 0 ? raw.slice(0, firstVersionIdx) : raw;
-  return parseSections(topContent.trim());
+/** Filter out internal/noise categories and "bump version" commits */
+function filterSections(sections: CategorySection[]): CategorySection[] {
+  return sections
+    .filter((s) => !hiddenCategories.has(s.category))
+    .map((s) => ({
+      ...s,
+      items: s.items.filter(
+        (item) => !item.toLowerCase().startsWith('bump version'),
+      ),
+    }))
+    .filter((s) => s.items.length > 0);
+}
+
+function countItems(sections: CategorySection[]): number {
+  return sections.reduce((sum, s) => sum + s.items.length, 0);
 }
 
 interface VersionHistoryModalProps {
@@ -95,12 +122,98 @@ interface VersionHistoryModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function VersionHistoryModal({ open, onOpenChange }: VersionHistoryModalProps) {
+function VersionBlock({
+  version,
+  sections,
+  isLatest,
+  defaultOpen,
+}: {
+  version: string;
+  sections: CategorySection[];
+  isLatest: boolean;
+  defaultOpen: boolean;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(defaultOpen);
+  const itemCount = countItems(sections);
+
+  return (
+    <div className="border border-brand-border rounded-lg overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-brand-surface/50 transition-colors"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-2">
+          <Badge
+            className={
+              isLatest
+                ? 'bg-brand text-white text-[11px] font-semibold'
+                : 'bg-brand-surface text-brand-text-secondary text-[11px] font-semibold border border-brand-border'
+            }
+          >
+            v{version}
+          </Badge>
+          {isLatest && (
+            <span className="text-[11px] text-brand font-medium">
+              {t('about.versionHistory.current')}
+            </span>
+          )}
+          {!open && (
+            <span className="text-[11px] text-brand-muted">
+              {itemCount} {itemCount === 1 ? t('about.versionHistory.change') : t('about.versionHistory.changes')}
+            </span>
+          )}
+        </div>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-brand-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {open && sections.length > 0 && (
+        <div className="px-3 pb-3 space-y-3 border-t border-brand-border pt-2.5">
+          {sections.map((section) => (
+            <div key={section.category}>
+              <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-1">
+                {categoryKeys[section.category]
+                  ? t(categoryKeys[section.category])
+                  : section.category}
+              </p>
+              <ul className="space-y-1">
+                {section.items.map((item, idx) => (
+                  <li
+                    key={idx}
+                    className="text-[13px] text-brand-text-secondary flex gap-1.5"
+                  >
+                    <span className="text-brand-muted mt-0.5">·</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {open && sections.length === 0 && (
+        <div className="px-3 pb-3 border-t border-brand-border pt-2.5">
+          <p className="text-[13px] text-brand-muted">
+            {t('about.versionHistory.noChanges')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function VersionHistoryModal({
+  open,
+  onOpenChange,
+}: VersionHistoryModalProps) {
   const { t } = useTranslation();
   const entries = parseChangelog(changelogRaw);
-
-  // Also parse any unreleased content at the top (before first version heading)
-  const unreleasedSections = parseUnversionedSections(changelogRaw);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -113,79 +226,22 @@ export function VersionHistoryModal({ open, onOpenChange }: VersionHistoryModalP
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-2">
-          {entries.length === 0 && unreleasedSections.length === 0 ? (
+          {entries.length === 0 ? (
             <p className="text-[13px] text-brand-muted py-4 text-center">
               {t('about.versionHistory.noEntries')}
             </p>
           ) : (
-            <div className="space-y-6 py-1">
-              {/* Unreleased section (no version tag) */}
-              {unreleasedSections.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge className="bg-brand text-white text-[11px] font-semibold">
-                      {t('about.versionHistory.unreleased')}
-                    </Badge>
-                  </div>
-                  <div className="space-y-3 pl-1">
-                    {unreleasedSections.map((section) => (
-                      <div key={section.category}>
-                        <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-1">
-                          {categoryKeys[section.category] ? t(categoryKeys[section.category]) : section.category}
-                        </p>
-                        <ul className="space-y-1">
-                          {section.items.map((item, idx) => (
-                            <li
-                              key={idx}
-                              className="text-[13px] text-brand-text-secondary flex gap-1.5"
-                            >
-                              <span className="text-brand-muted mt-0.5">·</span>
-                              <span>{item}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Versioned entries */}
-              {entries.map((entry) => {
-                const sections = parseSections(entry.body);
+            <div className="space-y-2 py-1">
+              {entries.map((entry, idx) => {
+                const sections = filterSections(parseSections(entry.body));
                 return (
-                  <div key={entry.version} className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-brand text-white text-[11px] font-semibold">
-                        {entry.version}
-                      </Badge>
-                    </div>
-                    {sections.length > 0 ? (
-                      <div className="space-y-3 pl-1">
-                        {sections.map((section) => (
-                          <div key={section.category}>
-                            <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-1">
-                              {section.category}
-                            </p>
-                            <ul className="space-y-1">
-                              {section.items.map((item, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-[13px] text-brand-text-secondary flex gap-1.5"
-                                >
-                                  <span className="text-brand-muted mt-0.5">·</span>
-                                  <span>{item}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[13px] text-brand-muted pl-1">{entry.body || '—'}</p>
-                    )}
-                    <div className="border-t border-brand-border" />
-                  </div>
+                  <VersionBlock
+                    key={entry.version}
+                    version={entry.version}
+                    sections={sections}
+                    isLatest={idx === 0}
+                    defaultOpen={idx === 0}
+                  />
                 );
               })}
             </div>
