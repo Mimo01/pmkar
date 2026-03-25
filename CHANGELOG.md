@@ -13,6 +13,12 @@
 
 ### Documentation
 
+- create deploy v0.2.0 release plan
+- complete hide copy to company Jira button on dismissed tickets plan summary and state update
+- complete hide copy button on dismissed tickets plan summary and state update
+- complete redesign Jira linked ticket state UI plan summary and state update
+- complete redesign Jira linked ticket state UI plan summary
+- complete version history changelog viewer plan summary and state update
 - create plan to redesign jira linked ticket state UI
 - create version history and changelog plan
 - complete About modal plan summary and state update
@@ -58,6 +64,11 @@
 
 ### Features
 
+- hide copy button on dismissed tickets in both detail views
+- redesign linked ticket state with compact badge and short open buttons
+- auto-regenerate changelog on version bump and internationalize version history modal
+- redesign copied/linked state UI in TicketDetailPanel
+- add VersionHistoryModal with changelog viewer and Version History button
 - create AboutModal and wire show-about event in App.tsx
 - redesign linked issues section with grouped layout
 - add native menu with About pmkar item that emits show-about event
@@ -87,6 +98,10 @@
 - frontend project selection — Settings dropdowns, Copy Preview target project, store wiring
 - backend project selection — fetch_projects commands, DB persistence, copy_ticket param
 - add TicketFilterBar and wire to all three ticket tabs
+
+### Miscellaneous
+
+- generate CHANGELOG.md and add changelog npm script
 
 ### Refactoring
 

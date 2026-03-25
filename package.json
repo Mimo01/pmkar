@@ -1,7 +1,7 @@
 {
   "name": "pmkar",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "changelog": "git cliff --config cliff.toml -o CHANGELOG.md"
+    "changelog": "npx git-cliff --config cliff.toml -o CHANGELOG.md"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
