@@ -1,4 +1,7 @@
+import { ArrowDownLeft, ArrowUpRight, Link2 } from 'lucide-react';
 import { DescriptionRenderer } from '../DescriptionRenderer';
+import { PriorityIcon } from '../PriorityIcon';
+import { StatusBadge } from '../StatusBadge';
 import { UserAvatar } from '../UserAvatar';
 import type { JiraTicketDetail } from '../types';
 
@@ -37,8 +40,14 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
             {fields.reporter?.displayName ?? 'Unknown'}
           </div>
         </div>
-        <FieldItem label="Status" value={fields.status.name} />
-        <FieldItem label="Priority" value={fields.priority.name} />
+        <div>
+          <div className="text-xs font-semibold text-brand-muted mb-1">Status</div>
+          <StatusBadge status={fields.status.name} />
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-brand-muted mb-1">Priority</div>
+          <PriorityIcon priority={fields.priority.name} size="sm" />
+        </div>
         <FieldItem
           label="Labels"
           value={fields.labels.length > 0 ? fields.labels.join(', ') : 'None'}
@@ -77,38 +86,64 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
             <div key={subtask.key} className="flex items-center gap-2 py-1">
               <span className="text-xs font-semibold text-brand-text-secondary">{subtask.key}</span>
               <span className="text-sm text-brand-text-secondary">{subtask.fields.summary}</span>
-              <span className="text-xs text-brand-muted">{subtask.fields.status.name}</span>
+              <StatusBadge status={subtask.fields.status.name} />
             </div>
           ))}
         </div>
       )}
 
       {/* Linked Issues */}
-      {fields.issuelinks.length > 0 && (
-        <div className="px-5 py-4 border-t border-brand-border-subtle">
-          <div className="text-xs font-semibold text-brand-muted mb-2">Linked Issues</div>
-          {fields.issuelinks.map((link) => {
-            const isOutward = !!link.outwardIssue;
-            const linkedIssue = isOutward ? link.outwardIssue : link.inwardIssue;
-            const direction = isOutward ? link.type.outward : link.type.inward;
+      {fields.issuelinks.length > 0 && (() => {
+        const groups = new Map<string, { isOutward: boolean; items: Array<{ key: string; summary: string; statusName: string; linkId: string }> }>();
+        for (const link of fields.issuelinks) {
+          const isOutward = !!link.outwardIssue;
+          const linkedIssue = isOutward ? link.outwardIssue : link.inwardIssue;
+          if (!linkedIssue) continue;
+          const direction = isOutward ? link.type.outward : link.type.inward;
+          if (!groups.has(direction)) {
+            groups.set(direction, { isOutward, items: [] });
+          }
+          groups.get(direction)!.items.push({
+            key: linkedIssue.key,
+            summary: linkedIssue.fields.summary,
+            statusName: linkedIssue.fields.status.name,
+            linkId: link.id,
+          });
+        }
 
-            if (!linkedIssue) return null;
-
-            return (
-              <div key={link.id} className="flex items-center gap-2 py-1">
-                <span className="text-xs text-brand-text-secondary">{direction}</span>
-                <span className="text-xs font-semibold text-brand-text-secondary">
-                  {linkedIssue.key}
-                </span>
-                <span className="text-sm text-brand-text-secondary">
-                  {linkedIssue.fields.summary}
-                </span>
-                <span className="text-xs text-brand-muted">{linkedIssue.fields.status.name}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        return (
+          <div className="px-5 py-4 border-t border-brand-border-subtle">
+            <div className="text-xs font-semibold text-brand-muted mb-3">Linked Issues</div>
+            {Array.from(groups.entries()).map(([direction, group], groupIndex) => {
+              const DirectionIcon = group.isOutward ? ArrowUpRight : ArrowDownLeft;
+              const fallbackIcon = !group.isOutward && !direction.toLowerCase().startsWith('is');
+              const IconComponent = fallbackIcon ? Link2 : DirectionIcon;
+              return (
+                <div key={direction}>
+                  <div className={`flex items-center gap-1.5 mb-1.5 mt-3 ${groupIndex === 0 ? 'first:mt-0 mt-0' : ''}`}>
+                    <IconComponent className="w-3.5 h-3.5 text-brand-muted" />
+                    <span className="text-xs font-medium text-brand-muted capitalize">{direction}</span>
+                  </div>
+                  {group.items.map((item) => (
+                    <div
+                      key={item.linkId}
+                      className="flex items-center gap-2.5 py-1.5 px-3 rounded-md hover:bg-brand-surface-hover transition-colors"
+                    >
+                      <span className="text-xs font-semibold font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded">
+                        {item.key}
+                      </span>
+                      <span className="text-sm text-brand-text-secondary truncate flex-1">
+                        {item.summary}
+                      </span>
+                      <StatusBadge status={item.statusName} />
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
     </div>
   );
 }
