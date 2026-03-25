@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { TicketCard } from './TicketCard';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
+import { isDoneTicket } from './utils';
 
 function handleRestore(issueKey: string) {
   invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
@@ -19,7 +20,7 @@ export function IgnoredTicketsPage() {
   const triageMap = useTicketStore((s) => s.triageMap);
 
   const ignoredTickets = useMemo(
-    () => tickets.filter((t) => triageMap[t.key]?.state === 'ignored'),
+    () => tickets.filter((t) => triageMap[t.key]?.state === 'ignored' && !isDoneTicket(t)),
     [tickets, triageMap],
   );
 

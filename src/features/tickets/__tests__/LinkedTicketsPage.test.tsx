@@ -9,7 +9,7 @@ const makeTicket = (key: string, updated = '2024-01-01T00:00:00.000Z'): JiraTick
   key,
   fields: {
     summary: `Summary for ${key}`,
-    status: { name: 'Done' },
+    status: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
     priority: { name: 'Medium', id: '3' },
     assignee: null,
     updated,

@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { TicketCard } from './TicketCard';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket } from './types';
+import { isDoneTicket } from './utils';
 
 export function LinkedTicketsPage() {
   const { t } = useTranslation();
@@ -11,7 +12,7 @@ export function LinkedTicketsPage() {
   const triageMap = useTicketStore((s) => s.triageMap);
 
   const copiedTickets = useMemo(
-    () => tickets.filter((t) => triageMap[t.key]?.state === 'copied'),
+    () => tickets.filter((t) => triageMap[t.key]?.state === 'copied' && !isDoneTicket(t)),
     [tickets, triageMap],
   );
 

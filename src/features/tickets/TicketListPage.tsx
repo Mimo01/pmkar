@@ -9,6 +9,7 @@ import { useConnectionStore } from '../connections/connectionStore';
 import { SkeletonCards, TicketCard } from './TicketCard';
 import { useTicketStore } from './ticketStore';
 import type { FetchTicketsResult, JqlPreset } from './types';
+import { isDoneTicket } from './utils';
 
 // --- Helpers ---
 
@@ -108,7 +109,7 @@ export function TicketListPage() {
 
   const candidateTickets = tickets.filter((t) => {
     const s = triageMap[t.key]?.state;
-    return s !== 'ignored' && s !== 'copied';
+    return s !== 'ignored' && s !== 'copied' && !isDoneTicket(t);
   });
 
   // Sort by updated DESC (no user-selectable sort — cards don't have column headers)
