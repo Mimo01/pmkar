@@ -240,7 +240,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-sjh: Redesign Jira linked ticket state UI
+Last activity: 2026-03-25 - Completed quick task 260325-sxj: Hide copy to company Jira button on dismissed tickets
 Last session: 2026-03-25T19:33:00Z
 Stopped at: Completed quick task 260325-sjh
 Resume file: None
