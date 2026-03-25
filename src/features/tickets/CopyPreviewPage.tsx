@@ -6,6 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 import { UserAvatar } from './UserAvatar';
 
 function SourceFieldRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
@@ -141,8 +143,12 @@ export function CopyPreviewPage() {
             </h2>
 
             <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
-            <SourceFieldRow label="Status" value={sourceTicket.fields.status.name} />
-            <SourceFieldRow label="Priority" value={sourceTicket.fields.priority.name} />
+            <SourceFieldRow label="Status">
+              <StatusBadge status={sourceTicket.fields.status.name} />
+            </SourceFieldRow>
+            <SourceFieldRow label="Priority">
+              <PriorityIcon priority={sourceTicket.fields.priority.name} size="sm" />
+            </SourceFieldRow>
             <SourceFieldRow label="Assignee">
               <span className="flex items-center gap-1.5">
                 <UserAvatar user={sourceTicket.fields.assignee} size="sm" />

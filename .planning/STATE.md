@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-pp3
-last_updated: "2026-03-25T17:30:07.366Z"
-last_activity: "2026-03-25 - Completed quick task 260325-pp3: On the issue copy page, the buttons are both on top and bottom. Keep only one set"
+stopped_at: Completed quick task 260325-pv3
+last_updated: "2026-03-25T17:45:00.000Z"
+last_activity: "2026-03-25 - Completed quick task 260325-pv3: Make the Copy/NotMine/OpenInJira action strip on TicketDetailPage polished using shadcn Button variants and Separator"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -225,6 +225,7 @@ None yet.
 | 260325-pcb | Fix watched users input losing focus on keystroke | 2026-03-25 | 4c3888c | | [260325-pcb-in-settings-when-editing-watched-users-a](./quick/260325-pcb-in-settings-when-editing-watched-users-a/) |
 | 260325-pp3 | Remove duplicate buttons from issue copy page | 2026-03-25 | b85d0f8 | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pp3 | Remove duplicated footer buttons from copy preview page | 2026-03-25 | 0ce321a | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
+| 260325-pv3 | Polished action strip with shadcn Button variants and Separator | 2026-03-25 | ba5282c | | [260325-pv3-make-the-copy-notmine-open-in-jira-strip](./quick/260325-pv3-make-the-copy-notmine-open-in-jira-strip/) |
 
 ## Session Continuity
 

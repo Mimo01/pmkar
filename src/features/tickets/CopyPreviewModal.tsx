@@ -16,6 +16,8 @@ import { Separator } from '@/components/ui/separator';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 import { UserAvatar } from './UserAvatar';
 
 function SourceFieldRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
@@ -138,8 +140,12 @@ export function CopyPreviewModal() {
               <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
 
               <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
-              <SourceFieldRow label="Status" value={sourceTicket.fields.status.name} />
-              <SourceFieldRow label="Priority" value={sourceTicket.fields.priority.name} />
+              <SourceFieldRow label="Status">
+                <StatusBadge status={sourceTicket.fields.status.name} />
+              </SourceFieldRow>
+              <SourceFieldRow label="Priority">
+                <PriorityIcon priority={sourceTicket.fields.priority.name} size="sm" />
+              </SourceFieldRow>
               <SourceFieldRow label="Assignee">
                 <span className="flex items-center gap-1.5">
                   <UserAvatar user={sourceTicket.fields.assignee} size="sm" />

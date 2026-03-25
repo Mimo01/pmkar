@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { CommentsTab } from './tabs/CommentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
@@ -183,12 +185,8 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
               {detail.fields.summary}
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-brand-text-secondary">
-                {detail.fields.status.name}
-              </span>
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-brand-surface-hover text-brand-text-secondary">
-                {detail.fields.priority.name}
-              </span>
+              <StatusBadge status={detail.fields.status.name} />
+              <PriorityIcon priority={detail.fields.priority.name} size="md" />
               <div className="ml-auto flex items-center gap-2">
                 {isCopied && triageEntry?.copiedKey ? (
                   <>
