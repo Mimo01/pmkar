@@ -120,16 +120,7 @@ export function AboutSection() {
       )}
 
       {status === 'error' && errorMessage && (
-        <div>
-          <p className="text-[13px] text-red-400">{errorMessage}</p>
-          <button
-            type="button"
-            onClick={handleCheckForUpdates}
-            className="text-[11px] text-brand hover:underline mt-1"
-          >
-            {t('update.modal.tryAgain')}
-          </button>
-        </div>
+        <p className="text-[13px] text-red-400">{errorMessage}</p>
       )}
 
       {/* Check for updates button */}
