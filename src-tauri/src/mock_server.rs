@@ -244,10 +244,10 @@ mod v2 {
 
     pub async fn search_users(Query(params): Query<UserSearchQuery>) -> impl IntoResponse {
         let mock_users = vec![
-            json!({"name": "jdoe", "displayName": "Jane Doe", "emailAddress": "jdoe@example.com", "active": true}),
-            json!({"name": "csmith", "displayName": "Chris Smith", "emailAddress": "csmith@example.com", "active": true}),
-            json!({"name": "bwilson", "displayName": "Bob Wilson", "emailAddress": "bwilson@example.com", "active": true}),
-            json!({"name": "admin", "displayName": "Admin User", "emailAddress": "admin@example.com", "active": true}),
+            json!({"name": "jdoe", "displayName": "Jane Doe", "emailAddress": "jdoe@example.com", "active": true, "avatarUrls": {"48x48": "https://avatar.example.com/jdoe/48x48.png", "32x32": "https://avatar.example.com/jdoe/32x32.png", "24x24": "https://avatar.example.com/jdoe/24x24.png", "16x16": "https://avatar.example.com/jdoe/16x16.png"}}),
+            json!({"name": "csmith", "displayName": "Chris Smith", "emailAddress": "csmith@example.com", "active": true, "avatarUrls": {"48x48": "https://avatar.example.com/csmith/48x48.png", "32x32": "https://avatar.example.com/csmith/32x32.png", "24x24": "https://avatar.example.com/csmith/24x24.png", "16x16": "https://avatar.example.com/csmith/16x16.png"}}),
+            json!({"name": "bwilson", "displayName": "Bob Wilson", "emailAddress": "bwilson@example.com", "active": true, "avatarUrls": {"48x48": "https://avatar.example.com/bwilson/48x48.png", "32x32": "https://avatar.example.com/bwilson/32x32.png", "24x24": "https://avatar.example.com/bwilson/24x24.png", "16x16": "https://avatar.example.com/bwilson/16x16.png"}}),
+            json!({"name": "admin", "displayName": "Admin User", "emailAddress": "admin@example.com", "active": true, "avatarUrls": {"48x48": "https://avatar.example.com/admin/48x48.png", "32x32": "https://avatar.example.com/admin/32x32.png", "24x24": "https://avatar.example.com/admin/24x24.png", "16x16": "https://avatar.example.com/admin/16x16.png"}}),
         ];
         let query = params.username.unwrap_or_default().to_lowercase();
         let filtered: Vec<Value> = if query.is_empty() {

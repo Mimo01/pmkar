@@ -12,6 +12,8 @@ pub struct JiraUser {
     pub account_id: Option<String>, // Cloud v3 uses "accountId"
     #[serde(rename = "displayName")]
     pub display_name: String,
+    #[serde(rename = "avatarUrls")]
+    pub avatar_urls: Option<std::collections::HashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -155,12 +157,30 @@ pub type SharedFixtures = Arc<Mutex<FixtureState>>;
 
 // Helper to create v2 user
 fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
-    json!({ "name": name, "displayName": display_name })
+    json!({
+        "name": name,
+        "displayName": display_name,
+        "avatarUrls": {
+            "48x48": format!("https://avatar.example.com/{}/48x48.png", name),
+            "32x32": format!("https://avatar.example.com/{}/32x32.png", name),
+            "24x24": format!("https://avatar.example.com/{}/24x24.png", name),
+            "16x16": format!("https://avatar.example.com/{}/16x16.png", name)
+        }
+    })
 }
 
 // Helper to create v3 user
 fn v3_user(account_id: &str, display_name: &str) -> serde_json::Value {
-    json!({ "accountId": account_id, "displayName": display_name })
+    json!({
+        "accountId": account_id,
+        "displayName": display_name,
+        "avatarUrls": {
+            "48x48": format!("https://avatar.example.com/{}/48x48.png", account_id),
+            "32x32": format!("https://avatar.example.com/{}/32x32.png", account_id),
+            "24x24": format!("https://avatar.example.com/{}/24x24.png", account_id),
+            "16x16": format!("https://avatar.example.com/{}/16x16.png", account_id)
+        }
+    })
 }
 
 // Helper to create v2 status
