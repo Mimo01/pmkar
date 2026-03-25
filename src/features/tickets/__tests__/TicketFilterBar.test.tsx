@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketFilterBar } from '../TicketFilterBar';
 import { TicketListPage } from '../TicketListPage';
 import { useTicketStore } from '../ticketStore';
-import type { JiraTicket, TriageEntry } from '../types';
+import type { JiraTicket } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
@@ -50,32 +50,50 @@ const defaultStoreState = {
 // ---------------------------------------------------------------------------
 
 describe('TicketFilterBar', () => {
-  it('renders search input with placeholder text', () => {
+  it('renders key search input with placeholder text', () => {
     render(
       <TicketFilterBar
         searchText=""
         onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
       />,
     );
-    // placeholder comes from i18n — en.json value
-    expect(screen.getByPlaceholderText('Filter by key or assignee...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Filter by key...')).toBeInTheDocument();
   });
 
-  it('calls onSearchChange when typing in the search input', () => {
+  it('renders assignee autocomplete input with placeholder text', () => {
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+    expect(screen.getByPlaceholderText('Filter by assignee...')).toBeInTheDocument();
+  });
+
+  it('calls onSearchChange when typing in the key search input', () => {
     const onSearchChange = vi.fn();
     render(
       <TicketFilterBar
         searchText=""
         onSearchChange={onSearchChange}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
       />,
     );
-    const input = screen.getByPlaceholderText('Filter by key or assignee...');
+    const input = screen.getByPlaceholderText('Filter by key...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
     expect(onSearchChange).toHaveBeenCalledWith('PROJ-1');
   });
@@ -85,6 +103,8 @@ describe('TicketFilterBar', () => {
       <TicketFilterBar
         searchText=""
         onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -98,6 +118,8 @@ describe('TicketFilterBar', () => {
       <TicketFilterBar
         searchText="PROJ"
         onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={2}
@@ -112,6 +134,8 @@ describe('TicketFilterBar', () => {
       <TicketFilterBar
         searchText="PROJ"
         onSearchChange={onSearchChange}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={2}
@@ -127,6 +151,8 @@ describe('TicketFilterBar', () => {
       <TicketFilterBar
         searchText=""
         onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={onToggleSort}
         resultCount={5}
@@ -141,12 +167,47 @@ describe('TicketFilterBar', () => {
       <TicketFilterBar
         searchText=""
         onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={7}
       />,
     );
     expect(screen.getByText('7 shown')).toBeInTheDocument();
+  });
+
+  it('shows assignee chip when assigneeFilter is set', () => {
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter="Alice"
+        onAssigneeChange={vi.fn()}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={2}
+      />,
+    );
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByLabelText('Clear assignee filter')).toBeInTheDocument();
+  });
+
+  it('calls onAssigneeChange with empty string when assignee chip X is clicked', () => {
+    const onAssigneeChange = vi.fn();
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter="Alice"
+        onAssigneeChange={onAssigneeChange}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={2}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Clear assignee filter'));
+    expect(onAssigneeChange).toHaveBeenCalledWith('');
   });
 });
 
@@ -194,9 +255,9 @@ describe('TicketListPage filter integration', () => {
     expect(screen.getByText('Summary for OTHER-1')).toBeInTheDocument();
   });
 
-  it('filters to matching ticket key when typing in search', () => {
+  it('filters to matching ticket key when typing in key search', () => {
     render(<TicketListPage />);
-    const input = screen.getByPlaceholderText('Filter by key or assignee...');
+    const input = screen.getByPlaceholderText('Filter by key...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
 
     expect(screen.getByText('Summary for PROJ-1')).toBeInTheDocument();
@@ -204,19 +265,9 @@ describe('TicketListPage filter integration', () => {
     expect(screen.queryByText('Summary for OTHER-1')).toBeNull();
   });
 
-  it('filters by assignee name when typing in search', () => {
-    render(<TicketListPage />);
-    const input = screen.getByPlaceholderText('Filter by key or assignee...');
-    fireEvent.change(input, { target: { value: 'Alice' } });
-
-    expect(screen.getByText('Summary for PROJ-1')).toBeInTheDocument();
-    expect(screen.queryByText('Summary for PROJ-2')).toBeNull();
-    expect(screen.getByText('Summary for OTHER-1')).toBeInTheDocument();
-  });
-
   it('shows all tickets again after clearing search', () => {
     render(<TicketListPage />);
-    const input = screen.getByPlaceholderText('Filter by key or assignee...');
+    const input = screen.getByPlaceholderText('Filter by key...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
     // Only PROJ-1 visible
     expect(screen.queryByText('Summary for PROJ-2')).toBeNull();
