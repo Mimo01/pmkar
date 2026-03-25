@@ -1,43 +1,9 @@
 import type React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '../../lib/format';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 import type { JiraTicket, TriageEntry } from './types';
-
-// --- Sub-components ---
-
-function StatusDot({ status }: { status: string }) {
-  const lower = status.toLowerCase();
-  let colorClass = 'bg-brand-muted'; // default: To Do / Open
-  if (lower.includes('progress') || lower.includes('review')) colorClass = 'bg-blue-600';
-  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
-    colorClass = 'bg-green-600';
-  if (lower.includes('blocked')) colorClass = 'bg-red-600';
-  return (
-    <span className="flex items-center gap-1">
-      <span className={`w-1.5 h-1.5 rounded-full ${colorClass}`} aria-hidden="true" />
-      <span className="text-xs text-brand-text-secondary">{status}</span>
-    </span>
-  );
-}
-
-function PriorityDot({ priority }: { priority: string }) {
-  const lower = priority.toLowerCase();
-  let color = 'var(--color-brand-muted)'; // Lowest
-  if (lower === 'highest' || lower === 'critical') color = '#dc2626';
-  if (lower === 'high') color = '#ea580c';
-  if (lower === 'medium') color = '#ca8a04';
-  if (lower === 'low') color = '#3b82f6';
-  return (
-    <span className="flex items-center gap-1">
-      <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: color }}
-        aria-hidden="true"
-      />
-      <span className="text-xs text-brand-text-secondary">{priority}</span>
-    </span>
-  );
-}
 
 // --- TicketCard props interface ---
 
@@ -74,8 +40,8 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
       </p>
       {/* Line 3: metadata row */}
       <div className="flex items-center gap-2">
-        <StatusDot status={ticket.fields.status.name} />
-        <PriorityDot priority={ticket.fields.priority.name} />
+        <StatusBadge status={ticket.fields.status.name} />
+        <PriorityIcon priority={ticket.fields.priority.name} size="sm" />
         <span className="text-xs text-brand-text-secondary truncate">
           {ticket.fields.assignee?.displayName ?? ''}
         </span>

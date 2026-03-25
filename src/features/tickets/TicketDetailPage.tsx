@@ -3,9 +3,10 @@ import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { CommentsTab } from './tabs/CommentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
@@ -19,21 +20,6 @@ type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
 interface TicketDetailPageProps {
   issueKey: string;
   onBack: () => void;
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const lower = status.toLowerCase();
-  let className = 'bg-brand-surface-hover text-brand-text-secondary'; // To Do / Open
-  if (lower.includes('progress') || lower.includes('review'))
-    className = 'bg-blue-600/10 text-blue-600 dark:text-blue-400';
-  if (lower.includes('done') || lower.includes('resolved') || lower.includes('closed'))
-    className = 'bg-green-600/10 text-green-600 dark:text-green-400';
-  if (lower.includes('blocked')) className = 'bg-red-600/10 text-red-600 dark:text-red-400';
-  return (
-    <Badge variant="outline" className={cn('text-xs', className)}>
-      {status}
-    </Badge>
-  );
 }
 
 export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
@@ -212,7 +198,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           <h1 className="text-base font-semibold text-brand-text mb-2">{detail.fields.summary}</h1>
           <div className="flex items-center gap-3 mb-6 text-xs text-brand-muted flex-wrap">
             <StatusBadge status={detail.fields.status.name} />
-            <span>{detail.fields.priority.name}</span>
+            <PriorityIcon priority={detail.fields.priority.name} size="md" />
             {detail.fields.assignee?.displayName && (
               <span>{detail.fields.assignee.displayName}</span>
             )}

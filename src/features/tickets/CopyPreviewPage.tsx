@@ -1,4 +1,5 @@
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -6,12 +7,26 @@ import { Separator } from '@/components/ui/separator';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
+import { PriorityIcon } from './PriorityIcon';
+import { StatusBadge } from './StatusBadge';
 
-function SourceFieldRow({ label, value }: { label: string; value: string }) {
+function SourceFieldRow({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children?: React.ReactNode;
+}) {
   return (
     <div className="mb-3">
       <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
-      <span className="text-sm text-brand-text">{value}</span>
+      {children ? (
+        <div className="mt-1">{children}</div>
+      ) : (
+        <span className="text-sm text-brand-text">{value}</span>
+      )}
     </div>
   );
 }
@@ -136,8 +151,12 @@ export function CopyPreviewPage() {
             </h2>
 
             <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
-            <SourceFieldRow label="Status" value={sourceTicket.fields.status.name} />
-            <SourceFieldRow label="Priority" value={sourceTicket.fields.priority.name} />
+            <SourceFieldRow label="Status">
+              <StatusBadge status={sourceTicket.fields.status.name} />
+            </SourceFieldRow>
+            <SourceFieldRow label="Priority">
+              <PriorityIcon priority={sourceTicket.fields.priority.name} size="sm" />
+            </SourceFieldRow>
             <SourceFieldRow
               label="Assignee"
               value={sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
