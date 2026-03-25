@@ -438,6 +438,7 @@ pub async fn ping_mock_servers() -> Result<serde_json::Value, AppError> {
 // --- Connection test commands ---
 
 #[derive(serde::Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ConnectionTestResult {
     pub success: bool,
     pub username: Option<String>,
