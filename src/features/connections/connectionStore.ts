@@ -18,7 +18,12 @@ interface ConnectionState {
   setSourceProjectName: (name: string | null) => void;
   setTargetProjectName: (name: string | null) => void;
   loadProjectConfig: () => Promise<void>;
-  saveProjectConfig: (source: string | null, target: string | null, sourceName?: string | null, targetName?: string | null) => Promise<void>;
+  saveProjectConfig: (
+    source: string | null,
+    target: string | null,
+    sourceName?: string | null,
+    targetName?: string | null,
+  ) => Promise<void>;
 }
 
 export const useConnectionStore = create<ConnectionState>((set, get) => ({
@@ -38,7 +43,12 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   setTargetProjectName: (name) => set({ targetProjectName: name }),
   loadProjectConfig: async () => {
     try {
-      const config = await invoke<{ sourceProjectKey: string | null; targetProjectKey: string | null; sourceProjectName: string | null; targetProjectName: string | null }>('get_project_config');
+      const config = await invoke<{
+        sourceProjectKey: string | null;
+        targetProjectKey: string | null;
+        sourceProjectName: string | null;
+        targetProjectName: string | null;
+      }>('get_project_config');
       set({
         sourceProjectKey: config.sourceProjectKey ?? null,
         targetProjectKey: config.targetProjectKey ?? null,

@@ -214,7 +214,14 @@ impl TriageDb {
         Ok(())
     }
 
-    pub fn get_project_keys(&self) -> AppResult<(Option<String>, Option<String>, Option<String>, Option<String>)> {
+    pub fn get_project_keys(
+        &self,
+    ) -> AppResult<(
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+    )> {
         let result = self
             .conn
             .query_row(
@@ -272,9 +279,15 @@ impl TriageDb {
         if keys.is_empty() {
             return Ok(0);
         }
-        let placeholders = keys.iter().enumerate().map(|(i, _)| format!("?{}", i + 1)).collect::<Vec<_>>().join(", ");
+        let placeholders = keys
+            .iter()
+            .enumerate()
+            .map(|(i, _)| format!("?{}", i + 1))
+            .collect::<Vec<_>>()
+            .join(", ");
         let sql = format!("DELETE FROM triage_state WHERE ticket_key IN ({placeholders})");
-        let params: Vec<&dyn rusqlite::ToSql> = keys.iter().map(|k| k as &dyn rusqlite::ToSql).collect();
+        let params: Vec<&dyn rusqlite::ToSql> =
+            keys.iter().map(|k| k as &dyn rusqlite::ToSql).collect();
         let count = self.conn.execute(&sql, params.as_slice())?;
         Ok(count)
     }
@@ -386,10 +399,7 @@ mod tests {
         db.set_triage("PROJ-2", "seen").expect("set failed");
         db.set_triage("PROJ-3", "ignored").expect("set failed");
         let deleted = db
-            .delete_triage_entries(&[
-                "PROJ-1".to_string(),
-                "PROJ-2".to_string(),
-            ])
+            .delete_triage_entries(&["PROJ-1".to_string(), "PROJ-2".to_string()])
             .expect("delete failed");
         assert_eq!(deleted, 2, "should have deleted 2 entries");
         let all = db.get_all_triage().expect("get failed");

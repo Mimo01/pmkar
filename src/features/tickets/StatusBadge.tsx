@@ -5,8 +5,7 @@ interface StatusBadgeProps {
 export function StatusBadge({ status }: StatusBadgeProps) {
   const lower = status.toLowerCase();
 
-  let colorClass =
-    'bg-brand-surface-hover text-brand-text-secondary border border-brand-border';
+  let colorClass = 'bg-brand-surface-hover text-brand-text-secondary border border-brand-border';
   if (lower.includes('progress') || lower.includes('review'))
     colorClass =
       'bg-blue-50/60 text-blue-600 border border-blue-200/60 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-400/20';

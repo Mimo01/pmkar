@@ -51,9 +51,10 @@ export function UserAvatar({ user, size = 'sm' }: UserAvatarProps) {
   const colorClass = getAvatarColor(user.displayName);
 
   // Pick avatar URL based on size
-  const avatarUrl = size === 'md'
-    ? (user.avatarUrls?.['32x32'] ?? user.avatarUrls?.['24x24'])
-    : user.avatarUrls?.['24x24'];
+  const avatarUrl =
+    size === 'md'
+      ? (user.avatarUrls?.['32x32'] ?? user.avatarUrls?.['24x24'])
+      : user.avatarUrls?.['24x24'];
 
   if (avatarUrl && !imgError) {
     return (

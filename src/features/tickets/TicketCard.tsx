@@ -36,11 +36,15 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
         <div className="flex items-center gap-2 text-xs text-brand-muted">
           {ticket.fields.created && (
             <>
-              <span>{t('tickets.card.created', { time: formatRelativeTime(ticket.fields.created) })}</span>
+              <span>
+                {t('tickets.card.created', { time: formatRelativeTime(ticket.fields.created) })}
+              </span>
               <span className="text-brand-muted/40">·</span>
             </>
           )}
-          <span>{t('tickets.card.updated', { time: formatRelativeTime(ticket.fields.updated) })}</span>
+          <span>
+            {t('tickets.card.updated', { time: formatRelativeTime(ticket.fields.updated) })}
+          </span>
         </div>
       </div>
       {/* Line 2: summary */}

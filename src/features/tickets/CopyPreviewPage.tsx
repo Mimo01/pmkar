@@ -1,6 +1,6 @@
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -10,7 +10,15 @@ import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
 import { UserAvatar } from './UserAvatar';
 
-function SourceFieldRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
+function SourceFieldRow({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="mb-3">
       <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
@@ -81,11 +89,7 @@ export function CopyPreviewPage() {
       {/* Page header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-brand-border bg-brand-surface flex-shrink-0">
         <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleDiscard}
-            disabled={isCopying}
-          >
+          <Button variant="outline" onClick={handleDiscard} disabled={isCopying}>
             <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
             {t('copy.preview.discard')}
           </Button>
@@ -110,7 +114,9 @@ export function CopyPreviewPage() {
               {t('copy.preview.copying')}
             </>
           ) : (
-            t('copy.preview.confirm', { name: targetProjectName || t('wizard.destination.subtitle') })
+            t('copy.preview.confirm', {
+              name: targetProjectName || t('wizard.destination.subtitle'),
+            })
           )}
         </Button>
       </div>

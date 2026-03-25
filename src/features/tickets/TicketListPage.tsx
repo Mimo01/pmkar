@@ -125,8 +125,7 @@ export function TicketListPage() {
     if (assigneeFilter.length > 0) {
       const assigneeLower = assigneeFilter.toLowerCase();
       filtered = filtered.filter(
-        (ticket) =>
-          (ticket.fields.assignee?.displayName ?? '').toLowerCase() === assigneeLower,
+        (ticket) => (ticket.fields.assignee?.displayName ?? '').toLowerCase() === assigneeLower,
       );
     }
     return [...filtered].sort((a, b) => {

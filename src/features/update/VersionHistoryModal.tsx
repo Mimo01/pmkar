@@ -2,23 +2,18 @@ import { ChevronDown, History } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import changelogRaw from '../../../CHANGELOG.md?raw';
 
 const categoryKeys: Record<string, string> = {
-  'Features': 'changelog.features',
+  Features: 'changelog.features',
   'Bug Fixes': 'changelog.bugFixes',
-  'Refactoring': 'changelog.refactoring',
-  'Performance': 'changelog.performance',
-  'Testing': 'changelog.testing',
-  'Documentation': 'changelog.documentation',
-  'Miscellaneous': 'changelog.miscellaneous',
+  Refactoring: 'changelog.refactoring',
+  Performance: 'changelog.performance',
+  Testing: 'changelog.testing',
+  Documentation: 'changelog.documentation',
+  Miscellaneous: 'changelog.miscellaneous',
   'CI/CD': 'changelog.cicd',
 };
 
@@ -56,15 +51,12 @@ function parseChangelog(raw: string): VersionEntry[] {
 
   // Merge "Unreleased" into the next version entry — those commits are part
   // of the current build even though they landed after the last git tag.
-  const unreleasedIdx = entries.findIndex(
-    (e) => e.version.toLowerCase() === 'unreleased',
-  );
+  const unreleasedIdx = entries.findIndex((e) => e.version.toLowerCase() === 'unreleased');
   if (unreleasedIdx !== -1) {
     const unreleased = entries[unreleasedIdx];
     const nextVersionIdx = unreleasedIdx + 1;
     if (nextVersionIdx < entries.length) {
-      entries[nextVersionIdx].body =
-        unreleased.body + '\n' + entries[nextVersionIdx].body;
+      entries[nextVersionIdx].body = `${unreleased.body}\n${entries[nextVersionIdx].body}`;
     }
     // Drop the Unreleased entry either way
     entries.splice(unreleasedIdx, 1);
@@ -106,9 +98,7 @@ function filterSections(sections: CategorySection[]): CategorySection[] {
     .filter((s) => !hiddenCategories.has(s.category))
     .map((s) => ({
       ...s,
-      items: s.items.filter(
-        (item) => !item.toLowerCase().startsWith('bump version'),
-      ),
+      items: s.items.filter((item) => !item.toLowerCase().startsWith('bump version')),
     }))
     .filter((s) => s.items.length > 0);
 }
@@ -162,7 +152,10 @@ function VersionBlock({
           )}
           {!open && (
             <span className="text-[11px] text-brand-muted">
-              {itemCount} {itemCount === 1 ? t('about.versionHistory.change') : t('about.versionHistory.changes')}
+              {itemCount}{' '}
+              {itemCount === 1
+                ? t('about.versionHistory.change')
+                : t('about.versionHistory.changes')}
             </span>
           )}
         </div>
@@ -182,11 +175,8 @@ function VersionBlock({
                   : section.category}
               </p>
               <ul className="space-y-1">
-                {section.items.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="text-[13px] text-brand-text-secondary flex gap-1.5"
-                  >
+                {section.items.map((item) => (
+                  <li key={item} className="text-[13px] text-brand-text-secondary flex gap-1.5">
                     <span className="text-brand-muted mt-0.5">·</span>
                     <span>{item}</span>
                   </li>
@@ -199,19 +189,14 @@ function VersionBlock({
 
       {open && sections.length === 0 && (
         <div className="px-3 pb-3 border-t border-brand-border pt-2.5">
-          <p className="text-[13px] text-brand-muted">
-            {t('about.versionHistory.noChanges')}
-          </p>
+          <p className="text-[13px] text-brand-muted">{t('about.versionHistory.noChanges')}</p>
         </div>
       )}
     </div>
   );
 }
 
-export function VersionHistoryModal({
-  open,
-  onOpenChange,
-}: VersionHistoryModalProps) {
+export function VersionHistoryModal({ open, onOpenChange }: VersionHistoryModalProps) {
   const { t } = useTranslation();
   const entries = parseChangelog(changelogRaw);
 

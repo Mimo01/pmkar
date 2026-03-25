@@ -54,8 +54,14 @@ export function SummaryStep({ serverConnection, cloudConnection, onDone }: Summa
       <p className="text-sm text-brand-text-secondary">{t('wizard.bothConfigured')}</p>
 
       <div className="space-y-3">
-        <ConnectionSummaryCard label={t('settings.sourceLabel', { name: t('wizard.source.subtitle') })} connection={serverConnection} />
-        <ConnectionSummaryCard label={t('settings.destLabel', { name: t('wizard.destination.subtitle') })} connection={cloudConnection} />
+        <ConnectionSummaryCard
+          label={t('settings.sourceLabel', { name: t('wizard.source.subtitle') })}
+          connection={serverConnection}
+        />
+        <ConnectionSummaryCard
+          label={t('settings.destLabel', { name: t('wizard.destination.subtitle') })}
+          connection={cloudConnection}
+        />
       </div>
 
       <div className="flex justify-end pt-2">

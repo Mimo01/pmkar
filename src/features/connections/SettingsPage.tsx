@@ -122,6 +122,7 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
                   onChange={(e) => setSearch(e.target.value)}
                   className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
                   placeholder={t('settings.project.search')}
+                  // biome-ignore lint/a11y/noAutofocus: search input in dropdown should focus on open
                   autoFocus
                 />
               </div>
@@ -137,7 +138,11 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-surface-hover transition-colors text-[13px]"
                 >
                   <Layers className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" />
-                  <span className={cn(!currentKey ? 'text-brand-text font-medium' : 'text-brand-muted italic')}>
+                  <span
+                    className={cn(
+                      !currentKey ? 'text-brand-text font-medium' : 'text-brand-muted italic',
+                    )}
+                  >
                     {t('settings.project.all')}
                   </span>
                   {!currentKey && (
@@ -474,7 +479,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             ) : (
               <>
                 <ConnectionCard
-                  label={t('settings.sourceLabel', { name: sourceProjectName || t('wizard.source.subtitle') })}
+                  label={t('settings.sourceLabel', {
+                    name: sourceProjectName || t('wizard.source.subtitle'),
+                  })}
                   connection={serverConn}
                   onEdit={() => handleEdit('server')}
                 />
@@ -528,7 +535,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             ) : (
               <>
                 <ConnectionCard
-                  label={t('settings.destLabel', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                  label={t('settings.destLabel', {
+                    name: targetProjectName || t('wizard.destination.subtitle'),
+                  })}
                   connection={cloudConn}
                   onEdit={() => handleEdit('cloud')}
                 />

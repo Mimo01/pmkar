@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft, ChevronUp } from 'lucide-react';
-import { Fragment, useEffect, useState } from 'react';
 import type { JSX } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';

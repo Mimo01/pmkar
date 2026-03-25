@@ -24,9 +24,7 @@ export function LinkedTicketsPage() {
     let filtered = copiedTickets;
     if (searchText.length > 0) {
       const lower = searchText.toLowerCase();
-      filtered = filtered.filter((ticket: JiraTicket) =>
-        ticket.key.toLowerCase().includes(lower),
-      );
+      filtered = filtered.filter((ticket: JiraTicket) => ticket.key.toLowerCase().includes(lower));
     }
     if (assigneeFilter.length > 0) {
       const assigneeLower = assigneeFilter.toLowerCase();

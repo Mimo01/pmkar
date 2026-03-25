@@ -211,64 +211,70 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
 
           {/* Action buttons */}
           <TooltipProvider delayDuration={300}>
-          <div className="flex items-center gap-3 flex-wrap mb-6">
-            {!isCopied && !isIgnored && (
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleStartCopy}
-                disabled={copyPhase === 'loading_preview'}
-              >
-                {copyPhase === 'loading_preview' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                ) : null}
-                {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
-              </Button>
-            )}
-            {isCopied && triageEntry?.copiedKey ? (
-              <>
-                {/* Linked status badge */}
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
-                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.copied')} → {triageEntry.copiedKey}
-                </span>
-                <Button variant="outline" size="sm" onClick={handleOpenInJira}>
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  {sourceProjectName || t('wizard.source.subtitle')}
+            <div className="flex items-center gap-3 flex-wrap mb-6">
+              {!isCopied && !isIgnored && (
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={handleStartCopy}
+                  disabled={copyPhase === 'loading_preview'}
+                >
+                  {copyPhase === 'loading_preview' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : null}
+                  {t('detail.copy', {
+                    name: targetProjectName || t('wizard.destination.subtitle'),
+                  })}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  {triageEntry.copiedKey}
-                </Button>
-              </>
-            ) : (
-              <>
-                {isIgnored ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="secondary" size="lg" onClick={handleUnignore}>
-                        {t('detail.ignored')}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.ignored.tooltip')}</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="secondary" size="lg" onClick={handleIgnore}>
-                        {t('detail.ignore')}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
-                  </Tooltip>
-                )}
-                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInJira')}
-                </Button>
-              </>
-            )}
-          </div>
+              )}
+              {isCopied && triageEntry?.copiedKey ? (
+                <>
+                  {/* Linked status badge */}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
+                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                    {t('detail.copied')} → {triageEntry.copiedKey}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={handleOpenInJira}>
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    {sourceProjectName || t('wizard.source.subtitle')}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    {triageEntry.copiedKey}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {isIgnored ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="secondary" size="lg" onClick={handleUnignore}>
+                          {t('detail.ignored')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.ignored.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                          {t('detail.ignore')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.ignore.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                    <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                    {t('detail.openInJira')}
+                  </Button>
+                </>
+              )}
+            </div>
           </TooltipProvider>
 
           {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
@@ -307,7 +313,6 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

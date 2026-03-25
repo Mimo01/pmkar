@@ -21,7 +21,8 @@ fn main() {
 
             // Build custom application menu with About item that opens frontend modal
             {
-                let about_item = MenuItem::with_id(app, "about", "About pmkar", true, None::<&str>)?;
+                let about_item =
+                    MenuItem::with_id(app, "about", "About pmkar", true, None::<&str>)?;
                 let separator = PredefinedMenuItem::separator(app)?;
 
                 #[cfg(target_os = "macos")]
@@ -69,18 +70,22 @@ fn main() {
                     app,
                     "Edit",
                     true,
-                    &[&undo, &redo, &edit_sep, &cut, &copy_item, &paste, &select_all],
+                    &[
+                        &undo,
+                        &redo,
+                        &edit_sep,
+                        &cut,
+                        &copy_item,
+                        &paste,
+                        &select_all,
+                    ],
                 )?;
 
                 // Window submenu
                 let minimize = PredefinedMenuItem::minimize(app, None::<&str>)?;
                 let close_window = PredefinedMenuItem::close_window(app, None::<&str>)?;
-                let window_submenu = Submenu::with_items(
-                    app,
-                    "Window",
-                    true,
-                    &[&minimize, &close_window],
-                )?;
+                let window_submenu =
+                    Submenu::with_items(app, "Window", true, &[&minimize, &close_window])?;
 
                 let menu = Menu::with_items(app, &[&app_submenu, &edit_submenu, &window_submenu])?;
                 app.set_menu(menu)?;

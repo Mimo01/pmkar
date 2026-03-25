@@ -256,18 +256,32 @@ mod tests {
             )
             .expect("backdating failed");
 
-        let updated = db.prune_response_bodies(7).expect("prune_response_bodies failed");
+        let updated = db
+            .prune_response_bodies(7)
+            .expect("prune_response_bodies failed");
         assert_eq!(updated, 1, "expected 1 response body nullified");
 
         let entries = db.get_all().expect("get_all failed");
         // Both entries still exist
         assert_eq!(entries.len(), 2);
         // The old one should have no body
-        let old = entries.iter().find(|e| e.url == "https://example.com/old").unwrap();
-        assert!(old.response_body.is_none(), "old entry's response_body should be None");
+        let old = entries
+            .iter()
+            .find(|e| e.url == "https://example.com/old")
+            .unwrap();
+        assert!(
+            old.response_body.is_none(),
+            "old entry's response_body should be None"
+        );
         // The recent one should still have a body
-        let recent = entries.iter().find(|e| e.url == "https://example.com/recent").unwrap();
-        assert!(recent.response_body.is_some(), "recent entry's response_body should still be Some");
+        let recent = entries
+            .iter()
+            .find(|e| e.url == "https://example.com/recent")
+            .unwrap();
+        assert!(
+            recent.response_body.is_some(),
+            "recent entry's response_body should still be Some"
+        );
     }
 
     #[test]
@@ -284,7 +298,11 @@ mod tests {
         assert_eq!(page2.len(), 5, "second page should have 5 entries");
 
         let all = db.get_page(0, 20).expect("get_page failed");
-        assert_eq!(all.len(), 10, "oversized limit should return all 10 entries");
+        assert_eq!(
+            all.len(),
+            10,
+            "oversized limit should return all 10 entries"
+        );
 
         // Pages should not overlap
         let ids1: Vec<_> = page1.iter().map(|e| e.id).collect();

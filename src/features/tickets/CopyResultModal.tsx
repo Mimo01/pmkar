@@ -130,7 +130,9 @@ export function CopyResultModal() {
         <DialogFooter>
           {issueCreated && result?.targetUrl && (
             <Button variant="outline" onClick={handleOpenInJira}>
-              {t('copy.result.openInJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+              {t('copy.result.openInJira', {
+                name: targetProjectName || t('wizard.destination.subtitle'),
+              })}
             </Button>
           )}
           <Button onClick={handleClose}>{t('copy.result.close')}</Button>

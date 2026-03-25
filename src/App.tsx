@@ -140,9 +140,7 @@ function App() {
     return (
       <ErrorBoundary>
         <AppShell>
-          <AuditLogPage
-            onClose={() => setShowAuditLog(false)}
-          />
+          <AuditLogPage onClose={() => setShowAuditLog(false)} />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
@@ -158,9 +156,11 @@ function App() {
           copyPhase === 'previewing' ||
           copyPhase === 'copying' ||
           copyPhase === 'result' ? (
-            <>
-              {copyPhase === 'result' ? <CopyResultPage /> : <CopyPreviewPage />}
-            </>
+            copyPhase === 'result' ? (
+              <CopyResultPage />
+            ) : (
+              <CopyPreviewPage />
+            )
           ) : (
             <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
           )}

@@ -1,8 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,7 +20,15 @@ import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
 import { UserAvatar } from './UserAvatar';
 
-function SourceFieldRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
+function SourceFieldRow({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value?: string;
+  children?: ReactNode;
+}) {
   return (
     <div className="mb-3">
       <span className="text-xs text-brand-muted block mb-0.5">{label}</span>

@@ -85,7 +85,9 @@ export function CopyResultPage() {
           {issueCreated && result?.targetUrl && (
             <Button variant="outline" size="lg" onClick={handleOpenInJira}>
               <ExternalLink className="w-4 h-4 mr-1.5" aria-hidden="true" />
-              {t('copy.result.openInJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+              {t('copy.result.openInJira', {
+                name: targetProjectName || t('wizard.destination.subtitle'),
+              })}
             </Button>
           )}
           <Button size="lg" onClick={handleClose}>
@@ -99,15 +101,15 @@ export function CopyResultPage() {
         <div className="flex-1 overflow-y-auto p-6">
           {result.targetKey && (
             <p className="text-sm text-brand-muted mb-6">
-              Created: <span className="font-mono font-semibold text-brand-text">{result.targetKey}</span>
+              Created:{' '}
+              <span className="font-mono font-semibold text-brand-text">{result.targetKey}</span>
             </p>
           )}
 
           <div className="space-y-2 max-w-2xl">
-            {result.steps.map((step, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: steps are immutable copy result items, index is stable
+            {result.steps.map((step) => (
               <div
-                key={i}
+                key={step.step}
                 className="flex items-start gap-3 py-2.5 px-3 rounded-md bg-brand-bg border border-brand-border"
               >
                 {step.success ? (

@@ -2,8 +2,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../../lib/format';
-import { UserAvatar } from '../UserAvatar';
 import type { JiraWorklog } from '../types';
+import { UserAvatar } from '../UserAvatar';
 
 interface WorkLogTabProps {
   issueKey: string;

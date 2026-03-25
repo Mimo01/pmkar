@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../../lib/format';
-import { UserAvatar } from '../UserAvatar';
 import type { JiraComment } from '../types';
+import { UserAvatar } from '../UserAvatar';
 
 interface CommentsTabProps {
   comments: JiraComment[];

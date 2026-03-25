@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, Equal } from 'lucide-react';
+import { ChevronDown, ChevronsDown, ChevronsUp, ChevronUp, Equal } from 'lucide-react';
 
 interface PriorityIconProps {
   priority: string;
@@ -33,9 +33,7 @@ export function PriorityIcon({ priority, showLabel = true, size = 'sm' }: Priori
   return (
     <span className="flex items-center gap-1">
       <Icon className={iconClass} style={{ color }} aria-hidden="true" />
-      {showLabel && (
-        <span className="text-xs text-brand-text-secondary">{priority}</span>
-      )}
+      {showLabel && <span className="text-xs text-brand-text-secondary">{priority}</span>}
     </span>
   );
 }

@@ -152,7 +152,10 @@ export function TicketFilterBar({
             <span className="truncate max-w-[140px]">{assigneeFilter}</span>
             <button
               type="button"
-              onClick={() => { onAssigneeChange(''); setSelectedUser(null); }}
+              onClick={() => {
+                onAssigneeChange('');
+                setSelectedUser(null);
+              }}
               aria-label={t('tickets.filter.clearAssignee')}
               className="shrink-0 text-brand/70 hover:text-brand transition-colors duration-150"
             >
