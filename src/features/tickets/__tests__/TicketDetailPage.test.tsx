@@ -181,7 +181,7 @@ describe('TicketDetailPage', () => {
   it('shows ignored state button when ticket is ignored', async () => {
     useTicketStore.setState({
       triageMap: { 'PROJ-1': { state: 'ignored', copiedKey: null } },
-    } as Parameters<typeof useTicketStore.setState>[0]);
+    } as unknown as Parameters<typeof useTicketStore.setState>[0]);
     mockInvoke.mockResolvedValue(makeDetail());
     render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
 
