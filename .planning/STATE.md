@@ -239,7 +239,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-sk0: Version history and changelog viewer in About modal
-Last session: 2026-03-25T19:43:00Z
-Stopped at: Completed quick task 260325-sk0
+Last activity: 2026-03-25 - Completed quick task 260325-sjh: Redesign Jira linked ticket state UI
+Last session: 2026-03-25T19:33:00Z
+Stopped at: Completed quick task 260325-sjh
 Resume file: None
