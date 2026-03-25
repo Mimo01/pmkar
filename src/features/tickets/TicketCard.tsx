@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatRelativeTime } from '../../lib/format';
 import type { JiraTicket, TriageEntry } from './types';
+import { UserAvatar } from './UserAvatar';
 
 // --- Sub-components ---
 
@@ -84,9 +85,12 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
       <div className="flex items-center gap-2">
         <StatusDot status={ticket.fields.status.name} />
         <PriorityDot priority={ticket.fields.priority.name} />
-        <span className="text-xs text-brand-text-secondary truncate">
-          {ticket.fields.assignee?.displayName ?? ''}
-        </span>
+        <UserAvatar user={ticket.fields.assignee} size="sm" />
+        {ticket.fields.assignee && (
+          <span className="text-xs text-brand-text-secondary truncate">
+            {ticket.fields.assignee.displayName}
+          </span>
+        )}
       </div>
     </button>
   );

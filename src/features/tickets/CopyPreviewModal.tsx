@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -15,12 +16,17 @@ import { Separator } from '@/components/ui/separator';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
+import { UserAvatar } from './UserAvatar';
 
-function SourceFieldRow({ label, value }: { label: string; value: string }) {
+function SourceFieldRow({ label, value, children }: { label: string; value?: string; children?: ReactNode }) {
   return (
     <div className="mb-3">
       <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
-      <span className="text-sm text-brand-text">{value}</span>
+      {children ? (
+        <div className="text-sm text-brand-text">{children}</div>
+      ) : (
+        <span className="text-sm text-brand-text">{value}</span>
+      )}
     </div>
   );
 }
@@ -134,10 +140,12 @@ export function CopyPreviewModal() {
               <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
               <SourceFieldRow label="Status" value={sourceTicket.fields.status.name} />
               <SourceFieldRow label="Priority" value={sourceTicket.fields.priority.name} />
-              <SourceFieldRow
-                label="Assignee"
-                value={sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
-              />
+              <SourceFieldRow label="Assignee">
+                <span className="flex items-center gap-1.5">
+                  <UserAvatar user={sourceTicket.fields.assignee} size="sm" />
+                  {sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
+                </span>
+              </SourceFieldRow>
               <SourceFieldRow
                 label="Labels"
                 value={

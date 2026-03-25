@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../../lib/format';
+import { UserAvatar } from '../UserAvatar';
 import type { JiraComment } from '../types';
 
 interface CommentsTabProps {
@@ -21,7 +22,8 @@ export function CommentsTab({ comments }: CommentsTabProps) {
     <div className="divide-y divide-brand-border-subtle px-5">
       {comments.map((comment) => (
         <div key={comment.id} className="py-3">
-          <div className="flex items-center gap-2 pb-1">
+          <div className="flex items-center gap-1.5 pb-1">
+            <UserAvatar user={comment.author} size="sm" />
             <span className="text-xs font-semibold text-brand-text-secondary">
               {comment.author.displayName}
             </span>

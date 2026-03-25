@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
 import type { JiraUser } from './types';
+import { UserAvatar } from './UserAvatar';
 
 interface TicketFilterBarProps {
   searchText: string;
@@ -33,6 +34,7 @@ export function TicketFilterBar({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(-1);
+  const [selectedUser, setSelectedUser] = useState<JiraUser | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -86,6 +88,7 @@ export function TicketFilterBar({
 
   function selectUser(user: JiraUser) {
     onAssigneeChange(user.displayName);
+    setSelectedUser(user);
     setUserQuery('');
     setSuggestions([]);
     setShowSuggestions(false);
@@ -145,10 +148,11 @@ export function TicketFilterBar({
         {assigneeFilter ? (
           /* Selected assignee chip */
           <span className="inline-flex items-center gap-1 bg-brand/10 text-brand text-sm rounded-full px-2.5 py-0.5 h-8">
-            <span className="truncate max-w-[160px]">{assigneeFilter}</span>
+            <UserAvatar user={selectedUser} size="sm" />
+            <span className="truncate max-w-[140px]">{assigneeFilter}</span>
             <button
               type="button"
-              onClick={() => onAssigneeChange('')}
+              onClick={() => { onAssigneeChange(''); setSelectedUser(null); }}
               aria-label={t('tickets.filter.clearAssignee')}
               className="shrink-0 text-brand/70 hover:text-brand transition-colors duration-150"
             >
@@ -194,11 +198,12 @@ export function TicketFilterBar({
                         selectUser(user);
                       }}
                       onMouseEnter={() => setSelectedIdx(idx)}
-                      className={`w-full text-left px-3 py-1.5 text-sm cursor-pointer transition-colors duration-100 ${
+                      className={`w-full text-left px-3 py-1.5 text-sm cursor-pointer transition-colors duration-100 flex items-center gap-1.5 ${
                         idx === selectedIdx ? 'bg-brand/10' : 'hover:bg-brand/10'
                       }`}
                     >
-                      <span className="block text-brand-text">{user.displayName}</span>
+                      <UserAvatar user={user} size="sm" />
+                      <span className="text-brand-text">{user.displayName}</span>
                     </button>
                   ))
                 )}

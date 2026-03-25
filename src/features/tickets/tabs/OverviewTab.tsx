@@ -1,4 +1,5 @@
 import { DescriptionRenderer } from '../DescriptionRenderer';
+import { UserAvatar } from '../UserAvatar';
 import type { JiraTicketDetail } from '../types';
 
 interface OverviewTabProps {
@@ -22,8 +23,20 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
     <div>
       {/* Field grid */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-3 px-5 py-4">
-        <FieldItem label="Assignee" value={fields.assignee?.displayName ?? 'Unassigned'} />
-        <FieldItem label="Reporter" value={fields.reporter?.displayName ?? 'Unknown'} />
+        <div>
+          <div className="text-xs font-semibold text-brand-muted mb-1">Assignee</div>
+          <div className="flex items-center gap-1.5 text-sm text-brand-text-secondary">
+            <UserAvatar user={fields.assignee} size="md" />
+            {fields.assignee?.displayName ?? 'Unassigned'}
+          </div>
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-brand-muted mb-1">Reporter</div>
+          <div className="flex items-center gap-1.5 text-sm text-brand-text-secondary">
+            <UserAvatar user={fields.reporter} size="md" />
+            {fields.reporter?.displayName ?? 'Unknown'}
+          </div>
+        </div>
         <FieldItem label="Status" value={fields.status.name} />
         <FieldItem label="Priority" value={fields.priority.name} />
         <FieldItem

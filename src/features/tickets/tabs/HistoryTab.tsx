@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDate } from '../../../lib/format';
+import { UserAvatar } from '../UserAvatar';
 import type { ChangelogEntry } from '../types';
 
 interface HistoryTabProps {
@@ -75,7 +76,8 @@ export function HistoryTab({ issueKey, baseUrl }: HistoryTabProps) {
     <div className="divide-y divide-brand-border-subtle px-5">
       {histories.map((entry) => (
         <div key={entry.id} className="py-3">
-          <div className="flex items-center gap-2 pb-1">
+          <div className="flex items-center gap-1.5 pb-1">
+            <UserAvatar user={entry.author} size="sm" />
             <span className="text-xs font-semibold text-brand-text-secondary">
               {entry.author.displayName}
             </span>
