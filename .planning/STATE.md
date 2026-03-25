@@ -226,10 +226,11 @@ None yet.
 | 260325-pp3 | Remove duplicate buttons from issue copy page | 2026-03-25 | b85d0f8 | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pp3 | Remove duplicated footer buttons from copy preview page | 2026-03-25 | 0ce321a | | [260325-pp3-on-the-issue-copy-page-the-buttons-are-b](./quick/260325-pp3-on-the-issue-copy-page-the-buttons-are-b/) |
 | 260325-pv3 | Make the copy/notmine/open in jira strip look a little nicer | 2026-03-25 | d269c6c | | [260325-pv3-make-the-copy-notmine-open-in-jira-strip](./quick/260325-pv3-make-the-copy-notmine-open-in-jira-strip/) |
+| 260325-ppv | Consistently display status and priority with colored badges and priority icons like Jira | 2026-03-25 | 1ca9083 | | [260325-ppv-consistently-display-status-and-priority](./quick/260325-ppv-consistently-display-status-and-priority/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-pv3: Make the copy/notmine/open in jira strip look a little nicer
+Last activity: 2026-03-25 - Completed quick task 260325-ppv: Consistently display status and priority with colored badges and priority icons like Jira
 Last session: 2026-03-25T17:39:36.148Z
 Stopped at: Completed quick task 260325-ppv
 Resume file: None
