@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft, ChevronUp } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
+import type { JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -42,11 +43,56 @@ function parseHeaders(raw: string): Record<string, string> | null {
   }
 }
 
-function statusColor(code: number | null): string {
-  if (!code) return 'text-brand-muted';
-  if (code >= 200 && code < 300) return 'text-green-400';
-  if (code >= 300 && code < 400) return 'text-yellow-400';
-  return 'text-red-400';
+function renderStatusBadge(code: number | null, t: (key: string) => string): JSX.Element {
+  if (code === null) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs font-mono bg-red-500/20 text-red-300 border-red-500/30"
+      >
+        {t('audit.status.error')}
+      </Badge>
+    );
+  }
+  if (code >= 200 && code < 300) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs font-mono bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+      >
+        {code}
+      </Badge>
+    );
+  }
+  if (code >= 300 && code < 400) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs font-mono bg-amber-500/15 text-amber-400 border-amber-500/20"
+      >
+        {code}
+      </Badge>
+    );
+  }
+  if (code >= 400 && code < 500) {
+    return (
+      <Badge
+        variant="outline"
+        className="text-xs font-mono bg-red-500/15 text-red-400 border-red-500/20"
+      >
+        {code}
+      </Badge>
+    );
+  }
+  // 5xx and anything else
+  return (
+    <Badge
+      variant="outline"
+      className="text-xs font-mono bg-red-500/20 text-red-300 border-red-500/30"
+    >
+      {code}
+    </Badge>
+  );
 }
 
 function methodColor(method: string): string {
@@ -107,7 +153,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.url')}
                 </th>
-                <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
+                <th className="w-20 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
                   {t('audit.col.status')}
                 </th>
               </tr>
@@ -125,7 +171,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   <td className="px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-full" />
                   </td>
-                  <td className="w-16 px-4 py-2">
+                  <td className="w-20 px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-8 ml-auto" />
                   </td>
                 </tr>
@@ -165,7 +211,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.url')}
                 </th>
-                <th className="w-16 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
+                <th className="w-20 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
                   {t('audit.col.status')}
                 </th>
               </tr>
@@ -202,10 +248,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     <td className="max-w-0 px-4 py-2 text-xs text-brand-text-secondary overflow-hidden text-ellipsis whitespace-nowrap">
                       {entry.url}
                     </td>
-                    <td
-                      className={`w-16 px-4 py-2 text-xs font-semibold text-right ${statusColor(entry.statusCode)}`}
-                    >
-                      {entry.statusCode ?? '\u2014'}
+                    <td className="w-20 px-4 py-2 text-right">
+                      {renderStatusBadge(entry.statusCode, t)}
                     </td>
                   </tr>
 

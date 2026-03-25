@@ -147,6 +147,7 @@
   "audit.requestHeaders": "Request Headers",
   "audit.headersEmpty": "No headers recorded",
   "audit.responseBodyEmpty": "Response body not recorded",
+  "audit.status.error": "Error",
   "audit.loadError": "Could not load audit log. Restart the app if the problem persists.",
   "error.connectionFailed": "Connection failed",
   "error.authFailed": "Authentication failed. Check your Source connection credentials in Settings.",
