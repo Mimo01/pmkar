@@ -13,12 +13,26 @@ jobs:
     outputs:
       release_id: ${{ steps.create_release.outputs.id }}
       changelog: ${{ steps.changelog.outputs.content }}
+      should_build: ${{ steps.check_existing.outputs.should_build }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check if release already exists
+        id: check_existing
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://api.github.com/repos/Mimo01/pmkar-releases/releases/tags/${{ github.ref_name }}")
+          if [ "$STATUS" = "200" ]; then
+            echo "Release ${{ github.ref_name }} already exists — skipping"
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Generate changelog
+        if: steps.check_existing.outputs.should_build == 'true'
         id: changelog
         uses: orhun/git-cliff-action@v4
         with:
@@ -26,6 +40,7 @@ jobs:
           args: --latest --strip header
 
       - name: Create release on public repo
+        if: steps.check_existing.outputs.should_build == 'true'
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
@@ -39,6 +54,7 @@ jobs:
 
   build-tauri:
     needs: create-release
+    if: needs.create-release.outputs.should_build == 'true'
     permissions:
       contents: write
     strategy:
