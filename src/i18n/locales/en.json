@@ -248,5 +248,7 @@
   "settings.project.select": "Select project...",
   "settings.project.loading": "Loading projects...",
   "settings.project.error": "Failed to load projects",
+  "settings.project.all": "All Projects",
+  "settings.project.search": "Search projects...",
   "copy.targetProject": "Target Project"
 }

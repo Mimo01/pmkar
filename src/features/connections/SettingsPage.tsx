@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, Monitor, Moon, Search, Sun, X } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Layers, Monitor, Moon, Search, Sun, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Separator } from '@/components/ui/separator';
@@ -23,7 +23,7 @@ interface ProjectSelectorProps {
   connectionType: 'server' | 'cloud';
   baseUrl: string;
   currentKey: string | null;
-  onSelect: (key: string) => void;
+  onSelect: (key: string | null) => void;
 }
 
 function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: ProjectSelectorProps) {
@@ -31,6 +31,9 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
   const [projects, setProjects] = useState<JiraProject[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!baseUrl) return;
@@ -49,8 +52,27 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
       });
   }, [connectionType, baseUrl]);
 
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch('');
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const selectedProject = projects.find((p) => p.key === currentKey);
+  const filtered = projects.filter(
+    (p) =>
+      p.key.toLowerCase().includes(search.toLowerCase()) ||
+      p.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
-    <div className="mt-3">
+    <div className="mt-3" ref={containerRef}>
       <span className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider block mb-1.5">
         {connectionType === 'server' ? t('settings.project.source') : t('settings.project.target')}
       </span>
@@ -59,20 +81,94 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
       ) : error ? (
         <p className="text-[12px] text-red-400">{t('settings.project.error')}</p>
       ) : (
-        <select
-          value={currentKey ?? ''}
-          onChange={(e) => {
-            if (e.target.value) onSelect(e.target.value);
-          }}
-          className="w-full rounded-lg border border-brand-border bg-brand-bg text-brand-text px-3 py-2 text-[13px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15 transition-colors duration-200"
-        >
-          <option value="">{t('settings.project.select')}</option>
-          {projects.map((p) => (
-            <option key={p.key} value={p.key}>
-              {p.name} ({p.key})
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(!open);
+              setSearch('');
+            }}
+            className="w-full flex items-center justify-between rounded-lg border border-brand-border bg-brand-bg text-brand-text px-3 py-2 text-[13px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15 transition-colors duration-200"
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              {selectedProject ? (
+                <>
+                  <span className="bg-brand/8 text-brand rounded px-1.5 py-0.5 text-[11px] font-mono font-semibold flex-shrink-0">
+                    {selectedProject.key}
+                  </span>
+                  <span className="truncate">{selectedProject.name}</span>
+                </>
+              ) : currentKey ? (
+                <span>{currentKey}</span>
+              ) : (
+                <span className="text-brand-muted italic">{t('settings.project.all')}</span>
+              )}
+            </span>
+            <ChevronDown
+              className={cn(
+                'w-4 h-4 text-brand-muted flex-shrink-0 transition-transform duration-200',
+                open && 'rotate-180',
+              )}
+            />
+          </button>
+
+          {open && (
+            <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl border border-brand-border bg-brand-surface shadow-lg overflow-hidden">
+              <div className="flex items-center gap-2.5 px-3 py-2 border-b border-brand-border-subtle">
+                <Search className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
+                  placeholder={t('settings.project.search')}
+                  autoFocus
+                />
+              </div>
+
+              <div className="max-h-[240px] overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(null);
+                    setOpen(false);
+                    setSearch('');
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-surface-hover transition-colors text-[13px]"
+                >
+                  <Layers className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" />
+                  <span className={cn(!currentKey ? 'text-brand-text font-medium' : 'text-brand-muted italic')}>
+                    {t('settings.project.all')}
+                  </span>
+                  {!currentKey && (
+                    <Check className="w-3.5 h-3.5 text-brand ml-auto flex-shrink-0" />
+                  )}
+                </button>
+
+                {filtered.map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => {
+                      onSelect(p.key);
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-brand-surface-hover transition-colors text-[13px]"
+                  >
+                    <span className="bg-brand/8 text-brand rounded px-1.5 py-0.5 text-[11px] font-mono font-semibold flex-shrink-0">
+                      {p.key}
+                    </span>
+                    <span className="text-brand-text truncate">{p.name}</span>
+                    {currentKey === p.key && (
+                      <Check className="w-3.5 h-3.5 text-brand ml-auto flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -248,5 +248,7 @@
   "settings.project.select": "Vybrať projekt...",
   "settings.project.loading": "Načítavam projekty...",
   "settings.project.error": "Nepodarilo sa načítať projekty",
+  "settings.project.all": "Všetky projekty",
+  "settings.project.search": "Hľadať projekty...",
   "copy.targetProject": "Cieľový projekt"
 }
