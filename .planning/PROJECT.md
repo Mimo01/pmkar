@@ -24,6 +24,9 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [x] UI available in English and Slovak, switchable at runtime with persistent preference — Validated in Phase 7: Internationalization
 - [x] Modern, consistent UI with shadcn/ui components, Lucide icons, card-based layouts, and Linear-inspired aesthetic — Validated in Phase 8: UI Redesign
 - [x] WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, form labels, ARIA semantics, color-independent indicators, live regions — Validated in Phase 9: Accessibility
+- [x] Cross-platform binary distribution with tag-triggered CI builds for macOS, Windows, and Linux — Validated in Phase 11: Deployment
+- [x] Auto-update via Tauri updater plugin with silent launch check and blocking modal — Validated in Phase 11: Deployment
+- [x] Changelog generation from conventional commits and version synchronization tooling — Validated in Phase 11: Deployment
 
 ### Active
 - [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
@@ -71,6 +74,8 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 | One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | ✓ Validated Phase 4 |
 | Mock server for testing | No test PATs available, need development independence | ✓ Validated Phase 1 |
 | Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
+| Public releases repo for binary distribution | Keep source private, publish binaries to Mimo01/pmkar-releases | ✓ Validated Phase 11 |
+| Tauri updater plugin for auto-updates | Native update mechanism with signed artifacts and progress UI | ✓ Validated Phase 11 |
 
 ---
-*Last updated: 2026-03-24 — Phase 9 (Accessibility) complete*
+*Last updated: 2026-03-25 — Phase 11 (Deployment, Auto-Updates, Release Management) complete*

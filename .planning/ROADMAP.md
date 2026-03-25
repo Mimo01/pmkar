@@ -234,7 +234,7 @@ Plans:
   4. Settings page has an About section with current version, last-checked timestamp, and manual Check for updates button
   5. Changelog is auto-generated from conventional commits for each release
   6. Updater artifacts are signed (public key in tauri.conf.json, private key in CI secrets)
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 11-01-PLAN.md — Tauri updater + process plugin registration, capabilities file, tauri.conf.json updater config
