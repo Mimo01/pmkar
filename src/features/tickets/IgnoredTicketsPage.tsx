@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { Info, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TicketCard } from './TicketCard';
@@ -20,6 +21,7 @@ export function IgnoredTicketsPage() {
   const [searchText, setSearchText] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [showInfoCard, setShowInfoCard] = useState(true);
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
 
@@ -71,6 +73,22 @@ export function IgnoredTicketsPage() {
         <div className="flex flex-col items-center justify-center flex-1 py-16">
           <p className="text-sm font-semibold text-brand-text mb-1">{t('ignored.empty.heading')}</p>
           <p className="text-xs text-brand-muted text-center max-w-sm">{t('ignored.empty.body')}</p>
+        </div>
+      )}
+
+      {/* Info card */}
+      {ignoredTickets.length > 0 && showInfoCard && (
+        <div className="mx-4 mt-3 mb-1 flex items-start gap-3 bg-brand/5 border border-brand/10 rounded-lg px-4 py-3">
+          <Info className="w-4 h-4 text-brand mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <p className="text-xs text-brand-text flex-1">{t('dismissed.infoCard')}</p>
+          <button
+            type="button"
+            onClick={() => setShowInfoCard(false)}
+            className="text-brand-muted hover:text-brand-text transition-colors duration-150 flex-shrink-0"
+            aria-label="Dismiss info card"
+          >
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
+          </button>
         </div>
       )}
 
