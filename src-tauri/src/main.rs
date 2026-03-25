@@ -2,6 +2,8 @@
 
 use pmkar_lib::{audit::AuditDb, commands, fixtures::build_fixtures, triage_db::TriageDb};
 use std::sync::{Arc, Mutex};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
+use tauri::Emitter;
 use tauri::Manager;
 
 fn main() {
@@ -15,6 +17,79 @@ fn main() {
                 app.handle()
                     .plugin(tauri_plugin_updater::Builder::new().build())?;
                 app.handle().plugin(tauri_plugin_process::init())?;
+            }
+
+            // Build custom application menu with About item that opens frontend modal
+            {
+                let about_item = MenuItem::with_id(app, "about", "About pmkar", true, None::<&str>)?;
+                let separator = PredefinedMenuItem::separator(app)?;
+
+                #[cfg(target_os = "macos")]
+                let app_submenu = {
+                    let services = PredefinedMenuItem::services(app, None::<&str>)?;
+                    let hide = PredefinedMenuItem::hide(app, None::<&str>)?;
+                    let hide_others = PredefinedMenuItem::hide_others(app, None::<&str>)?;
+                    let show_all = PredefinedMenuItem::show_all(app, None::<&str>)?;
+                    let quit = PredefinedMenuItem::quit(app, None::<&str>)?;
+                    let sep2 = PredefinedMenuItem::separator(app)?;
+                    let sep3 = PredefinedMenuItem::separator(app)?;
+                    Submenu::with_items(
+                        app,
+                        "pmkar",
+                        true,
+                        &[
+                            &about_item,
+                            &separator,
+                            &services,
+                            &sep2,
+                            &hide,
+                            &hide_others,
+                            &show_all,
+                            &sep3,
+                            &quit,
+                        ],
+                    )?
+                };
+
+                #[cfg(not(target_os = "macos"))]
+                let app_submenu = {
+                    let quit = PredefinedMenuItem::quit(app, None::<&str>)?;
+                    Submenu::with_items(app, "pmkar", true, &[&about_item, &separator, &quit])?
+                };
+
+                // Edit submenu
+                let undo = PredefinedMenuItem::undo(app, None::<&str>)?;
+                let redo = PredefinedMenuItem::redo(app, None::<&str>)?;
+                let edit_sep = PredefinedMenuItem::separator(app)?;
+                let cut = PredefinedMenuItem::cut(app, None::<&str>)?;
+                let copy_item = PredefinedMenuItem::copy(app, None::<&str>)?;
+                let paste = PredefinedMenuItem::paste(app, None::<&str>)?;
+                let select_all = PredefinedMenuItem::select_all(app, None::<&str>)?;
+                let edit_submenu = Submenu::with_items(
+                    app,
+                    "Edit",
+                    true,
+                    &[&undo, &redo, &edit_sep, &cut, &copy_item, &paste, &select_all],
+                )?;
+
+                // Window submenu
+                let minimize = PredefinedMenuItem::minimize(app, None::<&str>)?;
+                let close_window = PredefinedMenuItem::close_window(app, None::<&str>)?;
+                let window_submenu = Submenu::with_items(
+                    app,
+                    "Window",
+                    true,
+                    &[&minimize, &close_window],
+                )?;
+
+                let menu = Menu::with_items(app, &[&app_submenu, &edit_submenu, &window_submenu])?;
+                app.set_menu(menu)?;
+
+                app.on_menu_event(|app, event| {
+                    if event.id() == "about" {
+                        let _ = app.emit("show-about", ());
+                    }
+                });
             }
 
             // Open audit database in app data directory
