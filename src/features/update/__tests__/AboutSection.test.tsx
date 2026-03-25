@@ -131,11 +131,13 @@ describe('AboutSection', () => {
   });
 
   it('check for updates sets available when update found', async () => {
+    // Provide a minimal mock shaped as the Update type (only fields AboutSection reads)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockCheck.mockResolvedValue({
       version: '2.0.0',
       body: 'Major release',
       downloadAndInstall: vi.fn(),
-    });
+    } as any);
     const user = userEvent.setup();
     renderWithI18n(<AboutSection />);
     await user.click(screen.getByRole('button', { name: /check for updates/i }));
