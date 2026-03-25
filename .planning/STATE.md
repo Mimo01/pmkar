@@ -213,6 +213,7 @@ None yet.
 | 260324-q5o | Redesign icon with proper macOS padding | 2026-03-24 | b41a5ef | | [260324-q5o-redesign-icon-with-proper-macos-padding-](./quick/260324-q5o-redesign-icon-with-proper-macos-padding-/) |
 | 260325-dd7 | Open issues in external Jira from the app | 2026-03-25 | 2291b68 | | [260325-dd7-open-issues-in-external-jira-from-the-ap](./quick/260325-dd7-open-issues-in-external-jira-from-the-ap/) |
 | 260325-dom | Copied tickets open in both Jiras with more visible buttons | 2026-03-25 | 9ea47bc | | [260325-dom-copied-tickets-open-in-both-jiras-with-m](./quick/260325-dom-copied-tickets-open-in-both-jiras-with-m/) |
+| 260325-jos | Select source and target Jira projects | 2026-03-25 | 55e532c | | [260325-jos-i-want-the-user-to-be-able-to-select-sou](./quick/260325-jos-i-want-the-user-to-be-able-to-select-sou/) |
 
 ## Session Continuity
 
