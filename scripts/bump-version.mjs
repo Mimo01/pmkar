@@ -4,6 +4,7 @@
 // Example: node scripts/bump-version.mjs 1.0.0
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -79,6 +80,15 @@ try {
   console.log(`  src-tauri/Cargo.toml: ${oldVersion} -> ${newVersion}`);
 } catch (err) {
   console.error(`  src-tauri/Cargo.toml: ERROR — ${err.message}`);
+  hasError = true;
+}
+
+// --- Regenerate CHANGELOG.md ---
+try {
+  execSync('npm run changelog', { cwd: ROOT, stdio: 'inherit' });
+  console.log('  CHANGELOG.md: regenerated');
+} catch (err) {
+  console.error(`  CHANGELOG.md: ERROR — ${err.message}`);
   hasError = true;
 }
 

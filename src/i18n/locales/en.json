@@ -261,5 +261,14 @@
   "about.modal.close": "Close",
   "about.versionHistory": "Version History",
   "about.versionHistory.title": "Version History",
-  "about.versionHistory.noEntries": "No version history available"
+  "about.versionHistory.noEntries": "No version history available",
+  "about.versionHistory.unreleased": "Unreleased",
+  "changelog.features": "Features",
+  "changelog.bugFixes": "Bug Fixes",
+  "changelog.refactoring": "Refactoring",
+  "changelog.performance": "Performance",
+  "changelog.testing": "Testing",
+  "changelog.documentation": "Documentation",
+  "changelog.miscellaneous": "Miscellaneous",
+  "changelog.cicd": "CI/CD"
 }

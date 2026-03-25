@@ -10,6 +10,17 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import changelogRaw from '../../../CHANGELOG.md?raw';
 
+const categoryKeys: Record<string, string> = {
+  'Features': 'changelog.features',
+  'Bug Fixes': 'changelog.bugFixes',
+  'Refactoring': 'changelog.refactoring',
+  'Performance': 'changelog.performance',
+  'Testing': 'changelog.testing',
+  'Documentation': 'changelog.documentation',
+  'Miscellaneous': 'changelog.miscellaneous',
+  'CI/CD': 'changelog.cicd',
+};
+
 interface VersionEntry {
   version: string;
   body: string;
@@ -113,14 +124,14 @@ export function VersionHistoryModal({ open, onOpenChange }: VersionHistoryModalP
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Badge className="bg-brand text-white text-[11px] font-semibold">
-                      Unreleased
+                      {t('about.versionHistory.unreleased')}
                     </Badge>
                   </div>
                   <div className="space-y-3 pl-1">
                     {unreleasedSections.map((section) => (
                       <div key={section.category}>
                         <p className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-1">
-                          {section.category}
+                          {categoryKeys[section.category] ? t(categoryKeys[section.category]) : section.category}
                         </p>
                         <ul className="space-y-1">
                           {section.items.map((item, idx) => (

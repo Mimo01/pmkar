@@ -261,5 +261,14 @@
   "about.modal.close": "Zavrieť",
   "about.versionHistory": "História verzií",
   "about.versionHistory.title": "História verzií",
-  "about.versionHistory.noEntries": "História verzií nie je dostupná"
+  "about.versionHistory.noEntries": "História verzií nie je dostupná",
+  "about.versionHistory.unreleased": "Nevydané",
+  "changelog.features": "Funkcie",
+  "changelog.bugFixes": "Opravy chýb",
+  "changelog.refactoring": "Refaktoring",
+  "changelog.performance": "Výkon",
+  "changelog.testing": "Testovanie",
+  "changelog.documentation": "Dokumentácia",
+  "changelog.miscellaneous": "Rôzne",
+  "changelog.cicd": "CI/CD"
 }
