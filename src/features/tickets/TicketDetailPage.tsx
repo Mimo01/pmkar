@@ -6,8 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
-import { PriorityIcon } from './PriorityIcon';
-import { StatusBadge } from './StatusBadge';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { CommentsTab } from './tabs/CommentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
@@ -195,18 +193,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-8 py-6">
-          {/* Ticket header: summary + metadata */}
-          <h1 className="text-base font-semibold text-brand-text mb-2">{detail.fields.summary}</h1>
-          <div className="flex items-center gap-3 mb-6 text-xs text-brand-muted flex-wrap">
-            <StatusBadge status={detail.fields.status.name} />
-            <PriorityIcon priority={detail.fields.priority.name} size="md" />
-            {detail.fields.assignee?.displayName && (
-              <span>{detail.fields.assignee.displayName}</span>
-            )}
-            {detail.fields.reporter?.displayName && (
-              <span>{detail.fields.reporter.displayName}</span>
-            )}
-          </div>
+          {/* Ticket header: summary */}
+          <h1 className="text-base font-semibold text-brand-text mb-6">{detail.fields.summary}</h1>
 
           {/* Action buttons */}
           <div className="flex items-center gap-3 flex-wrap mb-6">
