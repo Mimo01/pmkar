@@ -2,8 +2,8 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { useUpdateStore } from '../updateStore';
 import { UpdateModal } from '../UpdateModal';
+import { useUpdateStore } from '../updateStore';
 
 vi.mock('@tauri-apps/plugin-updater', () => ({
   check: vi.fn(),
@@ -48,9 +48,7 @@ describe('UpdateModal', () => {
   it('shows changelog text from the store', () => {
     useUpdateStore.setState({ status: 'available', updateInfo: mockUpdateInfo });
     renderWithI18n(<UpdateModal open={true} />);
-    expect(
-      screen.getByText('Bug fixes and performance improvements'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Bug fixes and performance improvements')).toBeInTheDocument();
   });
 
   it('shows Update Now and Later buttons when status is available', () => {

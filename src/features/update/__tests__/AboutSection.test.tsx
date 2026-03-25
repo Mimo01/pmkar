@@ -2,8 +2,8 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { useUpdateStore } from '../updateStore';
 import { AboutSection } from '../AboutSection';
+import { useUpdateStore } from '../updateStore';
 
 vi.mock('@tauri-apps/plugin-updater', () => ({
   check: vi.fn(),
@@ -73,8 +73,6 @@ describe('AboutSection', () => {
       errorMessage: 'Could not check for updates. Check your connection and try again.',
     });
     renderWithI18n(<AboutSection />);
-    expect(
-      screen.getByText(/could not check for updates/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/could not check for updates/i)).toBeInTheDocument();
   });
 });

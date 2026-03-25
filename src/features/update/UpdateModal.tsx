@@ -34,8 +34,7 @@ export function UpdateModal({ open }: UpdateModalProps) {
   const progress = useUpdateStore((s) => s.progress);
   const errorMessage = useUpdateStore((s) => s.errorMessage);
 
-  const isActive =
-    status === 'downloading' || status === 'installing';
+  const isActive = status === 'downloading' || status === 'installing';
 
   async function handleUpdate() {
     const { updateInfo: info } = useUpdateStore.getState();
@@ -99,9 +98,7 @@ export function UpdateModal({ open }: UpdateModalProps) {
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-base font-semibold">
-            {t('update.modal.title')}
-          </DialogTitle>
+          <DialogTitle className="text-base font-semibold">{t('update.modal.title')}</DialogTitle>
           {updateInfo && (
             <DialogDescription className="text-[13px] text-brand-text-secondary">
               {t('update.modal.subtitle', { version: updateInfo.version })}
@@ -128,11 +125,7 @@ export function UpdateModal({ open }: UpdateModalProps) {
               aria-valuemin={0}
               aria-valuemax={100}
             />
-            <p
-              className="text-[13px] text-brand-muted"
-              aria-live="polite"
-              aria-atomic="true"
-            >
+            <p className="text-[13px] text-brand-muted" aria-live="polite" aria-atomic="true">
               {status === 'installing'
                 ? t('update.modal.installing')
                 : t('update.modal.downloading')}
@@ -142,21 +135,13 @@ export function UpdateModal({ open }: UpdateModalProps) {
 
         {/* Error state */}
         {status === 'error' && errorMessage && (
-          <p
-            className="text-[13px] text-red-400"
-            aria-live="polite"
-            aria-atomic="true"
-          >
+          <p className="text-[13px] text-red-400" aria-live="polite" aria-atomic="true">
             {errorMessage}
           </p>
         )}
 
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onClick={handleLater}
-            disabled={isActive}
-          >
+          <Button variant="ghost" onClick={handleLater} disabled={isActive}>
             {t('update.modal.later')}
           </Button>
 

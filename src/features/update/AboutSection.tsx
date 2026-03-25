@@ -26,7 +26,6 @@ function formatRelativeTime(isoString: string): string {
 export function AboutSection() {
   const { t } = useTranslation();
   const status = useUpdateStore((s) => s.status);
-  const updateInfo = useUpdateStore((s) => s.updateInfo);
   const errorMessage = useUpdateStore((s) => s.errorMessage);
   const lastCheckedAt = useUpdateStore((s) => s.lastCheckedAt);
 
@@ -126,7 +125,9 @@ export function AboutSection() {
           aria-busy={status === 'checking' ? 'true' : 'false'}
           className="flex items-center gap-2"
         >
-          {status === 'checking' && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+          {status === 'checking' && (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+          )}
           {status === 'checking' ? t('about.checking') : t('about.checkForUpdates')}
         </Button>
       )}

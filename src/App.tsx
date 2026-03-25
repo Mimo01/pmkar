@@ -8,15 +8,15 @@ import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
 import { useApplyTheme } from './features/theme/useApplyTheme';
-import { UpdateModal } from './features/update/UpdateModal';
-import { useUpdateCheck } from './features/update/useUpdateCheck';
-import { useUpdateStore } from './features/update/updateStore';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
 import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { TicketDetailPage } from './features/tickets/TicketDetailPage';
 import { TicketListPage } from './features/tickets/TicketListPage';
 import { useTicketStore } from './features/tickets/ticketStore';
+import { UpdateModal } from './features/update/UpdateModal';
+import { useUpdateStore } from './features/update/updateStore';
+import { useUpdateCheck } from './features/update/useUpdateCheck';
 import { hydrateLanguage } from './i18n/languageStore';
 
 interface StoredConnectionMeta {
