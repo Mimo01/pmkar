@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "tauri": "tauri",
+    "tauri:dev": "tauri dev -- --features mock-server",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/"
