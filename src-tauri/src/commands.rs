@@ -634,14 +634,14 @@ pub fn open_external_url(url: String) -> Result<(), AppError> {
         std::process::Command::new("cmd")
             .args(["/C", "start", &url])
             .spawn()
-            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {e}")))?;
     }
     #[cfg(target_os = "linux")]
     {
         std::process::Command::new("xdg-open")
             .arg(&url)
             .spawn()
-            .map_err(|e| AppError::Internal(format!("Failed to open URL: {}", e)))?;
+            .map_err(|e| AppError::Internal(format!("Failed to open URL: {e}")))?;
     }
     Ok(())
 }
