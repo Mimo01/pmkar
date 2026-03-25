@@ -219,7 +219,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-k6l: Make ticket filter bar sleek with assignee autocomplete
+Last activity: 2026-03-25 - Fixed quick task 260325-jos: Select source and target Jira projects (backend gaps)
 Last session: 2026-03-25T13:31:54.921Z
 Stopped at: Completed quick task 260325-k6l
 Resume file: None

@@ -396,6 +396,13 @@ mod v2 {
             body,
         )
     }
+
+    pub async fn get_projects() -> impl IntoResponse {
+        Json(json!([
+            { "key": "PROJ", "name": "Project Alpha" },
+            { "key": "TEST", "name": "Test Project" }
+        ]))
+    }
 }
 
 // --- Cloud v3 handlers ---
@@ -696,6 +703,13 @@ mod v3 {
             { "id": "6", "name": "Closed" }
         ]))
     }
+
+    pub async fn get_projects() -> impl IntoResponse {
+        Json(json!([
+            { "key": "MYPROJ", "name": "My Project" },
+            { "key": "DEV", "name": "Development" }
+        ]))
+    }
 }
 
 // --- Router construction ---
@@ -721,6 +735,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
             "/secure/attachment/{id}/{filename}",
             get(v2::download_attachment),
         )
+        .route("/rest/api/2/project", get(v2::get_projects))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
@@ -750,6 +765,7 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
         )
         .route("/rest/api/3/priority", get(v3::get_priorities))
         .route("/rest/api/3/status", get(v3::get_statuses))
+        .route("/rest/api/3/project", get(v3::get_projects))
         .route(
             "/rest/api/3/project/{key}/statuses",
             get(v3::get_project_statuses),
