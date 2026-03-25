@@ -114,7 +114,9 @@ function App() {
     const initialStep = editStep === 'cloud' ? 2 : 1;
     return (
       <ErrorBoundary>
-        <SetupWizard initialStep={initialStep} onComplete={() => setEditStep(null)} />
+        <AppShell>
+          <SetupWizard initialStep={initialStep} onComplete={() => setEditStep(null)} />
+        </AppShell>
         <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>
     );

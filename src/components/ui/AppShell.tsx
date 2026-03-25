@@ -29,7 +29,7 @@ export function AppShell({
   ];
 
   return (
-    <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
+    <div className="h-screen bg-brand-bg text-brand-text flex flex-col overflow-hidden">
       <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface border-b border-brand-border">
         <span className="text-xs font-semibold tracking-tight text-brand-text">
           <span className="text-brand">pm</span>kar
