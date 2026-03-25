@@ -3,11 +3,20 @@
 
 ### Bug Fixes
 
+- treat unreachable update endpoint as up-to-date
+## [0.2.1]
+
+### Bug Fixes
+
 - add version headings to changelog template
 
 ### Documentation
 
 - complete deploy v0.2.0 release plan summary and state update
+
+### Miscellaneous
+
+- bump version to 0.2.1
 ## [0.2.0]
 
 ### Bug Fixes
