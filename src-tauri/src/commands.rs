@@ -196,10 +196,16 @@ pub async fn fetch_cloud_meta(
         })
         .collect();
 
-    // Fetch project statuses — use hardcoded project key for now
-    // (cloud_project_key not yet in settings; mock server responds to any key)
+    // Fetch project statuses using the configured target project key (falls back to "MYPROJ" for backwards compat)
+    let project_key_for_statuses = {
+        let db = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let (_, target_key) = db.get_project_keys()?;
+        target_key.unwrap_or_else(|| "MYPROJ".to_string())
+    };
     let status_resp = client
-        .get(format!("{base_url}/rest/api/3/project/MYPROJ/statuses"))
+        .get(format!("{base_url}/rest/api/3/project/{project_key_for_statuses}/statuses"))
         .header("Authorization", &auth)
         .send()
         .await
