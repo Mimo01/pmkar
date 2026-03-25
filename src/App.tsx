@@ -9,6 +9,9 @@ import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
+import { CopyPreviewPage } from './features/tickets/CopyPreviewPage';
+import { CopyResultPage } from './features/tickets/CopyResultPage';
+import { useCopyStore } from './features/tickets/copyStore';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
 import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { TicketDetailPage } from './features/tickets/TicketDetailPage';
@@ -66,6 +69,7 @@ function App() {
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
 
   const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
+  const copyPhase = useCopyStore((s) => s.phase);
 
   useEffect(() => {
     if (selectedTicketKey) {
@@ -153,7 +157,16 @@ function App() {
     return (
       <ErrorBoundary>
         <AppShell>
-          <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
+          {copyPhase === 'loading_preview' ||
+          copyPhase === 'previewing' ||
+          copyPhase === 'copying' ||
+          copyPhase === 'result' ? (
+            <>
+              {copyPhase === 'result' ? <CopyResultPage /> : <CopyPreviewPage />}
+            </>
+          ) : (
+            <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
+          )}
         </AppShell>
         <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>

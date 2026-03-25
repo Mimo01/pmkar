@@ -5,8 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useConnectionStore } from '../connections/connectionStore';
-import { CopyPreviewModal } from './CopyPreviewModal';
-import { CopyResultModal } from './CopyResultModal';
 import { useCopyStore } from './copyStore';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -291,9 +289,6 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
         </div>
       </div>
 
-      {/* Copy modals */}
-      <CopyPreviewModal />
-      <CopyResultModal />
     </div>
   );
 }

@@ -2,8 +2,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
-import { CopyPreviewModal } from './CopyPreviewModal';
-import { CopyResultModal } from './CopyResultModal';
 import { useCopyStore } from './copyStore';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -275,10 +273,6 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
         </div>
       )}
 
-      {/* Copy preview modal — overlays when copy phase is active */}
-      <CopyPreviewModal />
-      {/* Copy result modal — overlays after copy completes (z-[60] > z-50 preview) */}
-      <CopyResultModal />
     </aside>
   );
 }
