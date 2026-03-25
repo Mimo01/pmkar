@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Pmkar is a cross-platform desktop app (Tauri) that bridges two Jira systems — a customer's legacy self-hosted Jira and the user's company's cloud Jira. It automates the process of discovering relevant tickets from the customer's system and selectively copying them in full detail to the company's Jira, replacing a manual workflow that's tedious and error-prone.
+Pmkar is a cross-platform desktop app (Tauri 2.10 / React 19 / Rust) that bridges two Jira systems — a customer's legacy self-hosted Jira Server and the user's company's Jira Cloud. It discovers relevant tickets, presents them for review with full detail, and copies them with maximum fidelity (attachments, comments, work logs, sub-tasks) to the company's Jira. Bilingual (EN/SK), accessible (WCAG AA), with auto-update.
 
 ## Core Value
 
@@ -12,56 +12,54 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Validated
 
-- [x] Secure credential storage via OS keychain — Validated in Phase 1: Foundation
-- [x] All REST API calls logged with full request/response for audit and verification — Validated in Phase 1: Foundation
-- [x] Mock Jira server for development and testing without real PATs — Validated in Phase 1: Foundation
-- [x] Setup wizard for configuring two Jira connections (cloud + self-hosted) via REST API with Personal Access Tokens — Validated in Phase 2: Connection Setup
-- [x] Copy ticket core fields (summary, description, status, priority, labels) with ADF translation and diff preview — Validated in Phase 4: Copy Core Fields
-- [x] Track origin — remote link back to source ticket, copiedKey in triage state — Validated in Phase 4: Copy Core Fields
-- [x] Full mirror copy: attachments, comments, work log, sub-tasks, linked issues — Validated in Phase 5: Copy Attachments and Comments
-- [x] Ignored tickets filtered from candidate list, reviewable in dedicated page with restore — Validated in Phase 6: Triage and Audit
-- [x] In-app audit log viewer with expandable REST API call details — Validated in Phase 6: Triage and Audit
-- [x] UI available in English and Slovak, switchable at runtime with persistent preference — Validated in Phase 7: Internationalization
-- [x] Modern, consistent UI with shadcn/ui components, Lucide icons, card-based layouts, and Linear-inspired aesthetic — Validated in Phase 8: UI Redesign
-- [x] WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, form labels, ARIA semantics, color-independent indicators, live regions — Validated in Phase 9: Accessibility
-- [x] Cross-platform binary distribution with tag-triggered CI builds for macOS, Windows, and Linux — Validated in Phase 11: Deployment
-- [x] Auto-update via Tauri updater plugin with silent launch check and blocking modal — Validated in Phase 11: Deployment
-- [x] Changelog generation from conventional commits and version synchronization tooling — Validated in Phase 11: Deployment
+- ✓ Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service) — v1.0
+- ✓ All REST API calls logged with full request/response for audit, with credential redaction — v1.0
+- ✓ Mock Jira server (Server v2 + Cloud v3) for development and testing without real PATs — v1.0
+- ✓ Setup wizard for configuring two Jira connections with test/validation feedback — v1.0
+- ✓ Fetch candidate tickets from customer Jira (assigned, mentioned, watched users) with configurable JQL — v1.0
+- ✓ Full ticket detail view: summary, description, status, priority, assignee, reporter, labels, components, fix versions, comments, work log, attachments, sub-tasks, linked issues, change history — v1.0
+- ✓ Copy ticket core fields with wiki markup → ADF translation and diff preview — v1.0
+- ✓ Copy binary attachments, comment threads with attribution, work log entries, sub-tasks as child issues — v1.0
+- ✓ Origin tracking via remote link back to source ticket — v1.0
+- ✓ Triage workflow: ignore/restore tickets, persistent state across sessions — v1.0
+- ✓ In-app audit log viewer with expandable REST API call details — v1.0
+- ✓ UI available in English and Slovak, switchable at runtime with persistent preference — v1.0
+- ✓ Modern UI with shadcn/ui, Lucide icons, card-based layouts, Linear-inspired aesthetic — v1.0
+- ✓ WCAG AA accessibility: dark mode contrast 4.5:1+, keyboard navigation, ARIA semantics, live regions — v1.0
+- ✓ Cross-platform binary distribution with tag-triggered CI (macOS, Windows, Linux) — v1.0
+- ✓ Auto-update via Tauri updater plugin with blocking modal — v1.0
+- ✓ Changelog generation from conventional commits and version sync tooling — v1.0
+- ✓ Biome + clippy pedantic linting, 80% test coverage with threshold enforcement — v1.0
+- ✓ GitHub Actions CI (lint + type-check + test + clippy + fmt) — v1.0
 
 ### Active
-- [ ] Fetch candidate tickets from customer Jira (assigned to me, mentioned, watched users)
-- [ ] Configure watched users beyond just myself
-- [ ] Present candidate tickets in full detail (links, images, assignees, work log, history, comments, attachments, sub-tasks)
-- [ ] Two actions per ticket: "Ignore" (move to ignored list) or "Copy to my Jira"
-- [ ] Secure credential storage via OS keychain (macOS Keychain / Windows Credential Manager / Linux Secret Service)
-- [ ] Mock Jira server for development and testing without real PATs
-- [ ] Excel export capability (scope to be defined in later milestones)
-- [ ] Extensible architecture for future additions
+
+- [ ] Excel export capability (scope TBD)
+- [ ] Configurable cloud project key (currently hardcoded as MYPROJ)
+- [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
 
 ### Out of Scope
 
-- Two-way sync between Jira systems — complexity not justified, one-time copy with origin tracking is sufficient
+- Two-way sync — complexity not justified, one-time copy with origin tracking sufficient
 - Real-time notifications — batch review workflow, not a monitoring dashboard
 - OAuth/SSO authentication — PATs are the access method for both systems
 - Mobile app — desktop-only for this workflow
-- Video/rich media embedding — links and images yes, but not a full Jira renderer
+- Offline mode — real-time Jira API access is core to the workflow
+- Bulk copy (select all) — defeats review workflow purpose, copy is ticket-by-ticket
 
 ## Context
 
-- Customer Jira: Self-hosted (older version), accessed via REST API + PAT
-- Company Jira: Cloud (new), accessed via REST API + PAT
-- Two different Jira API versions may need to be handled (Server vs Cloud REST API differences)
-- Small batch workflow: 5-20 tickets per review session, daily cadence
-- Cross-platform requirement: macOS, Windows, Linux
-- Tauri for desktop shell — Rust backend handles credential security and API calls, web frontend for UI
-- No test PATs available — must have mock server layer from day one
-- Watched users: same copy workflow applies to their tickets too (review + optionally copy)
+Shipped v1.0 with 16,284 LOC (11,711 TypeScript + 4,573 Rust).
+Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf).
+389 frontend tests (Vitest), 28 Rust tests, 80.11% line coverage.
+GitHub Actions CI with parallel frontend + Rust jobs.
+Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 
 ## Constraints
 
 - **Security**: Credentials stored in OS keychain only — never in plaintext, config files, or environment variables
 - **Auditability**: Every REST call logged with timestamp, endpoint, method, status code, and response body
-- **Testability**: Full mock Jira server that simulates both cloud and self-hosted APIs — development must not require real credentials
+- **Testability**: Full mock Jira server that simulates both cloud and self-hosted APIs
 - **API compatibility**: Must handle differences between Jira Server REST API and Jira Cloud REST API
 - **Cross-platform**: Must build and run on macOS, Windows, and Linux
 
@@ -69,13 +67,15 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Validated Phase 1 |
-| OS keychain for credentials | Most secure option, native to each platform | ✓ Validated Phase 1 |
-| One-time copy with origin tracking | Full sync too complex, but need to know where tickets came from | ✓ Validated Phase 4 |
-| Mock server for testing | No test PATs available, need development independence | ✓ Validated Phase 1 |
-| Excel export deferred to later milestone | Core ticket workflow is priority, export scope TBD | — Pending |
-| Public releases repo for binary distribution | Keep source private, publish binaries to Mimo01/pmkar-releases | ✓ Validated Phase 11 |
-| Tauri updater plugin for auto-updates | Native update mechanism with signed artifacts and progress UI | ✓ Validated Phase 11 |
+| Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v1.0 |
+| OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v1.0 |
+| One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v1.0 |
+| Mock server from day one | No test PATs available, dev independence | ✓ Good — v1.0 |
+| shadcn/ui + Lucide for UI | Consistent design system, accessible by default | ✓ Good — v1.0 |
+| i18next for internationalization | Runtime switching, persistent preference via SQLite | ✓ Good — v1.0 |
+| Public releases repo for binaries | Keep source private, publish to Mimo01/pmkar-releases | ✓ Good — v1.0 |
+| Tauri updater plugin for auto-updates | Native mechanism with signed artifacts | ✓ Good — v1.0 |
+| Excel export deferred | Core ticket workflow is priority, export scope TBD | — Pending |
 
 ---
-*Last updated: 2026-03-25 — Phase 11 (Deployment, Auto-Updates, Release Management) complete*
+*Last updated: 2026-03-25 after v1.0 milestone*

@@ -109,3 +109,11 @@ None — IgnoredTicketsPage is fully implemented.
 ---
 *Phase: 06-triage-and-audit*
 *Completed: 2026-03-23*
+
+## Self-Check: PASSED
+
+- FOUND: src/features/tickets/IgnoredTicketsPage.tsx
+- FOUND: src/features/tickets/IgnoredTicketsPage.test.tsx
+- FOUND: .planning/phases/06-triage-and-audit/06-02-SUMMARY.md
+- FOUND: commit 9680fc5 (RED: failing tests)
+- FOUND: commit 830ff6c (GREEN: implementation)
