@@ -76,6 +76,12 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
     invoke('open_external_url', { url: `${baseUrl}/browse/${issueKey}` });
   };
 
+  const handleOpenInCloudJira = () => {
+    if (triageEntry?.copiedKey && cloudBaseUrl) {
+      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${triageEntry.copiedKey}` });
+    }
+  };
+
   // Fetch detail on mount or key change
   useEffect(() => {
     let cancelled = false;
@@ -254,14 +260,35 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                   {t('detail.ignore')}
                 </button>
               ))}
-            <button
-              type="button"
-              onClick={handleOpenInJira}
-              className="text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 flex items-center gap-1"
-            >
-              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-              {t('detail.openInJira')}
-            </button>
+            {isCopied && triageEntry?.copiedKey ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleOpenInJira}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t('detail.openInSourceJira')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenInCloudJira}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t('detail.openInCompanyJira')}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleOpenInJira}
+                className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                {t('detail.openInJira')}
+              </button>
+            )}
           </div>
 
           {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}

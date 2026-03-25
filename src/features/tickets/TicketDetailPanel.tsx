@@ -60,6 +60,12 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     invoke('open_external_url', { url: `${baseUrl}/browse/${issueKey}` });
   };
 
+  const handleOpenInCloudJira = () => {
+    if (triageEntry?.copiedKey && cloudBaseUrl) {
+      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${triageEntry.copiedKey}` });
+    }
+  };
+
   // Fetch detail on mount or key change
   useEffect(() => {
     let cancelled = false;
@@ -184,14 +190,35 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                 {detail.fields.priority.name}
               </span>
               <div className="ml-auto flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleOpenInJira}
-                  className="px-3 py-1 rounded text-sm text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors flex items-center gap-1"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  {t('detail.openInJira')}
-                </button>
+                {isCopied && triageEntry?.copiedKey ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleOpenInJira}
+                      className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                      {t('detail.openInSourceJira')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOpenInCloudJira}
+                      className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                      {t('detail.openInCompanyJira')}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleOpenInJira}
+                    className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t('detail.openInJira')}
+                  </button>
+                )}
                 {isCopied ? null : isIgnored ? (
                   <button
                     type="button"
