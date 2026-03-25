@@ -560,18 +560,27 @@ pub async fn fetch_tickets(
     let issues = body["issues"].as_array().cloned().unwrap_or_default();
     let total = body["total"].as_u64().unwrap_or(0);
 
-    // Update triage state for new tickets
+    // Update triage state for new tickets; remove done tickets
     {
         let tdb = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
         let existing = tdb.get_all_triage()?;
+        let mut done_keys: Vec<String> = Vec::new();
         for issue in &issues {
             if let Some(key) = issue["key"].as_str() {
-                if !existing.contains_key(key) {
+                let status_category = issue["fields"]["status"]["statusCategory"]["key"]
+                    .as_str()
+                    .unwrap_or("");
+                if status_category == "done" {
+                    done_keys.push(key.to_string());
+                } else if !existing.contains_key(key) {
                     tdb.set_triage(key, "new")?;
                 }
             }
+        }
+        if !done_keys.is_empty() {
+            tdb.delete_triage_entries(&done_keys)?;
         }
         // Update last_fetched_at
         let now = chrono::Utc::now().to_rfc3339();
@@ -803,6 +812,17 @@ pub fn set_triage_state(
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
     db.set_triage(&ticket_key, &state)
+}
+
+#[tauri::command]
+pub fn delete_done_triage(
+    ticket_keys: Vec<String>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<usize, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.delete_triage_entries(&ticket_keys)
 }
 
 // --- Fetch config commands ---
