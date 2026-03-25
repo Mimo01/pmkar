@@ -111,6 +111,8 @@ pub struct JiraProject {
 pub struct ProjectConfig {
     pub source_project_key: Option<String>,
     pub target_project_key: Option<String>,
+    pub source_project_name: Option<String>,
+    pub target_project_name: Option<String>,
 }
 
 // --- Copy ticket structs ---
@@ -356,10 +358,12 @@ pub fn get_project_config(
     let db = triage_db
         .lock()
         .map_err(|_| AppError::Internal("Lock poisoned".into()))?;
-    let (source, target) = db.get_project_keys()?;
+    let (source, target, source_name, target_name) = db.get_project_keys()?;
     Ok(ProjectConfig {
         source_project_key: source,
         target_project_key: target,
+        source_project_name: source_name,
+        target_project_name: target_name,
     })
 }
 
@@ -367,6 +371,8 @@ pub fn get_project_config(
 pub fn set_project_config(
     source_project_key: Option<String>,
     target_project_key: Option<String>,
+    source_project_name: Option<String>,
+    target_project_name: Option<String>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<(), AppError> {
     let db = triage_db
@@ -374,6 +380,8 @@ pub fn set_project_config(
         .map_err(|_| AppError::Internal("Lock poisoned".into()))?;
     db.set_source_project_key(source_project_key.as_deref())?;
     db.set_target_project_key(target_project_key.as_deref())?;
+    db.set_source_project_name(source_project_name.as_deref())?;
+    db.set_target_project_name(target_project_name.as_deref())?;
     Ok(())
 }
 

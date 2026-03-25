@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { Check, ExternalLink, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
+import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { useTicketStore } from './ticketStore';
 import type { CopyStepResult } from './types';
@@ -9,6 +10,7 @@ import type { CopyStepResult } from './types';
 export function CopyResultPage() {
   const { t } = useTranslation();
   const { result, reset } = useCopyStore();
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
 
   const allPassed = result?.steps.every((s) => s.success) ?? false;
   const issueCreated = result?.steps.some((s) => s.step === 'create_issue' && s.success) ?? false;
@@ -83,7 +85,7 @@ export function CopyResultPage() {
           {issueCreated && result?.targetUrl && (
             <Button variant="outline" size="lg" onClick={handleOpenInJira}>
               <ExternalLink className="w-4 h-4 mr-1.5" aria-hidden="true" />
-              {t('copy.result.openInJira')}
+              {t('copy.result.openInJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
             </Button>
           )}
           <Button size="lg" onClick={handleClose}>

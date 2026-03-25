@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { useTicketStore } from './ticketStore';
 import type { CopyStepResult } from './types';
@@ -17,6 +18,7 @@ import type { CopyStepResult } from './types';
 export function CopyResultModal() {
   const { t } = useTranslation();
   const { phase, result, reset } = useCopyStore();
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
 
   const allPassed = result?.steps.every((s) => s.success) ?? false;
   const issueCreated = result?.steps.some((s) => s.step === 'create_issue' && s.success) ?? false;
@@ -128,7 +130,7 @@ export function CopyResultModal() {
         <DialogFooter>
           {issueCreated && result?.targetUrl && (
             <Button variant="outline" onClick={handleOpenInJira}>
-              {t('copy.result.openInJira')}
+              {t('copy.result.openInJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
             </Button>
           )}
           <Button onClick={handleClose}>{t('copy.result.close')}</Button>

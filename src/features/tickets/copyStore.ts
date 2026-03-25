@@ -112,7 +112,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     } catch (_err) {
       set({
         phase: 'idle',
-        error: 'Could not load target fields. Check your Company Jira connection in Settings.',
+        error: 'Could not load target fields. Check your destination connection in Settings.',
       });
     }
   },

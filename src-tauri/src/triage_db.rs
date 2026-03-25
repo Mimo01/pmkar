@@ -40,6 +40,10 @@ const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT: &str =
     "ALTER TABLE app_config ADD COLUMN source_project_key TEXT;";
 const ALTER_APP_CONFIG_ADD_TARGET_PROJECT: &str =
     "ALTER TABLE app_config ADD COLUMN target_project_key TEXT;";
+const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME: &str =
+    "ALTER TABLE app_config ADD COLUMN source_project_name TEXT;";
+const ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME: &str =
+    "ALTER TABLE app_config ADD COLUMN target_project_name TEXT;";
 
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
@@ -75,6 +79,8 @@ impl TriageDb {
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         Ok(Self { conn })
     }
 
@@ -89,6 +95,8 @@ impl TriageDb {
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         Ok(Self { conn })
     }
 
@@ -206,21 +214,23 @@ impl TriageDb {
         Ok(())
     }
 
-    pub fn get_project_keys(&self) -> AppResult<(Option<String>, Option<String>)> {
+    pub fn get_project_keys(&self) -> AppResult<(Option<String>, Option<String>, Option<String>, Option<String>)> {
         let result = self
             .conn
             .query_row(
-                "SELECT source_project_key, target_project_key FROM app_config WHERE id = 1",
+                "SELECT source_project_key, target_project_key, source_project_name, target_project_name FROM app_config WHERE id = 1",
                 [],
                 |row| {
                     Ok((
                         row.get::<_, Option<String>>(0)?,
                         row.get::<_, Option<String>>(1)?,
+                        row.get::<_, Option<String>>(2)?,
+                        row.get::<_, Option<String>>(3)?,
                     ))
                 },
             )
             .ok()
-            .unwrap_or((None, None));
+            .unwrap_or((None, None, None, None));
         Ok(result)
     }
 
@@ -236,6 +246,22 @@ impl TriageDb {
         self.conn.execute(
             "UPDATE app_config SET target_project_key = ?1 WHERE id = 1",
             [key],
+        )?;
+        Ok(())
+    }
+
+    pub fn set_source_project_name(&self, name: Option<&str>) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET source_project_name = ?1 WHERE id = 1",
+            [name],
+        )?;
+        Ok(())
+    }
+
+    pub fn set_target_project_name(&self, name: Option<&str>) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET target_project_name = ?1 WHERE id = 1",
+            [name],
         )?;
         Ok(())
     }

@@ -31,6 +31,8 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   const copyPhase = useCopyStore((s) => s.phase);
   const copyError = useCopyStore((s) => s.error);
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+  const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
   const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
@@ -198,7 +200,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    {t('detail.openInSourceJira')}
+                    {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
                   </button>
                   <button
                     type="button"
@@ -206,7 +208,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    {t('detail.openInCompanyJira')}
+                    {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
                   </button>
                 </>
               ) : (
@@ -266,7 +268,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       />
                     </svg>
                   ) : (
-                    t('detail.copy')
+                    t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })
                   )}
                 </button>
               )}

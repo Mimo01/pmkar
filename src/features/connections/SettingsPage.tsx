@@ -23,7 +23,7 @@ interface ProjectSelectorProps {
   connectionType: 'server' | 'cloud';
   baseUrl: string;
   currentKey: string | null;
-  onSelect: (key: string | null) => void;
+  onSelect: (key: string | null, name: string | null) => void;
 }
 
 function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: ProjectSelectorProps) {
@@ -130,7 +130,7 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
                 <button
                   type="button"
                   onClick={() => {
-                    onSelect(null);
+                    onSelect(null, null);
                     setOpen(false);
                     setSearch('');
                   }}
@@ -150,7 +150,7 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
                     key={p.key}
                     type="button"
                     onClick={() => {
-                      onSelect(p.key);
+                      onSelect(p.key, p.name);
                       setOpen(false);
                       setSearch('');
                     }}
@@ -233,8 +233,12 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const cloudConn = useConnectionStore((s) => s.cloudConnection);
   const sourceProjectKey = useConnectionStore((s) => s.sourceProjectKey);
   const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
+  const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
   const setSourceProjectKey = useConnectionStore((s) => s.setSourceProjectKey);
   const setTargetProjectKey = useConnectionStore((s) => s.setTargetProjectKey);
+  const setSourceProjectName = useConnectionStore((s) => s.setSourceProjectName);
+  const setTargetProjectName = useConnectionStore((s) => s.setTargetProjectName);
   const loadProjectConfig = useConnectionStore((s) => s.loadProjectConfig);
   const saveProjectConfig = useConnectionStore((s) => s.saveProjectConfig);
 
@@ -470,7 +474,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             ) : (
               <>
                 <ConnectionCard
-                  label={t('settings.sourceLabel')}
+                  label={t('settings.sourceLabel', { name: sourceProjectName || t('wizard.source.subtitle') })}
                   connection={serverConn}
                   onEdit={() => handleEdit('server')}
                 />
@@ -479,9 +483,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                     connectionType="server"
                     baseUrl={serverConn.baseUrl}
                     currentKey={sourceProjectKey}
-                    onSelect={(key) => {
+                    onSelect={(key, name) => {
                       setSourceProjectKey(key);
-                      saveProjectConfig(key, targetProjectKey);
+                      setSourceProjectName(name);
+                      saveProjectConfig(key, targetProjectKey, name, targetProjectName);
                     }}
                   />
                 )}
@@ -523,7 +528,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             ) : (
               <>
                 <ConnectionCard
-                  label={t('settings.destLabel')}
+                  label={t('settings.destLabel', { name: targetProjectName || t('wizard.destination.subtitle') })}
                   connection={cloudConn}
                   onEdit={() => handleEdit('cloud')}
                 />
@@ -532,9 +537,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                     connectionType="cloud"
                     baseUrl={cloudConn.baseUrl}
                     currentKey={targetProjectKey}
-                    onSelect={(key) => {
+                    onSelect={(key, name) => {
                       setTargetProjectKey(key);
-                      saveProjectConfig(sourceProjectKey, key);
+                      setTargetProjectName(name);
+                      saveProjectConfig(sourceProjectKey, key, sourceProjectName, name);
                     }}
                   />
                 )}

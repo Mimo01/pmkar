@@ -61,6 +61,7 @@ export function CopyPreviewPage() {
 
   const sourceBaseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
 
   const isCopying = phase === 'copying';
   const isLoading = phase === 'loading_preview';
@@ -109,7 +110,7 @@ export function CopyPreviewPage() {
               {t('copy.preview.copying')}
             </>
           ) : (
-            t('copy.preview.confirm')
+            t('copy.preview.confirm', { name: targetProjectName || t('wizard.destination.subtitle') })
           )}
         </Button>
       </div>

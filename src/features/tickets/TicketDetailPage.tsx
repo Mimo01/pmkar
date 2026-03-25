@@ -32,6 +32,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const copyError = useCopyStore((s) => s.error);
   const baseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
+  const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
+  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
   const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
@@ -218,7 +220,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 {copyPhase === 'loading_preview' ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                 ) : null}
-                {t('detail.copy')}
+                {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
               </Button>
             )}
             {isCopied && (
@@ -241,11 +243,11 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
               <>
                 <Button variant="outline" size="lg" onClick={handleOpenInJira}>
                   <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInSourceJira')}
+                  {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
                 </Button>
                 <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
                   <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.openInCompanyJira')}
+                  {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
                 </Button>
               </>
             ) : (
