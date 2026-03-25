@@ -228,10 +228,11 @@ None yet.
 | 260325-pv3 | Make the copy/notmine/open in jira strip look a little nicer | 2026-03-25 | d269c6c | | [260325-pv3-make-the-copy-notmine-open-in-jira-strip](./quick/260325-pv3-make-the-copy-notmine-open-in-jira-strip/) |
 | 260325-ppv | Consistently display status and priority with colored badges and priority icons like Jira | 2026-03-25 | 1ca9083 | | [260325-ppv-consistently-display-status-and-priority](./quick/260325-ppv-consistently-display-status-and-priority/) |
 | 260325-qcl | Remove duplicate status/priority/assignee/reporter from issue detail headers | 2026-03-25 | d08d256 | | [260325-qcl-remove-status-priority-and-other-metadat](./quick/260325-qcl-remove-status-priority-and-other-metadat/) |
+| 260325-qac | Hide done/resolved/closed tickets from all ticket list views | 2026-03-25 | be3e687 | | [260325-qac-in-the-ticket-lists-only-show-those-that](./quick/260325-qac-in-the-ticket-lists-only-show-those-that/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-qcl: Remove status, priority and other metadata from issue detail header since it's already shown below
-Last session: 2026-03-25T17:39:36.148Z
-Stopped at: Completed quick task 260325-ppv
+Last activity: 2026-03-25 - Completed quick task 260325-qac: Hide done/resolved/closed tickets from all ticket list views
+Last session: 2026-03-25T18:06:35Z
+Stopped at: Completed quick task 260325-qac
 Resume file: None
