@@ -231,7 +231,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-ppv: Consistently display status and priority with colored badges and priority icons like Jira
+Last activity: 2026-03-25 - Completed quick task 260325-qcl: Remove status, priority and other metadata from issue detail header since it's already shown below
 Last session: 2026-03-25T17:39:36.148Z
 Stopped at: Completed quick task 260325-ppv
 Resume file: None
