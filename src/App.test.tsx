@@ -3,6 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { useConnectionStore } from './features/connections/connectionStore';
 
+// Mock @tauri-apps/api/event
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn(() => Promise.resolve(() => {})),
+}));
+
 // Mock @tauri-apps/api/core
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn((cmd: string) => {

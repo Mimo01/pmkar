@@ -15,7 +15,7 @@
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/",
-    "changelog": "npx git-cliff --config cliff.toml -o CHANGELOG.md"
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

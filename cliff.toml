@@ -20,6 +20,9 @@ conventional_commits = true
 filter_unconventional = true
 split_commits = false
 commit_parsers = [
+  { message = "^docs\\(quick", skip = true },
+  { message = "^docs\\(gsd", skip = true },
+  { message = "^chore: bump version", skip = true },
   { message = "^feat", group = "Features" },
   { message = "^fix", group = "Bug Fixes" },
   { message = "^refactor", group = "Refactoring" },
