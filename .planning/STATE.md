@@ -225,7 +225,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-kuc: make the filter more sleek. The assignee search should autocomplete with real users
+Last activity: 2026-03-25 - Completed quick task 260325-p8e: When users are shown in the app, always present them with their avatars
 Last session: 2026-03-25T17:21:10.333Z
 Stopped at: Completed quick task 260325-p8e
 Resume file: None
