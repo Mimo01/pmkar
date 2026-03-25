@@ -258,5 +258,8 @@
   "copy.targetProject": "Target Project",
   "about.modal.title": "About pmkar",
   "about.modal.description": "Jira ticket bridge for seamless cross-instance copying",
-  "about.modal.close": "Close"
+  "about.modal.close": "Close",
+  "about.versionHistory": "Version History",
+  "about.versionHistory.title": "Version History",
+  "about.versionHistory.noEntries": "No version history available"
 }

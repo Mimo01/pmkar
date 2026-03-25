@@ -1,12 +1,13 @@
 import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater';
-import { CircleCheck, Loader2 } from 'lucide-react';
+import { CircleCheck, History, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUpdateStore } from './updateStore';
+import { VersionHistoryModal } from './VersionHistoryModal';
 
 function formatRelativeTime(isoString: string): string {
   const now = Date.now();
@@ -30,6 +31,7 @@ export function AboutSection() {
   const lastCheckedAt = useUpdateStore((s) => s.lastCheckedAt);
 
   const [appVersion, setAppVersion] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     getVersion()
@@ -68,6 +70,14 @@ export function AboutSection() {
         ) : (
           <Skeleton className="h-4 w-16" />
         )}
+        <button
+          type="button"
+          onClick={() => setShowHistory(true)}
+          className="flex items-center gap-1 text-[13px] text-brand hover:underline mt-1"
+        >
+          <History className="w-3.5 h-3.5" aria-hidden="true" />
+          {t('about.versionHistory')}
+        </button>
       </div>
 
       {/* Last checked row */}
@@ -131,6 +141,8 @@ export function AboutSection() {
           {status === 'checking' ? t('about.checking') : t('about.checkForUpdates')}
         </Button>
       )}
+
+      <VersionHistoryModal open={showHistory} onOpenChange={setShowHistory} />
     </div>
   );
 }

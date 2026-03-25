@@ -258,5 +258,8 @@
   "copy.targetProject": "Cieľový projekt",
   "about.modal.title": "O aplikácii pmkar",
   "about.modal.description": "Most pre tikety medzi Jira inštanciami",
-  "about.modal.close": "Zavrieť"
+  "about.modal.close": "Zavrieť",
+  "about.versionHistory": "História verzií",
+  "about.versionHistory.title": "História verzií",
+  "about.versionHistory.noEntries": "História verzií nie je dostupná"
 }
