@@ -102,6 +102,52 @@ impl AuditDb {
             .query_row("SELECT COUNT(*) FROM audit_log", [], |row| row.get(0))?;
         Ok(count)
     }
+
+    /// Delete entries older than `max_age_days` days. Returns number of rows deleted.
+    pub fn prune_old_entries(&self, max_age_days: i64) -> AppResult<u64> {
+        let rows = self.conn.execute(
+            "DELETE FROM audit_log WHERE created_at < strftime('%s','now') - (?1 * 86400)",
+            rusqlite::params![max_age_days],
+        )?;
+        Ok(rows as u64)
+    }
+
+    /// Nullify response bodies older than `max_age_days` days. Returns number of rows updated.
+    pub fn prune_response_bodies(&self, max_age_days: i64) -> AppResult<u64> {
+        let rows = self.conn.execute(
+            "UPDATE audit_log SET response_body = NULL WHERE response_body IS NOT NULL AND created_at < strftime('%s','now') - (?1 * 86400)",
+            rusqlite::params![max_age_days],
+        )?;
+        Ok(rows as u64)
+    }
+
+    /// Run VACUUM to reclaim disk space after pruning.
+    pub fn vacuum(&self) -> AppResult<()> {
+        self.conn.execute_batch("VACUUM")?;
+        Ok(())
+    }
+
+    /// Return a page of entries ordered by id DESC with LIMIT/OFFSET.
+    pub fn get_page(&self, offset: i64, limit: i64) -> AppResult<Vec<AuditEntry>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, timestamp, method, url, headers, status_code, response_body
+             FROM audit_log ORDER BY id DESC LIMIT ?1 OFFSET ?2",
+        )?;
+        let entries = stmt
+            .query_map(rusqlite::params![limit, offset], |row| {
+                Ok(AuditEntry {
+                    id: Some(row.get(0)?),
+                    timestamp: row.get(1)?,
+                    method: row.get(2)?,
+                    url: row.get(3)?,
+                    headers: row.get(4)?,
+                    status_code: row.get(5)?,
+                    response_body: row.get(6)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(entries)
+    }
 }
 
 #[cfg(test)]
@@ -168,6 +214,94 @@ mod tests {
         // get_all returns ORDER BY id DESC — most-recent first
         assert_eq!(entries[0].url, "https://example.com/third");
         assert_eq!(entries[2].url, "https://example.com/first");
+    }
+
+    #[test]
+    fn test_prune_old_entries() {
+        let db = new_db();
+        // Insert a recent entry
+        db.insert(&make_entry("GET", "https://example.com/recent", 200))
+            .expect("insert failed");
+        // Insert and back-date an entry to 31 days ago
+        db.insert(&make_entry("GET", "https://example.com/old", 200))
+            .expect("insert failed");
+        db.conn
+            .execute(
+                "UPDATE audit_log SET created_at = strftime('%s','now') - (31 * 86400) WHERE url = 'https://example.com/old'",
+                [],
+            )
+            .expect("backdating failed");
+
+        let deleted = db.prune_old_entries(30).expect("prune failed");
+        assert_eq!(deleted, 1, "expected 1 old entry deleted");
+
+        let entries = db.get_all().expect("get_all failed");
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].url, "https://example.com/recent");
+    }
+
+    #[test]
+    fn test_prune_response_bodies() {
+        let db = new_db();
+        // Recent entry — body should be kept
+        db.insert(&make_entry("GET", "https://example.com/recent", 200))
+            .expect("insert failed");
+        // Old entry — body should be nullified
+        db.insert(&make_entry("GET", "https://example.com/old", 200))
+            .expect("insert failed");
+        db.conn
+            .execute(
+                "UPDATE audit_log SET created_at = strftime('%s','now') - (8 * 86400) WHERE url = 'https://example.com/old'",
+                [],
+            )
+            .expect("backdating failed");
+
+        let updated = db.prune_response_bodies(7).expect("prune_response_bodies failed");
+        assert_eq!(updated, 1, "expected 1 response body nullified");
+
+        let entries = db.get_all().expect("get_all failed");
+        // Both entries still exist
+        assert_eq!(entries.len(), 2);
+        // The old one should have no body
+        let old = entries.iter().find(|e| e.url == "https://example.com/old").unwrap();
+        assert!(old.response_body.is_none(), "old entry's response_body should be None");
+        // The recent one should still have a body
+        let recent = entries.iter().find(|e| e.url == "https://example.com/recent").unwrap();
+        assert!(recent.response_body.is_some(), "recent entry's response_body should still be Some");
+    }
+
+    #[test]
+    fn test_get_page() {
+        let db = new_db();
+        for i in 0..10u16 {
+            db.insert(&make_entry("GET", &format!("https://example.com/{i}"), 200))
+                .expect("insert failed");
+        }
+        let page1 = db.get_page(0, 5).expect("get_page failed");
+        assert_eq!(page1.len(), 5, "first page should have 5 entries");
+
+        let page2 = db.get_page(5, 5).expect("get_page failed");
+        assert_eq!(page2.len(), 5, "second page should have 5 entries");
+
+        let all = db.get_page(0, 20).expect("get_page failed");
+        assert_eq!(all.len(), 10, "oversized limit should return all 10 entries");
+
+        // Pages should not overlap
+        let ids1: Vec<_> = page1.iter().map(|e| e.id).collect();
+        let ids2: Vec<_> = page2.iter().map(|e| e.id).collect();
+        for id in &ids1 {
+            assert!(!ids2.contains(id), "page1 and page2 should not overlap");
+        }
+    }
+
+    #[test]
+    fn test_vacuum_succeeds() {
+        let db = new_db();
+        db.vacuum().expect("vacuum should succeed on empty db");
+
+        db.insert(&make_entry("GET", "https://example.com/", 200))
+            .expect("insert failed");
+        db.vacuum().expect("vacuum should succeed on non-empty db");
     }
 
     #[test]

@@ -267,6 +267,18 @@ pub fn get_audit_count(db: State<'_, Arc<Mutex<AuditDb>>>) -> Result<i64, AppErr
     db.count()
 }
 
+#[tauri::command]
+pub fn get_audit_logs_page(
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    offset: i64,
+    limit: i64,
+) -> Result<Vec<AuditEntry>, AppError> {
+    let db = db
+        .lock()
+        .map_err(|_| AppError::Internal("Database lock poisoned".into()))?;
+    db.get_page(offset, limit)
+}
+
 // --- Mock server commands ---
 
 #[tauri::command]
