@@ -220,7 +220,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Fixed quick task 260325-jos: Select source and target Jira projects (backend gaps)
+Last activity: 2026-03-25 - Completed quick task 260325-kf1: Make the app header across the app always visible on top of the app
 Last session: 2026-03-25T13:47:24.091Z
 Stopped at: Completed quick task 260325-kf1
 Resume file: None
