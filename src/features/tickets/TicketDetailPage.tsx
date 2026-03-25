@@ -213,22 +213,17 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
             {!isCopied && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="default"
-                    size="lg"
-                    onClick={handleStartCopy}
-                    disabled={copyPhase === 'loading_preview'}
-                  >
-                    {copyPhase === 'loading_preview' ? (
-                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    ) : null}
-                    {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent aria-hidden="true">{t('detail.copy.tooltip')}</TooltipContent>
-              </Tooltip>
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handleStartCopy}
+                disabled={copyPhase === 'loading_preview'}
+              >
+                {copyPhase === 'loading_preview' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })}
+              </Button>
             )}
             {isCopied && (
               <Badge className="bg-green-600/10 text-green-600 border-green-600/20 px-4 py-2 text-sm">
@@ -258,35 +253,20 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
               ))}
             {isCopied && triageEntry?.copiedKey ? (
               <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                      {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
-                      <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                      {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-                </Tooltip>
+                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
+                </Button>
+                <Button variant="outline" size="lg" onClick={handleOpenInCloudJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                </Button>
               </>
             ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                    <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                    {t('detail.openInJira')}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-              </Tooltip>
+              <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                {t('detail.openInJira')}
+              </Button>
             )}
           </div>
           </TooltipProvider>

@@ -86,8 +86,6 @@
   "detail.ignore.tooltip": "Move this ticket to the Dismissed tab — you can restore it anytime",
   "detail.ignored": "Ignored",
   "detail.ignored.tooltip": "This ticket is dismissed — click to restore it to your inbox",
-  "detail.copy.tooltip": "Copy this ticket to your company Jira",
-  "detail.openInJira.tooltip": "Open this ticket in the browser",
   "detail.loading": "Loading...",
   "detail.failedToLoad": "Failed to load ticket detail",
   "copy.preview.title": "Preview Copy",

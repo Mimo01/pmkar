@@ -196,47 +196,32 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
             <div className="flex items-center gap-2 mt-2">
               {isCopied && triageEntry?.copiedKey ? (
                 <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={handleOpenInJira}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                        {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={handleOpenInCloudJira}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                        {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-                  </Tooltip>
+                  <button
+                    type="button"
+                    onClick={handleOpenInJira}
+                    className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t('detail.openInSourceJira', { name: sourceProjectName || t('wizard.source.subtitle') })}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenInCloudJira}
+                    className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                    {t('detail.openInCompanyJira', { name: targetProjectName || t('wizard.destination.subtitle') })}
+                  </button>
                 </>
               ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={handleOpenInJira}
-                      className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                      {t('detail.openInJira')}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.openInJira.tooltip')}</TooltipContent>
-                </Tooltip>
+                <button
+                  type="button"
+                  onClick={handleOpenInJira}
+                  className="px-3 py-1.5 rounded-md text-sm font-medium border border-brand-border bg-brand-surface hover:bg-brand-surface-hover hover:border-brand-text/30 text-brand-text transition-colors duration-150 flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {t('detail.openInJira')}
+                </button>
               )}
               {isCopied ? null : isIgnored ? (
                 <Tooltip>
@@ -271,38 +256,33 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                   {triageEntry?.copiedKey ? ` \u2192 ${triageEntry.copiedKey}` : ''}
                 </span>
               ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={handleStartCopy}
-                      disabled={copyPhase === 'loading_preview'}
-                      className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
-                    >
-                      {copyPhase === 'loading_preview' ? (
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                          />
-                        </svg>
-                      ) : (
-                        t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent aria-hidden="true">{t('detail.copy.tooltip')}</TooltipContent>
-                </Tooltip>
+                <button
+                  type="button"
+                  onClick={handleStartCopy}
+                  disabled={copyPhase === 'loading_preview'}
+                  className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                >
+                  {copyPhase === 'loading_preview' ? (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                  ) : (
+                    t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })
+                  )}
+                </button>
               )}
             </div>
             </TooltipProvider>

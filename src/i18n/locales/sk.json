@@ -86,8 +86,6 @@
   "detail.ignore.tooltip": "Presunúť tiket do karty Zamietnuté — kedykoľvek ho môžete obnoviť",
   "detail.ignored": "Ignorované",
   "detail.ignored.tooltip": "Tento tiket je zamietnutý — kliknite pre obnovenie",
-  "detail.copy.tooltip": "Skopírovať tento tiket do firemnej Jiry",
-  "detail.openInJira.tooltip": "Otvoriť tento tiket v prehliadači",
   "detail.loading": "Načítavam...",
   "detail.failedToLoad": "Nepodarilo sa načítať detail tiketu",
   "copy.preview.title": "Náhľad kopírovania",
