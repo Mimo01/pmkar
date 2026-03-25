@@ -194,6 +194,17 @@ type ActiveSection =
   | 'language'
   | 'about';
 
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3">
+        {title}
+      </h2>
+      <div className="rounded-xl border border-brand-border bg-brand-surface p-5">{children}</div>
+    </div>
+  );
+}
+
 export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const { t } = useTranslation();
 
@@ -410,18 +421,6 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       >
         {label}
       </button>
-    );
-  }
-
-  // Content card wrapper
-  function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div>
-        <h2 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3">
-          {title}
-        </h2>
-        <div className="rounded-xl border border-brand-border bg-brand-surface p-5">{children}</div>
-      </div>
     );
   }
 
