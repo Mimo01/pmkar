@@ -147,6 +147,7 @@
   "audit.requestHeaders": "Hlavičky požiadavky",
   "audit.headersEmpty": "Hlavičky neboli zaznamenané",
   "audit.responseBodyEmpty": "Telo odpovede nebolo zaznamenané",
+  "audit.status.error": "Chyba",
   "audit.loadError": "Audit log sa nepodarilo načítať. Reštartujte aplikáciu ak problém pretrváva.",
   "error.connectionFailed": "Chyba pripojenia",
   "error.authFailed": "Autentifikácia zlyhala. Skontrolujte prihlasovacie údaje zdrojového pripojenia v nastaveniach.",
