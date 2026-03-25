@@ -36,6 +36,11 @@ const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
 
 const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
 
+const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT: &str =
+    "ALTER TABLE app_config ADD COLUMN source_project_key TEXT;";
+const ALTER_APP_CONFIG_ADD_TARGET_PROJECT: &str =
+    "ALTER TABLE app_config ADD COLUMN target_project_key TEXT;";
+
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
     base_url        TEXT NOT NULL,
@@ -68,6 +73,8 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
         Ok(Self { conn })
     }
 
@@ -80,6 +87,8 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
         Ok(Self { conn })
     }
 
@@ -193,6 +202,40 @@ impl TriageDb {
         self.conn.execute(
             "UPDATE app_config SET language = ?1 WHERE id = 1",
             [language],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_project_keys(&self) -> AppResult<(Option<String>, Option<String>)> {
+        let result = self
+            .conn
+            .query_row(
+                "SELECT source_project_key, target_project_key FROM app_config WHERE id = 1",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, Option<String>>(0)?,
+                        row.get::<_, Option<String>>(1)?,
+                    ))
+                },
+            )
+            .ok()
+            .unwrap_or((None, None));
+        Ok(result)
+    }
+
+    pub fn set_source_project_key(&self, key: Option<&str>) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET source_project_key = ?1 WHERE id = 1",
+            [key],
+        )?;
+        Ok(())
+    }
+
+    pub fn set_target_project_key(&self, key: Option<&str>) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET target_project_key = ?1 WHERE id = 1",
+            [key],
         )?;
         Ok(())
     }
