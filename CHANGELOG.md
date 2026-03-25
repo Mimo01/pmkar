@@ -1,6 +1,10 @@
 
 ## [Unreleased]
 
+### Bug Fixes
+
+- add version headings to changelog template
+
 ### Documentation
 
 - complete deploy v0.2.0 release plan summary and state update
