@@ -8,6 +8,9 @@ import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
 import { useApplyTheme } from './features/theme/useApplyTheme';
+import { UpdateModal } from './features/update/UpdateModal';
+import { useUpdateCheck } from './features/update/useUpdateCheck';
+import { useUpdateStore } from './features/update/updateStore';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { IgnoredTicketsPage } from './features/tickets/IgnoredTicketsPage';
 import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
@@ -29,6 +32,8 @@ function App() {
   const hasSetup = useConnectionStore((s) => s.hasCompletedSetup());
   const [hydrated, setHydrated] = useState(false);
   useApplyTheme();
+  useUpdateCheck();
+  const updateStatus = useUpdateStore((s) => s.status);
 
   useEffect(() => {
     Promise.all([invoke<StoredConnectionMeta[]>('get_all_connection_meta'), hydrateLanguage()])
@@ -94,12 +99,19 @@ function App() {
     return null;
   }
 
+  const showUpdateModal =
+    updateStatus === 'available' ||
+    updateStatus === 'downloading' ||
+    updateStatus === 'installing' ||
+    (updateStatus === 'error' && useUpdateStore.getState().updateInfo !== null);
+
   // Show wizard if not set up OR if user clicked Edit on a connection
   if (!hasSetup || editStep !== null) {
     const initialStep = editStep === 'cloud' ? 2 : 1;
     return (
       <ErrorBoundary>
         <SetupWizard initialStep={initialStep} onComplete={() => setEditStep(null)} />
+        <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>
     );
   }
@@ -116,6 +128,7 @@ function App() {
             }}
           />
         </AppShell>
+        <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>
     );
   }
@@ -131,6 +144,7 @@ function App() {
             }}
           />
         </AppShell>
+        <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>
     );
   }
@@ -141,6 +155,7 @@ function App() {
         <AppShell>
           <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
         </AppShell>
+        <UpdateModal open={showUpdateModal} />
       </ErrorBoundary>
     );
   }
@@ -168,6 +183,7 @@ function App() {
         {currentTab === 'not-mine' && <IgnoredTicketsPage />}
         {currentTab === 'linked' && <LinkedTicketsPage />}
       </AppShell>
+      <UpdateModal open={showUpdateModal} />
     </ErrorBoundary>
   );
 }

@@ -8,6 +8,7 @@ import { type Language, useLanguageStore } from '../../i18n/languageStore';
 import { type ThemeMode, useThemeStore } from '../theme/themeStore';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { FetchConfig, JqlPreset } from '../tickets/types';
+import { AboutSection } from '../update/AboutSection';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useConnectionStore } from './connectionStore';
@@ -30,7 +31,8 @@ type ActiveSection =
   | 'jql-presets'
   | 'watched-users'
   | 'theme'
-  | 'language';
+  | 'language'
+  | 'about';
 
 export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const { t } = useTranslation();
@@ -533,6 +535,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             <LanguageSection />
           </SectionCard>
         );
+
+      case 'about':
+        return (
+          <SectionCard title={t('settings.section.about')}>
+            <AboutSection />
+          </SectionCard>
+        );
     }
   }
 
@@ -592,6 +601,18 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             <div className="space-y-0.5">
               <NavItem section="theme" label={t('settings.nav.theme')} />
               <NavItem section="language" label={t('settings.nav.language')} />
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* About group */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.about')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="about" label={t('settings.nav.about')} />
             </div>
           </div>
         </nav>
