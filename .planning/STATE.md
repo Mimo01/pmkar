@@ -211,10 +211,11 @@ None yet.
 | 260324-pjx | The app is missing icon, add it | 2026-03-24 | 295c1ba | | [260324-pjx-the-app-is-missing-icon-add-it](./quick/260324-pjx-the-app-is-missing-icon-add-it/) |
 | 260324-pq3 | Redesign app icon to match app aesthetic | 2026-03-24 | a74bae8 | | [260324-pq3-redesign-app-icon-to-match-app-aesthetic](./quick/260324-pq3-redesign-app-icon-to-match-app-aesthetic/) |
 | 260324-q5o | Redesign icon with proper macOS padding | 2026-03-24 | b41a5ef | | [260324-q5o-redesign-icon-with-proper-macos-padding-](./quick/260324-q5o-redesign-icon-with-proper-macos-padding-/) |
+| 260325-dd7 | Open issues in external Jira from the app | 2026-03-25 | 2291b68 | | [260325-dd7-open-issues-in-external-jira-from-the-ap](./quick/260325-dd7-open-issues-in-external-jira-from-the-ap/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25
-Last session: 2026-03-25T07:39:55.214Z
-Stopped at: Completed 11-03-PLAN.md
+Last activity: 2026-03-25 - Completed quick task 260325-dd7: Open issues in external Jira from the app
+Last session: 2026-03-25T08:37:27.339Z
+Stopped at: Completed quick task 260325-dd7
 Resume file: None
