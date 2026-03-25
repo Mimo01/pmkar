@@ -231,10 +231,11 @@ None yet.
 | 260325-qac | Hide done/resolved/closed tickets from all ticket list views | 2026-03-25 | be3e687 | | [260325-qac-in-the-ticket-lists-only-show-those-that](./quick/260325-qac-in-the-ticket-lists-only-show-those-that/) |
 | 260325-qq8 | Add created date to issue detail header | 2026-03-25 | 8565605 | | [260325-qq8-add-date-created-to-the-issue-detail](./quick/260325-qq8-add-date-created-to-the-issue-detail/) |
 | 260325-qp8 | Audit log retention management with pagination | 2026-03-25 | 5fc4d11 | | [260325-qp8-implement-audit-log-retention-management](./quick/260325-qp8-implement-audit-log-retention-management/) |
+| 260325-qw2 | Rename Not Mine to Dismissed, add info card, show project names in labels | 2026-03-25 | 0707ea4 | | [260325-qw2-make-not-mine-ignored-clearer-to-users-a](./quick/260325-qw2-make-not-mine-ignored-clearer-to-users-a/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-qp8: Implement audit log retention management
-Last session: 2026-03-25T18:13:29Z
-Stopped at: Completed quick task 260325-qp8
+Last activity: 2026-03-25 - Completed quick task 260325-qw2: Rename Not Mine to Dismissed and add project name labels
+Last session: 2026-03-25T18:41:00Z
+Stopped at: Completed quick task 260325-qw2
 Resume file: None
