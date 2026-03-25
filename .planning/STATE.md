@@ -233,10 +233,11 @@ None yet.
 | 260325-qp8 | Audit log retention management with pagination | 2026-03-25 | 5fc4d11 | | [260325-qp8-implement-audit-log-retention-management](./quick/260325-qp8-implement-audit-log-retention-management/) |
 | 260325-qw2 | Rename Not Mine to Dismissed, add info card, show project names in labels | 2026-03-25 | 0707ea4 | Verified | [260325-qw2-make-not-mine-ignored-clearer-to-users-a](./quick/260325-qw2-make-not-mine-ignored-clearer-to-users-a/) |
 | 260325-s97 | Redesign Jira links section with grouped layout and direction icons | 2026-03-25 | 252a065 | | [260325-s97-redesign-jira-links-section-on-ticket-de](./quick/260325-s97-redesign-jira-links-section-on-ticket-de/) |
+| 260325-sa2 | Custom About modal from native macOS menu | 2026-03-25 | 40dfb7d | | [260325-sa2-add-a-custom-about-the-app-modal-that-wi](./quick/260325-sa2-add-a-custom-about-the-app-modal-that-wi/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-s97: Redesign Jira links section on ticket detail when ticket is linked
-Last session: 2026-03-25T00:00:00Z
-Stopped at: Completed quick task 260325-s97
+Last activity: 2026-03-25 - Completed quick task 260325-sa2: Custom About modal triggered from native macOS app menu
+Last session: 2026-03-25T19:31:00Z
+Stopped at: Completed quick task 260325-sa2
 Resume file: None
