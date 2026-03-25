@@ -1,39 +1,46 @@
 
+## [0.2.4]
+
+### Miscellaneous
+
+- pre-release cleanup for v0.2.4
 ## [0.2.3]
 
 ### Bug Fixes
 
+- remove unused waitFor import and fix AboutSection TS type error
+- skip keychain tests when no keyring daemon available
+- inline format args in platform-specific code for clippy
+- update tests to match current component behavior
+- resolve clippy warnings and add clippy to pre-commit hook
+- pass --tag to git-cliff so current version appears in changelog
 - skip release build when tag already has a release
 - resolve CI lint and format failures
 - remove redundant try again link from update error state
 - merge unreleased into latest version and make changelog collapsible
 
+### Documentation
+
+- rename milestone v1.0 to v0.1.0 to match actual binary version
+
 ### Miscellaneous
 
 - add pre-commit hook for lint and format checks
-- bump version to 0.2.3
+
+### Testing
+
+- expand tests for low-coverage files to meet thresholds
+- add comprehensive tests for CopyPreviewPage and CopyResultPage
 ## [0.2.2]
 
 ### Bug Fixes
 
 - treat unreachable update endpoint as up-to-date
-
-### Miscellaneous
-
-- bump version to 0.2.2
 ## [0.2.1]
 
 ### Bug Fixes
 
 - add version headings to changelog template
-
-### Documentation
-
-- complete deploy v0.2.0 release plan summary and state update
-
-### Miscellaneous
-
-- bump version to 0.2.1
 ## [0.2.0]
 
 ### Bug Fixes
@@ -46,57 +53,6 @@
 - implement missing backend commands for project selection
 - use configured target project key for status fetch in fetch_cloud_meta
 - use 'tiket/tikety' instead of 'lístky' in Slovak translation
-
-### Documentation
-
-- create deploy v0.2.0 release plan
-- complete hide copy to company Jira button on dismissed tickets plan summary and state update
-- complete hide copy button on dismissed tickets plan summary and state update
-- complete redesign Jira linked ticket state UI plan summary and state update
-- complete redesign Jira linked ticket state UI plan summary
-- complete version history changelog viewer plan summary and state update
-- create plan to redesign jira linked ticket state UI
-- create version history and changelog plan
-- complete About modal plan summary and state update
-- complete redesign Jira links section plan and state update
-- complete redesign jira links section plan
-- plan for custom About modal from native menu
-- complete not-mine UX and project names plan and state update
-- complete Dismissed rename and project name labels plan
-- create plan for dismiss UX and project names
-- complete audit log retention management plan and state update
-- record quick task in STATE.md
-- complete add-date-created-to-issue-detail plan and state update
-- create audit log retention management plan
-- complete hide done tickets plan and state update
-- record quick task in STATE.md
-- Remove status, priority and other metadata from issue detail header since it's already shown below
-- complete remove-metadata-from-detail-header plan
-- plan to hide done tickets from lists and clean triage DB
-- Consistently display status and priority with colored badges and priority icons like Jira
-- Make the copy/notmine/open in jira strip look a little nicer
-- complete action strip redesign plan and state update
-- complete consistently display status and priority plan
-- complete remove duplicate buttons plan and state update
-- complete remove duplicated footer buttons plan
-- Fix watched users input losing focus on keystroke
-- complete SectionCard focus fix plan
-- add plan and summary for user avatars display
-- complete user avatars plan summary and state update
-- See sleek filter with assignee autocomplete
-- add plan and summary for project selector redesign
-- add plan and summary for sleek filter bar with assignee autocomplete
-- plan for nicer project selector with All Projects option
-- See failed logs in audit logs with better status badge
-- add plan and summary for failed logs audit badge task
-- Make the app header across the app always visible on top of the app
-- complete app header always visible plan
-- Make ticket filter bar sleek with assignee autocomplete
-- add SUMMARY for sleek filter bar with assignee autocomplete
-- complete select source/target project plan
-- Add ticket list filters for ticket number, last change, and assignee
-- complete ticket list filters plan
-- create plan for source/target project selection
 
 ### Features
 
@@ -137,7 +93,6 @@
 
 ### Miscellaneous
 
-- bump version to 0.2.0
 - generate CHANGELOG.md and add changelog npm script
 
 ### Refactoring
@@ -191,11 +146,7 @@
 
 ### Documentation
 
-- Copied tickets open in both Jiras with more visible buttons
 - complete dual Jira buttons plan summary
-- Open issues in external Jira from the app
-- complete open-in-jira quick task summary
-- plan Open in Jira button for ticket detail views
 - complete phase execution — update roadmap, state, and PROJECT.md
 - complete final verification plan
 - complete update UI plan
@@ -220,13 +171,6 @@
 - research phase domain
 - record phase 10 context session
 - capture phase context
-- finalize icon redesign summary
-- Redesign icon with proper macOS padding
-- Redesign app icon to match app aesthetic
-- create icon redesign plan
-- The app is missing icon, add it
-- complete add-app-icon plan
-- Fix Slovak translation diacritics and errors
 - evolve PROJECT.md after phase completion
 - complete phase execution and verification
 - complete SettingsPage ARIA semantics plan summary
@@ -258,14 +202,6 @@
 - UI design contract
 - record phase 8 context session
 - capture phase context
-- debug logs triggered as icon next to settings
-- complete debug log header icon plan
-- 3-tab homepage — New / Not Mine / Already Linked
-- update summary with detail panel support for all tabs
-- complete 3-tab navigation plan — awaiting visual verification
-- redesign settings — verified
-- create settings redesign summary — tasks 1-2 complete, awaiting visual verification
-- create settings redesign plan — sidebar nav, 3-group layout
 - evolve PROJECT.md after phase completion
 - complete phase execution — internationalization verified
 - complete i18n test suite — visual verification approved
