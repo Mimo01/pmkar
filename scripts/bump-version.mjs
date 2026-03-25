@@ -85,7 +85,7 @@ try {
 
 // --- Regenerate CHANGELOG.md ---
 try {
-  execSync('npm run changelog', { cwd: ROOT, stdio: 'inherit' });
+  execSync(`npx git-cliff --config cliff.toml --tag v${newVersion} -o CHANGELOG.md`, { cwd: ROOT, stdio: 'inherit' });
   console.log('  CHANGELOG.md: regenerated');
 } catch (err) {
   console.error(`  CHANGELOG.md: ERROR — ${err.message}`);

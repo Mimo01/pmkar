@@ -1,10 +1,17 @@
 
-## [Unreleased]
+## [0.2.3]
 
 ### Bug Fixes
 
+- skip release build when tag already has a release
+- resolve CI lint and format failures
 - remove redundant try again link from update error state
 - merge unreleased into latest version and make changelog collapsible
+
+### Miscellaneous
+
+- add pre-commit hook for lint and format checks
+- bump version to 0.2.3
 ## [0.2.2]
 
 ### Bug Fixes
