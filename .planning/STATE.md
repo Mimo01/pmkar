@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-jos
-last_updated: "2026-03-25T13:30:46.498Z"
-last_activity: "2026-03-25 - Completed quick task 260325-jxu: Add ticket list filters for ticket number, last change, and assignee"
+stopped_at: Completed quick task 260325-kf1
+last_updated: "2026-03-25T13:47:24.097Z"
+last_activity: "2026-03-25 - Fixed quick task 260325-jos: Select source and target Jira projects (backend gaps)"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -216,10 +216,11 @@ None yet.
 | 260325-jxu | Add ticket list filters for key and assignee with sort toggle | 2026-03-25 | 959c2ab | | [260325-jxu-add-ticket-list-filters-for-ticket-numbe](./quick/260325-jxu-add-ticket-list-filters-for-ticket-numbe/) |
 | 260325-jos | Select source and target Jira projects | 2026-03-25 | 55e532c | | [260325-jos-i-want-the-user-to-be-able-to-select-sou](./quick/260325-jos-i-want-the-user-to-be-able-to-select-sou/) |
 | 260325-k6l | Sleek filter bar with assignee autocomplete from real users | 2026-03-25 | 36ebef3 | | [260325-k6l-make-ticket-filter-bar-sleek-with-assign](./quick/260325-k6l-make-ticket-filter-bar-sleek-with-assign/) |
+| 260325-kf1 | App header always visible across all routes | 2026-03-25 | 650dd39 | | [260325-kf1-make-the-app-header-across-the-app-alway](./quick/260325-kf1-make-the-app-header-across-the-app-alway/) |
 
 ## Session Continuity
 
 Last activity: 2026-03-25 - Fixed quick task 260325-jos: Select source and target Jira projects (backend gaps)
-Last session: 2026-03-25T13:31:54.921Z
-Stopped at: Completed quick task 260325-k6l
+Last session: 2026-03-25T13:47:24.091Z
+Stopped at: Completed quick task 260325-kf1
 Resume file: None
