@@ -255,5 +255,8 @@
   "settings.project.error": "Nepodarilo sa načítať projekty",
   "settings.project.all": "Všetky projekty",
   "settings.project.search": "Hľadať projekty...",
-  "copy.targetProject": "Cieľový projekt"
+  "copy.targetProject": "Cieľový projekt",
+  "about.modal.title": "O aplikácii pmkar",
+  "about.modal.description": "Most pre tikety medzi Jira inštanciami",
+  "about.modal.close": "Zavrieť"
 }

@@ -255,5 +255,8 @@
   "settings.project.error": "Failed to load projects",
   "settings.project.all": "All Projects",
   "settings.project.search": "Search projects...",
-  "copy.targetProject": "Target Project"
+  "copy.targetProject": "Target Project",
+  "about.modal.title": "About pmkar",
+  "about.modal.description": "Jira ticket bridge for seamless cross-instance copying",
+  "about.modal.close": "Close"
 }

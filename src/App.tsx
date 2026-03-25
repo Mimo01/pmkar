@@ -1,5 +1,6 @@
 import './i18n/index';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -17,6 +18,7 @@ import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { TicketDetailPage } from './features/tickets/TicketDetailPage';
 import { TicketListPage } from './features/tickets/TicketListPage';
 import { useTicketStore } from './features/tickets/ticketStore';
+import { AboutModal } from './features/update/AboutModal';
 import { UpdateModal } from './features/update/UpdateModal';
 import { useUpdateStore } from './features/update/updateStore';
 import { useUpdateCheck } from './features/update/useUpdateCheck';
@@ -66,6 +68,14 @@ function App() {
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
+  const [showAbout, setShowAbout] = useState(false);
+
+  useEffect(() => {
+    const unlisten = listen('show-about', () => setShowAbout(true));
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
   const copyPhase = useCopyStore((s) => s.phase);
@@ -103,6 +113,7 @@ function App() {
           <SetupWizard initialStep={initialStep} onComplete={() => setEditStep(null)} />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
+        <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       </ErrorBoundary>
     );
   }
@@ -120,6 +131,7 @@ function App() {
           />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
+        <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       </ErrorBoundary>
     );
   }
@@ -133,6 +145,7 @@ function App() {
           />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
+        <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       </ErrorBoundary>
     );
   }
@@ -153,6 +166,7 @@ function App() {
           )}
         </AppShell>
         <UpdateModal open={showUpdateModal} />
+        <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       </ErrorBoundary>
     );
   }
@@ -180,6 +194,7 @@ function App() {
         {currentTab === 'linked' && <LinkedTicketsPage />}
       </AppShell>
       <UpdateModal open={showUpdateModal} />
+      <AboutModal open={showAbout} onOpenChange={setShowAbout} />
     </ErrorBoundary>
   );
 }
