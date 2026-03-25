@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: v1.0 milestone complete
-stopped_at: Completed quick task 260325-qcl
-last_updated: "2026-03-25T19:04:20Z"
-last_activity: "2026-03-25 - Completed quick task 260325-qcl: Remove duplicate status/priority/assignee/reporter from issue detail headers"
+stopped_at: Completed quick task 260325-qq8
+last_updated: "2026-03-25T19:20:00Z"
+last_activity: "2026-03-25 - Completed quick task 260325-qq8: Add created date to issue detail header"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -229,10 +229,11 @@ None yet.
 | 260325-ppv | Consistently display status and priority with colored badges and priority icons like Jira | 2026-03-25 | 1ca9083 | | [260325-ppv-consistently-display-status-and-priority](./quick/260325-ppv-consistently-display-status-and-priority/) |
 | 260325-qcl | Remove duplicate status/priority/assignee/reporter from issue detail headers | 2026-03-25 | d08d256 | | [260325-qcl-remove-status-priority-and-other-metadat](./quick/260325-qcl-remove-status-priority-and-other-metadat/) |
 | 260325-qac | Hide done/resolved/closed tickets from all ticket list views | 2026-03-25 | be3e687 | | [260325-qac-in-the-ticket-lists-only-show-those-that](./quick/260325-qac-in-the-ticket-lists-only-show-those-that/) |
+| 260325-qq8 | Add created date to issue detail header | 2026-03-25 | 8565605 | | [260325-qq8-add-date-created-to-the-issue-detail](./quick/260325-qq8-add-date-created-to-the-issue-detail/) |
 
 ## Session Continuity
 
-Last activity: 2026-03-25 - Completed quick task 260325-qac: Hide done/resolved/closed tickets from all ticket list views
-Last session: 2026-03-25T18:06:35Z
-Stopped at: Completed quick task 260325-qac
+Last activity: 2026-03-25 - Completed quick task 260325-qq8: Add created date to issue detail header
+Last session: 2026-03-25T19:20:00Z
+Stopped at: Completed quick task 260325-qq8
 Resume file: None
