@@ -110,3 +110,38 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  update-readme:
+    needs: [create-release, build-tauri]
+    if: needs.create-release.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update README in releases repo
+        env:
+          TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          git clone https://x-access-token:${TOKEN}@github.com/Mimo01/pmkar-releases.git
+          cd pmkar-releases
+          cat > README.md <<EOF
+          # pmkar
+
+          ## Download
+
+          ### macOS
+          - [pmkar_${VERSION}_universal.dmg](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_universal.dmg)
+
+          ### Windows
+          - [pmkar_${VERSION}_x64-setup.exe](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_x64-setup.exe)
+          - [pmkar_${VERSION}_x64_en-US.msi](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_x64_en-US.msi)
+
+          ### Linux
+          - [pmkar_${VERSION}_amd64.deb](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_amd64.deb) (Debian/Ubuntu)
+          - [pmkar-${VERSION}-1.x86_64.rpm](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar-${VERSION}-1.x86_64.rpm) (Fedora/RHEL)
+          - [pmkar_${VERSION}_amd64.AppImage](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_amd64.AppImage) (AppImage)
+          EOF
+          sed -i 's/^          //' README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --cached --quiet || (git commit -m "docs: update download links to v${VERSION}" && git push)
