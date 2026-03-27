@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,8 +58,11 @@ export function TicketListPage() {
   const fetchStatus = useTicketStore((s) => s.fetchStatus);
   const fetchError = useTicketStore((s) => s.fetchError);
   const lastFetchedAt = useTicketStore((s) => s.lastFetchedAt);
+  const lastCheckedAt = useTicketStore((s) => s.lastCheckedAt);
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
+
+  const isLoading = fetchStatus === 'loading';
 
   const handleFetch = useCallback(async () => {
     const store = useTicketStore.getState();
@@ -77,7 +81,28 @@ export function TicketListPage() {
         jql,
       });
       store.setTickets(result.issues, result.triageMap, result.total);
-      store.setLastFetchedAt(new Date().toISOString());
+      const now = new Date().toISOString();
+      store.setLastFetchedAt(now);
+      store.setLastCheckedAt(now);
+
+      // Dual-purpose: run snapshot change detection after successful fetch (D-10, POLL-06)
+      for (const ticket of result.issues) {
+        try {
+          const detail = await invoke<unknown>('fetch_ticket_detail', {
+            baseUrl: serverConn.baseUrl,
+            ticketKey: ticket.key,
+          });
+          await invoke('check_ticket_changes', {
+            ticketKey: ticket.key,
+            responseJson: JSON.stringify(detail),
+          });
+        } catch {
+          // Skip change detection for this ticket if detail fetch fails (POLL-06: no watermark advance)
+        }
+      }
+
+      // Reset background poll timer after manual fetch (D-12)
+      invoke('trigger_manual_poll').catch(() => {});
     } catch (err) {
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
     }
@@ -101,6 +126,37 @@ export function TicketListPage() {
         handleFetch();
       }
     });
+  }, [handleFetch]);
+
+  // F5 manual poll shortcut (D-11)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'F5') {
+        e.preventDefault(); // Prevent browser page reload
+        if (!isLoading) handleFetch();
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLoading, handleFetch]);
+
+  // Listen for background poll-complete events (D-15, D-16)
+  useEffect(() => {
+    const unlisten = listen<{ changedKeys: string[]; checkedAt: string; hadError: boolean }>(
+      'poll-complete',
+      (event) => {
+        const store = useTicketStore.getState();
+        store.setLastCheckedAt(event.payload.checkedAt);
+
+        // If changes detected, silently re-fetch ticket list (D-16)
+        if (event.payload.changedKeys.length > 0) {
+          handleFetch();
+        }
+      },
+    );
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, [handleFetch]);
 
   function handleSelectTicket(key: string) {
@@ -134,7 +190,6 @@ export function TicketListPage() {
     });
   }, [candidateTickets, searchText, assigneeFilter, sortDirection]);
 
-  const isLoading = fetchStatus === 'loading';
   const hasFetched = lastFetchedAt !== null;
   const hasTickets = sortedCandidates.length > 0;
   const showEmptyState = hasFetched && !hasTickets && fetchStatus === 'idle';
@@ -147,6 +202,7 @@ export function TicketListPage() {
           type="button"
           disabled={isLoading}
           onClick={handleFetch}
+          title="Refresh (F5)"
           className={cn(
             'flex items-center gap-2 bg-brand hover:bg-brand-light text-white font-semibold rounded-md px-4 py-2 text-sm transition-colors duration-150',
             isLoading && 'opacity-40 cursor-not-allowed',
@@ -156,8 +212,8 @@ export function TicketListPage() {
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
         <span className="text-xs text-brand-muted" aria-live="polite">
-          {lastFetchedAt
-            ? t('tickets.lastFetched', { time: formatRelativeTime(lastFetchedAt) })
+          {(lastCheckedAt || lastFetchedAt)
+            ? t('tickets.lastChecked', { time: formatRelativeTime(lastCheckedAt || lastFetchedAt!) })
             : t('tickets.notYetFetched')}
         </span>
         {totalCount > 0 && (

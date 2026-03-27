@@ -7,6 +7,9 @@ import { useTicketStore } from '../ticketStore';
 import type { JiraTicket, JiraUser } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn(() => Promise.resolve(() => {})),
+}));
 
 import { invoke } from '@tauri-apps/api/core';
 
