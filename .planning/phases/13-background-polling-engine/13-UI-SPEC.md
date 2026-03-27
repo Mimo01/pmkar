@@ -26,6 +26,8 @@ created: 2026-03-27
 
 Source: `components.json`, `src/index.css`
 
+**Focal point:** Primary visual anchor for Settings > Polling is the frequency selector row — the brand-accented selected button draws the eye first.
+
 ---
 
 ## Spacing Scale
@@ -64,7 +66,7 @@ Concrete mappings for Phase 13 elements:
 - "Auto-poll" section card title: `text-[11px] font-semibold text-brand-muted uppercase tracking-wider` (matches SectionCard pattern)
 - Frequency dropdown button label: `text-[13px]` (matches ProjectSelector and LanguageSection patterns)
 - "Last checked: X min ago" span: `text-xs text-brand-muted` (matches existing `lastFetchedAt` span in TicketListPage)
-- Polling frequency option text: `text-[13px]` at weight 400, selected option at weight 500 (`font-medium`)
+- Polling frequency option text: `text-[13px]` at weight 400, selected option at weight 600 (`font-semibold`)
 - Nav group label "Polling": `text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest` (matches sidebar nav groups)
 
 Source: `SettingsPage.tsx` lines 76, 91, 205, 782–821; `TicketListPage.tsx` line 158.
@@ -118,7 +120,7 @@ No new shadcn components need to be installed. All required primitives already e
 
 **Frequency selector UI pattern:** Inline button group identical to `ThemeSection` (flex row, each option is a `<button>` with `flex-1`). Five options: `5m`, `15m`, `30m`, `1h`, `Off`.
 
-Selected state: `border-brand/30 bg-brand/8 text-brand-text font-medium ring-1 ring-brand/10`
+Selected state: `border-brand/30 bg-brand/8 text-brand-text font-semibold ring-1 ring-brand/10`
 Unselected state: `border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover`
 
 **Immediate effect:** Selection takes effect on click, no Save button (matches D-03 from CONTEXT.md, same as language/theme toggles).
