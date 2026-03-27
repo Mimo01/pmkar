@@ -275,7 +275,12 @@ mod tests {
     }
 
     /// Minimal Jira-like JSON blob for a ticket
-    fn ticket_json(status: &str, priority: &str, comment_count: usize, attachment_count: usize) -> String {
+    fn ticket_json(
+        status: &str,
+        priority: &str,
+        comment_count: usize,
+        attachment_count: usize,
+    ) -> String {
         let comments: Vec<serde_json::Value> = (0..comment_count)
             .map(|i| serde_json::json!({"id": i, "body": "comment"}))
             .collect();
@@ -319,8 +324,14 @@ mod tests {
 
         assert_eq!(snap.response_json, json, "stored JSON should match");
         assert!(!snap.content_hash.is_empty(), "hash should be non-empty");
-        assert_eq!(snap.content_hash, hash, "stored hash should match returned hash");
-        assert!(!snap.last_checked_at.is_empty(), "last_checked_at should be non-empty");
+        assert_eq!(
+            snap.content_hash, hash,
+            "stored hash should match returned hash"
+        );
+        assert!(
+            !snap.last_checked_at.is_empty(),
+            "last_checked_at should be non-empty"
+        );
     }
 
     #[test]
@@ -330,14 +341,18 @@ mod tests {
         db.store_snapshot("PROJ-1", &json).expect("store failed");
 
         let changes = check_for_changes(&db, "PROJ-1", &json).expect("check failed");
-        assert!(changes.is_empty(), "identical JSON should produce no changes");
+        assert!(
+            changes.is_empty(),
+            "identical JSON should produce no changes"
+        );
     }
 
     #[test]
     fn test_field_change_detected() {
         let db = new_db();
         let old_json = ticket_json("Open", "Medium", 0, 0);
-        db.store_snapshot("PROJ-1", &old_json).expect("store failed");
+        db.store_snapshot("PROJ-1", &old_json)
+            .expect("store failed");
 
         // Build new JSON with changed status
         let new_json = ticket_json("In Progress", "Medium", 0, 0);
@@ -355,7 +370,8 @@ mod tests {
     fn test_comment_count_change_detected() {
         let db = new_db();
         let old_json = ticket_json("Open", "Medium", 2, 0);
-        db.store_snapshot("PROJ-1", &old_json).expect("store failed");
+        db.store_snapshot("PROJ-1", &old_json)
+            .expect("store failed");
 
         let new_json = ticket_json("Open", "Medium", 3, 0);
         let changes = check_for_changes(&db, "PROJ-1", &new_json).expect("check failed");
@@ -372,7 +388,8 @@ mod tests {
     fn test_attachment_count_change_detected() {
         let db = new_db();
         let old_json = ticket_json("Open", "Medium", 0, 1);
-        db.store_snapshot("PROJ-1", &old_json).expect("store failed");
+        db.store_snapshot("PROJ-1", &old_json)
+            .expect("store failed");
 
         let new_json = ticket_json("Open", "Medium", 0, 2);
         let changes = check_for_changes(&db, "PROJ-1", &new_json).expect("check failed");
@@ -466,7 +483,10 @@ mod tests {
             )
             .expect("insert PROJ-3 failed");
 
-        let watermark = db.get_watermark().expect("watermark failed").expect("should have watermark");
+        let watermark = db
+            .get_watermark()
+            .expect("watermark failed")
+            .expect("should have watermark");
         assert_eq!(
             watermark, "2026-01-01T10:00:00Z",
             "watermark should be the minimum (earliest) timestamp"
@@ -487,7 +507,10 @@ mod tests {
 
         // Do NOT store PROJ-B (simulating a failed API call)
         // Watermark should only reflect PROJ-A
-        let watermark = db.get_watermark().expect("watermark failed").expect("should have watermark");
+        let watermark = db
+            .get_watermark()
+            .expect("watermark failed")
+            .expect("should have watermark");
         assert_eq!(
             watermark, "2026-01-01T10:00:00Z",
             "watermark should equal PROJ-A's timestamp since PROJ-B was never stored"
@@ -501,7 +524,10 @@ mod tests {
 
         // First call — ticket not in DB yet
         let changes = check_for_changes(&db, "PROJ-NEW", &json).expect("check failed");
-        assert!(changes.is_empty(), "first-time ticket should return no changes");
+        assert!(
+            changes.is_empty(),
+            "first-time ticket should return no changes"
+        );
 
         // Snapshot should now exist
         let snap = db.get_snapshot("PROJ-NEW").expect("get failed");
@@ -511,9 +537,7 @@ mod tests {
     #[test]
     fn test_get_snapshot_returns_none_for_unknown() {
         let db = new_db();
-        let snap = db
-            .get_snapshot("PROJ-DOES-NOT-EXIST")
-            .expect("get failed");
+        let snap = db.get_snapshot("PROJ-DOES-NOT-EXIST").expect("get failed");
         assert!(snap.is_none(), "unknown ticket key should return None");
     }
 }

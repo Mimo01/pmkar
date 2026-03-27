@@ -1,6 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use pmkar_lib::{audit::AuditDb, commands, fixtures::build_fixtures, snapshot_db::SnapshotDb, triage_db::TriageDb};
+use pmkar_lib::{
+    audit::AuditDb, commands, fixtures::build_fixtures, snapshot_db::SnapshotDb,
+    triage_db::TriageDb,
+};
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Emitter;
