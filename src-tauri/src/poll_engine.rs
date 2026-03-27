@@ -1,0 +1,294 @@
+use crate::jira_client;
+use crate::keychain;
+use crate::snapshot_db::{self, SnapshotDb};
+use crate::triage_db::TriageDb;
+use chrono::Utc;
+use serde::Serialize;
+use std::sync::{Arc, Mutex};
+use tauri::Emitter;
+use tokio::sync::watch;
+use tokio::time::{sleep, Duration};
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum PollFrequency {
+    Off,
+    Secs(u64),
+}
+
+impl PollFrequency {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "5m" => PollFrequency::Secs(300),
+            "15m" => PollFrequency::Secs(900),
+            "30m" => PollFrequency::Secs(1800),
+            "1h" => PollFrequency::Secs(3600),
+            _ => PollFrequency::Off,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PollCompletePayload {
+    pub changed_keys: Vec<String>,
+    pub checked_at: String,
+    pub had_error: bool,
+}
+
+/// Main poll loop. Runs as a long-lived tokio task.
+/// Uses `tokio::select!` on sleep + `rx.changed()` for immediate restart on frequency change.
+/// Parks on `rx.changed()` when frequency is Off (does NOT return — resume requirement).
+pub async fn run_poll_loop(
+    mut rx: watch::Receiver<PollFrequency>,
+    app_handle: tauri::AppHandle,
+    triage_db: Arc<Mutex<TriageDb>>,
+    snapshot_db: Arc<Mutex<SnapshotDb>>,
+) {
+    loop {
+        let freq = rx.borrow().clone();
+        match freq {
+            PollFrequency::Off => {
+                // Park until a non-Off frequency arrives
+                if rx.changed().await.is_err() {
+                    break; // Sender dropped — app shutting down
+                }
+            }
+            PollFrequency::Secs(secs) => {
+                tokio::select! {
+                    _ = sleep(Duration::from_secs(secs)) => {
+                        let payload = do_poll(&app_handle, &triage_db, &snapshot_db).await;
+                        let _ = app_handle.emit("poll-complete", payload);
+                    }
+                    result = rx.changed() => {
+                        if result.is_err() {
+                            break; // Sender dropped
+                        }
+                        // Frequency changed — loop restarts with new value
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Execute one poll cycle. Fetches tickets updated since watermark, runs change detection.
+/// On any error: logs, returns `had_error=true`, does NOT advance watermark.
+async fn do_poll(
+    _app_handle: &tauri::AppHandle,
+    triage_db: &Arc<Mutex<TriageDb>>,
+    snapshot_db: &Arc<Mutex<SnapshotDb>>,
+) -> PollCompletePayload {
+    let now = Utc::now().to_rfc3339();
+
+    // Step 1: Extract connection info and watermark (lock, extract, drop before await)
+    let poll_params = {
+        let tdb = match triage_db.lock() {
+            Ok(db) => db,
+            Err(_) => {
+                return PollCompletePayload {
+                    changed_keys: vec![],
+                    checked_at: now,
+                    had_error: true,
+                }
+            }
+        };
+        let sdb = match snapshot_db.lock() {
+            Ok(db) => db,
+            Err(_) => {
+                return PollCompletePayload {
+                    changed_keys: vec![],
+                    checked_at: now,
+                    had_error: true,
+                }
+            }
+        };
+        let watermark = sdb.get_watermark().ok().flatten();
+        let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
+        let fetch_config = tdb.get_fetch_config().ok();
+        drop(sdb);
+        drop(tdb);
+        (watermark, conn_meta, fetch_config)
+    };
+
+    let (watermark, conn_meta, fetch_config) = poll_params;
+
+    // Find the source (server) connection
+    let server_meta = conn_meta.iter().find(|m| m.connection_type == "server");
+    let server_meta = match server_meta {
+        Some(m) => m,
+        None => {
+            // No server connection configured — nothing to poll
+            return PollCompletePayload {
+                changed_keys: vec![],
+                checked_at: now,
+                had_error: false,
+            };
+        }
+    };
+
+    let base_url = server_meta.base_url.clone();
+    let username = server_meta.username.clone();
+
+    // Retrieve PAT from keychain
+    let pat = match keychain::get_credential("jira-server", &username) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("[poll] keychain error: {e}");
+            return PollCompletePayload {
+                changed_keys: vec![],
+                checked_at: now,
+                had_error: true,
+            };
+        }
+    };
+
+    // Build JQL with watermark filter
+    let fetch_config = match fetch_config {
+        Some(fc) => fc,
+        None => {
+            return PollCompletePayload {
+                changed_keys: vec![],
+                checked_at: now,
+                had_error: false,
+            }
+        }
+    };
+
+    let base_jql = build_poll_jql(
+        &fetch_config.jql_preset,
+        &fetch_config.jql_custom,
+        &fetch_config.watched_users,
+        &username,
+    );
+    let jql = if let Some(ref wm) = watermark {
+        format!("({base_jql}) AND updated >= \"{wm}\"")
+    } else {
+        base_jql
+    };
+
+    // Step 2: Fetch tickets via HTTP (async — no locks held)
+    let tickets = match jira_client::search_tickets(&base_url, &jql, &pat).await {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!("[poll] fetch error: {e}");
+            return PollCompletePayload {
+                changed_keys: vec![],
+                checked_at: now,
+                had_error: true,
+            };
+        }
+    };
+
+    // Step 3: For each ticket, fetch detail and run change detection
+    let mut changed_keys = Vec::new();
+    for ticket in &tickets {
+        let key = match ticket.get("key").and_then(|v| v.as_str()) {
+            Some(k) => k.to_string(),
+            None => continue,
+        };
+
+        // Fetch full detail for this ticket
+        let detail = match jira_client::fetch_ticket_detail_raw(&base_url, &key, &pat).await {
+            Ok(d) => d,
+            Err(e) => {
+                eprintln!("[poll] detail fetch error for {key}: {e}");
+                continue; // Skip this ticket, don't advance its watermark
+            }
+        };
+
+        let detail_json = detail.to_string();
+
+        // Run change detection (lock snapshot_db briefly for sync SQLite call)
+        let changes = {
+            let sdb = match snapshot_db.lock() {
+                Ok(db) => db,
+                Err(_) => continue,
+            };
+            snapshot_db::check_for_changes(&sdb, &key, &detail_json).unwrap_or_default()
+        };
+
+        if !changes.is_empty() {
+            changed_keys.push(key);
+        }
+    }
+
+    PollCompletePayload {
+        changed_keys,
+        checked_at: now,
+        had_error: false,
+    }
+}
+
+fn build_poll_jql(
+    preset: &str,
+    custom: &Option<String>,
+    watched_users: &[String],
+    username: &str,
+) -> String {
+    match preset {
+        "custom" => custom
+            .clone()
+            .unwrap_or_else(|| format!("assignee = \"{username}\" ORDER BY updated DESC")),
+        "assigned" => format!("assignee = \"{username}\" ORDER BY updated DESC"),
+        "mentioned" => format!("text ~ \"{username}\" ORDER BY updated DESC"),
+        "all_watched" => {
+            let all: Vec<String> = std::iter::once(format!("\"{username}\""))
+                .chain(watched_users.iter().map(|u| format!("\"{u}\"")))
+                .collect();
+            format!("assignee in ({}) ORDER BY updated DESC", all.join(", "))
+        }
+        _ => format!("assignee = \"{username}\" ORDER BY updated DESC"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── PollFrequency::from_str tests ──────────────────────────────────────────
+
+    #[test]
+    fn test_poll_frequency_5m() {
+        assert_eq!(PollFrequency::from_str("5m"), PollFrequency::Secs(300));
+    }
+
+    #[test]
+    fn test_poll_frequency_15m() {
+        assert_eq!(PollFrequency::from_str("15m"), PollFrequency::Secs(900));
+    }
+
+    #[test]
+    fn test_poll_frequency_30m() {
+        assert_eq!(PollFrequency::from_str("30m"), PollFrequency::Secs(1800));
+    }
+
+    #[test]
+    fn test_poll_frequency_1h() {
+        assert_eq!(PollFrequency::from_str("1h"), PollFrequency::Secs(3600));
+    }
+
+    #[test]
+    fn test_poll_frequency_off() {
+        assert_eq!(PollFrequency::from_str("off"), PollFrequency::Off);
+    }
+
+    #[test]
+    fn test_poll_frequency_bogus_fallback() {
+        assert_eq!(PollFrequency::from_str("bogus"), PollFrequency::Off);
+    }
+
+    // ── PollCompletePayload serialization tests ────────────────────────────────
+
+    #[test]
+    fn test_poll_payload_serializes_camel_case() {
+        let payload = PollCompletePayload {
+            changed_keys: vec!["PROJ-1".to_string()],
+            checked_at: "2026-01-01T00:00:00Z".to_string(),
+            had_error: false,
+        };
+        let json = serde_json::to_string(&payload).expect("serialize failed");
+        assert!(json.contains("\"changedKeys\""), "should use camelCase changedKeys");
+        assert!(json.contains("\"checkedAt\""), "should use camelCase checkedAt");
+        assert!(json.contains("\"hadError\""), "should use camelCase hadError");
+    }
+}

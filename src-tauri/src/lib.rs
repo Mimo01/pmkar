@@ -5,5 +5,6 @@ pub mod fixtures;
 pub mod jira_client;
 pub mod keychain;
 pub mod mock_server;
+pub mod poll_engine;
 pub mod snapshot_db;
 pub mod triage_db;

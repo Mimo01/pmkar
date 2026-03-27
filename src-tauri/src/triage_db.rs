@@ -44,6 +44,8 @@ const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME: &str =
     "ALTER TABLE app_config ADD COLUMN source_project_name TEXT;";
 const ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME: &str =
     "ALTER TABLE app_config ADD COLUMN target_project_name TEXT;";
+const ALTER_APP_CONFIG_ADD_POLL_FREQUENCY: &str =
+    "ALTER TABLE app_config ADD COLUMN poll_frequency TEXT NOT NULL DEFAULT 'off';";
 
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
@@ -81,6 +83,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
         Ok(Self { conn })
     }
 
@@ -97,6 +100,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
         Ok(Self { conn })
     }
 
@@ -210,6 +214,26 @@ impl TriageDb {
         self.conn.execute(
             "UPDATE app_config SET language = ?1 WHERE id = 1",
             [language],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_poll_frequency(&self) -> AppResult<String> {
+        let freq: String = self
+            .conn
+            .query_row(
+                "SELECT poll_frequency FROM app_config WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or_else(|_| "off".to_string());
+        Ok(freq)
+    }
+
+    pub fn set_poll_frequency(&self, frequency: &str) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET poll_frequency = ?1 WHERE id = 1",
+            [frequency],
         )?;
         Ok(())
     }
@@ -419,5 +443,29 @@ mod tests {
         assert_eq!(deleted, 0, "empty input should delete nothing");
         let all = db.get_all_triage().expect("get failed");
         assert_eq!(all.len(), 1, "PROJ-1 should remain");
+    }
+
+    #[test]
+    fn test_poll_frequency_default_is_off() {
+        let db = new_db();
+        let freq = db.get_poll_frequency().expect("get_poll_frequency failed");
+        assert_eq!(freq, "off", "fresh DB should return 'off' as default poll_frequency");
+    }
+
+    #[test]
+    fn test_set_and_get_poll_frequency() {
+        let db = new_db();
+        db.set_poll_frequency("15m").expect("set_poll_frequency failed");
+        let freq = db.get_poll_frequency().expect("get_poll_frequency failed");
+        assert_eq!(freq, "15m");
+    }
+
+    #[test]
+    fn test_set_poll_frequency_overwrites_previous() {
+        let db = new_db();
+        db.set_poll_frequency("5m").expect("first set failed");
+        db.set_poll_frequency("1h").expect("second set failed");
+        let freq = db.get_poll_frequency().expect("get failed");
+        assert_eq!(freq, "1h", "second set should overwrite first");
     }
 }
