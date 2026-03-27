@@ -30,7 +30,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
 
 **Milestone Goal:** Detect ticket changes after initial fetch, notify users via OS-level desktop notifications, and let them configure what they watch, what triggers notifications, and how often to poll.
 
-- [ ] **Phase 12: Snapshot Foundation** - SQLite snapshot storage and hash-based change detection
+- [x] **Phase 12: Snapshot Foundation** - SQLite snapshot storage and hash-based change detection (completed 2026-03-27)
 - [ ] **Phase 13: Background Polling Engine** - Rust-side poll loop with configurable interval and manual trigger
 - [ ] **Phase 14: Notification Dispatch** - OS-level notifications with per-event preferences and quiet hours
 - [ ] **Phase 15: Change Diff View** - Field-level diff UI and changed-ticket indicators in ticket list
@@ -50,7 +50,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
 **Plans**: 2 plans
 Plans:
 - [x] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
-- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
+- [x] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 
 ### Phase 13: Background Polling Engine
 **Goal**: The app polls for ticket updates on a Rust-side background loop at a user-configured interval, and the user can trigger a manual poll at any time
@@ -63,7 +63,7 @@ Plans:
   4. Polling stops cleanly when frequency is set to off and resumes when a frequency is re-selected
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [x] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
 - [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 **UI hint**: yes
 
@@ -126,7 +126,7 @@ Plans:
 | 9. Accessibility | v0.1.0 | 4/4 | Complete | 2026-03-24 |
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
-| 12. Snapshot Foundation | v0.3.0 | 1/2 | In Progress|  |
+| 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete   | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 0/? | Not started | - |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |

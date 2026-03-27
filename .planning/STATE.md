@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
-status: executing
-stopped_at: Completed 12-snapshot-foundation/12-01-PLAN.md
-last_updated: "2026-03-27T21:41:04.559Z"
+status: verifying
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-27T21:46:35.817Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 12 (snapshot-foundation) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-27
 
 Progress: [░░░░░░░░░░] 0% (v0.3.0)
@@ -61,6 +61,7 @@ Key decisions affecting v0.3.0 work:
 - Email domain selector uses config-time resolver — Jira Cloud hides email at runtime
 - [Phase 12-snapshot-foundation]: sha2 + hex for hash computation — lighter than ring, no async overhead needed for synchronous SQLite snapshot hashing
 - [Phase 12-snapshot-foundation]: check_for_changes first-time returns empty vec and stores — prevents false-positive on initial poll; hash match still updates last_checked_at to advance watermark
+- [Phase 12-snapshot-foundation]: POLL-06 enforced by call-site structure: check_ticket_changes only invoked after successful fetch_ticket_detail — watermark not advanced on failed polls
 
 ### Pending Todos
 
@@ -73,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T21:41:04.555Z
-Stopped at: Completed 12-snapshot-foundation/12-01-PLAN.md
+Last session: 2026-03-27T21:46:35.813Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
