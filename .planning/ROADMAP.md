@@ -31,7 +31,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
 **Milestone Goal:** Detect ticket changes after initial fetch, notify users via OS-level desktop notifications, and let them configure what they watch, what triggers notifications, and how often to poll.
 
 - [x] **Phase 12: Snapshot Foundation** - SQLite snapshot storage and hash-based change detection (completed 2026-03-27)
-- [ ] **Phase 13: Background Polling Engine** - Rust-side poll loop with configurable interval and manual trigger
+- [x] **Phase 13: Background Polling Engine** - Rust-side poll loop with configurable interval and manual trigger (completed 2026-03-27)
 - [ ] **Phase 14: Notification Dispatch** - OS-level notifications with per-event preferences and quiet hours
 - [ ] **Phase 15: Change Diff View** - Field-level diff UI and changed-ticket indicators in ticket list
 - [ ] **Phase 16: Enhanced Watch Configuration** - Email domain selector with config-time user resolver
@@ -64,7 +64,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 13-01-PLAN.md — Rust poll engine: tokio loop with watch-channel control, TriageDb frequency persistence, Tauri commands, main.rs wiring
-- [ ] 13-02-PLAN.md — Frontend integration: Settings polling section, dual-purpose Fetch button, F5 shortcut, poll-complete event listener
+- [x] 13-02-PLAN.md — Frontend integration: Settings polling section, dual-purpose Fetch button, F5 shortcut, poll-complete event listener
 **UI hint**: yes
 
 ### Phase 14: Notification Dispatch
@@ -127,7 +127,7 @@ Plans:
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
-| 13. Background Polling Engine | v0.3.0 | 1/2 | In Progress|  |
+| 13. Background Polling Engine | v0.3.0 | 2/2 | Complete   | 2026-03-27 |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
