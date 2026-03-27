@@ -59,12 +59,12 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can set poll frequency (5m / 15m / 30m / 1h / off) in Settings and the change takes effect without restarting the app
   2. The background poll loop runs on the Rust side and continues firing when the app window is minimized
-  3. User can click a Refresh button (or press Cmd/Ctrl+R) and see the ticket list update immediately
+  3. User can click a Refresh button (or press F5) and see the ticket list update immediately
   4. Polling stops cleanly when frequency is set to off and resumes when a frequency is re-selected
 **Plans**: 2 plans
 Plans:
-- [x] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
-- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
+- [ ] 13-01-PLAN.md — Rust poll engine: tokio loop with watch-channel control, TriageDb frequency persistence, Tauri commands, main.rs wiring
+- [ ] 13-02-PLAN.md — Frontend integration: Settings polling section, dual-purpose Fetch button, F5 shortcut, poll-complete event listener
 **UI hint**: yes
 
 ### Phase 14: Notification Dispatch
@@ -79,8 +79,8 @@ Plans:
   5. User can set quiet hours in Settings; notifications are suppressed outside the configured work-hours window
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
-- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
+- [ ] 14-01-PLAN.md — [to be planned]
+- [ ] 14-02-PLAN.md — [to be planned]
 **UI hint**: yes
 
 ### Phase 15: Change Diff View
@@ -93,8 +93,8 @@ Plans:
   3. The diff panel accounts for comment and worklog changes, not only changelog field items
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
-- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
+- [ ] 15-01-PLAN.md — [to be planned]
+- [ ] 15-02-PLAN.md — [to be planned]
 **UI hint**: yes
 
 ### Phase 16: Enhanced Watch Configuration
@@ -107,8 +107,8 @@ Plans:
   3. When Jira Cloud privacy settings hide email addresses, the app shows an explicit warning rather than silently returning an empty list
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
-- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
+- [ ] 16-01-PLAN.md — [to be planned]
+- [ ] 16-02-PLAN.md — [to be planned]
 **UI hint**: yes
 
 ## Progress
@@ -127,7 +127,7 @@ Plans:
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
-| 13. Background Polling Engine | v0.3.0 | 0/? | Not started | - |
+| 13. Background Polling Engine | v0.3.0 | 0/2 | Not started | - |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
