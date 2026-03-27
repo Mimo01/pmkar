@@ -195,6 +195,7 @@ type ActiveSection =
   | 'destination'
   | 'jql-presets'
   | 'watched-users'
+  | 'polling'
   | 'theme'
   | 'language'
   | 'about';
@@ -264,6 +265,12 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   useEffect(() => {
     loadProjectConfig();
   }, [loadProjectConfig]);
+
+  useEffect(() => {
+    invoke<string>('get_poll_frequency')
+      .then((freq) => useTicketStore.getState().hydratePollFrequency(freq))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!userQuery.trim() || !serverConn) {
@@ -732,6 +739,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           </SectionCard>
         );
 
+      case 'polling':
+        return (
+          <SectionCard title={t('settings.section.polling')}>
+            <PollingSection />
+          </SectionCard>
+        );
+
       case 'theme':
         return (
           <SectionCard title={t('settings.section.theme')}>
@@ -798,6 +812,18 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             <div className="space-y-0.5">
               <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
               <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* Polling group */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.polling')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="polling" label={t('settings.nav.polling')} />
             </div>
           </div>
 
@@ -880,6 +906,51 @@ function ThemeSection() {
           {opt.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+function PollingSection() {
+  const { t } = useTranslation();
+  const pollFrequency = useTicketStore((s) => s.pollFrequency);
+
+  const POLL_OPTIONS = [
+    { value: 'off', label: t('settings.polling.off') },
+    { value: '5m', label: t('settings.polling.5m') },
+    { value: '15m', label: t('settings.polling.15m') },
+    { value: '30m', label: t('settings.polling.30m') },
+    { value: '1h', label: t('settings.polling.1h') },
+  ] as const;
+
+  async function handleFrequencyChange(freq: string) {
+    try {
+      await invoke('set_poll_frequency', { frequency: freq });
+      useTicketStore.getState().setPollFrequency(freq);
+    } catch (e) {
+      console.error('Failed to set poll frequency:', e);
+    }
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-brand-muted mb-3">{t('settings.polling.hint')}</p>
+      <div className="flex gap-2">
+        {POLL_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            aria-pressed={pollFrequency === opt.value}
+            onClick={() => handleFrequencyChange(opt.value)}
+            className={`flex-1 flex items-center justify-center rounded-lg border px-3 py-2.5 text-[13px] transition-all duration-200 ${
+              pollFrequency === opt.value
+                ? 'border-brand/30 bg-brand/8 text-brand-text font-semibold ring-1 ring-brand/10'
+                : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

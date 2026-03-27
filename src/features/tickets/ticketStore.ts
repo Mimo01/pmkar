@@ -19,6 +19,10 @@ interface TicketState {
   totalCount: number;
   newCount: number;
 
+  // Polling state (D-04, D-13, D-15)
+  pollFrequency: string;        // "off" | "5m" | "15m" | "30m" | "1h"
+  lastCheckedAt: string | null; // ISO-8601 from poll-complete event
+
   // Fetch config (mirrors SQLite fetch_config)
   jqlPreset: JqlPreset;
   jqlCustom: string | null;
@@ -34,6 +38,11 @@ interface TicketState {
   markSeen: (key: string) => void;
   setFetchStatus: (status: FetchStatus, error?: string) => void;
   setLastFetchedAt: (timestamp: string) => void;
+
+  // Actions — polling
+  setPollFrequency: (freq: string) => void;
+  setLastCheckedAt: (ts: string) => void;
+  hydratePollFrequency: (freq: string) => void;
 
   // Actions — triage hydration
   hydrateTriageMap: (map: Record<string, TriageEntry>) => void;
@@ -55,6 +64,9 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   lastFetchedAt: null,
   totalCount: 0,
   newCount: 0,
+
+  pollFrequency: 'off',
+  lastCheckedAt: null,
 
   jqlPreset: 'assigned',
   jqlCustom: null,
@@ -88,6 +100,10 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   setFetchStatus: (status, error) => set({ fetchStatus: status, fetchError: error ?? null }),
 
   setLastFetchedAt: (timestamp) => set({ lastFetchedAt: timestamp }),
+
+  setPollFrequency: (freq) => set({ pollFrequency: freq }),
+  setLastCheckedAt: (ts) => set({ lastCheckedAt: ts }),
+  hydratePollFrequency: (freq) => set({ pollFrequency: freq || 'off' }),
 
   hydrateTriageMap: (map) => {
     const safeMap = map ?? {};
