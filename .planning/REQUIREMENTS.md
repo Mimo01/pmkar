@@ -64,30 +64,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| POLL-01 | — | Pending |
-| POLL-02 | — | Pending |
-| POLL-03 | — | Pending |
-| POLL-04 | — | Pending |
-| POLL-05 | — | Pending |
-| POLL-06 | — | Pending |
-| NOTIF-01 | — | Pending |
-| NOTIF-02 | — | Pending |
-| NOTIF-03 | — | Pending |
-| NOTIF-04 | — | Pending |
-| NOTIF-05 | — | Pending |
-| NOTIF-06 | — | Pending |
-| NOTIF-07 | — | Pending |
-| NOTIF-08 | — | Pending |
-| CHNG-01 | — | Pending |
-| CHNG-02 | — | Pending |
-| WTCH-01 | — | Pending |
-| WTCH-02 | — | Pending |
+| POLL-01 | Phase 13 | Pending |
+| POLL-02 | Phase 13 | Pending |
+| POLL-03 | Phase 13 | Pending |
+| POLL-04 | Phase 12 | Pending |
+| POLL-05 | Phase 12 | Pending |
+| POLL-06 | Phase 12 | Pending |
+| NOTIF-01 | Phase 14 | Pending |
+| NOTIF-02 | Phase 14 | Pending |
+| NOTIF-03 | Phase 14 | Pending |
+| NOTIF-04 | Phase 14 | Pending |
+| NOTIF-05 | Phase 14 | Pending |
+| NOTIF-06 | Phase 14 | Pending |
+| NOTIF-07 | Phase 14 | Pending |
+| NOTIF-08 | Phase 14 | Pending |
+| CHNG-01 | Phase 15 | Pending |
+| CHNG-02 | Phase 15 | Pending |
+| WTCH-01 | Phase 16 | Pending |
+| WTCH-02 | Phase 16 | Pending |
 
 **Coverage:**
 - v0.3.0 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after initial definition*
+*Last updated: 2026-03-27 after roadmap creation*
