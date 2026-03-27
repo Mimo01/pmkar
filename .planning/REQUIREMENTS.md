@@ -9,8 +9,8 @@ Requirements for Notifications & Change Tracking milestone. Each maps to roadmap
 
 ### Polling
 
-- [ ] **POLL-01**: User can configure auto-poll frequency (5m / 15m / 30m / 1h / off) in settings
-- [ ] **POLL-02**: App polls for ticket updates in background at configured interval (Rust-side tokio loop)
+- [x] **POLL-01**: User can configure auto-poll frequency (5m / 15m / 30m / 1h / off) in settings
+- [x] **POLL-02**: App polls for ticket updates in background at configured interval (Rust-side tokio loop)
 - [ ] **POLL-03**: User can trigger a manual poll anytime via button or Cmd/Ctrl+R
 - [x] **POLL-04**: App stores ticket snapshots in SQLite for change comparison
 - [x] **POLL-05**: App detects ticket changes via hash-based fast check + field-level diff on mismatch
@@ -64,8 +64,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| POLL-01 | Phase 13 | Pending |
-| POLL-02 | Phase 13 | Pending |
+| POLL-01 | Phase 13 | Complete |
+| POLL-02 | Phase 13 | Complete |
 | POLL-03 | Phase 13 | Pending |
 | POLL-04 | Phase 12 | Complete |
 | POLL-05 | Phase 12 | Complete |

@@ -63,7 +63,7 @@ Plans:
   4. Polling stops cleanly when frequency is set to off and resumes when a frequency is re-selected
 **Plans**: 2 plans
 Plans:
-- [ ] 13-01-PLAN.md — Rust poll engine: tokio loop with watch-channel control, TriageDb frequency persistence, Tauri commands, main.rs wiring
+- [x] 13-01-PLAN.md — Rust poll engine: tokio loop with watch-channel control, TriageDb frequency persistence, Tauri commands, main.rs wiring
 - [ ] 13-02-PLAN.md — Frontend integration: Settings polling section, dual-purpose Fetch button, F5 shortcut, poll-complete event listener
 **UI hint**: yes
 
@@ -127,7 +127,7 @@ Plans:
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
-| 13. Background Polling Engine | v0.3.0 | 0/2 | Not started | - |
+| 13. Background Polling Engine | v0.3.0 | 1/2 | In Progress|  |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
