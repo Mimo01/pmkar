@@ -126,7 +126,7 @@ Plans:
 | 9. Accessibility | v0.1.0 | 4/4 | Complete | 2026-03-24 |
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
-| 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete   | 2026-03-27 |
+| 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 0/? | Not started | - |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
