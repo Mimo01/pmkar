@@ -47,7 +47,10 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   2. A ticket whose status or priority changes between fetches produces a non-empty field change list with old and new values
   3. A comment-only update (no changelog entry) is detected as a change via comment count delta
   4. The poll watermark stored in SQLite does not advance when the API call fails
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 
 ### Phase 13: Background Polling Engine
 **Goal**: The app polls for ticket updates on a Rust-side background loop at a user-configured interval, and the user can trigger a manual poll at any time
@@ -58,7 +61,10 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   2. The background poll loop runs on the Rust side and continues firing when the app window is minimized
   3. User can click a Refresh button (or press Cmd/Ctrl+R) and see the ticket list update immediately
   4. Polling stops cleanly when frequency is set to off and resumes when a frequency is re-selected
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 **UI hint**: yes
 
 ### Phase 14: Notification Dispatch
@@ -71,7 +77,10 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   3. User receives an OS notification when a watched ticket's priority changes or a new comment is added
   4. User can toggle per-event notification preferences in Settings (new ticket, status change, priority change, comment) and toggling off suppresses that event type immediately
   5. User can set quiet hours in Settings; notifications are suppressed outside the configured work-hours window
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 **UI hint**: yes
 
 ### Phase 15: Change Diff View
@@ -82,7 +91,10 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   1. A ticket with detected changes shows a visual badge or dot in the ticket list view
   2. Opening a changed ticket's detail view shows a diff panel with old and new values for each changed field
   3. The diff panel accounts for comment and worklog changes, not only changelog field items
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 **UI hint**: yes
 
 ### Phase 16: Enhanced Watch Configuration
@@ -93,7 +105,10 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   1. User can type an email domain (e.g., @acme.com) in watch configuration and trigger a user search against the Jira instance
   2. The app displays the list of matched users for confirmation before saving the selector
   3. When Jira Cloud privacy settings hide email addresses, the app shows an explicit warning rather than silently returning an empty list
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 **UI hint**: yes
 
 ## Progress
