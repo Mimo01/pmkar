@@ -79,8 +79,8 @@ Plans:
   5. User can set quiet hours in Settings; notifications are suppressed outside the configured work-hours window
 **Plans**: 2 plans
 Plans:
-- [ ] 14-01-PLAN.md — [to be planned]
-- [ ] 14-02-PLAN.md — [to be planned]
+- [ ] 14-01-PLAN.md — Rust backend: notification dispatcher module, plugin registration, notification prefs in SQLite, poll engine enrichment with FieldChange data
+- [ ] 14-02-PLAN.md — Frontend: NotificationsSection UI with event toggles, quiet hours, permission request, i18n keys
 **UI hint**: yes
 
 ### Phase 15: Change Diff View
@@ -128,6 +128,6 @@ Plans:
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
-| 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
+| 14. Notification Dispatch | v0.3.0 | 0/2 | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
