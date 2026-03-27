@@ -449,13 +449,17 @@ mod tests {
     fn test_poll_frequency_default_is_off() {
         let db = new_db();
         let freq = db.get_poll_frequency().expect("get_poll_frequency failed");
-        assert_eq!(freq, "off", "fresh DB should return 'off' as default poll_frequency");
+        assert_eq!(
+            freq, "off",
+            "fresh DB should return 'off' as default poll_frequency"
+        );
     }
 
     #[test]
     fn test_set_and_get_poll_frequency() {
         let db = new_db();
-        db.set_poll_frequency("15m").expect("set_poll_frequency failed");
+        db.set_poll_frequency("15m")
+            .expect("set_poll_frequency failed");
         let freq = db.get_poll_frequency().expect("get_poll_frequency failed");
         assert_eq!(freq, "15m");
     }

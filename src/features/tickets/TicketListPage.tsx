@@ -212,8 +212,10 @@ export function TicketListPage() {
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
         <span className="text-xs text-brand-muted" aria-live="polite">
-          {(lastCheckedAt || lastFetchedAt)
-            ? t('tickets.lastChecked', { time: formatRelativeTime(lastCheckedAt || lastFetchedAt!) })
+          {lastCheckedAt || lastFetchedAt
+            ? t('tickets.lastChecked', {
+                time: formatRelativeTime(lastCheckedAt || lastFetchedAt!),
+              })
             : t('tickets.notYetFetched')}
         </span>
         {totalCount > 0 && (

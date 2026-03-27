@@ -104,7 +104,9 @@ fn extract_poll_params(
     let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
     let fetch_config = tdb.get_fetch_config().ok()?;
     drop(sdb);
-    let server_meta = conn_meta.into_iter().find(|m| m.connection_type == "server")?;
+    let server_meta = conn_meta
+        .into_iter()
+        .find(|m| m.connection_type == "server")?;
     let base_url = server_meta.base_url.clone();
     let username = server_meta.username.clone();
     drop(tdb);
@@ -206,7 +208,12 @@ async fn process_tickets(
     changed_keys
 }
 
-fn build_poll_jql(preset: &str, custom: Option<&str>, watched_users: &[String], username: &str) -> String {
+fn build_poll_jql(
+    preset: &str,
+    custom: Option<&str>,
+    watched_users: &[String],
+    username: &str,
+) -> String {
     match preset {
         "custom" => custom.map_or_else(
             || format!("assignee = \"{username}\" ORDER BY updated DESC"),
@@ -270,8 +277,17 @@ mod tests {
             had_error: false,
         };
         let json = serde_json::to_string(&payload).expect("serialize failed");
-        assert!(json.contains("\"changedKeys\""), "should use camelCase changedKeys");
-        assert!(json.contains("\"checkedAt\""), "should use camelCase checkedAt");
-        assert!(json.contains("\"hadError\""), "should use camelCase hadError");
+        assert!(
+            json.contains("\"changedKeys\""),
+            "should use camelCase changedKeys"
+        );
+        assert!(
+            json.contains("\"checkedAt\""),
+            "should use camelCase checkedAt"
+        );
+        assert!(
+            json.contains("\"hadError\""),
+            "should use camelCase hadError"
+        );
     }
 }

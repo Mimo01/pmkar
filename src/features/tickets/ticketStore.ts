@@ -20,7 +20,7 @@ interface TicketState {
   newCount: number;
 
   // Polling state (D-04, D-13, D-15)
-  pollFrequency: string;        // "off" | "5m" | "15m" | "30m" | "1h"
+  pollFrequency: string; // "off" | "5m" | "15m" | "30m" | "1h"
   lastCheckedAt: string | null; // ISO-8601 from poll-complete event
 
   // Fetch config (mirrors SQLite fetch_config)
