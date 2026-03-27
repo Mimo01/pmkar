@@ -64,6 +64,13 @@ export function TicketListPage() {
 
   const isLoading = fetchStatus === 'loading';
 
+  // Re-render every 30s so formatRelativeTime stays fresh
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   const handleFetch = useCallback(async () => {
     const store = useTicketStore.getState();
     store.setFetchStatus('loading');
