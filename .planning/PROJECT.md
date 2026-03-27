@@ -34,14 +34,31 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Active
 
+- [ ] OS-level notifications for ticket changes (native desktop notifications via Tauri)
+- [ ] Configurable notification preferences (choose which events trigger notifications)
+- [ ] Enhanced watch configuration — watch by specific users or by selector (e.g., email domain)
+- [ ] Background ticket update detection with configurable auto-poll frequency
+- [ ] Manual poll on demand — user can trigger a refresh anytime
+- [ ] Change diff view — see what changed on a ticket since last fetch
 - [ ] Excel export capability (scope TBD)
 - [ ] Configurable cloud project key (currently hardcoded as MYPROJ)
 - [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
 
+## Current Milestone: v0.3.0 Notifications & Change Tracking
+
+**Goal:** Detect ticket changes after initial fetch, notify users via OS-level notifications, and let them configure what they watch, get notified about, and how often to poll.
+
+**Target features:**
+- OS-level notifications for ticket changes
+- Configurable notification preferences in settings
+- Enhanced watch configuration (by user or by selector like email domain)
+- Background ticket update detection with configurable auto-poll frequency
+- Manual poll on demand
+- Change diff view showing what changed on a ticket
+
 ### Out of Scope
 
 - Two-way sync — complexity not justified, one-time copy with origin tracking sufficient
-- Real-time notifications — batch review workflow, not a monitoring dashboard
 - OAuth/SSO authentication — PATs are the access method for both systems
 - Mobile app — desktop-only for this workflow
 - Offline mode — real-time Jira API access is core to the workflow
@@ -77,5 +94,22 @@ Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 | Tauri updater plugin for auto-updates | Native mechanism with signed artifacts | ✓ Good — v0.1.0 |
 | Excel export deferred | Core ticket workflow is priority, export scope TBD | — Pending |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-25 after v0.1.0 milestone*
+*Last updated: 2026-03-27 after v0.3.0 milestone start*

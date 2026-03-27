@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
-status: v0.1.0 milestone complete
-stopped_at: "Completed quick task 260325-wet: Add tests to improve pipeline coverage"
-last_updated: "2026-03-25T22:37:07.719Z"
-last_activity: "2026-03-25 - Completed quick task 260325-sxj: Hide copy to company Jira button on dismissed tickets"
+milestone: v0.3.0
+milestone_name: Notifications & Change Tracking
+status: Defining requirements
+stopped_at: ""
+last_updated: "2026-03-27"
+last_activity: "2026-03-27 — Milestone v0.3.0 started"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -17,15 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-25)
+See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v0.1.0 shipped — planning next milestone
+**Current focus:** v0.3.0 Notifications & Change Tracking — defining requirements
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-27 — Milestone v0.3.0 started
 
 ## Performance Metrics
 
