@@ -37,9 +37,9 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [ ] OS-level notifications for ticket changes (native desktop notifications via Tauri)
 - [ ] Configurable notification preferences (choose which events trigger notifications)
 - [ ] Enhanced watch configuration — watch by specific users or by selector (e.g., email domain)
-- [ ] Background ticket update detection with configurable auto-poll frequency
+- [~] Background ticket update detection with configurable auto-poll frequency (snapshot foundation delivered in Phase 12)
 - [ ] Manual poll on demand — user can trigger a refresh anytime
-- [ ] Change diff view — see what changed on a ticket since last fetch
+- [~] Change diff view — see what changed on a ticket since last fetch (field-level diff engine delivered in Phase 12)
 - [ ] Excel export capability (scope TBD)
 - [ ] Configurable cloud project key (currently hardcoded as MYPROJ)
 - [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
@@ -68,7 +68,8 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 Shipped v0.1.0 with 16,284 LOC (11,711 TypeScript + 4,573 Rust).
 Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf).
-389 frontend tests (Vitest), 28 Rust tests, 80.11% line coverage.
+389 frontend tests (Vitest), 44 Rust tests, 80.11% line coverage.
+Phase 12 complete — SnapshotDb data layer and Tauri integration for change tracking.
 GitHub Actions CI with parallel frontend + Rust jobs.
 Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 
@@ -112,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after v0.3.0 milestone start*
+*Last updated: 2026-03-27 after Phase 12 (snapshot-foundation) completion*
