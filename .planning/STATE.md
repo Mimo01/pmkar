@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
-status: planning
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-27T19:03:30.952Z"
-last_activity: 2026-03-27 — Roadmap created for v0.3.0 (Phases 12-16)
+status: executing
+stopped_at: Completed 12-snapshot-foundation/12-01-PLAN.md
+last_updated: "2026-03-27T21:41:04.559Z"
+last_activity: 2026-03-27
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v0.3.0 Phase 12 — Snapshot Foundation
+**Current focus:** Phase 12 — snapshot-foundation
 
 ## Current Position
 
-Phase: 12 of 16 (Snapshot Foundation)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-27 — Roadmap created for v0.3.0 (Phases 12-16)
+Phase: 12 (snapshot-foundation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-27
 
 Progress: [░░░░░░░░░░] 0% (v0.3.0)
 
@@ -59,6 +59,8 @@ Key decisions affecting v0.3.0 work:
 - Notification permission must be requested before first send — silent failure on macOS
 - Notification click-to-navigate deferred — Tauri bugs #8644 and #12834 confirmed open
 - Email domain selector uses config-time resolver — Jira Cloud hides email at runtime
+- [Phase 12-snapshot-foundation]: sha2 + hex for hash computation — lighter than ring, no async overhead needed for synchronous SQLite snapshot hashing
+- [Phase 12-snapshot-foundation]: check_for_changes first-time returns empty vec and stores — prevents false-positive on initial poll; hash match still updates last_checked_at to advance watermark
 
 ### Pending Todos
 
@@ -71,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T19:03:30.946Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-snapshot-foundation/12-CONTEXT.md
+Last session: 2026-03-27T21:41:04.555Z
+Stopped at: Completed 12-snapshot-foundation/12-01-PLAN.md
+Resume file: None

@@ -49,7 +49,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
   4. The poll watermark stored in SQLite does not advance when the API call fails
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
+- [x] 12-01-PLAN.md — SnapshotDb data layer: SQLite storage, SHA-256 hash, field-level diff, watermark query (TDD)
 - [ ] 12-02-PLAN.md — Tauri integration: SnapshotDb state management and command wiring
 
 ### Phase 13: Background Polling Engine
@@ -126,7 +126,7 @@ Plans:
 | 9. Accessibility | v0.1.0 | 4/4 | Complete | 2026-03-24 |
 | 10. Codebase Quality | v0.1.0 | 5/5 | Complete | 2026-03-25 |
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
-| 12. Snapshot Foundation | v0.3.0 | 0/? | Not started | - |
+| 12. Snapshot Foundation | v0.3.0 | 1/2 | In Progress|  |
 | 13. Background Polling Engine | v0.3.0 | 0/? | Not started | - |
 | 14. Notification Dispatch | v0.3.0 | 0/? | Not started | - |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
