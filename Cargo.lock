@@ -2908,12 +2908,13 @@ dependencies = [
 
 [[package]]
 name = "pmkar"
-version = "0.1.0"
+version = "0.2.4"
 dependencies = [
  "async-trait",
  "axum",
  "base64 0.22.1",
  "chrono",
+ "hex",
  "htmltoadf",
  "http",
  "keyring",
@@ -2922,6 +2923,7 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "sha2",
  "sys-locale",
  "tauri",
  "tauri-build",
