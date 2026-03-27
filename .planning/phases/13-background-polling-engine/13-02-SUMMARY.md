@@ -25,9 +25,9 @@ decisions:
   - isLoading derived const moved before useEffects — required for F5 useEffect dependency array to reference the correct value
   - @tauri-apps/api/event mock added to TicketListPage.test.tsx and TicketFilterBar.test.tsx — listen() requires Tauri runtime not available in test environment
 metrics:
-  duration: ~10 min
+  duration: ~12 min
   completed: "2026-03-27"
-  tasks: 2
+  tasks: 3
   files: 7
 ---
 
@@ -41,6 +41,7 @@ Frontend integration for the polling engine: ticketStore polling state, Settings
 |---|------|--------|-------|
 | 1 | ticketStore extensions, i18n keys, and SettingsPage polling section | 218cf06 | ticketStore.ts, en.json, sk.json, SettingsPage.tsx |
 | 2 | Dual-purpose Fetch button, F5 shortcut, and poll-complete event listener | 7231b18 | TicketListPage.tsx, TicketListPage.test.tsx, TicketFilterBar.test.tsx |
+| 3 | Visual and functional verification of polling engine | -- (checkpoint) | User approved end-to-end verification |
 
 ## What Was Built
 
@@ -70,9 +71,9 @@ Frontend integration for the polling engine: ticketStore polling state, Settings
 - `poll-complete` event listener useEffect: updates `lastCheckedAt`, silently re-fetches if `changedKeys.length > 0`
 - FetchBar: Fetch button `title="Refresh (F5)"`, last-checked span uses `lastCheckedAt || lastFetchedAt` with `tickets.lastChecked` i18n key
 
-## Checkpoint: Task 3 (human-verify) — PENDING
+## Checkpoint: Task 3 (human-verify) — APPROVED
 
-Task 3 is a blocking `checkpoint:human-verify`. Execution paused awaiting user verification:
+User confirmed all 10 verification steps pass:
 - Settings Polling section renders correctly with frequency selector
 - Selection persists across settings close/reopen
 - Last checked timestamp updates after fetch
