@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use pmkar_lib::{audit::AuditDb, commands, fixtures::build_fixtures, triage_db::TriageDb};
+use pmkar_lib::{audit::AuditDb, commands, fixtures::build_fixtures, snapshot_db::SnapshotDb, triage_db::TriageDb};
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Emitter;
@@ -127,6 +127,11 @@ fn main() {
                 TriageDb::open(&triage_db_path).expect("Failed to open triage database");
             app.manage(Arc::new(Mutex::new(triage_db)));
 
+            let snapshot_db_path = app_dir.join("snapshots.db");
+            let snapshot_db =
+                SnapshotDb::open(&snapshot_db_path).expect("Failed to open snapshot database");
+            app.manage(Arc::new(Mutex::new(snapshot_db)));
+
             app.manage(fixtures.clone());
 
             // Start mock servers in dev mode
@@ -178,6 +183,8 @@ fn main() {
             commands::fetch_cloud_projects,
             commands::get_project_config,
             commands::set_project_config,
+            commands::check_ticket_changes,
+            commands::get_poll_watermark,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

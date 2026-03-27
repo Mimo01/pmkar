@@ -7,6 +7,7 @@ use crate::error::AppError;
 use crate::fixtures::SharedFixtures;
 use crate::keychain;
 use crate::mock_server;
+use crate::snapshot_db::{FieldChange, SnapshotDb};
 use crate::triage_db::{ConnectionMeta, FetchConfig, TriageDb};
 use base64::Engine as _;
 use std::collections::HashMap;
@@ -1905,4 +1906,37 @@ pub async fn copy_ticket(
         target_url: Some(format!("{trimmed_target}/browse/{target_key}")),
         steps,
     })
+}
+
+/// Store a ticket snapshot and return any detected field changes.
+///
+/// POLL-06: This command is ONLY called by the frontend after a successful
+/// `fetch_ticket_detail` response. If the HTTP call failed, this command is
+/// never invoked, so `last_checked_at` is never advanced for failed fetches.
+/// The watermark-only-on-success guarantee is enforced by call-site structure.
+#[tauri::command]
+pub fn check_ticket_changes(
+    snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+    ticket_key: String,
+    response_json: String,
+) -> Result<Vec<FieldChange>, AppError> {
+    let db = snapshot_db
+        .lock()
+        .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
+    crate::snapshot_db::check_for_changes(&db, &ticket_key, &response_json)
+}
+
+/// Return the poll watermark: `MIN(last_checked_at)` across all stored snapshots.
+///
+/// Returns `None` when no snapshots exist yet. Used by the polling engine (Phase 13)
+/// to build a JQL `updated >= watermark` filter that limits API calls to recently
+/// changed tickets.
+#[tauri::command]
+pub fn get_poll_watermark(
+    snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+) -> Result<Option<String>, AppError> {
+    let db = snapshot_db
+        .lock()
+        .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
+    db.get_watermark()
 }
