@@ -1,7 +1,7 @@
 use crate::jira_client;
 use crate::keychain;
 use crate::snapshot_db::{self, SnapshotDb};
-use crate::triage_db::TriageDb;
+use crate::triage_db::{FetchConfig, TriageDb};
 use chrono::Utc;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -16,6 +16,9 @@ pub enum PollFrequency {
 }
 
 impl PollFrequency {
+    /// Parse a frequency string into a `PollFrequency` variant.
+    /// Accepts "5m", "15m", "30m", "1h". Anything else maps to `Off`.
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Self {
         match s {
             "5m" => PollFrequency::Secs(300),
@@ -33,6 +36,24 @@ pub struct PollCompletePayload {
     pub changed_keys: Vec<String>,
     pub checked_at: String,
     pub had_error: bool,
+}
+
+impl PollCompletePayload {
+    fn error(checked_at: String) -> Self {
+        Self {
+            changed_keys: vec![],
+            checked_at,
+            had_error: true,
+        }
+    }
+
+    fn ok_no_changes(checked_at: String) -> Self {
+        Self {
+            changed_keys: vec![],
+            checked_at,
+            had_error: false,
+        }
+    }
 }
 
 /// Main poll loop. Runs as a long-lived tokio task.
@@ -55,7 +76,7 @@ pub async fn run_poll_loop(
             }
             PollFrequency::Secs(secs) => {
                 tokio::select! {
-                    _ = sleep(Duration::from_secs(secs)) => {
+                    () = sleep(Duration::from_secs(secs)) => {
                         let payload = do_poll(&app_handle, &triage_db, &snapshot_db).await;
                         let _ = app_handle.emit("poll-complete", payload);
                     }
@@ -71,6 +92,25 @@ pub async fn run_poll_loop(
     }
 }
 
+/// Extract connection info and watermark from locked state before any async call.
+/// Returns `(watermark, base_url, username, fetch_config)` or `None` on lock failure.
+fn extract_poll_params(
+    triage_db: &Arc<Mutex<TriageDb>>,
+    snapshot_db: &Arc<Mutex<SnapshotDb>>,
+) -> Option<(Option<String>, String, String, FetchConfig)> {
+    let tdb = triage_db.lock().ok()?;
+    let sdb = snapshot_db.lock().ok()?;
+    let watermark = sdb.get_watermark().ok().flatten();
+    let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
+    let fetch_config = tdb.get_fetch_config().ok()?;
+    drop(sdb);
+    let server_meta = conn_meta.into_iter().find(|m| m.connection_type == "server")?;
+    let base_url = server_meta.base_url.clone();
+    let username = server_meta.username.clone();
+    drop(tdb);
+    Some((watermark, base_url, username, fetch_config))
+}
+
 /// Execute one poll cycle. Fetches tickets updated since watermark, runs change detection.
 /// On any error: logs, returns `had_error=true`, does NOT advance watermark.
 async fn do_poll(
@@ -81,82 +121,26 @@ async fn do_poll(
     let now = Utc::now().to_rfc3339();
 
     // Step 1: Extract connection info and watermark (lock, extract, drop before await)
-    let poll_params = {
-        let tdb = match triage_db.lock() {
-            Ok(db) => db,
-            Err(_) => {
-                return PollCompletePayload {
-                    changed_keys: vec![],
-                    checked_at: now,
-                    had_error: true,
-                }
-            }
-        };
-        let sdb = match snapshot_db.lock() {
-            Ok(db) => db,
-            Err(_) => {
-                return PollCompletePayload {
-                    changed_keys: vec![],
-                    checked_at: now,
-                    had_error: true,
-                }
-            }
-        };
-        let watermark = sdb.get_watermark().ok().flatten();
-        let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
-        let fetch_config = tdb.get_fetch_config().ok();
-        drop(sdb);
-        drop(tdb);
-        (watermark, conn_meta, fetch_config)
+    let Some((watermark, base_url, username, fetch_config)) =
+        extract_poll_params(triage_db, snapshot_db)
+    else {
+        // No server connection configured or lock failure — nothing to poll
+        return PollCompletePayload::ok_no_changes(now);
     };
-
-    let (watermark, conn_meta, fetch_config) = poll_params;
-
-    // Find the source (server) connection
-    let server_meta = conn_meta.iter().find(|m| m.connection_type == "server");
-    let server_meta = match server_meta {
-        Some(m) => m,
-        None => {
-            // No server connection configured — nothing to poll
-            return PollCompletePayload {
-                changed_keys: vec![],
-                checked_at: now,
-                had_error: false,
-            };
-        }
-    };
-
-    let base_url = server_meta.base_url.clone();
-    let username = server_meta.username.clone();
 
     // Retrieve PAT from keychain
     let pat = match keychain::get_credential("jira-server", &username) {
         Ok(p) => p,
         Err(e) => {
             eprintln!("[poll] keychain error: {e}");
-            return PollCompletePayload {
-                changed_keys: vec![],
-                checked_at: now,
-                had_error: true,
-            };
+            return PollCompletePayload::error(now);
         }
     };
 
     // Build JQL with watermark filter
-    let fetch_config = match fetch_config {
-        Some(fc) => fc,
-        None => {
-            return PollCompletePayload {
-                changed_keys: vec![],
-                checked_at: now,
-                had_error: false,
-            }
-        }
-    };
-
     let base_jql = build_poll_jql(
         &fetch_config.jql_preset,
-        &fetch_config.jql_custom,
+        fetch_config.jql_custom.as_deref(),
         &fetch_config.watched_users,
         &username,
     );
@@ -171,46 +155,12 @@ async fn do_poll(
         Ok(t) => t,
         Err(e) => {
             eprintln!("[poll] fetch error: {e}");
-            return PollCompletePayload {
-                changed_keys: vec![],
-                checked_at: now,
-                had_error: true,
-            };
+            return PollCompletePayload::error(now);
         }
     };
 
     // Step 3: For each ticket, fetch detail and run change detection
-    let mut changed_keys = Vec::new();
-    for ticket in &tickets {
-        let key = match ticket.get("key").and_then(|v| v.as_str()) {
-            Some(k) => k.to_string(),
-            None => continue,
-        };
-
-        // Fetch full detail for this ticket
-        let detail = match jira_client::fetch_ticket_detail_raw(&base_url, &key, &pat).await {
-            Ok(d) => d,
-            Err(e) => {
-                eprintln!("[poll] detail fetch error for {key}: {e}");
-                continue; // Skip this ticket, don't advance its watermark
-            }
-        };
-
-        let detail_json = detail.to_string();
-
-        // Run change detection (lock snapshot_db briefly for sync SQLite call)
-        let changes = {
-            let sdb = match snapshot_db.lock() {
-                Ok(db) => db,
-                Err(_) => continue,
-            };
-            snapshot_db::check_for_changes(&sdb, &key, &detail_json).unwrap_or_default()
-        };
-
-        if !changes.is_empty() {
-            changed_keys.push(key);
-        }
-    }
+    let changed_keys = process_tickets(&tickets, &base_url, &pat, snapshot_db).await;
 
     PollCompletePayload {
         changed_keys,
@@ -219,17 +169,49 @@ async fn do_poll(
     }
 }
 
-fn build_poll_jql(
-    preset: &str,
-    custom: &Option<String>,
-    watched_users: &[String],
-    username: &str,
-) -> String {
+/// Fetch detail for each ticket and detect changes. Returns keys with detected changes.
+async fn process_tickets(
+    tickets: &[serde_json::Value],
+    base_url: &str,
+    pat: &str,
+    snapshot_db: &Arc<Mutex<SnapshotDb>>,
+) -> Vec<String> {
+    let mut changed_keys = Vec::new();
+    for ticket in tickets {
+        let Some(key) = ticket.get("key").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let key = key.to_string();
+
+        let detail = match jira_client::fetch_ticket_detail_raw(base_url, &key, pat).await {
+            Ok(d) => d,
+            Err(e) => {
+                eprintln!("[poll] detail fetch error for {key}: {e}");
+                continue;
+            }
+        };
+
+        let detail_json = detail.to_string();
+        let changes = {
+            let Ok(sdb) = snapshot_db.lock() else {
+                continue;
+            };
+            snapshot_db::check_for_changes(&sdb, &key, &detail_json).unwrap_or_default()
+        };
+
+        if !changes.is_empty() {
+            changed_keys.push(key);
+        }
+    }
+    changed_keys
+}
+
+fn build_poll_jql(preset: &str, custom: Option<&str>, watched_users: &[String], username: &str) -> String {
     match preset {
-        "custom" => custom
-            .clone()
-            .unwrap_or_else(|| format!("assignee = \"{username}\" ORDER BY updated DESC")),
-        "assigned" => format!("assignee = \"{username}\" ORDER BY updated DESC"),
+        "custom" => custom.map_or_else(
+            || format!("assignee = \"{username}\" ORDER BY updated DESC"),
+            str::to_string,
+        ),
         "mentioned" => format!("text ~ \"{username}\" ORDER BY updated DESC"),
         "all_watched" => {
             let all: Vec<String> = std::iter::once(format!("\"{username}\""))
@@ -237,6 +219,7 @@ fn build_poll_jql(
                 .collect();
             format!("assignee in ({}) ORDER BY updated DESC", all.join(", "))
         }
+        // "assigned" and unknown presets both use assignee filter
         _ => format!("assignee = \"{username}\" ORDER BY updated DESC"),
     }
 }

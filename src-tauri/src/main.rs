@@ -1,13 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use pmkar_lib::{
-    audit::AuditDb, commands, fixtures::build_fixtures, snapshot_db::SnapshotDb,
-    triage_db::TriageDb,
+    audit::AuditDb, commands, fixtures::build_fixtures, poll_engine::PollFrequency,
+    snapshot_db::SnapshotDb, triage_db::TriageDb,
 };
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Emitter;
 use tauri::Manager;
+use tokio::sync::watch;
 
 #[allow(clippy::too_many_lines)]
 fn main() {
@@ -137,6 +138,37 @@ fn main() {
 
             app.manage(fixtures.clone());
 
+            // Poll engine: create watch channel and spawn background loop
+            let (poll_tx, poll_rx) = watch::channel(PollFrequency::Off);
+            let poll_tx = Arc::new(Mutex::new(poll_tx));
+
+            // Read saved frequency from DB and send initial value
+            {
+                let tdb = app.state::<Arc<Mutex<TriageDb>>>();
+                let freq_str = tdb
+                    .lock()
+                    .unwrap()
+                    .get_poll_frequency()
+                    .unwrap_or_else(|_| "off".to_string());
+                let initial_freq = PollFrequency::from_str(&freq_str);
+                let _ = poll_tx.lock().unwrap().send(initial_freq);
+            }
+
+            app.manage(poll_tx); // type: Arc<Mutex<watch::Sender<PollFrequency>>>
+
+            {
+                let app_handle = app.handle().clone();
+                let triage_state = Arc::clone(app.state::<Arc<Mutex<TriageDb>>>().inner());
+                let snapshot_state = Arc::clone(app.state::<Arc<Mutex<SnapshotDb>>>().inner());
+
+                tauri::async_runtime::spawn(pmkar_lib::poll_engine::run_poll_loop(
+                    poll_rx,
+                    app_handle,
+                    triage_state,
+                    snapshot_state,
+                ));
+            }
+
             // Start mock servers in dev mode
             #[cfg(feature = "mock-server")]
             {
@@ -188,6 +220,9 @@ fn main() {
             commands::set_project_config,
             commands::check_ticket_changes,
             commands::get_poll_watermark,
+            commands::get_poll_frequency,
+            commands::set_poll_frequency,
+            commands::trigger_manual_poll,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

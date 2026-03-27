@@ -7,6 +7,7 @@ use crate::error::AppError;
 use crate::fixtures::SharedFixtures;
 use crate::keychain;
 use crate::mock_server;
+use crate::poll_engine::PollFrequency;
 use crate::snapshot_db::{FieldChange, SnapshotDb};
 use crate::triage_db::{ConnectionMeta, FetchConfig, TriageDb};
 use base64::Engine as _;
@@ -1939,4 +1940,64 @@ pub fn get_poll_watermark(
         .lock()
         .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
     db.get_watermark()
+}
+
+#[tauri::command]
+pub fn get_poll_frequency(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<String, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("TriageDb lock poisoned".into()))?;
+    db.get_poll_frequency()
+}
+
+#[tauri::command]
+pub fn set_poll_frequency(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    poll_tx: tauri::State<'_, Arc<Mutex<tokio::sync::watch::Sender<PollFrequency>>>>,
+    frequency: String,
+) -> Result<(), AppError> {
+    // Persist to SQLite
+    {
+        let db = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("TriageDb lock poisoned".into()))?;
+        db.set_poll_frequency(&frequency)?;
+    }
+    // Signal running loop — takes effect immediately
+    let freq = PollFrequency::from_str(&frequency);
+    let tx = poll_tx
+        .lock()
+        .map_err(|_| AppError::Internal("Poll tx lock poisoned".into()))?;
+    let _ = tx.send(freq);
+    Ok(())
+}
+
+/// Manual poll trigger. Sends current frequency to watch channel, waking the loop.
+#[tauri::command]
+pub fn trigger_manual_poll(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    poll_tx: tauri::State<'_, Arc<Mutex<tokio::sync::watch::Sender<PollFrequency>>>>,
+    _app_handle: tauri::AppHandle,
+    _snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+) -> Result<(), AppError> {
+    // Read current frequency
+    let freq_str = {
+        let db = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("TriageDb lock poisoned".into()))?;
+        db.get_poll_frequency()?
+    };
+
+    // Send current value to reset the background timer
+    let freq = PollFrequency::from_str(&freq_str);
+    if let PollFrequency::Secs(_) = &freq {
+        let tx = poll_tx
+            .lock()
+            .map_err(|_| AppError::Internal("Poll tx lock poisoned".into()))?;
+        let _ = tx.send(freq);
+    }
+
+    Ok(())
 }
