@@ -1,9 +1,11 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatRelativeTime } from '../../lib/format';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
+import { useTicketStore } from './ticketStore';
 import type { JiraTicket, TriageEntry } from './types';
 import { UserAvatar } from './UserAvatar';
 
@@ -20,6 +22,10 @@ interface TicketCardProps {
 
 export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   const { t } = useTranslation();
+  const unseenFields = useTicketStore((s) => s.unseenChanges[ticket.key]);
+  const hasUnseenChanges = !!unseenFields;
+  const changeCount = unseenFields?.length ?? 0;
+  const fieldList = unseenFields?.join(', ') ?? '';
   return (
     <button
       type="button"
@@ -31,6 +37,23 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
+          {hasUnseenChanges && (
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400 flex-shrink-0"
+                    aria-label={t('tickets.card.unseenChanges', { count: changeCount })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent aria-hidden="true">
+                  {changeCount > 0
+                    ? t('tickets.card.changeTooltip', { count: changeCount, fields: fieldList })
+                    : t('tickets.card.unseenChanges', { count: 0 })}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {actionSlot}
         </div>
         <div className="flex items-center gap-2 text-xs text-brand-muted">

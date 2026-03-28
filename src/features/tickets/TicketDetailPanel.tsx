@@ -6,7 +6,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
+import { Badge } from '@/components/ui/badge';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
+import { ChangesTab } from './tabs/ChangesTab';
 import { CommentsTab } from './tabs/CommentsTab';
 import { HistoryTab } from './tabs/HistoryTab';
 import { OverviewTab } from './tabs/OverviewTab';
@@ -14,7 +16,7 @@ import { WorkLogTab } from './tabs/WorkLogTab';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicketDetail } from './types';
 
-type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history';
+type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history' | 'changes';
 
 interface TicketDetailPanelProps {
   issueKey: string;
@@ -37,6 +39,9 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
+  const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
+  const hasUnseenChanges = !!unseenFields;
+  const changeCount = unseenFields?.length ?? 0;
 
   const handleStartCopy = () => {
     if (detail) {
@@ -75,7 +80,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     let cancelled = false;
     setLoading(true);
     setDetail(null);
-    setActiveTab('overview');
+    setActiveTab(useTicketStore.getState().unseenChanges[issueKey] ? 'changes' : 'overview');
 
     async function fetchDetail() {
       try {
@@ -135,6 +140,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
           label: `${t('detail.tab.attachments')} (${detail.fields.attachment.length})`,
         },
         { id: 'history', label: t('detail.tab.history') },
+        { id: 'changes' as TabId, label: t('detail.tab.changes') },
       ]
     : [];
 
@@ -311,14 +317,20 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
               role="tab"
               aria-selected={activeTab === tab.id}
               aria-controls={`tabpanel-${tab.id}`}
+              aria-label={tab.id === 'changes' && hasUnseenChanges ? t('detail.tab.changes.ariaLabel', { count: changeCount }) : undefined}
               onClick={() => setActiveTab(tab.id)}
-              className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 ${
+              className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
                 activeTab === tab.id
                   ? 'text-brand-text font-semibold border-brand'
                   : 'font-normal text-brand-muted hover:text-brand-text border-transparent'
               }`}
             >
               {tab.label}
+              {tab.id === 'changes' && hasUnseenChanges && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 min-w-[16px] h-4 leading-none">
+                  {changeCount || '!'}
+                </Badge>
+              )}
             </button>
           ))}
         </div>
@@ -332,6 +344,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
           {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
           {activeTab === 'attachments' && <AttachmentsTab attachments={detail.fields.attachment} />}
           {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
+          {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
         </div>
       )}
     </aside>
