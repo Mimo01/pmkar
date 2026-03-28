@@ -179,6 +179,24 @@ async fn do_poll(
     let mut changed_keys = Vec::new();
     for (key, changes, detail_json, is_new_ticket) in &results {
         changed_keys.push(key.clone());
+
+        // Persist unseen changes for frontend indicator (D-11)
+        // Compute cumulative diff from seen baseline (D-12): show original→current, not steps
+        if !changes.is_empty() {
+            if let Ok(sdb) = snapshot_db.lock() {
+                let cumulative_changes =
+                    if let Ok(Some(seen_json)) = sdb.get_seen_snapshot(key) {
+                        // Diff from last-seen baseline to current
+                        crate::snapshot_db::detect_changes(&seen_json, detail_json)
+                            .unwrap_or_else(|_| changes.clone())
+                    } else {
+                        // No seen baseline — use the changes as-is (first time)
+                        changes.clone()
+                    };
+                let _ = sdb.set_unseen_changes(key, &cumulative_changes);
+            }
+        }
+
         // Skip new-ticket notifications on the very first poll to avoid flood
         let effective_new = *is_new_ticket && !is_first_poll;
         notification_dispatcher::dispatch_notifications(

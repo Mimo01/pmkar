@@ -226,6 +226,9 @@ fn main() {
             commands::trigger_manual_poll,
             commands::get_notification_prefs,
             commands::set_notification_prefs,
+            commands::get_unseen_change_keys,
+            commands::get_ticket_changes,
+            commands::mark_changes_seen,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

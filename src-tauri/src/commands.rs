@@ -1996,6 +1996,43 @@ pub fn set_notification_prefs(
     db.set_notification_prefs(&prefs)
 }
 
+/// Return all ticket keys that have unseen changes (for frontend hydration on startup).
+#[tauri::command]
+pub fn get_unseen_change_keys(
+    snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+) -> Result<Vec<String>, AppError> {
+    let db = snapshot_db
+        .lock()
+        .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
+    db.get_unseen_keys()
+}
+
+/// Return the pending field changes for a specific ticket.
+/// Used by ChangesTab to render the diff table.
+#[tauri::command]
+pub fn get_ticket_changes(
+    snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+    ticket_key: String,
+) -> Result<Vec<FieldChange>, AppError> {
+    let db = snapshot_db
+        .lock()
+        .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
+    db.get_pending_changes(&ticket_key)
+}
+
+/// Mark a ticket's changes as seen. Clears the unseen flag, sets seen_response_json
+/// to current response_json (new baseline for D-12), and clears pending_changes_json.
+#[tauri::command]
+pub fn mark_changes_seen(
+    snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
+    ticket_key: String,
+) -> Result<(), AppError> {
+    let db = snapshot_db
+        .lock()
+        .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
+    db.mark_changes_seen(&ticket_key)
+}
+
 /// Manual poll trigger. Sends current frequency to watch channel, waking the loop.
 #[tauri::command]
 pub fn trigger_manual_poll(
