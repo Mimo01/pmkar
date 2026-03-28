@@ -6,10 +6,13 @@ use sha2::{Digest, Sha256};
 
 const CREATE_SNAPSHOT_TABLE: &str = "
     CREATE TABLE IF NOT EXISTS snapshot_store (
-        ticket_key      TEXT PRIMARY KEY,
-        response_json   TEXT NOT NULL,
-        content_hash    TEXT NOT NULL,
-        last_checked_at TEXT NOT NULL
+        ticket_key           TEXT PRIMARY KEY,
+        response_json        TEXT NOT NULL,
+        content_hash         TEXT NOT NULL,
+        last_checked_at      TEXT NOT NULL,
+        seen_response_json   TEXT,
+        has_unseen_changes   INTEGER NOT NULL DEFAULT 0,
+        pending_changes_json TEXT
     );
 ";
 
@@ -48,6 +51,10 @@ impl SnapshotDb {
     pub fn open(path: &std::path::Path) -> AppResult<Self> {
         let conn = Connection::open(path)?;
         conn.execute_batch(CREATE_SNAPSHOT_TABLE)?;
+        // Migrations for existing on-disk databases (silently ignore duplicate column errors)
+        conn.execute("ALTER TABLE snapshot_store ADD COLUMN seen_response_json TEXT", []).ok();
+        conn.execute("ALTER TABLE snapshot_store ADD COLUMN has_unseen_changes INTEGER NOT NULL DEFAULT 0", []).ok();
+        conn.execute("ALTER TABLE snapshot_store ADD COLUMN pending_changes_json TEXT", []).ok();
         Ok(Self { conn })
     }
 
@@ -102,6 +109,82 @@ impl SnapshotDb {
             .query_row(
                 "SELECT MIN(last_checked_at) FROM snapshot_store",
                 [],
+                |row| row.get::<_, Option<String>>(0),
+            )
+            .optional()?
+            .flatten();
+        Ok(result)
+    }
+
+    /// Return all ticket keys that have unseen changes.
+    pub fn get_unseen_keys(&self) -> AppResult<Vec<String>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT ticket_key FROM snapshot_store WHERE has_unseen_changes = 1",
+        )?;
+        let keys = stmt
+            .query_map([], |row| row.get::<_, String>(0))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(keys)
+    }
+
+    /// Return the pending field changes for a ticket, deserialized from JSON.
+    /// Returns an empty vec if no pending changes or ticket not found.
+    pub fn get_pending_changes(&self, ticket_key: &str) -> AppResult<Vec<FieldChange>> {
+        let json: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT pending_changes_json FROM snapshot_store WHERE ticket_key = ?1",
+                rusqlite::params![ticket_key],
+                |row| row.get(0),
+            )
+            .optional()?
+            .flatten();
+        match json {
+            Some(j) => Ok(serde_json::from_str(&j)?),
+            None => Ok(vec![]),
+        }
+    }
+
+    /// Mark a ticket's changes as seen. This:
+    /// 1. Copies current response_json to seen_response_json (new baseline for D-12)
+    /// 2. Sets has_unseen_changes = 0
+    /// 3. Clears pending_changes_json
+    pub fn mark_changes_seen(&self, ticket_key: &str) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE snapshot_store SET
+                seen_response_json = response_json,
+                has_unseen_changes = 0,
+                pending_changes_json = NULL
+             WHERE ticket_key = ?1",
+            rusqlite::params![ticket_key],
+        )?;
+        Ok(())
+    }
+
+    /// Set unseen changes for a ticket.
+    ///
+    /// Per D-12: multiple changes between views show original→current, not intermediate steps.
+    /// The caller is responsible for computing cumulative diff from the seen baseline.
+    pub fn set_unseen_changes(&self, ticket_key: &str, changes: &[FieldChange]) -> AppResult<()> {
+        let changes_json = serde_json::to_string(changes)?;
+        self.conn.execute(
+            "UPDATE snapshot_store SET
+                has_unseen_changes = 1,
+                pending_changes_json = ?2
+             WHERE ticket_key = ?1",
+            rusqlite::params![ticket_key, changes_json],
+        )?;
+        Ok(())
+    }
+
+    /// Get the seen_response_json for a ticket (the baseline snapshot at last "mark seen" time).
+    /// Returns None if the ticket has never been marked as seen.
+    pub fn get_seen_snapshot(&self, ticket_key: &str) -> AppResult<Option<String>> {
+        let result = self
+            .conn
+            .query_row(
+                "SELECT seen_response_json FROM snapshot_store WHERE ticket_key = ?1",
+                rusqlite::params![ticket_key],
                 |row| row.get::<_, Option<String>>(0),
             )
             .optional()?
@@ -539,5 +622,93 @@ mod tests {
         let db = new_db();
         let snap = db.get_snapshot("PROJ-DOES-NOT-EXIST").expect("get failed");
         assert!(snap.is_none(), "unknown ticket key should return None");
+    }
+
+    #[test]
+    fn test_unseen_changes_lifecycle() {
+        let db = new_db();
+        let json = ticket_json("Open", "Medium", 0, 0);
+        db.store_snapshot("PROJ-1", &json).expect("store failed");
+
+        // Initially no unseen keys
+        let keys = db.get_unseen_keys().expect("get_unseen_keys failed");
+        assert!(keys.is_empty(), "no unseen keys initially");
+
+        // Set unseen changes
+        let changes = vec![FieldChange {
+            field: "status".to_string(),
+            old_value: Some("Open".to_string()),
+            new_value: Some("In Progress".to_string()),
+        }];
+        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+
+        // Now PROJ-1 should appear
+        let keys = db.get_unseen_keys().expect("get_unseen_keys failed");
+        assert_eq!(keys, vec!["PROJ-1"]);
+
+        // Pending changes should deserialize correctly
+        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].field, "status");
+        assert_eq!(pending[0].old_value.as_deref(), Some("Open"));
+        assert_eq!(pending[0].new_value.as_deref(), Some("In Progress"));
+
+        // Mark seen clears everything
+        db.mark_changes_seen("PROJ-1").expect("mark_seen failed");
+        let keys = db.get_unseen_keys().expect("get_unseen_keys failed");
+        assert!(keys.is_empty(), "no unseen keys after mark_seen");
+        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        assert!(pending.is_empty(), "no pending changes after mark_seen");
+
+        // seen_response_json should be set
+        let seen = db.get_seen_snapshot("PROJ-1").expect("get_seen failed");
+        assert!(seen.is_some(), "seen_response_json should be set after mark_seen");
+    }
+
+    #[test]
+    fn test_cumulative_diff_from_seen_baseline() {
+        let db = new_db();
+        let json_v1 = ticket_json("Open", "Medium", 0, 0);
+        db.store_snapshot("PROJ-1", &json_v1).expect("store failed");
+
+        // Simulate user viewing the ticket (sets baseline)
+        db.mark_changes_seen("PROJ-1").expect("mark_seen failed");
+
+        // First poll: status changes to In Progress
+        let json_v2 = ticket_json("In Progress", "Medium", 0, 0);
+        db.store_snapshot("PROJ-1", &json_v2).expect("store failed");
+
+        // Get seen baseline and diff against current
+        let seen_json = db
+            .get_seen_snapshot("PROJ-1")
+            .expect("get_seen failed")
+            .expect("should have seen");
+        let changes = detect_changes(&seen_json, &json_v2).expect("detect failed");
+        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+
+        // Second poll: status changes to Done (user has NOT viewed yet)
+        let json_v3 = ticket_json("Done", "Medium", 0, 0);
+        db.store_snapshot("PROJ-1", &json_v3).expect("store failed");
+
+        // Cumulative diff from seen baseline (v1) to current (v3)
+        let changes = detect_changes(&seen_json, &json_v3).expect("detect failed");
+        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+
+        // Pending should show Open -> Done (D-12 cumulative)
+        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        let status_change = pending
+            .iter()
+            .find(|c| c.field == "status")
+            .expect("status change expected");
+        assert_eq!(
+            status_change.old_value.as_deref(),
+            Some("Open"),
+            "old value should be from seen baseline"
+        );
+        assert_eq!(
+            status_change.new_value.as_deref(),
+            Some("Done"),
+            "new value should be current"
+        );
     }
 }
