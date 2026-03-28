@@ -509,31 +509,10 @@ mod tests {
         let prefs = db
             .get_notification_prefs()
             .expect("get_notification_prefs failed");
-        assert!(
-            prefs.notify_new_ticket,
-            "notify_new_ticket should default to true"
-        );
-        assert!(
-            prefs.notify_status_change,
-            "notify_status_change should default to true"
-        );
-        assert!(
-            prefs.notify_priority_change,
-            "notify_priority_change should default to true"
-        );
-        assert!(
-            prefs.notify_new_comment,
-            "notify_new_comment should default to true"
-        );
-        assert!(
-            !prefs.quiet_hours_enabled,
-            "quiet_hours_enabled should default to false"
-        );
-        assert_eq!(
-            prefs.quiet_days,
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-            "default quiet_days should be Mon-Fri"
-        );
+        assert!(prefs.notify_new_ticket);
+        assert!(prefs.notify_status_change);
+        assert!(prefs.notify_priority_change);
+        assert!(prefs.notify_new_comment);
     }
 
     #[test]
@@ -544,10 +523,6 @@ mod tests {
             notify_status_change: true,
             notify_priority_change: false,
             notify_new_comment: true,
-            quiet_hours_enabled: true,
-            quiet_start: Some("20:00".to_string()),
-            quiet_end: Some("07:00".to_string()),
-            quiet_days: vec!["Mon".to_string(), "Wed".to_string(), "Fri".to_string()],
         };
         db.set_notification_prefs(&prefs)
             .expect("set_notification_prefs failed");
@@ -558,9 +533,5 @@ mod tests {
         assert!(retrieved.notify_status_change);
         assert!(!retrieved.notify_priority_change);
         assert!(retrieved.notify_new_comment);
-        assert!(retrieved.quiet_hours_enabled);
-        assert_eq!(retrieved.quiet_start.as_deref(), Some("20:00"));
-        assert_eq!(retrieved.quiet_end.as_deref(), Some("07:00"));
-        assert_eq!(retrieved.quiet_days, vec!["Mon", "Wed", "Fri"]);
     }
 }

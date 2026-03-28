@@ -994,10 +994,6 @@ interface NotificationPrefs {
   notify_status_change: boolean;
   notify_priority_change: boolean;
   notify_new_comment: boolean;
-  quiet_hours_enabled: boolean;
-  quiet_start: string | null;
-  quiet_end: string | null;
-  quiet_days: string[];
 }
 
 const EVENT_TOGGLES = [

@@ -10,10 +10,6 @@ pub struct NotificationPrefs {
     pub notify_status_change: bool,
     pub notify_priority_change: bool,
     pub notify_new_comment: bool,
-    pub quiet_hours_enabled: bool,
-    pub quiet_start: Option<String>,
-    pub quiet_end: Option<String>,
-    pub quiet_days: Vec<String>,
 }
 
 impl Default for NotificationPrefs {
@@ -23,16 +19,6 @@ impl Default for NotificationPrefs {
             notify_status_change: true,
             notify_priority_change: true,
             notify_new_comment: true,
-            quiet_hours_enabled: false,
-            quiet_start: None,
-            quiet_end: None,
-            quiet_days: vec![
-                "Mon".to_string(),
-                "Tue".to_string(),
-                "Wed".to_string(),
-                "Thu".to_string(),
-                "Fri".to_string(),
-            ],
         }
     }
 }
@@ -76,40 +62,6 @@ pub fn build_comment_body(new_json: &str) -> Option<String> {
     Some(format!("Comment by {author} \u{2014} '{snippet}'"))
 }
 
-/// Check whether we should send notifications right now given quiet hours settings.
-/// Delegates to `should_notify_now_at` with the current local time.
-pub fn should_notify_now(prefs: &NotificationPrefs) -> bool {
-    should_notify_now_at(prefs, chrono::Local::now())
-}
-
-/// Testable version of `should_notify_now` that accepts an explicit time.
-fn should_notify_now_at(prefs: &NotificationPrefs, now: chrono::DateTime<chrono::Local>) -> bool {
-    if !prefs.quiet_hours_enabled {
-        return true;
-    }
-    let (Some(ref start), Some(ref end)) = (&prefs.quiet_start, &prefs.quiet_end) else {
-        return true;
-    };
-    // Get day name
-    let weekday = now.weekday();
-    // num_days_from_sunday: Sun=0, Mon=1, ..., Sat=6
-    let day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    let day_name = day_names[weekday.num_days_from_sunday() as usize];
-    if !prefs.quiet_days.iter().any(|d| d == day_name) {
-        // Not a quiet day
-        return true;
-    }
-    let current_hhmm = format!("{:02}:{:02}", now.hour(), now.minute());
-    // Handle midnight wrap: if start > end, the quiet window crosses midnight
-    if start <= end {
-        // Normal window: quiet when start <= current < end
-        !(*start <= current_hhmm && current_hhmm < *end)
-    } else {
-        // Midnight-crossing window: quiet when current >= start OR current < end
-        !(current_hhmm >= *start || current_hhmm < *end)
-    }
-}
-
 /// Check whether an event type should fire a notification given the current prefs.
 pub fn should_filter_event(
     change_field: &str,
@@ -137,9 +89,6 @@ pub fn dispatch_notifications(
     is_new_ticket: bool,
     prefs: &NotificationPrefs,
 ) {
-    if !should_notify_now(prefs) {
-        return;
-    }
     if is_new_ticket && prefs.notify_new_ticket {
         app_handle
             .notification()
@@ -175,30 +124,15 @@ pub fn dispatch_notifications(
     }
 }
 
-// ─── Private helper imports ────────────────────────────────────────────────────
-use chrono::Datelike as _;
-use chrono::Timelike as _;
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{Local, TimeZone as _};
 
     fn make_change(field: &str, old: Option<&str>, new: Option<&str>) -> FieldChange {
         FieldChange {
             field: field.to_string(),
             old_value: old.map(str::to_string),
             new_value: new.map(str::to_string),
-        }
-    }
-
-    fn make_prefs_quiet(start: &str, end: &str, days: Vec<&str>) -> NotificationPrefs {
-        NotificationPrefs {
-            quiet_hours_enabled: true,
-            quiet_start: Some(start.to_string()),
-            quiet_end: Some(end.to_string()),
-            quiet_days: days.into_iter().map(str::to_string).collect(),
-            ..Default::default()
         }
     }
 
@@ -222,21 +156,6 @@ mod tests {
     #[test]
     fn test_default_notify_new_comment_true() {
         assert!(NotificationPrefs::default().notify_new_comment);
-    }
-
-    #[test]
-    fn test_default_quiet_hours_disabled() {
-        assert!(!NotificationPrefs::default().quiet_hours_enabled);
-    }
-
-    #[test]
-    fn test_default_quiet_days_mon_to_fri() {
-        let prefs = NotificationPrefs::default();
-        assert_eq!(
-            prefs.quiet_days,
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-            "default quiet_days should be Mon-Fri"
-        );
     }
 
     // ── build_body ─────────────────────────────────────────────────────────────
@@ -323,7 +242,6 @@ mod tests {
         })
         .to_string();
         let body = build_comment_body(&json).expect("should produce body");
-        // The snippet should be exactly 60 A's
         assert!(
             body.contains(&"A".repeat(60)),
             "body should contain 60-char truncated snippet"
@@ -350,57 +268,6 @@ mod tests {
         assert!(
             body.contains("Unknown"),
             "missing author defaults to Unknown"
-        );
-    }
-
-    // ── should_notify_now_at ──────────────────────────────────────────────────
-
-    #[test]
-    fn test_should_notify_now_quiet_disabled_always_true() {
-        let prefs = NotificationPrefs::default(); // quiet_hours_enabled = false
-                                                  // Construct any time — Wed 19:00
-        let dt = Local.with_ymd_and_hms(2026, 3, 25, 19, 0, 0).unwrap(); // Wed
-        assert!(should_notify_now_at(&prefs, dt));
-    }
-
-    #[test]
-    fn test_quiet_window_blocks_notification_at_1900_wed() {
-        // Quiet 18:00-08:00 Mon-Fri; at 19:00 Wed should be blocked
-        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
-        let dt = Local.with_ymd_and_hms(2026, 3, 25, 19, 0, 0).unwrap(); // Wed
-        assert!(
-            !should_notify_now_at(&prefs, dt),
-            "19:00 Wed inside quiet window"
-        );
-    }
-
-    #[test]
-    fn test_quiet_window_allows_notification_at_0900_wed() {
-        // Quiet 18:00-08:00 Mon-Fri; at 09:00 Wed should be allowed (after end)
-        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
-        let dt = Local.with_ymd_and_hms(2026, 3, 25, 9, 0, 0).unwrap(); // Wed
-        assert!(
-            should_notify_now_at(&prefs, dt),
-            "09:00 Wed outside quiet window"
-        );
-    }
-
-    #[test]
-    fn test_quiet_window_saturday_not_a_quiet_day() {
-        // Quiet 18:00-08:00 Mon-Fri; at 19:00 Sat should be allowed (weekend)
-        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
-        let dt = Local.with_ymd_and_hms(2026, 3, 28, 19, 0, 0).unwrap(); // Sat
-        assert!(should_notify_now_at(&prefs, dt), "Sat not a quiet day");
-    }
-
-    #[test]
-    fn test_quiet_window_midnight_wrap_at_0030_wed() {
-        // Quiet 18:00-08:00 Mon-Fri; at 00:30 Wed should be blocked (midnight wrap)
-        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
-        let dt = Local.with_ymd_and_hms(2026, 3, 25, 0, 30, 0).unwrap(); // Wed
-        assert!(
-            !should_notify_now_at(&prefs, dt),
-            "00:30 Wed inside midnight-wrap quiet window"
         );
     }
 
