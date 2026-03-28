@@ -1007,13 +1007,10 @@ const EVENT_TOGGLES = [
   { key: 'notify_new_comment' as const, labelKey: 'settings.notifications.newComment' },
 ] as const;
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-
 function NotificationsSection() {
   const { t } = useTranslation();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [timeError, setTimeError] = useState(false);
 
   useEffect(() => {
     invoke<NotificationPrefs>('get_notification_prefs').then(setPrefs).catch(console.error);
@@ -1075,102 +1072,6 @@ function NotificationsSection() {
               />
             </div>
           ))}
-        </div>
-
-        {/* Quiet hours subsection */}
-        <div className="mt-5">
-          <h3 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2">
-            {t('settings.notifications.quietHours')}
-          </h3>
-          <p className="text-xs text-brand-muted mb-3">{t('settings.notifications.quietHint')}</p>
-
-          <div className="flex items-center gap-2">
-            <label htmlFor="quiet-start" className="text-[13px] text-brand-muted">
-              {t('settings.notifications.from')}
-            </label>
-            <input
-              id="quiet-start"
-              type="time"
-              value={prefs.quiet_start ?? ''}
-              onBlur={(e) => {
-                const val = e.target.value || null;
-                if (val && val === prefs.quiet_end) {
-                  setTimeError(true);
-                  return;
-                }
-                setTimeError(false);
-                updatePrefs({
-                  quiet_start: val,
-                  quiet_hours_enabled: !!(val && prefs.quiet_end),
-                });
-              }}
-              onChange={(e) =>
-                setPrefs((prev) => (prev ? { ...prev, quiet_start: e.target.value || null } : prev))
-              }
-              className="bg-brand-surface rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-text min-h-[44px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15"
-            />
-            <span className="text-[13px] text-brand-muted">{t('settings.notifications.to')}</span>
-            <input
-              id="quiet-end"
-              type="time"
-              value={prefs.quiet_end ?? ''}
-              onBlur={(e) => {
-                const val = e.target.value || null;
-                if (val && val === prefs.quiet_start) {
-                  setTimeError(true);
-                  return;
-                }
-                setTimeError(false);
-                updatePrefs({
-                  quiet_end: val,
-                  quiet_hours_enabled: !!(prefs.quiet_start && val),
-                });
-              }}
-              onChange={(e) =>
-                setPrefs((prev) => (prev ? { ...prev, quiet_end: e.target.value || null } : prev))
-              }
-              className="bg-brand-surface rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-text min-h-[44px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15"
-            />
-          </div>
-          {timeError && (
-            <p className="text-[12px] text-red-400 mt-1">{t('settings.notifications.timeError')}</p>
-          )}
-
-          {/* Weekday pills */}
-          <div className="flex gap-1.5 mt-3">
-            {WEEKDAYS.map((day) => {
-              const isSelected = prefs.quiet_days.includes(day);
-              const dayKey = day.toLowerCase() as
-                | 'mon'
-                | 'tue'
-                | 'wed'
-                | 'thu'
-                | 'fri'
-                | 'sat'
-                | 'sun';
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    if (isSelected && prefs.quiet_days.length <= 1) return;
-                    const newDays = isSelected
-                      ? prefs.quiet_days.filter((d) => d !== day)
-                      : [...prefs.quiet_days, day];
-                    updatePrefs({ quiet_days: newDays });
-                  }}
-                  className={`w-9 h-8 rounded-md text-[12px] transition-all duration-200 border ${
-                    isSelected
-                      ? 'border-brand/30 bg-brand/8 text-brand-text font-semibold ring-1 ring-brand/10'
-                      : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
-                  }`}
-                >
-                  {t(`settings.notifications.days.${dayKey}`)}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
     </div>
