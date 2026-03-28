@@ -1,8 +1,22 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, Check, ChevronDown, Layers, Monitor, Moon, Search, Sun, X } from 'lucide-react';
+import { isPermissionGranted, requestPermission } from '@tauri-apps/plugin-notification';
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  Info,
+  Layers,
+  Monitor,
+  Moon,
+  Search,
+  Sun,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { type Language, useLanguageStore } from '../../i18n/languageStore';
 import { type ThemeMode, useThemeStore } from '../theme/themeStore';
@@ -196,6 +210,7 @@ type ActiveSection =
   | 'jql-presets'
   | 'watched-users'
   | 'polling'
+  | 'notifications'
   | 'theme'
   | 'language'
   | 'about';
@@ -746,6 +761,13 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           </SectionCard>
         );
 
+      case 'notifications':
+        return (
+          <SectionCard title={t('settings.section.notifications')}>
+            <NotificationsSection />
+          </SectionCard>
+        );
+
       case 'theme':
         return (
           <SectionCard title={t('settings.section.theme')}>
@@ -824,6 +846,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             </p>
             <div className="space-y-0.5">
               <NavItem section="polling" label={t('settings.nav.polling')} />
+              <NavItem section="notifications" label={t('settings.nav.notifications')} />
             </div>
           </div>
 
@@ -926,6 +949,17 @@ function PollingSection() {
     try {
       await invoke('set_poll_frequency', { frequency: freq });
       useTicketStore.getState().setPollFrequency(freq);
+      // Request notification permission when switching from Off to active
+      if (freq !== 'off') {
+        try {
+          const granted = await isPermissionGranted();
+          if (!granted) {
+            await requestPermission();
+          }
+        } catch (e) {
+          console.error('Notification permission request failed:', e);
+        }
+      }
     } catch (e) {
       console.error('Failed to set poll frequency:', e);
     }
@@ -950,6 +984,194 @@ function PollingSection() {
             {opt.label}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+interface NotificationPrefs {
+  notify_new_ticket: boolean;
+  notify_status_change: boolean;
+  notify_priority_change: boolean;
+  notify_new_comment: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_start: string | null;
+  quiet_end: string | null;
+  quiet_days: string[];
+}
+
+const EVENT_TOGGLES = [
+  { key: 'notify_new_ticket' as const, labelKey: 'settings.notifications.newTicket' },
+  { key: 'notify_status_change' as const, labelKey: 'settings.notifications.statusChange' },
+  { key: 'notify_priority_change' as const, labelKey: 'settings.notifications.priorityChange' },
+  { key: 'notify_new_comment' as const, labelKey: 'settings.notifications.newComment' },
+] as const;
+
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+function NotificationsSection() {
+  const { t } = useTranslation();
+  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [timeError, setTimeError] = useState(false);
+
+  useEffect(() => {
+    invoke<NotificationPrefs>('get_notification_prefs').then(setPrefs).catch(console.error);
+    isPermissionGranted()
+      .then((granted) => setPermissionDenied(!granted))
+      .catch(() => {});
+  }, []);
+
+  async function updatePrefs(patch: Partial<NotificationPrefs>) {
+    if (!prefs) return;
+    const updated = { ...prefs, ...patch };
+    setPrefs(updated);
+    try {
+      await invoke('set_notification_prefs', { prefs: updated });
+    } catch (e) {
+      console.error('Failed to save notification prefs:', e);
+    }
+  }
+
+  if (!prefs) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-10 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-xs text-brand-muted mb-3">{t('settings.notifications.hint')}</p>
+
+      {permissionDenied && (
+        <div
+          role="status"
+          className="flex items-start gap-2 border border-brand/20 bg-brand/5 rounded-lg p-3 mb-4 border-l-2 border-l-brand"
+        >
+          <Info className="w-3.5 h-3.5 text-brand mt-0.5 flex-shrink-0" />
+          <p className="text-[12px] text-brand-muted">{t('settings.notifications.permDenied')}</p>
+        </div>
+      )}
+
+      <div className={permissionDenied ? 'opacity-50 pointer-events-none' : ''}>
+        {/* Event type toggles */}
+        <div>
+          {EVENT_TOGGLES.map((toggle) => (
+            <div
+              key={toggle.key}
+              className="flex items-center justify-between py-2 border-b border-brand-border-subtle last:border-b-0"
+            >
+              <label htmlFor={`toggle-${toggle.key}`} className="text-[13px] text-brand-text">
+                {t(toggle.labelKey)}
+              </label>
+              <Switch
+                id={`toggle-${toggle.key}`}
+                checked={prefs[toggle.key]}
+                onCheckedChange={(checked) => updatePrefs({ [toggle.key]: checked })}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Quiet hours subsection */}
+        <div className="mt-5">
+          <h3 className="text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-2">
+            {t('settings.notifications.quietHours')}
+          </h3>
+          <p className="text-xs text-brand-muted mb-3">{t('settings.notifications.quietHint')}</p>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="quiet-start" className="text-[13px] text-brand-muted">
+              {t('settings.notifications.from')}
+            </label>
+            <input
+              id="quiet-start"
+              type="time"
+              value={prefs.quiet_start ?? ''}
+              onBlur={(e) => {
+                const val = e.target.value || null;
+                if (val && val === prefs.quiet_end) {
+                  setTimeError(true);
+                  return;
+                }
+                setTimeError(false);
+                updatePrefs({
+                  quiet_start: val,
+                  quiet_hours_enabled: !!(val && prefs.quiet_end),
+                });
+              }}
+              onChange={(e) =>
+                setPrefs((prev) => (prev ? { ...prev, quiet_start: e.target.value || null } : prev))
+              }
+              className="bg-brand-surface rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-text min-h-[44px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15"
+            />
+            <span className="text-[13px] text-brand-muted">{t('settings.notifications.to')}</span>
+            <input
+              id="quiet-end"
+              type="time"
+              value={prefs.quiet_end ?? ''}
+              onBlur={(e) => {
+                const val = e.target.value || null;
+                if (val && val === prefs.quiet_start) {
+                  setTimeError(true);
+                  return;
+                }
+                setTimeError(false);
+                updatePrefs({
+                  quiet_end: val,
+                  quiet_hours_enabled: !!(prefs.quiet_start && val),
+                });
+              }}
+              onChange={(e) =>
+                setPrefs((prev) => (prev ? { ...prev, quiet_end: e.target.value || null } : prev))
+              }
+              className="bg-brand-surface rounded-lg border border-brand-border px-3 py-2 text-[13px] text-brand-text min-h-[44px] focus:outline-none focus:border-brand/40 focus:ring-1 focus:ring-brand/15"
+            />
+          </div>
+          {timeError && (
+            <p className="text-[12px] text-red-400 mt-1">{t('settings.notifications.timeError')}</p>
+          )}
+
+          {/* Weekday pills */}
+          <div className="flex gap-1.5 mt-3">
+            {WEEKDAYS.map((day) => {
+              const isSelected = prefs.quiet_days.includes(day);
+              const dayKey = day.toLowerCase() as
+                | 'mon'
+                | 'tue'
+                | 'wed'
+                | 'thu'
+                | 'fri'
+                | 'sat'
+                | 'sun';
+              return (
+                <button
+                  key={day}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => {
+                    if (isSelected && prefs.quiet_days.length <= 1) return;
+                    const newDays = isSelected
+                      ? prefs.quiet_days.filter((d) => d !== day)
+                      : [...prefs.quiet_days, day];
+                    updatePrefs({ quiet_days: newDays });
+                  }}
+                  className={`w-9 h-8 rounded-md text-[12px] transition-all duration-200 border ${
+                    isSelected
+                      ? 'border-brand/30 bg-brand/8 text-brand-text font-semibold ring-1 ring-brand/10'
+                      : 'border-brand-border text-brand-muted hover:text-brand-text-secondary hover:bg-brand-surface-hover'
+                  }`}
+                >
+                  {t(`settings.notifications.days.${dayKey}`)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
