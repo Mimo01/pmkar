@@ -1,6 +1,7 @@
 use crate::jira_client;
 use crate::keychain;
-use crate::snapshot_db::{self, SnapshotDb};
+use crate::notification_dispatcher;
+use crate::snapshot_db::{self, FieldChange, SnapshotDb};
 use crate::triage_db::{FetchConfig, TriageDb};
 use chrono::Utc;
 use serde::Serialize;
@@ -116,7 +117,7 @@ fn extract_poll_params(
 /// Execute one poll cycle. Fetches tickets updated since watermark, runs change detection.
 /// On any error: logs, returns `had_error=true`, does NOT advance watermark.
 async fn do_poll(
-    _app_handle: &tauri::AppHandle,
+    app_handle: &tauri::AppHandle,
     triage_db: &Arc<Mutex<TriageDb>>,
     snapshot_db: &Arc<Mutex<SnapshotDb>>,
 ) -> PollCompletePayload {
@@ -129,6 +130,9 @@ async fn do_poll(
         // No server connection configured or lock failure — nothing to poll
         return PollCompletePayload::ok_no_changes(now);
     };
+
+    // Determine if this is the first poll (no watermark existed before)
+    let is_first_poll = watermark.is_none();
 
     // Retrieve PAT from keychain
     let pat = match keychain::get_credential("jira-server", &username) {
@@ -161,8 +165,31 @@ async fn do_poll(
         }
     };
 
-    // Step 3: For each ticket, fetch detail and run change detection
-    let changed_keys = process_tickets(&tickets, &base_url, &pat, snapshot_db).await;
+    // Step 3: For each ticket, fetch detail and run change detection (enriched)
+    let results = process_tickets(&tickets, &base_url, &pat, snapshot_db).await;
+
+    // Step 4: Read notification prefs and dispatch OS notifications
+    let prefs = {
+        let Ok(tdb) = triage_db.lock() else {
+            return PollCompletePayload::error(now);
+        };
+        tdb.get_notification_prefs().unwrap_or_default()
+    };
+
+    let mut changed_keys = Vec::new();
+    for (key, changes, detail_json, is_new_ticket) in &results {
+        changed_keys.push(key.clone());
+        // Skip new-ticket notifications on the very first poll to avoid flood
+        let effective_new = *is_new_ticket && !is_first_poll;
+        notification_dispatcher::dispatch_notifications(
+            app_handle,
+            key,
+            changes,
+            detail_json,
+            effective_new,
+            &prefs,
+        );
+    }
 
     PollCompletePayload {
         changed_keys,
@@ -171,14 +198,15 @@ async fn do_poll(
     }
 }
 
-/// Fetch detail for each ticket and detect changes. Returns keys with detected changes.
+/// Fetch detail for each ticket and detect changes.
+/// Returns enriched tuples: `(ticket_key, field_changes, detail_json, is_new_ticket)`.
 async fn process_tickets(
     tickets: &[serde_json::Value],
     base_url: &str,
     pat: &str,
     snapshot_db: &Arc<Mutex<SnapshotDb>>,
-) -> Vec<String> {
-    let mut changed_keys = Vec::new();
+) -> Vec<(String, Vec<FieldChange>, String, bool)> {
+    let mut results = Vec::new();
     for ticket in tickets {
         let Some(key) = ticket.get("key").and_then(|v| v.as_str()) else {
             continue;
@@ -194,6 +222,15 @@ async fn process_tickets(
         };
 
         let detail_json = detail.to_string();
+
+        // Check if snapshot already exists BEFORE calling check_for_changes (which stores it)
+        let is_new_ticket = {
+            let Ok(sdb) = snapshot_db.lock() else {
+                continue;
+            };
+            sdb.get_snapshot(&key).ok().flatten().is_none()
+        };
+
         let changes = {
             let Ok(sdb) = snapshot_db.lock() else {
                 continue;
@@ -201,11 +238,12 @@ async fn process_tickets(
             snapshot_db::check_for_changes(&sdb, &key, &detail_json).unwrap_or_default()
         };
 
-        if !changes.is_empty() {
-            changed_keys.push(key);
+        // Include ticket if it has field changes OR is new (for new-ticket notifications)
+        if !changes.is_empty() || is_new_ticket {
+            results.push((key, changes, detail_json, is_new_ticket));
         }
     }
-    changed_keys
+    results
 }
 
 fn build_poll_jql(

@@ -7,6 +7,7 @@ use crate::error::AppError;
 use crate::fixtures::SharedFixtures;
 use crate::keychain;
 use crate::mock_server;
+use crate::notification_dispatcher::NotificationPrefs;
 use crate::poll_engine::PollFrequency;
 use crate::snapshot_db::{FieldChange, SnapshotDb};
 use crate::triage_db::{ConnectionMeta, FetchConfig, TriageDb};
@@ -1972,6 +1973,27 @@ pub fn set_poll_frequency(
         .map_err(|_| AppError::Internal("Poll tx lock poisoned".into()))?;
     let _ = tx.send(freq);
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_notification_prefs(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<NotificationPrefs, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("TriageDb lock poisoned".into()))?;
+    db.get_notification_prefs()
+}
+
+#[tauri::command]
+pub fn set_notification_prefs(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    prefs: NotificationPrefs,
+) -> Result<(), AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("TriageDb lock poisoned".into()))?;
+    db.set_notification_prefs(&prefs)
 }
 
 /// Manual poll trigger. Sends current frequency to watch channel, waking the loop.
