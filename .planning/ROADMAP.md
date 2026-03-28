@@ -93,8 +93,8 @@ Plans:
   3. The diff panel accounts for comment and worklog changes, not only changelog field items
 **Plans**: 2 plans
 Plans:
-- [ ] 15-01-PLAN.md — [to be planned]
-- [ ] 15-02-PLAN.md — [to be planned]
+- [ ] 15-01-PLAN.md — Rust backend: SnapshotDb column extensions, unseen-changes tracking, three new Tauri commands, poll engine integration
+- [ ] 15-02-PLAN.md — Frontend: Zustand unseenChanges slice, TicketCard blue dot, ChangesTab diff table, TicketDetailPanel 6th tab with auto-switch
 **UI hint**: yes
 
 ### Phase 16: Enhanced Watch Configuration
@@ -129,5 +129,5 @@ Plans:
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete    | 2026-03-28 |
-| 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
+| 15. Change Diff View | v0.3.0 | 0/2 | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
