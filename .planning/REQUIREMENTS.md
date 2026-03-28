@@ -29,8 +29,8 @@ Requirements for Notifications & Change Tracking milestone. Each maps to roadmap
 
 ### Change Tracking
 
-- [ ] **CHNG-01**: User can see field-level diff on ticket detail page showing what changed since last fetch
-- [ ] **CHNG-02**: Changed tickets display a visual indicator (badge/dot) in the ticket list view
+- [x] **CHNG-01**: User can see field-level diff on ticket detail page showing what changed since last fetch
+- [x] **CHNG-02**: Changed tickets display a visual indicator (badge/dot) in the ticket list view
 
 ### Watch Configuration
 
@@ -78,8 +78,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTIF-06 | Phase 14 | Pending |
 | NOTIF-07 | Phase 14 | Pending |
 | NOTIF-08 | Phase 14 | Pending |
-| CHNG-01 | Phase 15 | Pending |
-| CHNG-02 | Phase 15 | Pending |
+| CHNG-01 | Phase 15 | Complete |
+| CHNG-02 | Phase 15 | Complete |
 | WTCH-01 | Phase 16 | Pending |
 | WTCH-02 | Phase 16 | Pending |
 

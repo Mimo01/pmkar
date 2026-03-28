@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
 status: executing
-stopped_at: Phase 15 context gathered
-last_updated: "2026-03-28T23:04:46.094Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-28T23:41:39.384Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** Phase 14 — notification-dispatch
+**Current focus:** Phase 15 — change-diff-view
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Executing Phase 14
+Phase: 15 (change-diff-view) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0% (v0.3.0)
@@ -66,6 +66,7 @@ Key decisions affecting v0.3.0 work:
 - [Phase 13-01]: do_poll split into extract_poll_params + process_tickets helpers to satisfy clippy too_many_lines (100-line limit)
 - [Phase 13-02]: pollFrequency read in PollingSection directly (not passed as prop) — avoids unused variable in component scope
 - [Phase 13-02]: isLoading const moved before useEffects — required for correct F5 useEffect dependency array reference
+- [Phase 15-change-diff-view]: ALTER TABLE migrations with .ok() pattern for existing on-disk databases; cumulative diff computed at poll time from seen_response_json baseline (D-12)
 
 ### Pending Todos
 
@@ -78,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T23:04:46.090Z
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-change-diff-view/15-CONTEXT.md
+Last session: 2026-03-28T23:41:39.379Z
+Stopped at: Completed 15-01-PLAN.md
+Resume file: None
