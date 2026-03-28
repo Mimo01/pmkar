@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
-status: executing
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-28T23:41:39.384Z"
+status: verifying
+stopped_at: "Completed 15-02 tasks 1 and 2; awaiting checkpoint:human-verify for Task 3"
+last_updated: "2026-03-28T23:47:31.253Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: 15 (change-diff-view) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0% (v0.3.0)
@@ -67,6 +67,8 @@ Key decisions affecting v0.3.0 work:
 - [Phase 13-02]: pollFrequency read in PollingSection directly (not passed as prop) — avoids unused variable in component scope
 - [Phase 13-02]: isLoading const moved before useEffects — required for correct F5 useEffect dependency array reference
 - [Phase 15-change-diff-view]: ALTER TABLE migrations with .ok() pattern for existing on-disk databases; cumulative diff computed at poll time from seen_response_json baseline (D-12)
+- [Phase 15-02]: getState() inside useEffect to read unseenChanges without dep array — auto-switch fires only on ticket open (D-06)
+- [Phase 15-02]: mark_changes_seen called after data fetch — prevents empty state race (D-10)
 
 ### Pending Todos
 
@@ -79,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T23:41:39.379Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-28T23:47:31.247Z
+Stopped at: Completed 15-02 tasks 1 and 2; awaiting checkpoint:human-verify for Task 3
 Resume file: None

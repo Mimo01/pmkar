@@ -33,7 +33,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
 - [x] **Phase 12: Snapshot Foundation** - SQLite snapshot storage and hash-based change detection (completed 2026-03-27)
 - [x] **Phase 13: Background Polling Engine** - Rust-side poll loop with configurable interval and manual trigger (completed 2026-03-27)
 - [x] **Phase 14: Notification Dispatch** - OS-level notifications with per-event preferences (completed 2026-03-28)
-- [ ] **Phase 15: Change Diff View** - Field-level diff UI and changed-ticket indicators in ticket list
+- [x] **Phase 15: Change Diff View** - Field-level diff UI and changed-ticket indicators in ticket list (completed 2026-03-28)
 - [ ] **Phase 16: Enhanced Watch Configuration** - Email domain selector with config-time user resolver
 
 ## Phase Details
@@ -94,7 +94,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 15-01-PLAN.md — Rust backend: SnapshotDb column extensions, unseen-changes tracking, three new Tauri commands, poll engine integration
-- [ ] 15-02-PLAN.md — Frontend: Zustand unseenChanges slice, TicketCard blue dot, ChangesTab diff table, TicketDetailPanel 6th tab with auto-switch
+- [x] 15-02-PLAN.md — Frontend: Zustand unseenChanges slice, TicketCard blue dot, ChangesTab diff table, TicketDetailPanel 6th tab with auto-switch
 **UI hint**: yes
 
 ### Phase 16: Enhanced Watch Configuration
@@ -129,5 +129,5 @@ Plans:
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete    | 2026-03-28 |
-| 15. Change Diff View | v0.3.0 | 1/2 | In Progress|  |
+| 15. Change Diff View | v0.3.0 | 2/2 | Complete   | 2026-03-28 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
