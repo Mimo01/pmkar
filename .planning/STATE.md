@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
 status: executing
-stopped_at: Phase 14 UI-SPEC approved
-last_updated: "2026-03-28T22:46:43.157Z"
+stopped_at: Phase 15 context gathered
+last_updated: "2026-03-28T23:04:46.094Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
@@ -78,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T23:27:48.888Z
-Stopped at: Phase 14 UI-SPEC approved
-Resume file: .planning/phases/14-notification-dispatch/14-UI-SPEC.md
+Last session: 2026-03-28T23:04:46.090Z
+Stopped at: Phase 15 context gathered
+Resume file: .planning/phases/15-change-diff-view/15-CONTEXT.md
