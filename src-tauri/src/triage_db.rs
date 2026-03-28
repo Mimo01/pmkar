@@ -1,4 +1,5 @@
 use crate::error::AppResult;
+use crate::notification_dispatcher::NotificationPrefs;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -47,6 +48,9 @@ const ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME: &str =
 const ALTER_APP_CONFIG_ADD_POLL_FREQUENCY: &str =
     "ALTER TABLE app_config ADD COLUMN poll_frequency TEXT NOT NULL DEFAULT 'off';";
 
+const ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS: &str =
+    "ALTER TABLE app_config ADD COLUMN notification_prefs TEXT;";
+
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
     base_url        TEXT NOT NULL,
@@ -84,6 +88,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS);
         Ok(Self { conn })
     }
 
@@ -101,6 +106,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS);
         Ok(Self { conn })
     }
 
@@ -234,6 +240,30 @@ impl TriageDb {
         self.conn.execute(
             "UPDATE app_config SET poll_frequency = ?1 WHERE id = 1",
             [frequency],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_notification_prefs(&self) -> AppResult<NotificationPrefs> {
+        let json_opt: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT notification_prefs FROM app_config WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(None);
+        match json_opt {
+            Some(ref s) if !s.is_empty() => Ok(serde_json::from_str(s)?),
+            _ => Ok(NotificationPrefs::default()),
+        }
+    }
+
+    pub fn set_notification_prefs(&self, prefs: &NotificationPrefs) -> AppResult<()> {
+        let json = serde_json::to_string(prefs)?;
+        self.conn.execute(
+            "UPDATE app_config SET notification_prefs = ?1 WHERE id = 1",
+            [&json],
         )?;
         Ok(())
     }
@@ -471,5 +501,51 @@ mod tests {
         db.set_poll_frequency("1h").expect("second set failed");
         let freq = db.get_poll_frequency().expect("get failed");
         assert_eq!(freq, "1h", "second set should overwrite first");
+    }
+
+    #[test]
+    fn test_notification_prefs_default_on_null() {
+        let db = new_db();
+        let prefs = db
+            .get_notification_prefs()
+            .expect("get_notification_prefs failed");
+        assert!(prefs.notify_new_ticket, "notify_new_ticket should default to true");
+        assert!(prefs.notify_status_change, "notify_status_change should default to true");
+        assert!(prefs.notify_priority_change, "notify_priority_change should default to true");
+        assert!(prefs.notify_new_comment, "notify_new_comment should default to true");
+        assert!(!prefs.quiet_hours_enabled, "quiet_hours_enabled should default to false");
+        assert_eq!(
+            prefs.quiet_days,
+            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
+            "default quiet_days should be Mon-Fri"
+        );
+    }
+
+    #[test]
+    fn test_notification_prefs_roundtrip() {
+        let db = new_db();
+        let prefs = crate::notification_dispatcher::NotificationPrefs {
+            notify_new_ticket: false,
+            notify_status_change: true,
+            notify_priority_change: false,
+            notify_new_comment: true,
+            quiet_hours_enabled: true,
+            quiet_start: Some("20:00".to_string()),
+            quiet_end: Some("07:00".to_string()),
+            quiet_days: vec!["Mon".to_string(), "Wed".to_string(), "Fri".to_string()],
+        };
+        db.set_notification_prefs(&prefs)
+            .expect("set_notification_prefs failed");
+        let retrieved = db
+            .get_notification_prefs()
+            .expect("get_notification_prefs failed");
+        assert!(!retrieved.notify_new_ticket);
+        assert!(retrieved.notify_status_change);
+        assert!(!retrieved.notify_priority_change);
+        assert!(retrieved.notify_new_comment);
+        assert!(retrieved.quiet_hours_enabled);
+        assert_eq!(retrieved.quiet_start.as_deref(), Some("20:00"));
+        assert_eq!(retrieved.quiet_end.as_deref(), Some("07:00"));
+        assert_eq!(retrieved.quiet_days, vec!["Mon", "Wed", "Fri"]);
     }
 }

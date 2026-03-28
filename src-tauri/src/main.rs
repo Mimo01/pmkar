@@ -22,6 +22,7 @@ fn main() {
                 app.handle()
                     .plugin(tauri_plugin_updater::Builder::new().build())?;
                 app.handle().plugin(tauri_plugin_process::init())?;
+                app.handle().plugin(tauri_plugin_notification::init())?;
             }
 
             // Build custom application menu with About item that opens frontend modal
