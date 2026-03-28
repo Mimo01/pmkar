@@ -67,10 +67,7 @@ pub fn build_comment_body(new_json: &str) -> Option<String> {
         .pointer("/author/displayName")
         .and_then(|v| v.as_str())
         .unwrap_or("Unknown");
-    let body_text = last
-        .get("body")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let body_text = last.get("body").and_then(|v| v.as_str()).unwrap_or("");
     let snippet = if body_text.len() > 60 {
         &body_text[..60]
     } else {
@@ -179,13 +176,13 @@ pub fn dispatch_notifications(
 }
 
 // ─── Private helper imports ────────────────────────────────────────────────────
-use chrono::Timelike as _;
 use chrono::Datelike as _;
+use chrono::Timelike as _;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{TimeZone as _, Local};
+    use chrono::{Local, TimeZone as _};
 
     fn make_change(field: &str, old: Option<&str>, new: Option<&str>) -> FieldChange {
         FieldChange {
@@ -302,10 +299,7 @@ mod tests {
         })
         .to_string();
         let body = build_comment_body(&json).expect("should produce body");
-        assert!(
-            body.contains("Bob"),
-            "should use the last comment's author"
-        );
+        assert!(body.contains("Bob"), "should use the last comment's author");
         assert!(
             body.contains("Second comment reply"),
             "should contain the comment body"
@@ -353,7 +347,10 @@ mod tests {
         })
         .to_string();
         let body = build_comment_body(&json).expect("should produce body");
-        assert!(body.contains("Unknown"), "missing author defaults to Unknown");
+        assert!(
+            body.contains("Unknown"),
+            "missing author defaults to Unknown"
+        );
     }
 
     // ── should_notify_now_at ──────────────────────────────────────────────────
@@ -361,45 +358,37 @@ mod tests {
     #[test]
     fn test_should_notify_now_quiet_disabled_always_true() {
         let prefs = NotificationPrefs::default(); // quiet_hours_enabled = false
-        // Construct any time — Wed 19:00
-        let dt = Local
-            .with_ymd_and_hms(2026, 3, 25, 19, 0, 0)
-            .unwrap(); // Wed
+                                                  // Construct any time — Wed 19:00
+        let dt = Local.with_ymd_and_hms(2026, 3, 25, 19, 0, 0).unwrap(); // Wed
         assert!(should_notify_now_at(&prefs, dt));
     }
 
     #[test]
     fn test_quiet_window_blocks_notification_at_1900_wed() {
         // Quiet 18:00-08:00 Mon-Fri; at 19:00 Wed should be blocked
-        let prefs = make_prefs_quiet(
-            "18:00",
-            "08:00",
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-        );
+        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
         let dt = Local.with_ymd_and_hms(2026, 3, 25, 19, 0, 0).unwrap(); // Wed
-        assert!(!should_notify_now_at(&prefs, dt), "19:00 Wed inside quiet window");
+        assert!(
+            !should_notify_now_at(&prefs, dt),
+            "19:00 Wed inside quiet window"
+        );
     }
 
     #[test]
     fn test_quiet_window_allows_notification_at_0900_wed() {
         // Quiet 18:00-08:00 Mon-Fri; at 09:00 Wed should be allowed (after end)
-        let prefs = make_prefs_quiet(
-            "18:00",
-            "08:00",
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-        );
+        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
         let dt = Local.with_ymd_and_hms(2026, 3, 25, 9, 0, 0).unwrap(); // Wed
-        assert!(should_notify_now_at(&prefs, dt), "09:00 Wed outside quiet window");
+        assert!(
+            should_notify_now_at(&prefs, dt),
+            "09:00 Wed outside quiet window"
+        );
     }
 
     #[test]
     fn test_quiet_window_saturday_not_a_quiet_day() {
         // Quiet 18:00-08:00 Mon-Fri; at 19:00 Sat should be allowed (weekend)
-        let prefs = make_prefs_quiet(
-            "18:00",
-            "08:00",
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-        );
+        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
         let dt = Local.with_ymd_and_hms(2026, 3, 28, 19, 0, 0).unwrap(); // Sat
         assert!(should_notify_now_at(&prefs, dt), "Sat not a quiet day");
     }
@@ -407,13 +396,12 @@ mod tests {
     #[test]
     fn test_quiet_window_midnight_wrap_at_0030_wed() {
         // Quiet 18:00-08:00 Mon-Fri; at 00:30 Wed should be blocked (midnight wrap)
-        let prefs = make_prefs_quiet(
-            "18:00",
-            "08:00",
-            vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
-        );
+        let prefs = make_prefs_quiet("18:00", "08:00", vec!["Mon", "Tue", "Wed", "Thu", "Fri"]);
         let dt = Local.with_ymd_and_hms(2026, 3, 25, 0, 30, 0).unwrap(); // Wed
-        assert!(!should_notify_now_at(&prefs, dt), "00:30 Wed inside midnight-wrap quiet window");
+        assert!(
+            !should_notify_now_at(&prefs, dt),
+            "00:30 Wed inside midnight-wrap quiet window"
+        );
     }
 
     // ── should_filter_event ───────────────────────────────────────────────────

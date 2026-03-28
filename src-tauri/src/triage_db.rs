@@ -509,11 +509,26 @@ mod tests {
         let prefs = db
             .get_notification_prefs()
             .expect("get_notification_prefs failed");
-        assert!(prefs.notify_new_ticket, "notify_new_ticket should default to true");
-        assert!(prefs.notify_status_change, "notify_status_change should default to true");
-        assert!(prefs.notify_priority_change, "notify_priority_change should default to true");
-        assert!(prefs.notify_new_comment, "notify_new_comment should default to true");
-        assert!(!prefs.quiet_hours_enabled, "quiet_hours_enabled should default to false");
+        assert!(
+            prefs.notify_new_ticket,
+            "notify_new_ticket should default to true"
+        );
+        assert!(
+            prefs.notify_status_change,
+            "notify_status_change should default to true"
+        );
+        assert!(
+            prefs.notify_priority_change,
+            "notify_priority_change should default to true"
+        );
+        assert!(
+            prefs.notify_new_comment,
+            "notify_new_comment should default to true"
+        );
+        assert!(
+            !prefs.quiet_hours_enabled,
+            "quiet_hours_enabled should default to false"
+        );
         assert_eq!(
             prefs.quiet_days,
             vec!["Mon", "Tue", "Wed", "Thu", "Fri"],
