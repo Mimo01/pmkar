@@ -32,7 +32,7 @@ Full details: [milestones/v0.1.0-ROADMAP.md](milestones/v0.1.0-ROADMAP.md)
 
 - [x] **Phase 12: Snapshot Foundation** - SQLite snapshot storage and hash-based change detection (completed 2026-03-27)
 - [x] **Phase 13: Background Polling Engine** - Rust-side poll loop with configurable interval and manual trigger (completed 2026-03-27)
-- [ ] **Phase 14: Notification Dispatch** - OS-level notifications with per-event preferences and quiet hours
+- [x] **Phase 14: Notification Dispatch** - OS-level notifications with per-event preferences (completed 2026-03-28)
 - [ ] **Phase 15: Change Diff View** - Field-level diff UI and changed-ticket indicators in ticket list
 - [ ] **Phase 16: Enhanced Watch Configuration** - Email domain selector with config-time user resolver
 
@@ -68,7 +68,7 @@ Plans:
 **UI hint**: yes
 
 ### Phase 14: Notification Dispatch
-**Goal**: The app sends OS-level desktop notifications when watched tickets change, with user control over which event types trigger notifications and when notifications are suppressed
+**Goal**: The app sends OS-level desktop notifications when watched tickets change, with user control over which event types trigger notifications
 **Depends on**: Phase 13
 **Requirements**: NOTIF-01, NOTIF-02, NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06, NOTIF-07, NOTIF-08
 **Success Criteria** (what must be TRUE):
@@ -76,11 +76,11 @@ Plans:
   2. User receives an OS notification containing a change summary (e.g., "CUST-123: Status Open → In Progress") when a watched ticket's status changes
   3. User receives an OS notification when a watched ticket's priority changes or a new comment is added
   4. User can toggle per-event notification preferences in Settings (new ticket, status change, priority change, comment) and toggling off suppresses that event type immediately
-  5. User can set quiet hours in Settings; notifications are suppressed outside the configured work-hours window
+  5. ~~User can set quiet hours in Settings~~ (removed per user decision)
 **Plans**: 2 plans
 Plans:
-- [ ] 14-01-PLAN.md — Rust backend: notification dispatcher module, plugin registration, notification prefs in SQLite, poll engine enrichment with FieldChange data
-- [ ] 14-02-PLAN.md — Frontend: NotificationsSection UI with event toggles, quiet hours, permission request, i18n keys
+- [x] 14-01-PLAN.md — Rust backend: notification dispatcher module, plugin registration, notification prefs in SQLite, poll engine enrichment with FieldChange data
+- [x] 14-02-PLAN.md — Frontend: NotificationsSection UI with event toggles, permission request, i18n keys
 **UI hint**: yes
 
 ### Phase 15: Change Diff View
@@ -128,6 +128,6 @@ Plans:
 | 11. Deployment & Auto-Updates | v0.1.0 | 4/4 | Complete | 2026-03-25 |
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
-| 14. Notification Dispatch | v0.3.0 | 0/2 | Not started | - |
+| 14. Notification Dispatch | v0.3.0 | 2/2 | Complete    | 2026-03-28 |
 | 15. Change Diff View | v0.3.0 | 0/? | Not started | - |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
