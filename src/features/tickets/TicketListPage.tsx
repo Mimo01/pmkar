@@ -127,6 +127,9 @@ export function TicketListPage() {
           return config;
         })
         .catch(() => null),
+      invoke<string[]>('get_unseen_change_keys')
+        .then((keys) => useTicketStore.getState().hydrateUnseenChanges(keys))
+        .catch(() => {}),
     ]).then(([, config]) => {
       // Auto-refetch if user has previously fetched (tickets are in-memory only)
       if (config?.lastFetchedAt) {

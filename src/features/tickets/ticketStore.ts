@@ -52,6 +52,14 @@ interface TicketState {
   setJqlCustom: (jql: string | null) => void;
   setWatchedUsers: (users: string[]) => void;
   hydrateFetchConfig: (config: FetchConfig) => void;
+
+  // Unseen changes tracking (Phase 15)
+  unseenChanges: Record<string, string[]>; // key -> changed field names (empty array = no tooltip data yet)
+
+  // Actions — unseen changes
+  hydrateUnseenChanges: (keys: string[]) => void;
+  setUnseenChange: (key: string, fields: string[]) => void;
+  clearUnseenChange: (key: string) => void;
 }
 
 export const useTicketStore = create<TicketState>((set, get) => ({
@@ -71,6 +79,8 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   jqlPreset: 'assigned',
   jqlCustom: null,
   watchedUsers: [],
+
+  unseenChanges: {},
 
   // Actions
   setTickets: (tickets, triageMap, total) => {
@@ -121,5 +131,20 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       jqlCustom: config.jqlCustom ?? null,
       watchedUsers: Array.isArray(config.watchedUsers) ? config.watchedUsers : [],
       lastFetchedAt: config.lastFetchedAt ?? null,
+    }),
+
+  // Unseen changes actions
+  hydrateUnseenChanges: (keys) =>
+    set({
+      unseenChanges: Object.fromEntries(keys.map((k) => [k, []])),
+    }),
+  setUnseenChange: (key, fields) =>
+    set((state) => ({
+      unseenChanges: { ...state.unseenChanges, [key]: fields },
+    })),
+  clearUnseenChange: (key) =>
+    set((state) => {
+      const { [key]: _, ...rest } = state.unseenChanges;
+      return { unseenChanges: rest };
     }),
 }));
