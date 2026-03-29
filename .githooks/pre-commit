@@ -1,27 +1,91 @@
 #!/bin/sh
-# Pre-commit hook: run the same checks as CI
+# Pre-commit hook: replaces CI (ci.yml deleted — this is the single source of truth for code quality)
+#
+# Runs all quality checks in fail-fast order (cheapest first):
+#   1. cargo fmt --check   (~1s,      Rust formatting)
+#   2. npm run lint        (~2s,      Biome lint + format)
+#   3. npx tsc --noEmit   (~5-10s,   TypeScript typecheck)
+#   4. cargo clippy        (~15-30s,  Rust linter)
+#   5. npm run test        (~10-20s,  Vitest frontend tests)
+#   6. cargo test          (~5-15s,   Rust tests)
 
 echo "Running pre-commit checks..."
+HOOK_START=$(date +%s)
 
-# Biome lint + format
-npm run lint 2>&1
-if [ $? -ne 0 ]; then
-  echo "❌ Biome check failed. Run: npm run lint:fix && npm run format"
-  exit 1
-fi
-
-# Rust format check
+# ── 1. Rust format check ──────────────────────────────────────────────────────
+echo ""
+echo "  [1/6] cargo fmt --check..."
+STEP_START=$(date +%s)
 cargo fmt --check 2>&1
 if [ $? -ne 0 ]; then
-  echo "❌ Rust format check failed. Run: cargo fmt"
+  echo "  FAILED: Rust format check. Fix with: cargo fmt"
   exit 1
 fi
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
 
-# Rust clippy
+# ── 2. Biome lint ─────────────────────────────────────────────────────────────
+echo ""
+echo "  [2/6] npm run lint (Biome)..."
+STEP_START=$(date +%s)
+npm run lint 2>&1
+if [ $? -ne 0 ]; then
+  echo "  FAILED: Biome lint. Fix with: npm run lint:fix && npm run format"
+  exit 1
+fi
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
+
+# ── 3. TypeScript typecheck ───────────────────────────────────────────────────
+echo ""
+echo "  [3/6] npx tsc --noEmit (TypeScript typecheck)..."
+STEP_START=$(date +%s)
+npx tsc --noEmit 2>&1
+if [ $? -ne 0 ]; then
+  echo "  FAILED: TypeScript typecheck. Fix type errors above."
+  exit 1
+fi
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
+
+# ── 4. Rust clippy ────────────────────────────────────────────────────────────
+echo ""
+echo "  [4/6] cargo clippy -- -D warnings..."
+STEP_START=$(date +%s)
 cargo clippy -- -D warnings 2>&1
 if [ $? -ne 0 ]; then
-  echo "❌ Clippy check failed. Fix warnings above."
+  echo "  FAILED: Clippy check. Fix warnings above."
   exit 1
 fi
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
 
-echo "✓ Pre-commit checks passed"
+# ── 5. Frontend tests ─────────────────────────────────────────────────────────
+echo ""
+echo "  [5/6] npm run test (Vitest)..."
+STEP_START=$(date +%s)
+npm run test 2>&1
+if [ $? -ne 0 ]; then
+  echo "  FAILED: Frontend tests. Fix failing tests above."
+  exit 1
+fi
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
+
+# ── 6. Rust tests ─────────────────────────────────────────────────────────────
+echo ""
+echo "  [6/6] cargo test (src-tauri)..."
+STEP_START=$(date +%s)
+cd src-tauri && cargo test 2>&1
+if [ $? -ne 0 ]; then
+  echo "  FAILED: Rust tests. Fix failing tests above."
+  exit 1
+fi
+cd ..
+STEP_END=$(date +%s)
+echo "  OK ($(( STEP_END - STEP_START ))s)"
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+HOOK_END=$(date +%s)
+echo ""
+echo "All pre-commit checks passed ($(( HOOK_END - HOOK_START ))s total)"
