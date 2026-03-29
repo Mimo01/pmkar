@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n/index';
 import { useLanguageStore } from '../../../i18n/languageStore';
@@ -351,5 +351,214 @@ describe('SettingsPage — Watched Users section', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
     expect(screen.getByText('alice')).toBeInTheDocument();
+  });
+});
+
+describe('SettingsPage — Domain Search sub-section', () => {
+  const mockCloudConnection = {
+    baseUrl: 'https://jira.example.atlassian.net',
+    username: 'cloud-user@example.com',
+    serverVersion: '',
+    lastTestedAt: new Date().toISOString(),
+    status: 'ok' as const,
+  };
+
+  const mockDomainUsers = [
+    { accountId: 'acc-1', displayName: 'Jane Doe', emailAddress: 'jdoe@example.com' },
+    { accountId: 'acc-2', displayName: 'Chris Smith', emailAddress: 'csmith@example.com' },
+    { accountId: 'acc-3', displayName: 'Private User' },
+  ];
+
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockResolvedValue(undefined);
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockCloudConnection,
+    });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+    useTicketStore.setState({
+      tickets: [],
+      triageMap: {},
+      selectedTicketKey: null,
+      fetchStatus: 'idle',
+      fetchError: null,
+      lastFetchedAt: null,
+      totalCount: 0,
+      newCount: 0,
+      jqlPreset: 'assigned',
+      jqlCustom: null,
+      watchedUsers: [],
+    });
+  });
+
+  // Test 1: Domain input renders with placeholder and AtSign icon
+  it('renders domain input in Watched Users section', () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    expect(domainInput).toBeInTheDocument();
+    expect(domainInput).toHaveAttribute('placeholder', 'acme.com');
+  });
+
+  // Test 2: Searching a valid domain invokes the command
+  it('invokes search_jira_users_by_domain when searching a valid domain', async () => {
+    mockInvoke.mockResolvedValueOnce(mockDomainUsers);
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'acme.com' } });
+
+    const searchButton = screen.getByRole('button', { name: /search domain/i });
+    await act(async () => {
+      fireEvent.click(searchButton);
+    });
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', { domain: 'acme.com' });
+    });
+  });
+
+  // Test 3: Invalid domain shows inline error and does NOT invoke
+  it('shows inline error for invalid domain format', async () => {
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'nodot' } });
+
+    const searchButton = screen.getByRole('button', { name: /search domain/i });
+    fireEvent.click(searchButton);
+
+    expect(screen.getByText(/enter a valid domain/i)).toBeInTheDocument();
+    expect(mockInvoke).not.toHaveBeenCalledWith('search_jira_users_by_domain', expect.anything());
+  });
+
+  // Test 4: Search results render with displayName, checkboxes pre-checked, and Add selected button
+  it('renders search results with checkboxes pre-checked and Add selected button', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    });
+    expect(screen.getByText('Chris Smith')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add selected/i })).toBeInTheDocument();
+  });
+
+  // Test 5: Clicking "Add selected" merges users into watchedUsers with dedup
+  it('adds selected users to watchedUsers on Add selected click', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add selected/i })).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /add selected/i }));
+    });
+
+    await waitFor(() => {
+      const watchedUsers = useTicketStore.getState().watchedUsers;
+      expect(watchedUsers).toContain('acc-1');
+    });
+  });
+
+  // Test 6: Already-watched users show "Already watching" badge
+  it('shows Already watching badge for users already in watchedUsers', async () => {
+    useTicketStore.setState({
+      watchedUsers: ['acc-1'],
+    } as Parameters<typeof useTicketStore.setState>[0]);
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/already watching/i)).toBeInTheDocument();
+    });
+  });
+
+  // Test 7: Privacy warning renders when cloudConn is set and results are empty
+  it('shows privacy warning banner when Cloud connection is set and results are empty', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.getByText(/email addresses are hidden/i)).toBeInTheDocument();
+    });
+  });
+
+  // Test 8: Privacy warning does NOT render when cloudConn is null (Server-only)
+  it('does NOT show privacy warning when Cloud connection is null', async () => {
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: null,
+    });
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve([]);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    await waitFor(() => {
+      // Should NOT show alert/privacy warning
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
   });
 });

@@ -107,3 +107,13 @@ None - no external service configuration required.
 ---
 *Phase: 15-change-diff-view*
 *Completed: 2026-03-29*
+
+## Self-Check: PASSED
+
+- FOUND: src-tauri/src/snapshot_db.rs
+- FOUND: src-tauri/src/commands.rs
+- FOUND: src-tauri/src/main.rs
+- FOUND: src-tauri/src/poll_engine.rs
+- FOUND: .planning/phases/15-change-diff-view/15-01-SUMMARY.md
+- FOUND: d3e359d (feat(15-01): extend SnapshotDb with unseen-changes columns and methods)
+- FOUND: 37da241 (feat(15-01): add Tauri commands and wire poll engine for unseen changes)
