@@ -35,18 +35,24 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       - name: Resolve version
         id: version
         shell: bash
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "tag=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "bare=$(echo '${{ github.event.inputs.version }}' | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+            TAG="${{ github.event.inputs.version }}"
           else
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-            echo "bare=$(echo '${{ github.ref_name }}' | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+            TAG="${{ github.ref_name }}"
           fi
+          BARE=$(echo "$TAG" | sed 's/^v//')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "bare=$BARE" >> "$GITHUB_OUTPUT"
+          # Create tag locally if missing (workflow_dispatch case)
+          git tag "$TAG" 2>/dev/null || true
 
       - name: Install Linux dependencies
         if: matrix.os_name == 'linux'
@@ -128,6 +134,7 @@ jobs:
 
   upload-to-releases:
     needs: build
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -135,18 +142,24 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-tags: true
+          fetch-depth: 0
 
       - name: Resolve version
         id: version
         shell: bash
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "tag=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
-            echo "bare=$(echo '${{ github.event.inputs.version }}' | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+            TAG="${{ github.event.inputs.version }}"
           else
-            echo "tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-            echo "bare=$(echo '${{ github.ref_name }}' | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+            TAG="${{ github.ref_name }}"
           fi
+          BARE=$(echo "$TAG" | sed 's/^v//')
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "bare=$BARE" >> "$GITHUB_OUTPUT"
+          # Create tag locally if missing (workflow_dispatch case)
+          git tag "$TAG" 2>/dev/null || true
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
