@@ -1,11 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
+milestone: v0.3.0
+milestone_name: Notifications & Change Tracking
 status: v0.1.0 milestone complete
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-29T13:33:22.287Z"
+stopped_at: "Checkpoint 16-02 Task 2: Visual verification of domain search feature"
+last_updated: "2026-03-29T13:40:40.628Z"
 last_activity: "2026-03-25 - Completed quick task 260325-wet: Add tests to improve pipeline coverage"
+progress:
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -83,6 +88,7 @@ Plan: Not started
 | Phase 11-add-deployment-auto-updates-and-release-management P01 | 4 | 2 tasks | 9 files |
 | Phase 11-add-deployment-auto-updates-and-release-management P03 | 12 | 2 tasks | 11 files |
 | Phase 16-enhanced-watch-configuration P01 | 12 | 2 tasks | 6 files |
+| Phase 16-enhanced-watch-configuration P02 | 18 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -181,6 +187,8 @@ Recent decisions affecting current work:
 - [Phase quick-260325-wet]: vi.runAllTimersAsync() required after vi.advanceTimersByTime() to flush async promise callbacks in fake timer context
 - [Phase 16-01]: search_jira_users_by_domain uses get_cloud_credentials for Cloud v3 Basic auth — consistent with existing cloud command pattern
 - [Phase 16-01]: Privacy-simulation user in mock omits emailAddress entirely (JSON key absent, not null) — accurately simulates Jira Cloud email visibility restriction
+- [Phase 16-02]: Updated local JiraUser interface to support optional name/accountId for Cloud v3 domain search users
+- [Phase 16-02]: Privacy warning gated to cloudConn non-null — server-only connections never show amber banner
 
 ### Roadmap Evolution
 
@@ -241,6 +249,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-25 - Completed quick task 260325-wet: Add tests to improve pipeline coverage
-Last session: 2026-03-29T13:33:22.283Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-29T13:40:40.623Z
+Stopped at: Checkpoint 16-02 Task 2: Visual verification of domain search feature
 Resume file: None

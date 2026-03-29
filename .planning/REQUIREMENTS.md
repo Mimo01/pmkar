@@ -34,8 +34,8 @@ Requirements for Notifications & Change Tracking milestone. Each maps to roadmap
 
 ### Watch Configuration
 
-- [ ] **WTCH-01**: User can add a watch selector by email domain (e.g. @acme.com)
-- [ ] **WTCH-02**: Domain selector resolves to matching users at config time (search + confirm list)
+- [x] **WTCH-01**: User can add a watch selector by email domain (e.g. @acme.com)
+- [x] **WTCH-02**: Domain selector resolves to matching users at config time (search + confirm list)
 
 ## Future Requirements
 
@@ -80,8 +80,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTIF-08 | Phase 14 | Pending |
 | CHNG-01 | Phase 15 | Complete |
 | CHNG-02 | Phase 15 | Complete |
-| WTCH-01 | Phase 16 | Pending |
-| WTCH-02 | Phase 16 | Pending |
+| WTCH-01 | Phase 16 | Complete |
+| WTCH-02 | Phase 16 | Complete |
 
 **Coverage:**
 - v0.3.0 requirements: 18 total
