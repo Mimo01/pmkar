@@ -132,9 +132,9 @@ npm run build
 npx tauri build --target universal-apple-darwin
 
 # Restore version-injected files and Cargo.lock to avoid dirty state
-git -C "$REPO_ROOT" checkout -- src-tauri/tauri.conf.json package.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git -C "$REPO_ROOT" checkout -- src-tauri/tauri.conf.json package.json src-tauri/Cargo.toml Cargo.lock
 
-MACOS_BUNDLE_DIR="$REPO_ROOT/src-tauri/target/universal-apple-darwin/release/bundle"
+MACOS_BUNDLE_DIR="$REPO_ROOT/target/universal-apple-darwin/release/bundle"
 MACOS_DMG="$MACOS_BUNDLE_DIR/dmg/pmkar_${VERSION}_universal.dmg"
 MACOS_APP_TGZ="$MACOS_BUNDLE_DIR/macos/pmkar.app.tar.gz"
 MACOS_APP_SIG="$MACOS_BUNDLE_DIR/macos/pmkar.app.tar.gz.sig"
@@ -154,7 +154,7 @@ LINUX_BUNDLE_DIR=""
 
 if command -v docker &>/dev/null; then
   echo "  --> Linux build (Docker)..."
-  LINUX_BUNDLE_DIR="$REPO_ROOT/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle"
+  LINUX_BUNDLE_DIR="$REPO_ROOT/target/x86_64-unknown-linux-gnu/release/bundle"
 
   docker run --rm \
     -v "$REPO_ROOT:/workspace" \
@@ -184,7 +184,7 @@ if command -v docker &>/dev/null; then
     "
 
   # Restore version-injected files to avoid dirty state
-  git -C "$REPO_ROOT" checkout -- src-tauri/tauri.conf.json package.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+  git -C "$REPO_ROOT" checkout -- src-tauri/tauri.conf.json package.json src-tauri/Cargo.toml Cargo.lock
 
   LINUX_APPIMAGE_TGZ="$LINUX_BUNDLE_DIR/appimage/pmkar_${VERSION}_amd64.AppImage.tar.gz"
   LINUX_APPIMAGE_SIG="$LINUX_BUNDLE_DIR/appimage/pmkar_${VERSION}_amd64.AppImage.tar.gz.sig"
