@@ -17,6 +17,7 @@ tauri = { version = "2.10", features = ["devtools"] }
 tauri-build = { version = "2.0", features = [] }
 axum = "0.8"
 keyring = { version = "3.6", features = ["apple-native", "windows-native", "linux-native-sync-persistent"] }
+dirs = "6"
 rusqlite = { version = "0.39", features = ["bundled"] }
 reqwest = { version = "0.13", features = ["json", "multipart"] }
 htmltoadf = "0.1.12"
