@@ -13,6 +13,7 @@ export interface JiraUser {
   accountId?: string; // Cloud v3
   displayName: string;
   avatarUrls?: Record<string, string>; // e.g. { "48x48": url, "24x24": url, "16x16": url, "32x32": url }
+  emailAddress?: string; // Cloud v3 — absent (not null) when user hides email
 }
 
 // Jira status
