@@ -129,5 +129,5 @@ Plans:
 | 12. Snapshot Foundation | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 13. Background Polling Engine | v0.3.0 | 2/2 | Complete    | 2026-03-27 |
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete    | 2026-03-28 |
-| 15. Change Diff View | v0.3.0 | 2/2 | Complete   | 2026-03-28 |
+| 15. Change Diff View | v0.3.0 | 2/2 | Complete    | 2026-03-29 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 0/? | Not started | - |
