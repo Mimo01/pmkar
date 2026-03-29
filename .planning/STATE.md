@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Last activity: 2026-03-29 - Completed quick task 260329-25f: Dev-mode file-based credential store (no keychain prompts)
 
 Progress: [░░░░░░░░░░] 0% (v0.3.0)
 
@@ -78,6 +78,12 @@ None yet.
 
 - Phase 16: Jira Cloud email privacy behavior under different org/PAT settings is unvalidated — research-phase recommended before planning Phase 16 stories
 - Phase 14: Verify Tauri bugs #8644 and #12834 status against Tauri 2.10 before finalizing Phase 14 scope (click-to-navigate may now be feasible)
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260329-25f | Only on dev mode, don't use keychain for jira keys - on normal build use keychain normally | 2026-03-29 | d602132 | [260329-25f-only-on-dev-mode-don-t-use-keychain-for-](./quick/260329-25f-only-on-dev-mode-don-t-use-keychain-for-/) |
 
 ## Session Continuity
 
