@@ -172,7 +172,7 @@ jobs:
       - name: Get release ID from pmkar-releases
         id: release
         env:
-          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           RELEASE=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload artifacts to pmkar-releases
         env:
-          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
         run: |
           RELEASE_ID="${{ steps.release.outputs.id }}"
           UPLOAD_BASE="https://uploads.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets"
@@ -215,7 +215,7 @@ jobs:
 
       - name: Update latest.json with Linux + Windows platforms
         env:
-          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_TOKEN }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
         run: |
           VERSION="${{ steps.version.outputs.bare }}"
           TAG="${{ steps.version.outputs.tag }}"
