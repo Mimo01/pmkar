@@ -25,7 +25,7 @@
   "settings.watchedUsers.empty": "Zatiaľ žiadni sledovaní používatelia",
   "settings.watchedUsers.remove": "Odstrániť {{user}}",
   "settings.watchedUsers.domainSearch.heading": "Pridať podľa e-mailovej domény",
-  "settings.watchedUsers.domainSearch.placeholder": "acme.com",
+  "settings.watchedUsers.domainSearch.placeholder": "company.com",
   "settings.watchedUsers.domainSearch.searchButton": "Hľadať doménu",
   "settings.watchedUsers.domainSearch.searching": "Vyhľadávam...",
   "settings.watchedUsers.domainSearch.found": "{{count}} používateľ(ov) nájdených",

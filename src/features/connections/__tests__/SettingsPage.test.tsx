@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, act } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n/index';
 import { useLanguageStore } from '../../../i18n/languageStore';
@@ -399,7 +399,7 @@ describe('SettingsPage — Domain Search sub-section', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
     const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
     expect(domainInput).toBeInTheDocument();
-    expect(domainInput).toHaveAttribute('placeholder', 'acme.com');
+    expect(domainInput).toHaveAttribute('placeholder', 'company.com');
   });
 
   // Test 2: Searching a valid domain invokes the command
@@ -417,7 +417,9 @@ describe('SettingsPage — Domain Search sub-section', () => {
     });
 
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', { domain: 'acme.com' });
+      expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', {
+        domain: 'acme.com',
+      });
     });
   });
 
@@ -485,14 +487,14 @@ describe('SettingsPage — Domain Search sub-section', () => {
 
     await waitFor(() => {
       const watchedUsers = useTicketStore.getState().watchedUsers;
-      expect(watchedUsers).toContain('acc-1');
+      expect(watchedUsers).toContain('Jane Doe');
     });
   });
 
   // Test 6: Already-watched users show "Already watching" badge
   it('shows Already watching badge for users already in watchedUsers', async () => {
     useTicketStore.setState({
-      watchedUsers: ['acc-1'],
+      watchedUsers: ['Jane Doe'],
     } as Parameters<typeof useTicketStore.setState>[0]);
 
     mockInvoke.mockImplementation((cmd: string) => {

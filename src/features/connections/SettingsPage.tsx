@@ -425,7 +425,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
         setDomainResults(users);
         const newSelected = new Set<string>();
         users.forEach((u) => {
-          const id = u.accountId ?? u.name ?? '';
+          const id = u.displayName;
           if (id && !safeWatchedUsers.includes(id)) newSelected.add(id);
         });
         setSelectedAccountIds(newSelected);
@@ -439,19 +439,26 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
 
   function handleAddDomainResults() {
     const current = safeWatchedUsers;
-    const newIds = domainResults
+    const newNames = domainResults
       .filter((u) => {
-        const id = u.accountId ?? u.name ?? '';
+        const id = u.displayName;
         return selectedAccountIds.has(id);
       })
-      .map((u) => u.accountId ?? u.name ?? '')
-      .filter((id) => id && !current.includes(id));
-    if (newIds.length === 0) return;
-    const updated = [...current, ...newIds];
+      .map((u) => u.displayName)
+      .filter((name) => name && !current.includes(name));
+    if (newNames.length === 0) return;
+    const updated = [...current, ...newNames];
     useTicketStore.getState().setWatchedUsers(updated);
     persistFetchConfigWith(updated);
     setDomainResults([]);
     setDomainQuery('');
+    setSelectedAccountIds(new Set());
+    setDomainSearchState('idle');
+    setShowPrivacyWarning(false);
+  }
+
+  function handleCancelDomainResults() {
+    setDomainResults([]);
     setSelectedAccountIds(new Set());
     setDomainSearchState('idle');
     setShowPrivacyWarning(false);
@@ -785,7 +792,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                         <span className="text-[13px] text-brand-text block">
                           {user.displayName}
                         </span>
-                        <span className="text-[11px] text-brand-muted block">{user.name ?? ''}</span>
+                        <span className="text-[11px] text-brand-muted block">
+                          {user.name ?? ''}
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -793,16 +802,44 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
               )}
             </div>
 
+            {/* User list */}
+            {safeWatchedUsers.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
+              </div>
+            ) : (
+              <div className="space-y-0.5 mb-2">
+                {safeWatchedUsers.map((user) => (
+                  <div
+                    key={user}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
+                        {user.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveUser(user)}
+                      className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      aria-label={t('settings.watchedUsers.remove', { user })}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Domain search sub-section */}
-            <Separator className="mt-6 mb-4" />
+            <Separator className="mt-4 mb-4" />
             <p className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
               {t('settings.watchedUsers.domainSearch.heading')}
             </p>
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
-              <AtSign
-                className="w-3.5 h-3.5 text-brand-muted flex-shrink-0"
-                aria-hidden="true"
-              />
+              <AtSign className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
               <input
                 type="text"
                 value={domainQuery}
@@ -850,10 +887,10 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                     className="text-xs text-brand hover:underline cursor-pointer"
                     onClick={() => {
                       const allSelectable = domainResults
-                        .map((u) => u.accountId ?? u.name ?? '')
-                        .filter((id) => id && !safeWatchedUsers.includes(id));
-                      const allSelected = allSelectable.every((id) =>
-                        selectedAccountIds.has(id),
+                        .map((u) => u.displayName)
+                        .filter((name) => name && !safeWatchedUsers.includes(name));
+                      const allSelected = allSelectable.every((name) =>
+                        selectedAccountIds.has(name),
                       );
                       if (allSelected) {
                         setSelectedAccountIds(new Set());
@@ -863,22 +900,21 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                     }}
                   >
                     {domainResults
-                      .map((u) => u.accountId ?? u.name ?? '')
-                      .filter((id) => id && !safeWatchedUsers.includes(id))
-                      .every((id) => selectedAccountIds.has(id))
+                      .map((u) => u.displayName)
+                      .filter((name) => name && !safeWatchedUsers.includes(name))
+                      .every((name) => selectedAccountIds.has(name))
                       ? t('settings.watchedUsers.domainSearch.deselectAll')
                       : t('settings.watchedUsers.domainSearch.selectAll')}
                   </button>
                 </div>
-                <div role="list">
+                <ul className="list-none m-0 p-0">
                   {domainResults.map((user, i) => {
-                    const userId = user.accountId ?? user.name ?? '';
+                    const userId = user.displayName;
                     const isAlreadyWatching = safeWatchedUsers.includes(userId);
                     const isChecked = selectedAccountIds.has(userId);
                     return (
-                      <div
-                        key={userId || user.displayName}
-                        role="listitem"
+                      <li
+                        key={userId}
                         className={`flex items-center gap-2 px-4 py-2 ${i > 0 ? 'border-t border-brand-border-subtle' : ''}`}
                       >
                         <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-xs font-semibold text-brand flex-shrink-0">
@@ -914,11 +950,18 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                             }}
                           />
                         )}
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
-                <div className="flex justify-end px-4 py-2 border-t border-brand-border bg-brand-bg">
+                </ul>
+                <div className="flex justify-end gap-2 px-4 py-2 border-t border-brand-border bg-brand-bg">
+                  <button
+                    type="button"
+                    onClick={handleCancelDomainResults}
+                    className="text-xs font-medium text-brand-muted px-2 py-1 rounded-lg hover:bg-brand-surface-hover transition-colors"
+                  >
+                    {t('settings.cancel')}
+                  </button>
                   <button
                     type="button"
                     onClick={handleAddDomainResults}
@@ -958,37 +1001,6 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   </p>
                   <p>{t('settings.watchedUsers.domainSearch.privacyWarning.body')}</p>
                 </div>
-              </div>
-            )}
-
-            {/* User list */}
-            {safeWatchedUsers.length === 0 ? (
-              <div className="py-6 text-center">
-                <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {safeWatchedUsers.map((user) => (
-                  <div
-                    key={user}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
-                        {user.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveUser(user)}
-                      className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      aria-label={t('settings.watchedUsers.remove', { user })}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
               </div>
             )}
           </SectionCard>

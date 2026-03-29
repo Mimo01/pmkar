@@ -25,7 +25,7 @@
   "settings.watchedUsers.empty": "No watched users yet",
   "settings.watchedUsers.remove": "Remove {{user}}",
   "settings.watchedUsers.domainSearch.heading": "Add by email domain",
-  "settings.watchedUsers.domainSearch.placeholder": "acme.com",
+  "settings.watchedUsers.domainSearch.placeholder": "company.com",
   "settings.watchedUsers.domainSearch.searchButton": "Search domain",
   "settings.watchedUsers.domainSearch.searching": "Searching...",
   "settings.watchedUsers.domainSearch.found": "{{count}} user(s) found",
