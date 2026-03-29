@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: true
 preset: "style: default, baseColor: neutral, cssVariables: true"
 created: 2026-03-29
+revised: 2026-03-29
 ---
 
 # Phase 16 — UI Design Contract
@@ -36,14 +37,14 @@ Declared values (multiples of 4):
 | xs | 4px | Icon gaps, tight inline padding (`gap-1`, `p-1`) |
 | sm | 8px | Compact element spacing (`gap-2`, `mb-2`) |
 | md | 16px | Default element spacing (`px-4`, `mb-4`) |
-| lg | 24px | Section padding (`p-5` rounds to 20px — exception noted below) |
+| lg | 24px | Section padding |
 | xl | 32px | Layout gaps |
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level spacing |
 
-Exceptions:
-- `SectionCard` inner padding uses `p-5` (20px) — matches existing SettingsPage pattern, do not change.
-- Sub-section separator between existing user search and new domain search: `mt-6 mb-4` (24px top, 16px bottom).
+Exceptions (inherited from existing SettingsPage patterns — do not change):
+- `SectionCard` inner padding uses `p-5` (20px) — matches existing SettingsPage pattern throughout the file. Inherited exception; executor must not alter it.
+- Sub-section separator between existing user search and new domain search: `mt-6 mb-4` (24px top, 16px bottom) — both are standard-set values.
 - Avatar size: 24px (`w-6 h-6`) — matches existing user list row avatars.
 
 Source: observed from `SettingsPage.tsx` Watched Users section (lines 651-754).
@@ -54,14 +55,15 @@ Source: observed from `SettingsPage.tsx` Watched Users section (lines 651-754).
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body / input text | 13px (`text-[13px]`) | 400 (regular) | 1.5 |
-| Label / helper text | 12px (`text-[12px]`) | 400 (regular) | 1.5 |
-| Caption / meta text | 11px (`text-[11px]`) | 400 regular / 600 semibold for initials | 1.4 |
-| Section heading | 11px (`text-[11px]`) | 600 (semibold), uppercase, tracking-wider | 1.2 |
+| Body / input text | 14px (`text-sm`) | 400 (regular) | 1.5 |
+| Label / helper / caption / meta text | 12px (`text-xs`) | 400 (regular) | 1.5 |
+| Section heading | 12px (`text-xs`) | 600 (semibold), uppercase, tracking-wider | 1.2 |
 
 Only two weights used: 400 (regular) and 600 (semibold). No other weights.
 
-Source: observed from `SettingsPage.tsx` and `SectionCard` component.
+Note: Previous draft used 11/12/13px at 1px increments, which creates ambiguous hierarchy. Consolidated to two sizes — 14px for interactive body/input text and 12px for all supporting text (labels, captions, meta, section headings). Avatar initials use 12px semibold.
+
+Source: observed from `SettingsPage.tsx` and `SectionCard` component. Revised per checker recommendation (Dimension 4).
 
 ---
 
@@ -77,9 +79,10 @@ Source: observed from `SettingsPage.tsx` and `SectionCard` component.
 
 Accent (`--color-brand` #c02232) reserved for:
 - Search input focus ring (`focus-within:ring-brand/15`)
-- "Add users" button (primary action)
+- "Add selected" button (primary action)
 - User avatar initial badges background tint (`bg-brand/8`)
 - Keyboard-highlighted suggestion row (`bg-brand/10`)
+- "Search domain" button text
 
 Warning color (amber) reserved for:
 - Jira Cloud email privacy warning banner only — no other element uses amber in this phase.
@@ -92,23 +95,37 @@ Source: `src/index.css` token definitions + `SettingsPage.tsx` existing Watched 
 
 All components extend the existing Watched Users section (`SettingsPage.tsx` case `'watched-users'`, line 651). No new routes or pages.
 
+Focal point: the domain input field is the primary focal point of this sub-section. It is the first interactive element the eye lands on, positioned immediately below the `<Separator>` divider and sub-heading. The "Add selected" button in the results footer is the secondary focal point — reached only after a successful search.
+
 ### 1. Domain Input Sub-section
 
 Location: Below the existing individual user search block, separated by a `<Separator>` with sub-heading.
 
-Sub-heading: `text-[11px] font-semibold text-brand-muted uppercase tracking-wider mb-3`
+Sub-heading: `text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3`
 Copy: `"Add by email domain"` (i18n key: `settings.watchedUsers.domainSearch.heading`)
 
-Input field: same compound input pattern as existing user search (`flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15`).
+Input field: same compound input pattern as existing user search (`flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15`).
+
+Spacing notes vs previous draft:
+- `gap-2.5` (10px, non-standard) replaced with `gap-2` (8px)
+- `px-3` kept at `px-4` (16px, standard) — input row side padding
+
 - Leading icon: `AtSign` (lucide) `w-3.5 h-3.5 text-brand-muted`
 - Placeholder: `"acme.com"` — user types with or without @, both accepted
-- Trailing: `"Search"` button (`text-[12px] font-medium text-brand px-2 py-0.5 rounded hover:bg-brand/8 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`)
+- Trailing: `"Search domain"` button (`text-xs font-medium text-brand px-2 py-1 rounded hover:bg-brand/8 transition-colors disabled:opacity-40 disabled:cursor-not-allowed`)
+
+Spacing notes vs previous draft:
+- `py-0.5` (2px, non-standard) replaced with `py-1` (4px)
+
 - Keyboard: Enter triggers search; Escape clears
 
-Inline validation error (invalid domain format): `text-[11px] text-destructive mt-1.5 ml-1`
+Inline validation error (invalid domain format): `text-xs text-destructive mt-2 ml-1`
 Copy: `"Enter a valid domain (e.g. acme.com)"` (i18n key: `settings.watchedUsers.domainSearch.invalidFormat`)
 
-Loading state during search: replace trailing "Search" button text with `Skeleton` pulse or spinner (`w-3 h-3 animate-spin` border spinner, brand-muted color).
+Spacing notes vs previous draft:
+- `mt-1.5` (6px, non-standard) replaced with `mt-2` (8px)
+
+Loading state during search: replace trailing "Search domain" button text with spinner (`w-3 h-3 animate-spin` border spinner, brand-muted color).
 
 ### 2. Search Results List
 
@@ -116,29 +133,45 @@ Rendered inline below the domain input, no modal. Same visual container as the e
 
 Each row:
 ```
-flex items-center gap-2.5 px-3.5 py-2
+flex items-center gap-2 px-4 py-2
 border-t border-brand-border-subtle (for rows > 0)
 ```
-- Avatar: `w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand` — initial letter
-- Primary text: `text-[13px] text-brand-text` — displayName
-- Secondary text: `text-[11px] text-brand-muted` — username/email (masked as `••••@domain` if Cloud privacy active)
+
+Spacing notes vs previous draft:
+- `gap-2.5` (10px, non-standard) replaced with `gap-2` (8px)
+- `px-3.5` (14px, non-standard) replaced with `px-4` (16px)
+
+- Avatar: `w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-xs font-semibold text-brand` — initial letter
+- Primary text: `text-sm text-brand-text` — displayName
+- Secondary text: `text-xs text-brand-muted` — username/email (masked as `••••@domain` if Cloud privacy active)
 - Right: checkbox `w-4 h-4` (shadcn Checkbox or native `<input type="checkbox">`) — pre-checked by default, user unchecks to exclude
 
 Header row above the list (when results present):
 ```
-flex items-center justify-between px-3.5 py-2 border-b border-brand-border
+flex items-center justify-between px-4 py-2 border-b border-brand-border
 ```
-- Left: `text-[11px] text-brand-muted` — `"N users found"` (i18n key: `settings.watchedUsers.domainSearch.found`)
-- Right: `"Select all"` / `"Deselect all"` toggle — `text-[11px] text-brand hover:underline cursor-pointer`
+
+Spacing notes vs previous draft:
+- `px-3.5` (14px, non-standard) replaced with `px-4` (16px)
+
+- Left: `text-xs text-brand-muted` — `"N users found"` (i18n key: `settings.watchedUsers.domainSearch.found`)
+- Right: `"Select all"` / `"Deselect all"` toggle — `text-xs text-brand hover:underline cursor-pointer`
 
 Footer row (when results present):
 ```
-flex justify-end px-3.5 py-2.5 border-t border-brand-border bg-brand-bg
+flex justify-end px-4 py-2 border-t border-brand-border bg-brand-bg
 ```
-- "Add selected" button: `text-[12px] font-semibold text-white bg-brand px-3 py-1.5 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed`
-- Disabled when zero users selected.
 
-Already-watched users in results: show with `text-brand-muted line-through` on displayName and `text-[11px] text-brand-muted ml-auto` badge reading `"Already watching"`. Checkbox disabled and unchecked.
+Spacing notes vs previous draft:
+- `px-3.5` (14px, non-standard) replaced with `px-4` (16px)
+- `py-2.5` (10px, non-standard) replaced with `py-2` (8px)
+
+- "Add selected" button: `text-xs font-semibold text-white bg-brand px-3 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed`
+
+Spacing notes vs previous draft:
+- `py-1.5` (6px, non-standard) replaced with `py-1` (4px) in the button interior — consistent with `py-1` used on "Search domain" button.
+
+Already-watched users in results: show with `text-brand-muted line-through` on displayName and `text-xs text-brand-muted ml-auto` badge reading `"Already watching"`. Checkbox disabled and unchecked.
 
 ### 3. Privacy Warning Banner
 
@@ -147,10 +180,15 @@ Trigger: when Jira Cloud connection is active AND search returns zero results (o
 Position: inline, below the results container (or below the domain input if no results container shown). Not a toast. Not dismissible.
 
 ```
-flex items-start gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 mt-3
+flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 mt-3
 ```
-- Icon: `AlertTriangle` (lucide) `w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5`
-- Text block: `text-[12px] text-brand-text`
+
+Spacing notes vs previous draft:
+- `gap-2.5` (10px, non-standard) replaced with `gap-2` (8px)
+- `py-3` (12px, non-standard) replaced with `py-2` (8px)
+
+- Icon: `AlertTriangle` (lucide) `w-4 h-4 text-amber-500 flex-shrink-0 mt-1`
+- Text block: `text-xs text-brand-text`
   - Bold line: `"Email addresses are hidden by your Jira Cloud settings."` (i18n key: `settings.watchedUsers.domainSearch.privacyWarning.title`)
   - Body line: `"Ask your Jira admin to disable email visibility restrictions, or add users individually above."` (i18n key: `settings.watchedUsers.domainSearch.privacyWarning.body`)
 
@@ -159,9 +197,10 @@ flex items-start gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/10 p
 Rendered in place of the results list when search returns zero users and no privacy flag.
 
 ```
-py-5 text-center
+py-4 text-center
 ```
-- `text-[12px] text-brand-muted` — `"No users found for @{domain}"` (i18n key: `settings.watchedUsers.domainSearch.noResults`)
+
+- `text-xs text-brand-muted` — `"No users found for @{domain}"` (i18n key: `settings.watchedUsers.domainSearch.noResults`)
 
 ### 5. Success Confirmation
 
@@ -177,7 +216,7 @@ No separate success message needed — the users appearing in the list is suffic
 |---------|------|----------|
 | Sub-section heading | "Add by email domain" | `settings.watchedUsers.domainSearch.heading` |
 | Input placeholder | "acme.com" | `settings.watchedUsers.domainSearch.placeholder` |
-| Search button | "Search" | `settings.watchedUsers.domainSearch.searchButton` |
+| Search button | "Search domain" | `settings.watchedUsers.domainSearch.searchButton` |
 | Searching state | "Searching..." | `settings.watchedUsers.domainSearch.searching` |
 | Results count | "{{count}} user found" / "{{count}} users found" | `settings.watchedUsers.domainSearch.found` |
 | Select all toggle | "Select all" | `settings.watchedUsers.domainSearch.selectAll` |
@@ -194,6 +233,8 @@ Destructive actions in this phase: none. Domain search adds users; no remove-use
 
 Primary CTA label: "Add selected" — verb + noun, acts on the current selection.
 
+Note: "Search" was updated to "Search domain" (verb + noun) per checker recommendation (Dimension 1).
+
 ---
 
 ## Interaction States
@@ -202,8 +243,8 @@ Primary CTA label: "Add selected" — verb + noun, acts on the current selection
 |-------|---------|--------|
 | Idle | Page load | Domain input empty, no results panel |
 | Typing | User keystroke | Input value updates; no search until Enter or button click |
-| Invalid | Blur or search with malformed input | Red inline error below input; Search button disabled |
-| Loading | Search triggered | Spinner replaces Search button label; input disabled |
+| Invalid | Blur or search with malformed input | Red inline error below input; Search domain button disabled |
+| Loading | Search triggered | Spinner replaces Search domain button label; input disabled |
 | Results | Search returns ≥1 user | Results list renders; Add selected button enabled if any checkbox checked |
 | Empty | Search returns 0 users, no privacy flag | Empty state text inline |
 | Privacy warning | Cloud + 0 results or masked emails | Amber banner below results/empty state |
@@ -217,7 +258,7 @@ Primary CTA label: "Add selected" — verb + noun, acts on the current selection
 - Domain input: `aria-label="Search users by email domain"`, `aria-describedby` pointing to inline error when visible.
 - Results list: `role="list"`, each row `role="listitem"`. Not a combobox/dropdown — it is a persistent in-document list.
 - Privacy warning: `role="alert"` so screen readers announce it when it appears.
-- Search button: `aria-busy="true"` during loading state.
+- Search domain button: `aria-busy="true"` during loading state.
 - Checkbox rows: each checkbox has `aria-label="Select {displayName}"`.
 - "Add selected" button: `aria-disabled="true"` (not `disabled`) when 0 selected — preserves tab focus for keyboard users.
 
@@ -231,6 +272,18 @@ Primary CTA label: "Add selected" — verb + noun, acts on the current selection
 | Third-party | none | not applicable |
 
 No third-party registries. All new UI is hand-composed following existing SettingsPage patterns. shadcn Checkbox component may be used from the official registry — no vetting required.
+
+---
+
+## Revision Log
+
+| Date | Change | Reason |
+|------|--------|--------|
+| 2026-03-29 | Replace `gap-2.5`→`gap-2`, `px-3.5`→`px-4`, `py-0.5`→`py-1`, `py-2.5`→`py-2`, `mt-1.5`→`mt-2`, `py-3`→`py-2` throughout component definitions | Blocking: non-standard spacing values (Dimension 5) |
+| 2026-03-29 | Document `p-5` as explicit inherited exception from SettingsPage pattern | Blocking: undocumented non-standard value (Dimension 5) |
+| 2026-03-29 | "Search" button label → "Search domain" | Recommendation: single-word CTA lacked noun (Dimension 1) |
+| 2026-03-29 | Add focal point declaration | Recommendation: missing focal point (Dimension 2) |
+| 2026-03-29 | Consolidate 11/12/13px → 12px (`text-xs`) + 14px (`text-sm`) | Recommendation: 1px-increment type sizes lack hierarchy (Dimension 4) |
 
 ---
 
