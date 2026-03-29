@@ -101,7 +101,7 @@ Focal point: the domain input field is the primary focal point of this sub-secti
 
 Location: Below the existing individual user search block, separated by a `<Separator>` with sub-heading.
 
-Sub-heading: `text-xs font-semibold text-brand-muted uppercase tracking-wider mb-3`
+Sub-heading: `text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2`
 Copy: `"Add by email domain"` (i18n key: `settings.watchedUsers.domainSearch.heading`)
 
 Input field: same compound input pattern as existing user search (`flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15`).
@@ -166,10 +166,11 @@ Spacing notes vs previous draft:
 - `px-3.5` (14px, non-standard) replaced with `px-4` (16px)
 - `py-2.5` (10px, non-standard) replaced with `py-2` (8px)
 
-- "Add selected" button: `text-xs font-semibold text-white bg-brand px-3 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed`
+- "Add selected" button: `text-xs font-semibold text-white bg-brand px-2 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed`
 
 Spacing notes vs previous draft:
 - `py-1.5` (6px, non-standard) replaced with `py-1` (4px) in the button interior — consistent with `py-1` used on "Search domain" button.
+- `px-3` (12px, non-standard) replaced with `px-2` (8px) — consistent with "Search domain" button horizontal padding.
 
 Already-watched users in results: show with `text-brand-muted line-through` on displayName and `text-xs text-brand-muted ml-auto` badge reading `"Already watching"`. Checkbox disabled and unchecked.
 
@@ -180,12 +181,13 @@ Trigger: when Jira Cloud connection is active AND search returns zero results (o
 Position: inline, below the results container (or below the domain input if no results container shown). Not a toast. Not dismissible.
 
 ```
-flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 mt-3
+flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 mt-4
 ```
 
 Spacing notes vs previous draft:
 - `gap-2.5` (10px, non-standard) replaced with `gap-2` (8px)
 - `py-3` (12px, non-standard) replaced with `py-2` (8px)
+- `mt-3` (12px, non-standard) replaced with `mt-4` (16px) — provides more visual separation from the results/empty state above than inline errors
 
 - Icon: `AlertTriangle` (lucide) `w-4 h-4 text-amber-500 flex-shrink-0 mt-1`
 - Text block: `text-xs text-brand-text`
@@ -284,6 +286,7 @@ No third-party registries. All new UI is hand-composed following existing Settin
 | 2026-03-29 | "Search" button label → "Search domain" | Recommendation: single-word CTA lacked noun (Dimension 1) |
 | 2026-03-29 | Add focal point declaration | Recommendation: missing focal point (Dimension 2) |
 | 2026-03-29 | Consolidate 11/12/13px → 12px (`text-xs`) + 14px (`text-sm`) | Recommendation: 1px-increment type sizes lack hierarchy (Dimension 4) |
+| 2026-03-29 | `mb-3`→`mb-2` (sub-heading bottom margin), `px-3`→`px-2` ("Add selected" button horizontal padding), `mt-3`→`mt-4` (privacy warning top margin) | Blocking: three remaining `*-3` (12px) spacing values not in standard set (Dimension 5) |
 
 ---
 
