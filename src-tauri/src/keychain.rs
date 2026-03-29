@@ -14,11 +14,18 @@ fn service_name(connection_type: &str) -> String {
 mod file_store {
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use std::sync::Once;
+    use std::sync::{Mutex, Once, OnceLock};
 
     use crate::error::{AppError, AppResult};
 
     static WARN_ONCE: Once = Once::new();
+
+    /// Global mutex to serialise all reads and writes to the dev credential file.
+    static FILE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn file_lock() -> &'static Mutex<()> {
+        FILE_LOCK.get_or_init(|| Mutex::new(()))
+    }
 
     fn dev_cred_path() -> AppResult<PathBuf> {
         dirs::home_dir()
@@ -26,19 +33,22 @@ mod file_store {
             .ok_or_else(|| AppError::Keychain("Cannot determine home directory".into()))
     }
 
-    fn load_map() -> AppResult<HashMap<String, String>> {
+    fn load_map_unlocked() -> AppResult<HashMap<String, String>> {
         let path = dev_cred_path()?;
         if !path.exists() {
             return Ok(HashMap::new());
         }
         let raw = std::fs::read_to_string(&path)
             .map_err(|e| AppError::Keychain(format!("Failed to read credential file: {e}")))?;
+        if raw.trim().is_empty() {
+            return Ok(HashMap::new());
+        }
         let map: HashMap<String, String> = serde_json::from_str(&raw)
             .map_err(|e| AppError::Keychain(format!("Failed to parse credential file: {e}")))?;
         Ok(map)
     }
 
-    fn save_map(map: &HashMap<String, String>) -> AppResult<()> {
+    fn save_map_unlocked(map: &HashMap<String, String>) -> AppResult<()> {
         let path = dev_cred_path()?;
         let raw = serde_json::to_string_pretty(map)
             .map_err(|e| AppError::Keychain(format!("Failed to serialize credentials: {e}")))?;
@@ -56,15 +66,21 @@ mod file_store {
     pub fn store(service: &str, username: &str, secret: &str) -> AppResult<()> {
         announce();
         let key = format!("{service}:{username}");
-        let mut map = load_map()?;
+        let _guard = file_lock()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut map = load_map_unlocked()?;
         map.insert(key, secret.to_string());
-        save_map(&map)
+        save_map_unlocked(&map)
     }
 
     pub fn get(service: &str, username: &str) -> AppResult<String> {
         announce();
         let key = format!("{service}:{username}");
-        let map = load_map()?;
+        let _guard = file_lock()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let map = load_map_unlocked()?;
         map.get(&key)
             .cloned()
             .ok_or_else(|| AppError::Keychain(format!("Credential not found: {key}")))
@@ -73,11 +89,14 @@ mod file_store {
     pub fn delete(service: &str, username: &str) -> AppResult<()> {
         announce();
         let key = format!("{service}:{username}");
-        let mut map = load_map()?;
+        let _guard = file_lock()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut map = load_map_unlocked()?;
         if map.remove(&key).is_none() {
             return Err(AppError::Keychain(format!("Credential not found: {key}")));
         }
-        save_map(&map)
+        save_map_unlocked(&map)
     }
 }
 
