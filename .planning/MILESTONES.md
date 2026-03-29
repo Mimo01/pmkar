@@ -1,5 +1,37 @@
 # Milestones
 
+## v0.3.0 Notifications & Change Tracking (Shipped: 2026-03-29)
+
+**Phases:** 5 | **Plans:** 10 | **Tasks:** 10
+**Timeline:** 10 days (2026-03-19 → 2026-03-29)
+**Codebase:** 23,250 LOC (16,048 TypeScript + 7,202 Rust) | 91 commits
+**Git range:** 1df1a29 → 8ed9bdc
+
+**Delivered:** Ticket change tracking pipeline — background polling detects field-level changes via SQLite snapshots, sends OS-level desktop notifications with configurable per-event preferences, and surfaces diffs in a dedicated change view with visual indicators.
+
+**Key accomplishments:**
+
+1. SQLite snapshot storage with SHA-256 hash-based change detection, volatile field stripping, and watermark query
+2. Rust-side background polling engine (tokio loop) with configurable frequency (5m/15m/30m/1h/off) and manual trigger
+3. OS-level notification dispatch with body formatting, event filtering, and per-event toggle preferences
+4. Change diff view — blue dot indicators on ticket cards, field-level diff table, auto-switch to Changes tab
+5. Enhanced watch configuration with email domain search, bulk user add, and Jira Cloud privacy warning
+
+### Known Gaps
+
+Per milestone audit (tech_debt status):
+
+- MC-01: Blue dots appear via re-fetch path (~1-3s delay) rather than directly from changedKeys payload (cosmetic)
+- Nyquist validation not completed for phases 12-16 (VALIDATION.md files exist in draft)
+
+### Archives
+
+- [Roadmap](milestones/v0.3.0-ROADMAP.md)
+- [Requirements](milestones/v0.3.0-REQUIREMENTS.md)
+- [Audit](milestones/v0.3.0-MILESTONE-AUDIT.md)
+
+---
+
 ## v0.1.0 MVP (Shipped: 2026-03-25)
 
 **Phases:** 11 | **Plans:** 45 | **Tasks:** 84
@@ -22,6 +54,7 @@
 ### Known Gaps
 
 Per milestone audit (tech_debt status):
+
 - INT-02: Hardcoded `MYPROJ` cloud project key — copy fails against real Jira Cloud with different project key
 - INT-01: `CopyResultModal` step label mismatch (cosmetic)
 - INT-03: Attachment upload HTTP calls bypass audit middleware

@@ -31,30 +31,26 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Changelog generation from conventional commits and version sync tooling — v0.1.0
 - ✓ Biome + clippy pedantic linting, 80% test coverage with threshold enforcement — v0.1.0
 - ✓ GitHub Actions CI (lint + type-check + test + clippy + fmt) — v0.1.0
+- ✓ Background ticket update detection with configurable auto-poll frequency (5m/15m/30m/1h/off) — v0.3.0
+- ✓ Manual poll on demand via button or F5 — v0.3.0
+- ✓ SQLite snapshot storage with SHA-256 hash-based change detection and field-level diff — v0.3.0
+- ✓ OS-level desktop notifications for ticket changes (status, priority, comments, new tickets) — v0.3.0
+- ✓ Configurable notification preferences with per-event toggles — v0.3.0
+- ✓ Change diff view with blue dot indicators and field-level diff table — v0.3.0
+- ✓ Enhanced watch configuration with email domain search and bulk user add — v0.3.0
 
 ### Active
 
-- [ ] OS-level notifications for ticket changes (native desktop notifications via Tauri)
-- [ ] Configurable notification preferences (choose which events trigger notifications)
-- [ ] Enhanced watch configuration — watch by specific users or by selector (e.g., email domain)
-- [~] Background ticket update detection with configurable auto-poll frequency (snapshot foundation delivered in Phase 12)
-- [ ] Manual poll on demand — user can trigger a refresh anytime
-- [~] Change diff view — see what changed on a ticket since last fetch (field-level diff engine delivered in Phase 12)
 - [ ] Excel export capability (scope TBD)
 - [ ] Configurable cloud project key (currently hardcoded as MYPROJ)
 - [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
+- [ ] Taskbar/dock badge count showing unread change count
+- [ ] In-app notification history panel
 
-## Current Milestone: v0.3.0 Notifications & Change Tracking
+## Shipped Milestones
 
-**Goal:** Detect ticket changes after initial fetch, notify users via OS-level notifications, and let them configure what they watch, get notified about, and how often to poll.
-
-**Target features:**
-- OS-level notifications for ticket changes
-- Configurable notification preferences in settings
-- Enhanced watch configuration (by user or by selector like email domain)
-- Background ticket update detection with configurable auto-poll frequency
-- Manual poll on demand
-- Change diff view showing what changed on a ticket
+- **v0.1.0 MVP** — shipped 2026-03-25
+- **v0.3.0 Notifications & Change Tracking** — shipped 2026-03-29
 
 ### Out of Scope
 
@@ -66,12 +62,12 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ## Context
 
-Shipped v0.1.0 with 16,284 LOC (11,711 TypeScript + 4,573 Rust).
-Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf).
-389 frontend tests (Vitest), 44 Rust tests, 80.11% line coverage.
-Phase 12 complete — SnapshotDb data layer and Tauri integration for change tracking.
-GitHub Actions CI with parallel frontend + Rust jobs.
+Shipped v0.3.0 with 23,250 LOC (16,048 TypeScript + 7,202 Rust).
+Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf, tauri-plugin-notification).
+528 frontend tests (Vitest), 75 Rust tests.
+Local pre-commit hook replaces GitHub Actions CI (lint + type-check + test + clippy + fmt).
 Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
+Background polling with OS notifications and field-level change tracking fully operational.
 
 ## Constraints
 
@@ -94,6 +90,12 @@ Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 | Public releases repo for binaries | Keep source private, publish to Mimo01/pmkar-releases | ✓ Good — v0.1.0 |
 | Tauri updater plugin for auto-updates | Native mechanism with signed artifacts | ✓ Good — v0.1.0 |
 | Excel export deferred | Core ticket workflow is priority, export scope TBD | — Pending |
+| Rust-side polling (tokio loop) | Continues when webview is backgrounded; setInterval would throttle | ✓ Good — v0.3.0 |
+| SQLite snapshots + SHA-256 hash | Fast change detection without full field comparison on every poll | ✓ Good — v0.3.0 |
+| tauri-plugin-notification for OS notifications | Native notifications without Electron-style workarounds | ✓ Good — v0.3.0 |
+| Quiet hours removed | User requested removal during Phase 14 — simplifies notification UX | ✓ Good — v0.3.0 |
+| Re-fetch path for blue dots (not direct changedKeys) | Simpler wiring; ~1-3s cosmetic delay acceptable vs. dual state path | ⚠️ Revisit |
+| Local pre-commit hook replaces GitHub Actions CI | No public CI needed for private repo; faster feedback loop | ✓ Good — v0.3.0 |
 
 ## Evolution
 
@@ -113,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after Phase 16 (enhanced-watch-configuration) completion*
+*Last updated: 2026-03-29 after v0.3.0 milestone*

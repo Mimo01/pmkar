@@ -49,6 +49,49 @@
 
 ---
 
+## Milestone: v0.3.0 — Notifications & Change Tracking
+
+**Shipped:** 2026-03-29
+**Phases:** 5 | **Plans:** 10 | **Tasks:** 10
+
+### What Was Built
+- SQLite snapshot storage with SHA-256 hash-based change detection and field-level diff engine
+- Rust-side background polling engine (tokio loop) with configurable frequency and manual trigger
+- OS-level desktop notifications via tauri-plugin-notification with per-event preferences
+- Change diff view with blue dot indicators on ticket cards and field-level diff table
+- Enhanced watch configuration with email domain search and bulk user add
+
+### What Worked
+- Milestone audit (`/gsd:audit-milestone`) before completion caught documentation drift (NOTIF checkbox/traceability table stale) — fixed before archiving
+- 2 plans per phase kept scope tight and execution fast (3 days for 5 phases)
+- Rust-side polling architecture decision was correct — continues when webview is backgrounded
+- Phase dependency graph (12 → 13 → 14, 13 → 15, 13 → 16) enabled parallel execution of phases 14/15/16
+
+### What Was Inefficient
+- REQUIREMENTS.md traceability table for NOTIF-01–NOTIF-07 drifted to stale "Pending" status despite being satisfied — same checkbox drift pattern from v0.1.0
+- Phase 13 summary one-liners were malformed (bug fix descriptions rather than feature summaries) — required manual cleanup in MILESTONES.md
+- Nyquist validation not completed for any of the 5 phases — VALIDATION.md files exist in draft but none were finalized
+- Blue dot implementation chose re-fetch path over direct changedKeys propagation — creates ~1-3s cosmetic delay
+
+### Patterns Established
+- SnapshotDb follows TriageDb/AuditDb pattern for SQLite persistence consistency
+- watch channel (tokio::sync::watch) for controlling background loops from frontend commands
+- tauri-plugin-notification for OS-level notifications with permission request flow
+- Zustand slice pattern for unseen changes state management
+
+### Key Lessons
+1. **Checkbox drift is a systemic issue** — happened again in v0.3.0 despite being identified in v0.1.0 retro. Need automated enforcement, not manual discipline.
+2. **Summary one-liner quality matters** — malformed one-liners cascade into MILESTONES.md entry. Verify summary quality at plan completion.
+3. **Nyquist validation should happen per-phase, not deferred** — deferring to milestone end means all 5 phases are in draft simultaneously.
+4. **Parallel phase execution works well** when dependency graph allows — phases 14/15/16 ran in parallel off phase 13.
+
+### Cost Observations
+- Model mix: primarily opus for execution, sonnet for verification/research agents
+- Sessions: ~5-8 across 3 days
+- Notable: 10 plans in 3 days (vs 45 plans in 6 days for v0.1.0) — improved velocity from established patterns
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -56,14 +99,18 @@
 | Milestone | Phases | Plans | Key Change |
 |-----------|--------|-------|------------|
 | v0.1.0 | 11 | 45 | Baseline established — mock-first, phase-gated, Zustand-centric |
+| v0.3.0 | 5 | 10 | Parallel phase execution, milestone audit before completion, Rust-side background loops |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | LOC |
 |-----------|-------|----------|-----|
 | v0.1.0 | 389 + 28 Rust | 80.11% | 16,284 |
+| v0.3.0 | 528 + 75 Rust | — | 23,250 |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. Mock-first development enables rapid parallel progress but requires discipline on parameterizing config values
-2. Phase verification gates catch real gaps — COPY-05 sub-task creation was missing until verification surfaced it
+1. **Checkbox/traceability drift is systemic** — happened in both v0.1.0 and v0.3.0. Manual updates are insufficient; needs automation.
+2. Mock-first development enables rapid parallel progress but requires discipline on parameterizing config values
+3. Phase verification gates catch real gaps — milestone audits before completion are worth the time investment
+4. Parallel phase execution (when dependency graph allows) significantly improves velocity
