@@ -3,14 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.1.0
 milestone_name: milestone
 status: v0.1.0 milestone complete
-stopped_at: "Completed quick task 260325-wet: Add tests to improve pipeline coverage"
-last_updated: "2026-03-25T22:37:07.719Z"
-last_activity: "2026-03-25 - Completed quick task 260325-sxj: Hide copy to company Jira button on dismissed tickets"
-progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-29T13:33:22.287Z"
+last_activity: "2026-03-25 - Completed quick task 260325-wet: Add tests to improve pipeline coverage"
 ---
 
 # Project State
@@ -87,6 +82,7 @@ Plan: Not started
 | Phase 11-add-deployment-auto-updates-and-release-management P02 | 2 | 2 tasks | 3 files |
 | Phase 11-add-deployment-auto-updates-and-release-management P01 | 4 | 2 tasks | 9 files |
 | Phase 11-add-deployment-auto-updates-and-release-management P03 | 12 | 2 tasks | 11 files |
+| Phase 16-enhanced-watch-configuration P01 | 12 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -183,6 +179,8 @@ Recent decisions affecting current work:
 - [Phase 11-add-deployment-auto-updates-and-release-management]: UpdateModal rendered in every App.tsx routing branch since Dialog uses a portal — no layout disruption and avoids complex state threading
 - [Phase 11-add-deployment-auto-updates-and-release-management]: Slovak translations include full diacritics for correctness, matching existing sk.json style
 - [Phase quick-260325-wet]: vi.runAllTimersAsync() required after vi.advanceTimersByTime() to flush async promise callbacks in fake timer context
+- [Phase 16-01]: search_jira_users_by_domain uses get_cloud_credentials for Cloud v3 Basic auth — consistent with existing cloud command pattern
+- [Phase 16-01]: Privacy-simulation user in mock omits emailAddress entirely (JSON key absent, not null) — accurately simulates Jira Cloud email visibility restriction
 
 ### Roadmap Evolution
 
@@ -243,6 +241,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-03-25 - Completed quick task 260325-wet: Add tests to improve pipeline coverage
-Last session: 2026-03-25T22:37:04.129Z
-Stopped at: Completed quick task 260325-wet: Add tests to improve pipeline coverage
+Last session: 2026-03-29T13:33:22.283Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None
