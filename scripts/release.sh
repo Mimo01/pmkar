@@ -17,7 +17,7 @@ set -euo pipefail
 #
 # Credentials (auto-detected in this order):
 #   RELEASES_REPO_TOKEN       — 1) env var, 2) macOS Keychain (git credential-osxkeychain)
-#   TAURI_SIGNING_PRIVATE_KEY — 1) env var, 2) ~/.tauri/pmkar.key
+#   TAURI_SIGNING_PRIVATE_KEY — 1) env var, 2) ~/.tauri/pmkar.key, 3) ~/.tauri/taskflow.key
 #   TAURI_SIGNING_PRIVATE_KEY_PASSWORD — env var (empty string if not set)
 #
 # Platform scope: macOS (native universal) + Linux x86_64 (Docker, skipped if unavailable)
@@ -64,17 +64,23 @@ if [[ -z "${RELEASES_REPO_TOKEN:-}" ]]; then
   echo "    Token loaded from macOS Keychain."
 fi
 
-# Auto-detect TAURI_SIGNING_PRIVATE_KEY from ~/.tauri/pmkar.key if not set
+# Auto-detect TAURI_SIGNING_PRIVATE_KEY from ~/.tauri/pmkar.key or ~/.tauri/taskflow.key
 if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
-  TAURI_KEY_FILE="$HOME/.tauri/pmkar.key"
-  if [[ -f "$TAURI_KEY_FILE" ]]; then
+  TAURI_KEY_FILE=""
+  for candidate in "$HOME/.tauri/pmkar.key" "$HOME/.tauri/taskflow.key"; do
+    if [[ -f "$candidate" ]]; then
+      TAURI_KEY_FILE="$candidate"
+      break
+    fi
+  done
+  if [[ -n "$TAURI_KEY_FILE" ]]; then
     echo "    Loading signing key from $TAURI_KEY_FILE..."
     TAURI_SIGNING_PRIVATE_KEY="$(cat "$TAURI_KEY_FILE")"
     export TAURI_SIGNING_PRIVATE_KEY
   else
-    echo "Error: TAURI_SIGNING_PRIVATE_KEY not set and $TAURI_KEY_FILE not found." >&2
+    echo "Error: TAURI_SIGNING_PRIVATE_KEY not set and no key found." >&2
+    echo "  Looked in: ~/.tauri/pmkar.key, ~/.tauri/taskflow.key" >&2
     echo "  Generate a keypair: npx tauri signer generate -w ~/.tauri/pmkar.key" >&2
-    echo "  Or set: export TAURI_SIGNING_PRIVATE_KEY=\$(cat ~/.tauri/pmkar.key)" >&2
     exit 1
   fi
 fi
