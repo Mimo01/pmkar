@@ -730,13 +730,20 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       case 'watched-users':
         return (
           <SectionCard title={t('settings.section.watchedUsers')}>
-            <p className="text-[12px] text-brand-muted mb-4">{t('settings.watchedUsers.hint')}</p>
+            <p className="text-[12px] text-brand-muted mb-6">{t('settings.watchedUsers.hint')}</p>
 
             {/* Search input */}
-            <div className="relative mb-4">
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
+            <div className="relative mb-6">
+              <label
+                htmlFor="watched-user-search"
+                className="text-[12px] font-medium text-brand-text-secondary mb-2 block"
+              >
+                {t('settings.watchedUsers.searchPlaceholder')}
+              </label>
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
                 <Search className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
                 <input
+                  id="watched-user-search"
                   ref={inputRef}
                   type="text"
                   role="combobox"
@@ -803,10 +810,17 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             </div>
 
             {/* Domain search sub-section */}
-            <div className="relative mb-4">
-              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
+            <div className="relative mb-6">
+              <label
+                htmlFor="domain-search"
+                className="text-[12px] font-medium text-brand-text-secondary mb-2 block"
+              >
+                {t('settings.watchedUsers.domainSearch.heading')}
+              </label>
+              <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
                 <AtSign className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
                 <input
+                  id="domain-search"
                   type="text"
                   value={domainQuery}
                   onChange={(e) => setDomainQuery(e.target.value)}
@@ -972,7 +986,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             </div>
 
             {/* Watched user list */}
-            <Separator className="mt-4 mb-4" />
+            <Separator className="mt-2 mb-4" />
             {safeWatchedUsers.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
