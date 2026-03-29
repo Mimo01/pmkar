@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
 status: Milestone complete
-stopped_at: "Checkpoint 16-02 Task 2: Visual verification of domain search feature"
-last_updated: "2026-03-29T14:11:19.212Z"
+stopped_at: "Completed quick task 260329-nha: Replace GitHub Actions with local processes"
+last_updated: "2026-03-29T15:08:15.309Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 5
@@ -245,10 +245,11 @@ None yet.
 | 260325-sk0 | Version history and changelog viewer in About modal | 2026-03-25 | 1c5994f | | [260325-sk0-i-want-the-user-to-be-able-to-see-versio](./quick/260325-sk0-i-want-the-user-to-be-able-to-see-versio/) |
 | 260325-sxj | Hide Copy to Company Jira button on dismissed tickets | 2026-03-25 | b68ed1c | | [260325-sxj-hide-copy-to-company-jira-button-on-dism](./quick/260325-sxj-hide-copy-to-company-jira-button-on-dism/) |
 | 260325-wet | Add tests to improve pipeline coverage | 2026-03-25 | 504cfe1 | | [260325-wet-add-tests-to-improve-pipeline-coverage](./quick/260325-wet-add-tests-to-improve-pipeline-coverage/) |
+| 260329-nha | Replace GitHub Actions with local processes (pre-commit hook + release.sh) | 2026-03-29 | a4d6b34 | | [260329-nha-replace-github-actions-with-local-proces](./quick/260329-nha-replace-github-actions-with-local-proces/) |
 
 ## Session Continuity
 
 Last activity: 2026-03-29
-Last session: 2026-03-29T13:40:40.623Z
-Stopped at: Checkpoint 16-02 Task 2: Visual verification of domain search feature
+Last session: 2026-03-29T15:08:15.302Z
+Stopped at: Completed quick task 260329-nha: Replace GitHub Actions with local processes
 Resume file: None
