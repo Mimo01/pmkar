@@ -238,14 +238,20 @@ jobs:
           VERSION="${{ steps.version.outputs.bare }}"
           TAG="${{ steps.version.outputs.tag }}"
           RELEASE_ID="${{ steps.release.outputs.id }}"
+          API_BASE="https://api.github.com/repos/Mimo01/pmkar-releases/releases"
 
-          EXISTING=$(curl -sL "https://github.com/Mimo01/pmkar-releases/releases/download/$TAG/latest.json" || echo "{}")
+          # Download existing latest.json to a file
+          curl -sL "https://github.com/Mimo01/pmkar-releases/releases/download/$TAG/latest.json" -o /tmp/existing-latest.json || echo '{}' > /tmp/existing-latest.json
 
-          python3 << 'PYEOF' > /tmp/latest.json
+          # Build updated latest.json via Python script file
+          cat > /tmp/build-latest.py << 'PYEOF'
           import json, os, sys
-          version = "$VERSION"
-          existing_str = '''$EXISTING'''
-          existing = json.loads(existing_str) if existing_str.strip() else {}
+          version = sys.argv[1]
+          with open("/tmp/existing-latest.json") as f:
+              try:
+                  existing = json.load(f)
+              except Exception:
+                  existing = {}
           platforms = existing.get("platforms", {})
           base_url = f"https://github.com/Mimo01/pmkar-releases/releases/download/v{version}"
           linux_sig = f"all-artifacts/linux-artifacts/pmkar_{version}_amd64.AppImage.tar.gz.sig"
@@ -259,25 +265,22 @@ jobs:
           result = {"version": existing.get("version", version), "notes": existing.get("notes", f"Release v{version}"), "pub_date": existing.get("pub_date", ""), "platforms": platforms}
           print(json.dumps(result, indent=2))
           PYEOF
-
+          python3 /tmp/build-latest.py "$VERSION" > /tmp/latest.json
           cat /tmp/latest.json
 
-          ASSETS=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
-            "https://api.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets")
+          # Delete old latest.json asset
+          ASSETS=$(curl -s -H "Authorization: token $RELEASES_TOKEN" "$API_BASE/$RELEASE_ID/assets")
           LATEST_ID=$(python3 -c "
           import sys, json
-          assets = json.loads(sys.argv[1], strict=False)
-          found = [a['id'] for a in assets if a['name'] == 'latest.json']
+          found = [a['id'] for a in json.loads(sys.argv[1], strict=False) if a['name'] == 'latest.json']
           print(found[0] if found else '')
           " "$ASSETS")
-
           if [ -n "$LATEST_ID" ]; then
             echo "Deleting old latest.json (asset $LATEST_ID)..."
-            curl -s -X DELETE \
-              -H "Authorization: token $RELEASES_TOKEN" \
-              "https://api.github.com/repos/Mimo01/pmkar-releases/releases/assets/$LATEST_ID"
+            curl -s -X DELETE -H "Authorization: token $RELEASES_TOKEN" "$API_BASE/assets/$LATEST_ID"
           fi
 
+          # Upload new latest.json
           echo "Uploading updated latest.json..."
           curl -s -X POST \
             -H "Authorization: token $RELEASES_TOKEN" \
