@@ -245,7 +245,7 @@ None yet.
 | 260325-sk0 | Version history and changelog viewer in About modal | 2026-03-25 | 1c5994f | | [260325-sk0-i-want-the-user-to-be-able-to-see-versio](./quick/260325-sk0-i-want-the-user-to-be-able-to-see-versio/) |
 | 260325-sxj | Hide Copy to Company Jira button on dismissed tickets | 2026-03-25 | b68ed1c | | [260325-sxj-hide-copy-to-company-jira-button-on-dism](./quick/260325-sxj-hide-copy-to-company-jira-button-on-dism/) |
 | 260325-wet | Add tests to improve pipeline coverage | 2026-03-25 | 504cfe1 | | [260325-wet-add-tests-to-improve-pipeline-coverage](./quick/260325-wet-add-tests-to-improve-pipeline-coverage/) |
-| 260329-nha | Replace GitHub Actions with local processes (pre-commit hook + release.sh) | 2026-03-29 | a4d6b34 | | [260329-nha-replace-github-actions-with-local-proces](./quick/260329-nha-replace-github-actions-with-local-proces/) |
+| 260329-nha | Replace GitHub Actions with local processes (pre-commit hook + release.sh) | 2026-03-29 | a4d6b34 | Gaps (fixed) | [260329-nha-replace-github-actions-with-local-proces](./quick/260329-nha-replace-github-actions-with-local-proces/) |
 
 ## Session Continuity
 

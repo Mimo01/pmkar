@@ -158,9 +158,9 @@ impl SnapshotDb {
     }
 
     /// Mark a ticket's changes as seen. This:
-    /// 1. Copies current response_json to seen_response_json (new baseline for D-12)
-    /// 2. Sets has_unseen_changes = 0
-    /// 3. Clears pending_changes_json
+    /// 1. Copies current `response_json` to `seen_response_json` (new baseline for D-12)
+    /// 2. Sets `has_unseen_changes` = 0
+    /// 3. Clears `pending_changes_json`
     pub fn mark_changes_seen(&self, ticket_key: &str) -> AppResult<()> {
         self.conn.execute(
             "UPDATE snapshot_store SET
@@ -189,7 +189,7 @@ impl SnapshotDb {
         Ok(())
     }
 
-    /// Get the seen_response_json for a ticket (the baseline snapshot at last "mark seen" time).
+    /// Get the `seen_response_json` for a ticket (the baseline snapshot at last "mark seen" time).
     /// Returns None if the ticket has never been marked as seen.
     pub fn get_seen_snapshot(&self, ticket_key: &str) -> AppResult<Option<String>> {
         let result = self

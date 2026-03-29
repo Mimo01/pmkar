@@ -2058,7 +2058,7 @@ pub fn get_unseen_change_keys(
 }
 
 /// Return the pending field changes for a specific ticket.
-/// Used by ChangesTab to render the diff table.
+/// Used by `ChangesTab` to render the diff table.
 #[tauri::command]
 pub fn get_ticket_changes(
     snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
@@ -2070,8 +2070,8 @@ pub fn get_ticket_changes(
     db.get_pending_changes(&ticket_key)
 }
 
-/// Mark a ticket's changes as seen. Clears the unseen flag, sets seen_response_json
-/// to current response_json (new baseline for D-12), and clears pending_changes_json.
+/// Mark a ticket's changes as seen. Clears the unseen flag, sets `seen_response_json`
+/// to current `response_json` (new baseline for D-12), and clears `pending_changes_json`.
 #[tauri::command]
 pub fn mark_changes_seen(
     snapshot_db: tauri::State<'_, Arc<Mutex<SnapshotDb>>>,
