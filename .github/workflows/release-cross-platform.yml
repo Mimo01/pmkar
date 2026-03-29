@@ -1,6 +1,5 @@
 name: Cross-Platform Release Build
 
-# Triggered manually or by release.sh pushing a v* tag
 on:
   push:
     tags:
@@ -51,7 +50,6 @@ jobs:
           BARE=$(echo "$TAG" | sed 's/^v//')
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "bare=$BARE" >> "$GITHUB_OUTPUT"
-          # Create tag locally if missing (workflow_dispatch case)
           git tag "$TAG" 2>/dev/null || true
 
       - name: Install Linux dependencies
@@ -158,7 +156,6 @@ jobs:
           BARE=$(echo "$TAG" | sed 's/^v//')
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "bare=$BARE" >> "$GITHUB_OUTPUT"
-          # Create tag locally if missing (workflow_dispatch case)
           git tag "$TAG" 2>/dev/null || true
 
       - name: Download all artifacts
@@ -173,23 +170,26 @@ jobs:
         id: release
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
+        shell: bash
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           RELEASE=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
             "https://api.github.com/repos/Mimo01/pmkar-releases/releases/tags/$TAG")
-          RELEASE_ID=$(echo "$RELEASE" | python3 -c "
-import sys, json
-data = json.loads(sys.stdin.read(), strict=False)
-if 'id' not in data:
-    print('Release not found for tag $TAG', file=sys.stderr)
-    sys.exit(1)
-print(data['id'])")
+          RELEASE_ID=$(python3 -c "
+          import sys, json
+          data = json.loads(sys.argv[1], strict=False)
+          if 'id' not in data:
+              print('Release not found', file=sys.stderr)
+              sys.exit(1)
+          print(data['id'])
+          " "$RELEASE")
           echo "id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
           echo "Release ID: $RELEASE_ID"
 
       - name: Upload artifacts to pmkar-releases
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
+        shell: bash
         run: |
           RELEASE_ID="${{ steps.release.outputs.id }}"
           UPLOAD_BASE="https://uploads.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets"
@@ -203,80 +203,56 @@ print(data['id'])")
               -H "Content-Type: application/octet-stream" \
               "$UPLOAD_BASE?name=$NAME" \
               --data-binary @"$file")
-            URL=$(echo "$RESPONSE" | python3 -c "
-import sys, json
-data = json.loads(sys.stdin.read(), strict=False)
-if 'id' not in data:
-    print('Error:', json.dumps(data, indent=2), file=sys.stderr)
-    sys.exit(1)
-print(data.get('browser_download_url', '(no url)'))")
-            echo "  OK: $URL"
+            python3 -c "
+          import sys, json
+          data = json.loads(sys.argv[1], strict=False)
+          if 'id' not in data:
+              print('Error:', json.dumps(data, indent=2), file=sys.stderr)
+              sys.exit(1)
+          print('  OK:', data.get('browser_download_url', '(no url)'))
+          " "$RESPONSE"
           done
 
       - name: Update latest.json with Linux + Windows platforms
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
+        shell: bash
         run: |
           VERSION="${{ steps.version.outputs.bare }}"
           TAG="${{ steps.version.outputs.tag }}"
           RELEASE_ID="${{ steps.release.outputs.id }}"
 
-          # Download current latest.json from the release
           EXISTING=$(curl -sL "https://github.com/Mimo01/pmkar-releases/releases/download/$TAG/latest.json" || echo "{}")
 
-          # Build updated latest.json with all platforms
-          python3 - "$VERSION" "$EXISTING" <<'PYEOF' > /tmp/latest.json
-          import sys, json, os
-
-          version = sys.argv[1]
-          existing = json.loads(sys.argv[2]) if sys.argv[2].strip() else {}
-
+          python3 << 'PYEOF' > /tmp/latest.json
+          import json, os, sys
+          version = "$VERSION"
+          existing_str = '''$EXISTING'''
+          existing = json.loads(existing_str) if existing_str.strip() else {}
           platforms = existing.get("platforms", {})
           base_url = f"https://github.com/Mimo01/pmkar-releases/releases/download/v{version}"
-
-          # Add Linux if AppImage sig exists
-          linux_sig_path = f"all-artifacts/linux-artifacts/pmkar_{version}_amd64.AppImage.tar.gz.sig"
-          if os.path.exists(linux_sig_path):
-              with open(linux_sig_path) as f:
-                  linux_sig = f.read().strip()
-              platforms["linux-x86_64"] = {
-                  "signature": linux_sig,
-                  "url": f"{base_url}/pmkar_{version}_amd64.AppImage.tar.gz"
-              }
-
-          # Add Windows if NSIS sig exists
-          win_sig_path = f"all-artifacts/windows-artifacts/pmkar_{version}_x64-setup.nsis.zip.sig"
-          if os.path.exists(win_sig_path):
-              with open(win_sig_path) as f:
-                  win_sig = f.read().strip()
-              platforms["windows-x86_64"] = {
-                  "signature": win_sig,
-                  "url": f"{base_url}/pmkar_{version}_x64-setup.nsis.zip"
-              }
-
-          result = {
-              "version": existing.get("version", version),
-              "notes": existing.get("notes", f"Release v{version}"),
-              "pub_date": existing.get("pub_date", ""),
-              "platforms": platforms
-          }
+          linux_sig = f"all-artifacts/linux-artifacts/pmkar_{version}_amd64.AppImage.tar.gz.sig"
+          if os.path.exists(linux_sig):
+              with open(linux_sig) as f:
+                  platforms["linux-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_amd64.AppImage.tar.gz"}
+          win_sig = f"all-artifacts/windows-artifacts/pmkar_{version}_x64-setup.nsis.zip.sig"
+          if os.path.exists(win_sig):
+              with open(win_sig) as f:
+                  platforms["windows-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_x64-setup.nsis.zip"}
+          result = {"version": existing.get("version", version), "notes": existing.get("notes", f"Release v{version}"), "pub_date": existing.get("pub_date", ""), "platforms": platforms}
           print(json.dumps(result, indent=2))
           PYEOF
 
           cat /tmp/latest.json
 
-          # Delete old latest.json asset, then upload new one
           ASSETS=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
             "https://api.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets")
-          LATEST_ID=$(echo "$ASSETS" | python3 -c "
-import sys, json
-assets = json.loads(sys.stdin.read(), strict=False)
-for a in assets:
-    if a['name'] == 'latest.json':
-        print(a['id'])
-        break
-else:
-    print('')")
+          LATEST_ID=$(python3 -c "
+          import sys, json
+          assets = json.loads(sys.argv[1], strict=False)
+          found = [a['id'] for a in assets if a['name'] == 'latest.json']
+          print(found[0] if found else '')
+          " "$ASSETS")
 
           if [ -n "$LATEST_ID" ]; then
             echo "Deleting old latest.json (asset $LATEST_ID)..."
@@ -286,12 +262,12 @@ else:
           fi
 
           echo "Uploading updated latest.json..."
-          UPLOAD_BASE="https://uploads.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets"
           curl -s -X POST \
             -H "Authorization: token $RELEASES_TOKEN" \
             -H "Content-Type: application/json" \
-            "$UPLOAD_BASE?name=latest.json" \
+            "https://uploads.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets?name=latest.json" \
             --data-binary @/tmp/latest.json | python3 -c "
-import sys, json
-data = json.loads(sys.stdin.read(), strict=False)
-print('OK:', data.get('browser_download_url', '(no url)'))"
+          import sys, json
+          data = json.loads(sys.stdin.read(), strict=False)
+          print('OK:', data.get('browser_download_url', '(no url)'))
+          "
