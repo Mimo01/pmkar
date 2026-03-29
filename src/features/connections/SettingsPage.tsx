@@ -803,9 +803,6 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             </div>
 
             {/* Domain search sub-section */}
-            <p className="text-[12px] text-brand-muted mb-2 mt-4">
-              {t('settings.watchedUsers.domainSearch.heading')}
-            </p>
             <div className="relative mb-4">
               <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
                 <AtSign className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
