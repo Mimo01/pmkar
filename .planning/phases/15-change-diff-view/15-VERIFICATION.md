@@ -7,14 +7,7 @@ re_verification: false
 gaps:
   - truth: "Hovering the dot shows a tooltip with change count and field names"
     status: resolved
-    reason: "TicketCard renders a static badge/pill with 'Changed' text. No Tooltip, TooltipProvider, or TooltipContent is present. Change count and field names are not surfaced on hover."
-    artifacts:
-      - path: "src/features/tickets/TicketCard.tsx"
-        issue: "No Tooltip component imported or rendered. Indicator is a plain <span> badge with fixed label t('tickets.card.changedLabel') = 'Changed'. The changeTooltip and unseenChanges i18n keys exist in en.json/sk.json but are never referenced in TicketCard."
-    missing:
-      - "Import TooltipProvider, Tooltip, TooltipTrigger, TooltipContent from '@/components/ui/tooltip' in TicketCard.tsx"
-      - "Wrap the blue indicator span in Tooltip with TooltipContent showing t('tickets.card.changeTooltip', { count: changeCount, fields: fieldList })"
-      - "Derive changeCount and fieldList from unseenFields (unseenFields?.length, unseenFields?.join(', '))"
+    reason: "Fixed post-verification. TicketCard.tsx now imports Tooltip components (line 4) and wraps the badge in TooltipProvider > Tooltip > TooltipTrigger/TooltipContent (lines 41-58) using changeTooltip i18n key with count and fields interpolation."
 human_verification:
   - test: "Visual inspection of blue indicator and tooltip"
     expected: "Hovering the 'Changed' badge on a ticket card shows a tooltip with change count and field names (e.g. '2 changes: status, priority')"
@@ -34,7 +27,7 @@ human_verification:
 
 **Phase Goal:** Users can see exactly what changed on a ticket since it was last fetched, both as a visual indicator in the list and as a field-level diff in the detail view
 **Verified:** 2026-03-29T01:30:00Z
-**Status:** gaps_found
+**Status:** passed
 **Re-verification:** No — initial verification
 
 ## Goal Achievement
@@ -56,14 +49,14 @@ human_verification:
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
 | 8 | A ticket with detected changes shows a blue dot indicator next to its key in the ticket list | VERIFIED | TicketCard.tsx line 37-42: conditional badge span with bg-blue-500/15 renders when hasUnseenChanges; useTicketStore selector at line 24 |
-| 9 | Hovering the dot shows a tooltip with change count and field names | FAILED | No Tooltip, TooltipProvider, or TooltipContent imported or rendered in TicketCard.tsx; indicator is a static badge showing 'Changed' text only |
+| 9 | Hovering the dot shows a tooltip with change count and field names | VERIFIED | Tooltip components imported (line 4); badge wrapped in TooltipProvider/Tooltip/TooltipTrigger/TooltipContent (lines 41-58); renders changeTooltip i18n key with count + fields |
 | 10 | Opening a changed ticket auto-switches to the Changes tab | VERIFIED | TicketDetailPanel.tsx lines 83, 92-93: useEffect on issueKey change calls setActiveTab('changes') when unseenChanges[issueKey] is truthy |
 | 11 | The Changes tab shows a table with Field / Old Value / arrow / New Value rows | VERIFIED | ChangesTab.tsx lines 109-147: table with four columns rendered for each FieldChange; arrow character U+2192 at line 125 |
 | 12 | Viewing the Changes tab clears the unseen indicator for that ticket | VERIFIED | ChangesTab.tsx lines 52-53, 58-59: invoke('mark_changes_seen') + clearUnseenChange(issueKey) called after data fetch |
 | 13 | The unseen state hydrates from SQLite on app start and updates on poll-complete events | VERIFIED | Mount hydration: TicketListPage.tsx line 151-153 (Promise.all includes get_unseen_change_keys); Poll-complete: line 183-185 calls handleFetch() which runs per-ticket check_ticket_changes and setUnseenChange |
 | 14 | Long-text fields like description show 'Description changed' instead of inline diff | VERIFIED | ChangesTab.tsx lines 32, 128-138: LONG_TEXT_FIELDS Set contains 'description'; conditional renders t('detail.changes.descriptionChanged') for new value |
 
-**Score:** 13/14 truths verified (11/12 must-haves from PLAN frontmatter verified, counting the tooltip truth as the gap)
+**Score:** 14/14 truths verified (12/12 must-haves from PLAN frontmatter verified; tooltip gap resolved post-verification)
 
 ### Required Artifacts
 
@@ -75,7 +68,7 @@ human_verification:
 | `src-tauri/src/poll_engine.rs` | Unseen changes flag set on poll | VERIFIED | set_unseen_changes called at line 195 with cumulative diff |
 | `src/features/tickets/tabs/ChangesTab.tsx` | Diff table, loading/error/empty states, min 60 lines | VERIFIED | 146 lines; loading (lines 68-79), error (lines 82-88), empty (lines 90-96), diff table (99-147) |
 | `src/features/tickets/ticketStore.ts` | unseenChanges slice with 3 actions | VERIFIED | unseenChanges field (line 57), hydrateUnseenChanges (137), setUnseenChange (141), clearUnseenChange (145) |
-| `src/features/tickets/TicketCard.tsx` | Blue dot indicator with Tooltip | PARTIAL | Blue indicator (bg-blue-500/15 badge) present at lines 37-42; Tooltip is MISSING — no TooltipProvider/Tooltip in the file |
+| `src/features/tickets/TicketCard.tsx` | Blue dot indicator with Tooltip | VERIFIED | Blue indicator (bg-blue-500/15 badge) at lines 40-46; TooltipProvider/Tooltip/TooltipTrigger/TooltipContent wrapping badge at lines 41-58 |
 | `src/features/tickets/TicketDetailPanel.tsx` | Changes tab (6th), auto-switch, badge count | VERIFIED | TabId includes 'changes' (line 19); tab in array (line 156); Badge (lines 346-352); auto-switch (lines 83, 92-93); ChangesTab rendered (line 367) |
 | `src/i18n/locales/en.json` | All change-related i18n keys including detail.tab.changes | VERIFIED | detail.tab.changes (80), ariaLabel (81), empty (82), error (83), descriptionChanged (84), noPreview (85), unseenChanges (266), changeTooltip (267), changedLabel (268) |
 
@@ -121,7 +114,7 @@ human_verification:
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `src/features/tickets/TicketCard.tsx` | 40 | `t('tickets.card.changedLabel')` — static "Changed" label with no dynamic data | Info | The changeTooltip and unseenChanges i18n keys (with count/fields interpolation) exist in en.json but are unused in TicketCard; no blocking issue but tooltip plan not delivered |
+| None | — | — | — | No anti-patterns found; tooltip gap resolved post-verification |
 
 ### Human Verification Required
 
@@ -151,13 +144,9 @@ human_verification:
 
 ### Gaps Summary
 
-One gap blocks full goal achievement:
+No gaps remaining. The tooltip gap identified in the initial verification has been resolved — TicketCard.tsx now wraps the badge in Tooltip components with changeTooltip i18n key interpolation.
 
-**Tooltip on change indicator is missing.** The plan specified that hovering the blue indicator shows a tooltip with change count and field names (D-02, D-03 per UI spec). The implementation delivers a static badge showing "Changed" text with no Tooltip component. The `tickets.card.changeTooltip` i18n key and `unseenChanges` count/fields data are both available in the codebase but not wired to a hover tooltip in `TicketCard.tsx`.
-
-The gap is a frontend UI enhancement (add TooltipProvider/Tooltip wrapper around the badge span) and does not block the core requirement (CHNG-02 "visual indicator visible") — the indicator renders correctly and is wired to real data. However, the plan truth "Hovering the dot shows a tooltip with change count and field names" is not met.
-
-All other plan truths, artifacts, and key links are fully verified with real data flowing end-to-end. Both Rust (75 tests) and TypeScript (528 tests) suites pass.
+All 14 plan truths, artifacts, and key links are fully verified with real data flowing end-to-end. Both Rust (75 tests) and TypeScript (528 tests) suites pass.
 
 ---
 

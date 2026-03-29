@@ -18,14 +18,14 @@ Requirements for Notifications & Change Tracking milestone. Each maps to roadmap
 
 ### Notifications
 
-- [ ] **NOTIF-01**: App requests OS notification permission on first poll enable (macOS requirement)
-- [ ] **NOTIF-02**: User receives OS-level notification when a new ticket matches watch criteria
-- [ ] **NOTIF-03**: User receives OS-level notification when a watched ticket's status changes
-- [ ] **NOTIF-04**: User receives OS-level notification when a watched ticket's priority changes
-- [ ] **NOTIF-05**: User receives OS-level notification when a new comment is added to a watched ticket
-- [ ] **NOTIF-06**: Notification body includes change summary (e.g. "CUST-123: Status Open → In Progress")
-- [ ] **NOTIF-07**: User can toggle notification preferences per event type in settings
-- [ ] **NOTIF-08**: User can configure quiet hours to suppress notifications outside work hours
+- [x] **NOTIF-01**: App requests OS notification permission on first poll enable (macOS requirement)
+- [x] **NOTIF-02**: User receives OS-level notification when a new ticket matches watch criteria
+- [x] **NOTIF-03**: User receives OS-level notification when a watched ticket's status changes
+- [x] **NOTIF-04**: User receives OS-level notification when a watched ticket's priority changes
+- [x] **NOTIF-05**: User receives OS-level notification when a new comment is added to a watched ticket
+- [x] **NOTIF-06**: Notification body includes change summary (e.g. "CUST-123: Status Open → In Progress")
+- [x] **NOTIF-07**: User can toggle notification preferences per event type in settings
+- ~~**NOTIF-08**: User can configure quiet hours to suppress notifications outside work hours~~ *(removed per user decision during Phase 14)*
 
 ### Change Tracking
 
@@ -70,23 +70,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POLL-04 | Phase 12 | Complete |
 | POLL-05 | Phase 12 | Complete |
 | POLL-06 | Phase 12 | Complete |
-| NOTIF-01 | Phase 14 | Pending |
-| NOTIF-02 | Phase 14 | Pending |
-| NOTIF-03 | Phase 14 | Pending |
-| NOTIF-04 | Phase 14 | Pending |
-| NOTIF-05 | Phase 14 | Pending |
-| NOTIF-06 | Phase 14 | Pending |
-| NOTIF-07 | Phase 14 | Pending |
-| NOTIF-08 | Phase 14 | Pending |
+| NOTIF-01 | Phase 14 | Complete |
+| NOTIF-02 | Phase 14 | Complete |
+| NOTIF-03 | Phase 14 | Complete |
+| NOTIF-04 | Phase 14 | Complete |
+| NOTIF-05 | Phase 14 | Complete |
+| NOTIF-06 | Phase 14 | Complete |
+| NOTIF-07 | Phase 14 | Complete |
+| NOTIF-08 | Phase 14 | Removed |
 | CHNG-01 | Phase 15 | Complete |
 | CHNG-02 | Phase 15 | Complete |
 | WTCH-01 | Phase 16 | Complete |
 | WTCH-02 | Phase 16 | Complete |
 
 **Coverage:**
-- v0.3.0 requirements: 18 total
-- Mapped to phases: 18
-- Unmapped: 0 ✓
+- v0.3.0 requirements: 17 active (1 removed)
+- Mapped to phases: 17
+- Complete: 17 ✓
+- Removed: 1 (NOTIF-08)
 
 ---
 *Requirements defined: 2026-03-27*
