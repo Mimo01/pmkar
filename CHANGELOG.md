@@ -1,4 +1,122 @@
 
+## [0.3.0]
+
+### Bug Fixes
+
+- correct artifact paths in release.sh (workspace root target/, not src-tauri/target/)
+- auto-detect signing key from taskflow.key fallback + fix clippy doc warnings
+- add matching labels to both search inputs with more spacing
+- remove domain search label — match individual search style
+- match domain search input styles to individual search input
+- move both search inputs above the watched user list
+- fix domain search UX issues — use displayName, reorder layout, add cancel
+- restore tooltip on Changed badge in TicketCard
+- wire change tracking to TicketDetailPage and improve UX
+- re-render "last checked" every 30s so relative time updates
+
+### CI/CD
+
+- auto-update README download links after each release
+
+### Documentation
+
+- fix tech debt — update NOTIF requirement statuses, checkboxes, and verification body text
+- evolve PROJECT.md after phase completion
+- complete phase execution
+- update SUMMARY.md with user feedback fixes and final state
+- complete domain search UI plan — checkpoint at human-verify
+- complete backend infrastructure for domain-based user search plan
+- add 16-01-SUMMARY.md for domain user search backend plan
+- create phase plan
+- add research and validation strategy
+- research phase — Jira user search API and email privacy
+- fix remaining spacing violations in UI-SPEC
+- fix spacing violations and apply checker recommendations
+- UI design contract
+- record phase 16 context session
+- capture phase context
+- complete phase execution
+- complete change diff view frontend plan
+- complete change-diff-view backend plan
+- create phase plan
+- add validation strategy
+- research phase domain
+- UI design contract
+- record phase 15 context session
+- capture phase context
+- complete phase execution and verification
+- complete plan summary
+- complete plan summary and fix formatting
+- create phase plan
+- add validation strategy
+- research phase domain
+- UI design contract
+- record phase 14 context session
+- capture phase context
+- finalize plan — human-verify checkpoint approved
+- complete frontend polling integration plan — checkpoint:human-verify pending
+- complete background polling engine plan — poll_engine.rs, frequency persistence, Tauri commands
+- create phase plan — 2 plans for background polling engine
+- add validation strategy
+- research phase domain
+- fix typography weights and add focal point declaration
+- UI design contract
+- record phase 13 context session
+- evolve PROJECT.md after phase completion
+- complete phase execution
+- complete SnapshotDb Tauri integration plan
+- complete snapshot-foundation plan 01 — SnapshotDb implementation
+- create phase plan — 2 plans in 2 waves
+- add validation strategy
+- research phase snapshot foundation
+- record phase 12 context session
+- capture phase context
+- create milestone v0.3.0 roadmap (5 phases)
+- define milestone v0.3.0 requirements
+- complete project research
+- start milestone v0.3.0 Notifications & Change Tracking
+
+### Features
+
+- add release.sh and inject-version.cjs, delete release.yml
+- enhance pre-commit hook with all CI checks, delete ci.yml
+- add domain search UI to Watched Users settings section
+- add emailAddress to JiraUser type and domain search i18n keys
+- add search_jira_users_by_domain Tauri command and v3 mock endpoint
+- file-based credential store for debug builds
+- wire TicketCard dot, TicketDetailPanel Changes tab, and TicketListPage hydration
+- add unseenChanges store slice, ChangesTab, and i18n keys
+- add Tauri commands and wire poll engine for unseen changes
+- extend SnapshotDb with unseen-changes columns and methods
+- remove quiet hours UI from notification settings
+- notification preferences UI with toggles, quiet hours, and permission handling
+- enrich poll engine with FieldChange data and wire notification dispatch
+- notification dispatcher module, NotificationPrefs in TriageDb, plugin setup
+- dual-purpose fetch, F5 shortcut, and poll-complete event listener
+- ticketStore polling state, i18n keys, and Settings polling section
+- wire poll loop in main.rs and add Tauri commands for poll frequency
+- add poll_engine module with PollFrequency, PollCompletePayload, run_poll_loop
+- wire SnapshotDb into Tauri runtime
+- implement SnapshotDb with SHA-256 hash-based change detection
+
+### Miscellaneous
+
+- complete v0.3.0 milestone — Notifications & Change Tracking
+
+### Refactoring
+
+- remove quiet hours from backend and frontend entirely
+
+### Testing
+
+- persist human verification items as UAT
+- add failing tests for domain search feature
+- update keychain tests for dual-backend
+
+### Style
+
+- fix formatting and complete phase verification
+- cargo fmt snapshot_db and main
 ## [0.2.4]
 
 ### Miscellaneous
