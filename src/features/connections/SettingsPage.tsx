@@ -802,37 +802,6 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
               )}
             </div>
 
-            {/* User list */}
-            {safeWatchedUsers.length === 0 ? (
-              <div className="py-6 text-center">
-                <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
-              </div>
-            ) : (
-              <div className="space-y-0.5 mb-2">
-                {safeWatchedUsers.map((user) => (
-                  <div
-                    key={user}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
-                        {user.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveUser(user)}
-                      className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      aria-label={t('settings.watchedUsers.remove', { user })}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
             {/* Domain search sub-section */}
             <Separator className="mt-4 mb-4" />
             <p className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
@@ -1001,6 +970,38 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   </p>
                   <p>{t('settings.watchedUsers.domainSearch.privacyWarning.body')}</p>
                 </div>
+              </div>
+            )}
+
+            {/* Watched user list */}
+            <Separator className="mt-4 mb-4" />
+            {safeWatchedUsers.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-[12px] text-brand-muted">{t('settings.watchedUsers.empty')}</p>
+              </div>
+            ) : (
+              <div className="space-y-0.5">
+                {safeWatchedUsers.map((user) => (
+                  <div
+                    key={user}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
+                        {user.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveUser(user)}
+                      className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      aria-label={t('settings.watchedUsers.remove', { user })}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </SectionCard>
