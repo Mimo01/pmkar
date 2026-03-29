@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatRelativeTime } from '../../lib/format';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
@@ -23,6 +24,8 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
   const { t } = useTranslation();
   const unseenFields = useTicketStore((s) => s.unseenChanges[ticket.key]);
   const hasUnseenChanges = !!unseenFields;
+  const changeCount = unseenFields?.length ?? 0;
+  const fieldList = unseenFields?.join(', ') ?? '';
   return (
     <button
       type="button"
@@ -35,10 +38,24 @@ export function TicketCard({ ticket, onClick, actionSlot }: TicketCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
           {hasUnseenChanges && (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 flex-shrink-0">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
-              {t('tickets.card.changedLabel')}
-            </span>
+            <TooltipProvider delayDuration={300}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 flex-shrink-0">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
+                    {t('tickets.card.changedLabel')}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {changeCount > 0
+                    ? t('tickets.card.changeTooltip', {
+                        count: changeCount,
+                        fields: fieldList,
+                      })
+                    : t('tickets.card.unseenChanges', { count: 0 })}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {actionSlot}
         </div>
