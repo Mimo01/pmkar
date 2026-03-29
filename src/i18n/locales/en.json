@@ -265,6 +265,7 @@
   "tickets.card.updated": "Updated {{time}}",
   "tickets.card.unseenChanges": "{{count}} unseen changes",
   "tickets.card.changeTooltip": "{{count}} changes: {{fields}}",
+  "tickets.card.changedLabel": "Changed",
   "tickets.filter.keyPlaceholder": "Filter by key...",
   "tickets.filter.assigneePlaceholder": "Filter by assignee...",
   "tickets.filter.noUsersFound": "No users found",

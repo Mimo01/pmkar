@@ -1925,7 +1925,20 @@ pub fn check_ticket_changes(
     let db = snapshot_db
         .lock()
         .map_err(|_| AppError::Internal("Snapshot DB lock poisoned".into()))?;
-    crate::snapshot_db::check_for_changes(&db, &ticket_key, &response_json)
+    let changes = crate::snapshot_db::check_for_changes(&db, &ticket_key, &response_json)?;
+
+    // Persist unseen state so frontend can show change indicators (Phase 15)
+    if !changes.is_empty() {
+        let cumulative_changes = if let Ok(Some(seen_json)) = db.get_seen_snapshot(&ticket_key) {
+            crate::snapshot_db::detect_changes(&seen_json, &response_json)
+                .unwrap_or_else(|_| changes.clone())
+        } else {
+            changes.clone()
+        };
+        let _ = db.set_unseen_changes(&ticket_key, &cumulative_changes);
+    }
+
+    Ok(changes)
 }
 
 /// Return the poll watermark: `MIN(last_checked_at)` across all stored snapshots.

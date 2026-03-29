@@ -2,11 +2,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { CheckCircle2, ExternalLink } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
-import { Badge } from '@/components/ui/badge';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { ChangesTab } from './tabs/ChangesTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -75,12 +75,25 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     }
   };
 
+  // Auto-switch to Changes tab when ticket has unseen changes
+  const initialTabRef = useRef<TabId | null>(null);
+  useEffect(() => {
+    if (hasUnseenChanges && initialTabRef.current !== issueKey) {
+      initialTabRef.current = issueKey as unknown as TabId;
+      setActiveTab('changes');
+    }
+  }, [issueKey, hasUnseenChanges]);
+
   // Fetch detail on mount or key change
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setDetail(null);
-    setActiveTab(useTicketStore.getState().unseenChanges[issueKey] ? 'changes' : 'overview');
+    if (useTicketStore.getState().unseenChanges[issueKey]) {
+      setActiveTab('changes');
+    } else {
+      setActiveTab('overview');
+    }
 
     async function fetchDetail() {
       try {
@@ -317,7 +330,11 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
               role="tab"
               aria-selected={activeTab === tab.id}
               aria-controls={`tabpanel-${tab.id}`}
-              aria-label={tab.id === 'changes' && hasUnseenChanges ? t('detail.tab.changes.ariaLabel', { count: changeCount }) : undefined}
+              aria-label={
+                tab.id === 'changes' && hasUnseenChanges
+                  ? t('detail.tab.changes.ariaLabel', { count: changeCount })
+                  : undefined
+              }
               onClick={() => setActiveTab(tab.id)}
               className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
                 activeTab === tab.id
@@ -327,7 +344,10 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
             >
               {tab.label}
               {tab.id === 'changes' && hasUnseenChanges && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 min-w-[16px] h-4 leading-none">
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] px-1.5 py-0 min-w-[16px] h-4 leading-none"
+                >
                   {changeCount || '!'}
                 </Badge>
               )}

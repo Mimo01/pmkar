@@ -93,20 +93,41 @@ export function TicketListPage() {
       store.setLastCheckedAt(now);
 
       // Dual-purpose: run snapshot change detection after successful fetch (D-10, POLL-06)
+      // Also hydrate unseen changes for frontend indicators (Phase 15)
       for (const ticket of result.issues) {
         try {
           const detail = await invoke<unknown>('fetch_ticket_detail', {
             baseUrl: serverConn.baseUrl,
             ticketKey: ticket.key,
           });
-          await invoke('check_ticket_changes', {
+          const changes = await invoke<
+            { field: string; oldValue: string | null; newValue: string | null }[]
+          >('check_ticket_changes', {
             ticketKey: ticket.key,
             responseJson: JSON.stringify(detail),
           });
+          if (changes.length > 0) {
+            store.setUnseenChange(
+              ticket.key,
+              changes.map((c) => c.field),
+            );
+          }
         } catch {
           // Skip change detection for this ticket if detail fetch fails (POLL-06: no watermark advance)
         }
       }
+
+      // Hydrate full unseen state from SQLite (catches any keys set by background polls too)
+      invoke<string[]>('get_unseen_change_keys')
+        .then((keys) => {
+          // Merge: keep field info for keys we just detected, add empty arrays for others
+          for (const key of keys) {
+            if (!store.unseenChanges[key]) {
+              store.setUnseenChange(key, []);
+            }
+          }
+        })
+        .catch(() => {});
 
       // Reset background poll timer after manual fetch (D-12)
       invoke('trigger_manual_poll').catch(() => {});

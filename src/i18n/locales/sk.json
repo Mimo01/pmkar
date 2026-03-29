@@ -265,6 +265,7 @@
   "tickets.card.updated": "Aktualizované {{time}}",
   "tickets.card.unseenChanges": "{{count}} nevidených zmien",
   "tickets.card.changeTooltip": "{{count}} zmien: {{fields}}",
+  "tickets.card.changedLabel": "Zmenene",
   "tickets.filter.keyPlaceholder": "Filtrovať podľa kľúča...",
   "tickets.filter.assigneePlaceholder": "Filtrovať podľa riešiteľa...",
   "tickets.filter.noUsersFound": "Žiadni používatelia",

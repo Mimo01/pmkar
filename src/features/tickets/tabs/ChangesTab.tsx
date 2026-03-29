@@ -47,14 +47,31 @@ export function ChangesTab({ issueKey }: ChangesTabProps) {
       try {
         const result = await invoke<FieldChange[]>('get_ticket_changes', { ticketKey: issueKey });
         if (!cancelled) {
-          setChanges(result);
-          // Mark seen AFTER data is fetched (D-10, avoids race condition)
-          await invoke('mark_changes_seen', { ticketKey: issueKey });
-          useTicketStore.getState().clearUnseenChange(issueKey);
+          if (result.length > 0) {
+            setChanges(result);
+            await invoke('mark_changes_seen', { ticketKey: issueKey });
+            useTicketStore.getState().clearUnseenChange(issueKey);
+          } else {
+            // DB has no pending_changes_json — fall back to store field names
+            const fields = useTicketStore.getState().unseenChanges[issueKey];
+            if (fields && fields.length > 0) {
+              setChanges(fields.map((f) => ({ field: f, oldValue: null, newValue: null })));
+              await invoke('mark_changes_seen', { ticketKey: issueKey });
+              useTicketStore.getState().clearUnseenChange(issueKey);
+            } else {
+              setChanges([]);
+            }
+          }
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load changes');
+          // On error, still try to show store field names
+          const fields = useTicketStore.getState().unseenChanges[issueKey];
+          if (fields && fields.length > 0) {
+            setChanges(fields.map((f) => ({ field: f, oldValue: null, newValue: null })));
+          } else {
+            setError('Failed to load changes');
+          }
         }
       }
     }

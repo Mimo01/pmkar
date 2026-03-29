@@ -52,9 +52,21 @@ impl SnapshotDb {
         let conn = Connection::open(path)?;
         conn.execute_batch(CREATE_SNAPSHOT_TABLE)?;
         // Migrations for existing on-disk databases (silently ignore duplicate column errors)
-        conn.execute("ALTER TABLE snapshot_store ADD COLUMN seen_response_json TEXT", []).ok();
-        conn.execute("ALTER TABLE snapshot_store ADD COLUMN has_unseen_changes INTEGER NOT NULL DEFAULT 0", []).ok();
-        conn.execute("ALTER TABLE snapshot_store ADD COLUMN pending_changes_json TEXT", []).ok();
+        conn.execute(
+            "ALTER TABLE snapshot_store ADD COLUMN seen_response_json TEXT",
+            [],
+        )
+        .ok();
+        conn.execute(
+            "ALTER TABLE snapshot_store ADD COLUMN has_unseen_changes INTEGER NOT NULL DEFAULT 0",
+            [],
+        )
+        .ok();
+        conn.execute(
+            "ALTER TABLE snapshot_store ADD COLUMN pending_changes_json TEXT",
+            [],
+        )
+        .ok();
         Ok(Self { conn })
     }
 
@@ -118,9 +130,9 @@ impl SnapshotDb {
 
     /// Return all ticket keys that have unseen changes.
     pub fn get_unseen_keys(&self) -> AppResult<Vec<String>> {
-        let mut stmt = self.conn.prepare(
-            "SELECT ticket_key FROM snapshot_store WHERE has_unseen_changes = 1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT ticket_key FROM snapshot_store WHERE has_unseen_changes = 1")?;
         let keys = stmt
             .query_map([], |row| row.get::<_, String>(0))?
             .collect::<Result<Vec<_>, _>>()?;
@@ -640,14 +652,17 @@ mod tests {
             old_value: Some("Open".to_string()),
             new_value: Some("In Progress".to_string()),
         }];
-        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+        db.set_unseen_changes("PROJ-1", &changes)
+            .expect("set_unseen failed");
 
         // Now PROJ-1 should appear
         let keys = db.get_unseen_keys().expect("get_unseen_keys failed");
         assert_eq!(keys, vec!["PROJ-1"]);
 
         // Pending changes should deserialize correctly
-        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        let pending = db
+            .get_pending_changes("PROJ-1")
+            .expect("get_pending failed");
         assert_eq!(pending.len(), 1);
         assert_eq!(pending[0].field, "status");
         assert_eq!(pending[0].old_value.as_deref(), Some("Open"));
@@ -657,12 +672,17 @@ mod tests {
         db.mark_changes_seen("PROJ-1").expect("mark_seen failed");
         let keys = db.get_unseen_keys().expect("get_unseen_keys failed");
         assert!(keys.is_empty(), "no unseen keys after mark_seen");
-        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        let pending = db
+            .get_pending_changes("PROJ-1")
+            .expect("get_pending failed");
         assert!(pending.is_empty(), "no pending changes after mark_seen");
 
         // seen_response_json should be set
         let seen = db.get_seen_snapshot("PROJ-1").expect("get_seen failed");
-        assert!(seen.is_some(), "seen_response_json should be set after mark_seen");
+        assert!(
+            seen.is_some(),
+            "seen_response_json should be set after mark_seen"
+        );
     }
 
     #[test]
@@ -684,7 +704,8 @@ mod tests {
             .expect("get_seen failed")
             .expect("should have seen");
         let changes = detect_changes(&seen_json, &json_v2).expect("detect failed");
-        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+        db.set_unseen_changes("PROJ-1", &changes)
+            .expect("set_unseen failed");
 
         // Second poll: status changes to Done (user has NOT viewed yet)
         let json_v3 = ticket_json("Done", "Medium", 0, 0);
@@ -692,10 +713,13 @@ mod tests {
 
         // Cumulative diff from seen baseline (v1) to current (v3)
         let changes = detect_changes(&seen_json, &json_v3).expect("detect failed");
-        db.set_unseen_changes("PROJ-1", &changes).expect("set_unseen failed");
+        db.set_unseen_changes("PROJ-1", &changes)
+            .expect("set_unseen failed");
 
         // Pending should show Open -> Done (D-12 cumulative)
-        let pending = db.get_pending_changes("PROJ-1").expect("get_pending failed");
+        let pending = db
+            .get_pending_changes("PROJ-1")
+            .expect("get_pending failed");
         let status_change = pending
             .iter()
             .find(|c| c.field == "status")
