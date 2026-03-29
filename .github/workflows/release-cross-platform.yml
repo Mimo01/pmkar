@@ -178,12 +178,12 @@ jobs:
           RELEASE=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
             "https://api.github.com/repos/Mimo01/pmkar-releases/releases/tags/$TAG")
           RELEASE_ID=$(echo "$RELEASE" | python3 -c "
-          import sys, json
-          data = json.loads(sys.stdin.read(), strict=False)
-          if 'id' not in data:
-              print('Release not found for tag $TAG', file=sys.stderr)
-              sys.exit(1)
-          print(data['id'])")
+import sys, json
+data = json.loads(sys.stdin.read(), strict=False)
+if 'id' not in data:
+    print('Release not found for tag $TAG', file=sys.stderr)
+    sys.exit(1)
+print(data['id'])")
           echo "id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
           echo "Release ID: $RELEASE_ID"
 
@@ -204,12 +204,12 @@ jobs:
               "$UPLOAD_BASE?name=$NAME" \
               --data-binary @"$file")
             URL=$(echo "$RESPONSE" | python3 -c "
-            import sys, json
-            data = json.loads(sys.stdin.read(), strict=False)
-            if 'id' not in data:
-                print('Error:', json.dumps(data, indent=2), file=sys.stderr)
-                sys.exit(1)
-            print(data.get('browser_download_url', '(no url)'))")
+import sys, json
+data = json.loads(sys.stdin.read(), strict=False)
+if 'id' not in data:
+    print('Error:', json.dumps(data, indent=2), file=sys.stderr)
+    sys.exit(1)
+print(data.get('browser_download_url', '(no url)'))")
             echo "  OK: $URL"
           done
 
@@ -269,14 +269,14 @@ jobs:
           ASSETS=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
             "https://api.github.com/repos/Mimo01/pmkar-releases/releases/$RELEASE_ID/assets")
           LATEST_ID=$(echo "$ASSETS" | python3 -c "
-          import sys, json
-          assets = json.loads(sys.stdin.read(), strict=False)
-          for a in assets:
-              if a['name'] == 'latest.json':
-                  print(a['id'])
-                  break
-          else:
-              print('')")
+import sys, json
+assets = json.loads(sys.stdin.read(), strict=False)
+for a in assets:
+    if a['name'] == 'latest.json':
+        print(a['id'])
+        break
+else:
+    print('')")
 
           if [ -n "$LATEST_ID" ]; then
             echo "Deleting old latest.json (asset $LATEST_ID)..."
@@ -292,6 +292,6 @@ jobs:
             -H "Content-Type: application/json" \
             "$UPLOAD_BASE?name=latest.json" \
             --data-binary @/tmp/latest.json | python3 -c "
-          import sys, json
-          data = json.loads(sys.stdin.read(), strict=False)
-          print('OK:', data.get('browser_download_url', '(no url)'))"
+import sys, json
+data = json.loads(sys.stdin.read(), strict=False)
+print('OK:', data.get('browser_download_url', '(no url)'))"
