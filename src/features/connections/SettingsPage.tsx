@@ -803,175 +803,176 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             </div>
 
             {/* Domain search sub-section */}
-            <Separator className="mt-4 mb-4" />
-            <p className="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">
+            <p className="text-[12px] text-brand-muted mb-2 mt-4">
               {t('settings.watchedUsers.domainSearch.heading')}
             </p>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
-              <AtSign className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
-              <input
-                type="text"
-                value={domainQuery}
-                onChange={(e) => setDomainQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void handleDomainSearch();
-                  if (e.key === 'Escape') setDomainQuery('');
-                }}
-                placeholder={t('settings.watchedUsers.domainSearch.placeholder')}
-                className="flex-1 bg-transparent text-sm text-brand-text placeholder-brand-muted focus:outline-none"
-                aria-label="Search users by email domain"
-                aria-describedby={domainError ? 'domain-error' : undefined}
-              />
-              <button
-                type="button"
-                onClick={() => void handleDomainSearch()}
-                disabled={domainSearchState === 'loading' || !domainQuery.trim()}
-                aria-busy={domainSearchState === 'loading'}
-                className="text-xs font-medium text-brand px-2 py-1 rounded hover:bg-brand/8 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {domainSearchState === 'loading' ? (
-                  <span className="w-3 h-3 border-2 border-brand-muted border-t-transparent rounded-full animate-spin inline-block" />
-                ) : (
-                  t('settings.watchedUsers.domainSearch.searchButton')
-                )}
-              </button>
-            </div>
-            {domainError && (
-              <p id="domain-error" className="text-xs text-destructive mt-2 ml-1">
-                {domainError}
-              </p>
-            )}
-
-            {/* Domain search results */}
-            {domainSearchState === 'results' && domainResults.length > 0 && (
-              <div className="border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden mt-2">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-brand-border">
-                  <span className="text-xs text-brand-muted">
-                    {t('settings.watchedUsers.domainSearch.found', {
-                      count: domainResults.length,
-                    })}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-xs text-brand hover:underline cursor-pointer"
-                    onClick={() => {
-                      const allSelectable = domainResults
-                        .map((u) => u.displayName)
-                        .filter((name) => name && !safeWatchedUsers.includes(name));
-                      const allSelected = allSelectable.every((name) =>
-                        selectedAccountIds.has(name),
-                      );
-                      if (allSelected) {
-                        setSelectedAccountIds(new Set());
-                      } else {
-                        setSelectedAccountIds(new Set(allSelectable));
-                      }
-                    }}
-                  >
-                    {domainResults
-                      .map((u) => u.displayName)
-                      .filter((name) => name && !safeWatchedUsers.includes(name))
-                      .every((name) => selectedAccountIds.has(name))
-                      ? t('settings.watchedUsers.domainSearch.deselectAll')
-                      : t('settings.watchedUsers.domainSearch.selectAll')}
-                  </button>
-                </div>
-                <ul className="list-none m-0 p-0">
-                  {domainResults.map((user, i) => {
-                    const userId = user.displayName;
-                    const isAlreadyWatching = safeWatchedUsers.includes(userId);
-                    const isChecked = selectedAccountIds.has(userId);
-                    return (
-                      <li
-                        key={userId}
-                        className={`flex items-center gap-2 px-4 py-2 ${i > 0 ? 'border-t border-brand-border-subtle' : ''}`}
-                      >
-                        <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-xs font-semibold text-brand flex-shrink-0">
-                          {user.displayName.charAt(0).toUpperCase()}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <span
-                            className={`text-sm block ${isAlreadyWatching ? 'text-brand-muted line-through' : 'text-brand-text'}`}
-                          >
-                            {user.displayName}
-                          </span>
-                          {user.emailAddress && (
-                            <span className="text-xs text-brand-muted block">
-                              {user.emailAddress}
-                            </span>
-                          )}
-                        </div>
-                        {isAlreadyWatching ? (
-                          <span className="text-xs text-brand-muted ml-auto">
-                            {t('settings.watchedUsers.domainSearch.alreadyWatching')}
-                          </span>
-                        ) : (
-                          <input
-                            type="checkbox"
-                            className="w-4 h-4"
-                            checked={isChecked}
-                            aria-label={`Select ${user.displayName}`}
-                            onChange={(e) => {
-                              const next = new Set(selectedAccountIds);
-                              if (e.target.checked) next.add(userId);
-                              else next.delete(userId);
-                              setSelectedAccountIds(next);
-                            }}
-                          />
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="flex justify-end gap-2 px-4 py-2 border-t border-brand-border bg-brand-bg">
-                  <button
-                    type="button"
-                    onClick={handleCancelDomainResults}
-                    className="text-xs font-medium text-brand-muted px-2 py-1 rounded-lg hover:bg-brand-surface-hover transition-colors"
-                  >
-                    {t('settings.cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAddDomainResults}
-                    aria-disabled={selectedAccountIds.size === 0}
-                    className="text-xs font-semibold text-white bg-brand px-2 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    {t('settings.watchedUsers.domainSearch.addSelected')}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Empty state (no privacy warning) */}
-            {domainSearchState === 'empty' && !showPrivacyWarning && (
-              <div className="py-4 text-center">
-                <p className="text-xs text-brand-muted">
-                  {t('settings.watchedUsers.domainSearch.noResults', {
-                    domain: domainQuery.replace(/^@/, ''),
-                  })}
-                </p>
-              </div>
-            )}
-
-            {/* Privacy warning */}
-            {showPrivacyWarning && (
-              <div
-                role="alert"
-                className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 mt-4"
-              >
-                <AlertTriangle
-                  className="w-4 h-4 text-amber-500 flex-shrink-0 mt-1"
-                  aria-hidden="true"
+            <div className="relative mb-4">
+              <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-brand-border bg-brand-bg focus-within:border-brand/40 focus-within:ring-1 focus-within:ring-brand/15 transition-all duration-200">
+                <AtSign className="w-3.5 h-3.5 text-brand-muted flex-shrink-0" aria-hidden="true" />
+                <input
+                  type="text"
+                  value={domainQuery}
+                  onChange={(e) => setDomainQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleDomainSearch();
+                    if (e.key === 'Escape') setDomainQuery('');
+                  }}
+                  placeholder={t('settings.watchedUsers.domainSearch.placeholder')}
+                  className="flex-1 bg-transparent text-[13px] text-brand-text placeholder-brand-muted focus:outline-none"
+                  aria-label="Search users by email domain"
+                  aria-describedby={domainError ? 'domain-error' : undefined}
                 />
-                <div className="text-xs text-brand-text">
-                  <p className="font-semibold">
-                    {t('settings.watchedUsers.domainSearch.privacyWarning.title')}
-                  </p>
-                  <p>{t('settings.watchedUsers.domainSearch.privacyWarning.body')}</p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleDomainSearch()}
+                  disabled={domainSearchState === 'loading' || !domainQuery.trim()}
+                  aria-busy={domainSearchState === 'loading'}
+                  className="text-xs font-medium text-brand px-2 py-1 rounded hover:bg-brand/8 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {domainSearchState === 'loading' ? (
+                    <span className="w-3 h-3 border-2 border-brand-muted border-t-transparent rounded-full animate-spin inline-block" />
+                  ) : (
+                    t('settings.watchedUsers.domainSearch.searchButton')
+                  )}
+                </button>
               </div>
-            )}
+              {domainError && (
+                <p id="domain-error" className="text-xs text-destructive mt-2 ml-1">
+                  {domainError}
+                </p>
+              )}
+
+              {/* Domain search results */}
+              {domainSearchState === 'results' && domainResults.length > 0 && (
+                <div className="border border-brand-border rounded-lg bg-brand-surface shadow-lg overflow-hidden mt-2">
+                  <div className="flex items-center justify-between px-4 py-2 border-b border-brand-border">
+                    <span className="text-xs text-brand-muted">
+                      {t('settings.watchedUsers.domainSearch.found', {
+                        count: domainResults.length,
+                      })}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-xs text-brand hover:underline cursor-pointer"
+                      onClick={() => {
+                        const allSelectable = domainResults
+                          .map((u) => u.displayName)
+                          .filter((name) => name && !safeWatchedUsers.includes(name));
+                        const allSelected = allSelectable.every((name) =>
+                          selectedAccountIds.has(name),
+                        );
+                        if (allSelected) {
+                          setSelectedAccountIds(new Set());
+                        } else {
+                          setSelectedAccountIds(new Set(allSelectable));
+                        }
+                      }}
+                    >
+                      {domainResults
+                        .map((u) => u.displayName)
+                        .filter((name) => name && !safeWatchedUsers.includes(name))
+                        .every((name) => selectedAccountIds.has(name))
+                        ? t('settings.watchedUsers.domainSearch.deselectAll')
+                        : t('settings.watchedUsers.domainSearch.selectAll')}
+                    </button>
+                  </div>
+                  <ul className="list-none m-0 p-0">
+                    {domainResults.map((user, i) => {
+                      const userId = user.displayName;
+                      const isAlreadyWatching = safeWatchedUsers.includes(userId);
+                      const isChecked = selectedAccountIds.has(userId);
+                      return (
+                        <li
+                          key={userId}
+                          className={`flex items-center gap-2 px-4 py-2 ${i > 0 ? 'border-t border-brand-border-subtle' : ''}`}
+                        >
+                          <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-xs font-semibold text-brand flex-shrink-0">
+                            {user.displayName.charAt(0).toUpperCase()}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <span
+                              className={`text-sm block ${isAlreadyWatching ? 'text-brand-muted line-through' : 'text-brand-text'}`}
+                            >
+                              {user.displayName}
+                            </span>
+                            {user.emailAddress && (
+                              <span className="text-xs text-brand-muted block">
+                                {user.emailAddress}
+                              </span>
+                            )}
+                          </div>
+                          {isAlreadyWatching ? (
+                            <span className="text-xs text-brand-muted ml-auto">
+                              {t('settings.watchedUsers.domainSearch.alreadyWatching')}
+                            </span>
+                          ) : (
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4"
+                              checked={isChecked}
+                              aria-label={`Select ${user.displayName}`}
+                              onChange={(e) => {
+                                const next = new Set(selectedAccountIds);
+                                if (e.target.checked) next.add(userId);
+                                else next.delete(userId);
+                                setSelectedAccountIds(next);
+                              }}
+                            />
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="flex justify-end gap-2 px-4 py-2 border-t border-brand-border bg-brand-bg">
+                    <button
+                      type="button"
+                      onClick={handleCancelDomainResults}
+                      className="text-xs font-medium text-brand-muted px-2 py-1 rounded-lg hover:bg-brand-surface-hover transition-colors"
+                    >
+                      {t('settings.cancel')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleAddDomainResults}
+                      aria-disabled={selectedAccountIds.size === 0}
+                      className="text-xs font-semibold text-white bg-brand px-2 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {t('settings.watchedUsers.domainSearch.addSelected')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Empty state (no privacy warning) */}
+              {domainSearchState === 'empty' && !showPrivacyWarning && (
+                <div className="py-4 text-center">
+                  <p className="text-xs text-brand-muted">
+                    {t('settings.watchedUsers.domainSearch.noResults', {
+                      domain: domainQuery.replace(/^@/, ''),
+                    })}
+                  </p>
+                </div>
+              )}
+
+              {/* Privacy warning */}
+              {showPrivacyWarning && (
+                <div
+                  role="alert"
+                  className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 mt-4"
+                >
+                  <AlertTriangle
+                    className="w-4 h-4 text-amber-500 flex-shrink-0 mt-1"
+                    aria-hidden="true"
+                  />
+                  <div className="text-xs text-brand-text">
+                    <p className="font-semibold">
+                      {t('settings.watchedUsers.domainSearch.privacyWarning.title')}
+                    </p>
+                    <p>{t('settings.watchedUsers.domainSearch.privacyWarning.body')}</p>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Watched user list */}
             <Separator className="mt-4 mb-4" />
