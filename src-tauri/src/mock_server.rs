@@ -34,6 +34,13 @@ pub struct UserSearchQuery {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct V3UserSearchQuery {
+    pub query: Option<String>,
+    #[serde(rename = "maxResults")]
+    pub max_results: Option<u32>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct SearchQuery {
     pub jql: Option<String>,
 }
@@ -411,8 +418,63 @@ mod v2 {
 mod v3 {
     use super::{
         filter_issues, json, make_search_response, AdfDoc, IntoResponse, IssueQuery, JiraIssue,
-        Json, Path, Query, SharedFixtures, State, StatusCode, Value,
+        Json, Path, Query, SharedFixtures, State, StatusCode, V3UserSearchQuery, Value,
     };
+
+    pub async fn search_users(Query(params): Query<V3UserSearchQuery>) -> impl IntoResponse {
+        let mock_users = vec![
+            json!({
+                "accountId": "5b10ac8d82e05b22cc7d4ef5",
+                "displayName": "Jane Doe",
+                "emailAddress": "jdoe@example.com",
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://avatar.example.com/jdoe/48x48.png",
+                    "32x32": "https://avatar.example.com/jdoe/32x32.png",
+                    "24x24": "https://avatar.example.com/jdoe/24x24.png",
+                    "16x16": "https://avatar.example.com/jdoe/16x16.png"
+                }
+            }),
+            json!({
+                "accountId": "5b10a2844c20165700ede21g",
+                "displayName": "Chris Smith",
+                "emailAddress": "csmith@example.com",
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://avatar.example.com/csmith/48x48.png",
+                    "32x32": "https://avatar.example.com/csmith/32x32.png",
+                    "24x24": "https://avatar.example.com/csmith/24x24.png",
+                    "16x16": "https://avatar.example.com/csmith/16x16.png"
+                }
+            }),
+            // Privacy-simulation user: no emailAddress field at all (simulates Cloud privacy)
+            json!({
+                "accountId": "5b10b3955c98780123abcdef",
+                "displayName": "Private User",
+                "active": true,
+                "avatarUrls": {
+                    "48x48": "https://avatar.example.com/private/48x48.png",
+                    "32x32": "https://avatar.example.com/private/32x32.png",
+                    "24x24": "https://avatar.example.com/private/24x24.png",
+                    "16x16": "https://avatar.example.com/private/16x16.png"
+                }
+            }),
+        ];
+        let query = params.query.unwrap_or_default().to_lowercase();
+        let filtered: Vec<Value> = if query.is_empty() {
+            mock_users
+        } else {
+            mock_users
+                .into_iter()
+                .filter(|u| {
+                    let email = u["emailAddress"].as_str().unwrap_or("").to_lowercase();
+                    let display = u["displayName"].as_str().unwrap_or("").to_lowercase();
+                    email.contains(&query) || display.contains(&query)
+                })
+                .collect()
+        };
+        (StatusCode::OK, Json(filtered)).into_response()
+    }
 
     pub async fn get_myself() -> impl IntoResponse {
         Json(json!({
@@ -772,6 +834,7 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
             "/rest/api/3/project/{key}/statuses",
             get(v3::get_project_statuses),
         )
+        .route("/rest/api/3/user/search", get(v3::search_users))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }

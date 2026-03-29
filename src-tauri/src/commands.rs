@@ -1033,6 +1033,43 @@ pub async fn search_jira_users(
     Ok(users)
 }
 
+// --- Cloud user search command ---
+
+#[tauri::command]
+pub async fn search_jira_users_by_domain(
+    domain: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<serde_json::Value>, AppError> {
+    let (base_url, cloud_email, api_token) = get_cloud_credentials(triage_db.inner())?;
+    let arc_db = Arc::clone(db.inner());
+    let client = build_audited_client(arc_db);
+
+    let clean_domain = domain.trim_start_matches('@');
+    let query = format!("@{clean_domain}");
+    let encoded_query = urlencoding::encode(&query);
+    let url = format!("{base_url}/rest/api/3/user/search?query={encoded_query}&maxResults=50");
+
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
+    );
+
+    let resp = client
+        .get(&url)
+        .header("Authorization", cloud_auth)
+        .send()
+        .await
+        .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;
+
+    if !resp.status().is_success() {
+        return Ok(vec![]);
+    }
+
+    let users: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
+    Ok(users)
+}
+
 // --- Connection meta commands ---
 
 #[tauri::command]
