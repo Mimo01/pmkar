@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.3.0
 milestone_name: Notifications & Change Tracking
 status: v0.3.0 milestone complete
-stopped_at: "Completed quick task 260329-nha: Replace GitHub Actions with local processes"
-last_updated: "2026-03-29T19:03:11.729Z"
-last_activity: 2026-03-29
+stopped_at: "Completed quick task 260401-hhp: Add MSI Windows build artifacts and platform-selective dispatch"
+last_updated: "2026-04-01T10:42:29Z"
+last_activity: 2026-04-01
 progress:
   total_phases: 5
   completed_phases: 5
@@ -246,6 +246,7 @@ None yet.
 | 260325-sxj | Hide Copy to Company Jira button on dismissed tickets | 2026-03-25 | b68ed1c | | [260325-sxj-hide-copy-to-company-jira-button-on-dism](./quick/260325-sxj-hide-copy-to-company-jira-button-on-dism/) |
 | 260325-wet | Add tests to improve pipeline coverage | 2026-03-25 | 504cfe1 | | [260325-wet-add-tests-to-improve-pipeline-coverage](./quick/260325-wet-add-tests-to-improve-pipeline-coverage/) |
 | 260329-nha | Replace GitHub Actions with local processes (pre-commit hook + release.sh) | 2026-03-29 | a4d6b34 | Gaps (fixed) | [260329-nha-replace-github-actions-with-local-proces](./quick/260329-nha-replace-github-actions-with-local-proces/) |
+| 260401-hhp | Add MSI Windows build artifacts and platform-selective dispatch | 2026-04-01 | b64c8e5 | | [260401-hhp-add-msi-windows-build-back-to-release-wo](./quick/260401-hhp-add-msi-windows-build-back-to-release-wo/) |
 
 ## Session Continuity
 
