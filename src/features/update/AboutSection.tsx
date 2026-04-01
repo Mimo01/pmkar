@@ -57,7 +57,12 @@ export function AboutSection() {
       // If the release endpoint is unreachable or returns 404 (no release yet),
       // treat as up-to-date rather than showing a scary error
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes('Could not fetch') || msg.includes('404') || msg.includes('Network')) {
+      if (
+        msg.includes('Could not fetch') ||
+        msg.includes('404') ||
+        msg.includes('Network') ||
+        msg.includes('pub_date')
+      ) {
         store.setUpToDate();
       } else {
         store.setError(t('update.modal.errorCheck'));
