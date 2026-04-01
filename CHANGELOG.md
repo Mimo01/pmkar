@@ -1,4 +1,27 @@
 
+## [0.3.1]
+
+### Bug Fixes
+
+- resolve target Jira project selection and credential persistence failures
+- use email as cloud credential key instead of display name
+- collect exe.sig instead of nsis.zip for Tauri v2 updater format
+- use temp files for JSON data in workflow instead of shell interpolation
+- delete existing release assets before re-uploading
+- rewrite workflow Python to use argv instead of stdin, fix YAML indentation
+- dedent inline Python in workflow to avoid IndentationError
+- use correct secret name RELEASES_REPO_PAT in workflow
+- fetch tags in CI checkout and handle partial build success
+
+### Features
+
+- add Windows MSI + NSIS download links to release.sh README template
+- add MSI artifact collection and platform-selective dispatch
+- add GitHub Actions workflow for Linux + Windows release builds
+
+### Miscellaneous
+
+- update Cargo.lock
 ## [0.3.0]
 
 ### Bug Fixes
