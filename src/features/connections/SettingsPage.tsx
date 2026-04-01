@@ -473,11 +473,16 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     result: ConnectionTestResult,
     credentials: { baseUrl: string; [key: string]: string },
   ) {
-    const username = result.username ?? '';
     const serverVersion = result.serverVersion ?? '';
+    // For cloud connections, the credential is keyed by email address (not display name).
+    // Use email as the username stored in connection_meta so keychain lookups match.
+    const metaUsername =
+      connectionType === 'cloud'
+        ? (credentials.email ?? result.username ?? '')
+        : (result.username ?? '');
     const meta: ConnectionMeta = {
       baseUrl: credentials.baseUrl,
-      username,
+      username: metaUsername,
       serverVersion,
       lastTestedAt: new Date().toISOString(),
       status: 'ok',
@@ -487,14 +492,14 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       useConnectionStore.getState().setServerConnection(meta);
       invoke('store_credential', {
         connectionType: 'jira-server',
-        username,
+        username: metaUsername,
         secret: credentials.pat ?? credentials.apiToken ?? '',
       }).catch(() => {});
     } else {
       useConnectionStore.getState().setCloudConnection(meta);
       invoke('store_credential', {
         connectionType: 'jira-cloud',
-        username: credentials.email ?? username,
+        username: metaUsername,
         secret: credentials.apiToken ?? '',
       }).catch(() => {});
     }
@@ -503,7 +508,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
       meta: {
         connectionType: connectionType === 'server' ? 'server' : 'cloud',
         baseUrl: credentials.baseUrl,
-        username,
+        username: metaUsername,
         serverVersion,
         lastTestedAt: meta.lastTestedAt,
         status: 'ok',

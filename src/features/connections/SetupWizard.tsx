@@ -77,7 +77,6 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
     credentials: CloudCredentials | { baseUrl: string; [key: string]: string },
   ) {
     const { baseUrl, email, apiToken } = credentials as CloudCredentials;
-    const username = result.username ?? '';
     const serverVersion = result.serverVersion ?? '';
 
     try {
@@ -92,7 +91,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
 
     const meta: ConnectionMeta = {
       baseUrl,
-      username,
+      username: email,
       serverVersion,
       lastTestedAt: new Date().toISOString(),
       status: 'ok',
@@ -102,7 +101,7 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       meta: {
         connectionType: 'cloud',
         baseUrl,
-        username,
+        username: email,
         serverVersion,
         lastTestedAt: meta.lastTestedAt,
         status: 'ok',

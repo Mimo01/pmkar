@@ -63,7 +63,7 @@ const initialState = {
 export const useCopyStore = create<CopyState>((set, get) => ({
   ...initialState,
 
-  startPreview: async (ticket, _sourceBaseUrl, cloudBaseUrl) => {
+  startPreview: async (ticket, _sourceBaseUrl, _cloudBaseUrl) => {
     const savedTargetProjectKey = useConnectionStore.getState().targetProjectKey ?? '';
     set({
       phase: 'loading_preview',
@@ -77,9 +77,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     });
 
     try {
-      const meta = await invoke<CloudMeta>('fetch_cloud_meta', {
-        baseUrl: cloudBaseUrl,
-      });
+      const meta = await invoke<CloudMeta>('fetch_cloud_meta');
 
       const labels = ticket.fields.labels || [];
 
@@ -109,7 +107,8 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetStatus: defaultStatus,
         targetPriorityId: defaultPriorityId,
       });
-    } catch (_err) {
+    } catch (err) {
+      console.error('[copyStore] fetch_cloud_meta failed:', err);
       set({
         phase: 'idle',
         error: 'Could not load target fields. Check your destination connection in Settings.',

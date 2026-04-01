@@ -188,9 +188,14 @@ pub async fn fetch_cloud_meta(
         .json()
         .await
         .map_err(|_| AppError::Http("Failed to parse /priority response".into()))?;
-    let priorities: Vec<PriorityOption> = prio_body
-        .as_array()
-        .unwrap_or(&vec![])
+    // Jira Cloud /rest/api/3/priority returns either a flat array (older) or a
+    // paginated SearchResult object { values: [...], isLast: bool } (newer).
+    // Handle both formats defensively.
+    let prio_items: &Vec<serde_json::Value> = &match prio_body.as_array() {
+        Some(arr) => arr.clone(),
+        None => prio_body["values"].as_array().cloned().unwrap_or_default(),
+    };
+    let priorities: Vec<PriorityOption> = prio_items
         .iter()
         .filter_map(|p| {
             Some(PriorityOption {
