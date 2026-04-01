@@ -57,6 +57,9 @@ function App() {
             useConnectionStore.getState().setCloudConnection(meta);
           }
         }
+        // Load persisted project config so targetProjectKey is available
+        // before the user opens Settings.
+        useConnectionStore.getState().loadProjectConfig().catch(() => {});
       })
       .catch(() => {})
       .finally(() => setHydrated(true));

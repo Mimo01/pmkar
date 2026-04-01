@@ -113,6 +113,7 @@
   "copy.preview.target": "Target",
   "copy.preview.discard": "Discard Preview",
   "copy.preview.confirm": "Copy to {{name}}",
+  "copy.preview.selectProject": "Select a target project",
   "copy.preview.copying": "Copying...",
   "copy.result.complete": "Copy Complete",
   "copy.result.withErrors": "Copy Finished with Errors",

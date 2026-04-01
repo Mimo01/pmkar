@@ -1,12 +1,16 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+
+import { invoke } from '@tauri-apps/api/core';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { CopyPreviewPage } from '../CopyPreviewPage';
 import { useCopyStore } from '../copyStore';
 import type { CloudMeta, JiraTicketDetail } from '../types';
 
-vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+const mockInvoke = vi.mocked(invoke);
 
 // ---------------------------------------------------------------------------
 // Factories
@@ -74,6 +78,10 @@ const baseStoreState = {
 
 describe('CopyPreviewPage', () => {
   beforeEach(() => {
+    mockInvoke.mockResolvedValue([
+      { key: 'MYPROJ', name: 'My Company Project' },
+      { key: 'DEV', name: 'Development' },
+    ]);
     useCopyStore.setState({
       ...baseStoreState,
       phase: 'previewing',

@@ -1,6 +1,8 @@
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -59,22 +61,33 @@ export function CopyPreviewPage() {
   const targetLabels = useCopyStore((s) => s.targetLabels);
   const selectedLabels = useCopyStore((s) => s.selectedLabels);
   const progressStep = useCopyStore((s) => s.progressStep);
+  const targetProjectKey = useCopyStore((s) => s.targetProjectKey);
   const setTargetSummary = useCopyStore((s) => s.setTargetSummary);
   const setTargetDescription = useCopyStore((s) => s.setTargetDescription);
   const setTargetStatus = useCopyStore((s) => s.setTargetStatus);
   const setTargetPriorityId = useCopyStore((s) => s.setTargetPriorityId);
+  const setTargetProjectKey = useCopyStore((s) => s.setTargetProjectKey);
   const toggleLabel = useCopyStore((s) => s.toggleLabel);
   const reset = useCopyStore((s) => s.reset);
   const confirmCopy = useCopyStore((s) => s.confirmCopy);
 
   const sourceBaseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
-  const targetProjectName = useConnectionStore((s) => s.targetProjectName);
+
+  const [cloudProjects, setCloudProjects] = useState<Array<{ key: string; name: string }>>([]);
+
+  useEffect(() => {
+    if (phase !== 'previewing') return;
+    invoke<Array<{ key: string; name: string }>>('fetch_cloud_projects')
+      .then(setCloudProjects)
+      .catch(() => setCloudProjects([]));
+  }, [phase]);
 
   const isCopying = phase === 'copying';
   const isLoading = phase === 'loading_preview';
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
   const progressPercent = getProgressPercent(progressStep);
+  const isProjectMissing = !targetProjectKey;
 
   const handleDiscard = () => {
     reset();
@@ -104,7 +117,7 @@ export function CopyPreviewPage() {
 
         <Button
           onClick={handleConfirm}
-          disabled={isCopying || isLoading}
+          disabled={isCopying || isLoading || isProjectMissing}
           size="lg"
           className="bg-brand hover:bg-brand/90 text-white font-semibold px-6"
         >
@@ -113,9 +126,11 @@ export function CopyPreviewPage() {
               <Loader2 className="w-4 h-4 animate-spin mr-2" aria-hidden="true" />
               {t('copy.preview.copying')}
             </>
+          ) : isProjectMissing ? (
+            t('copy.preview.selectProject')
           ) : (
             t('copy.preview.confirm', {
-              name: targetProjectName || t('wizard.destination.subtitle'),
+              name: targetProjectKey,
             })
           )}
         </Button>
@@ -226,6 +241,31 @@ export function CopyPreviewPage() {
             <h2 className="text-sm font-semibold text-brand-text mb-4">
               {t('copy.preview.target')}
             </h2>
+
+            {/* Target project selector */}
+            <div className="mb-4">
+              <label
+                htmlFor="copy-target-project"
+                className="text-xs text-brand-muted block mb-1"
+              >
+                {t('copy.targetProject')}
+              </label>
+              <select
+                id="copy-target-project"
+                value={targetProjectKey}
+                onChange={(e) => setTargetProjectKey(e.target.value)}
+                className="w-full bg-brand-bg border border-brand-border rounded px-2 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
+              >
+                {!targetProjectKey && (
+                  <option value="">{t('settings.project.select')}</option>
+                )}
+                {cloudProjects.map((p) => (
+                  <option key={p.key} value={p.key}>
+                    {p.name} ({p.key})
+                  </option>
+                ))}
+              </select>
+            </div>
 
             {/* Summary (editable) */}
             <div className="mb-4">

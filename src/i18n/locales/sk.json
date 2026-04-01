@@ -113,6 +113,7 @@
   "copy.preview.target": "Cieľ",
   "copy.preview.discard": "Zahodiť náhľad",
   "copy.preview.confirm": "Kopírovať do {{name}}",
+  "copy.preview.selectProject": "Vybrať cieľový projekt",
   "copy.preview.copying": "Kopírujem...",
   "copy.result.complete": "Kopírovanie dokončené",
   "copy.result.withErrors": "Kopírovanie dokončené s chybami",
