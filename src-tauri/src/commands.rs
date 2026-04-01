@@ -1057,26 +1057,44 @@ pub async fn search_jira_users_by_domain(
     let clean_domain = domain.trim_start_matches('@');
     let query = format!("@{clean_domain}");
     let encoded_query = urlencoding::encode(&query);
-    let url = format!("{base_url}/rest/api/3/user/search?query={encoded_query}&maxResults=50");
 
     let cloud_auth = format!(
         "Basic {}",
         base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
     );
 
-    let resp = client
-        .get(&url)
-        .header("Authorization", cloud_auth)
-        .send()
-        .await
-        .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;
+    const PAGE_SIZE: usize = 50;
+    let mut all_users: Vec<serde_json::Value> = Vec::new();
+    let mut start_at: usize = 0;
 
-    if !resp.status().is_success() {
-        return Ok(vec![]);
+    loop {
+        let url = format!(
+            "{base_url}/rest/api/3/user/search?query={encoded_query}&maxResults={PAGE_SIZE}&startAt={start_at}"
+        );
+
+        let resp = client
+            .get(&url)
+            .header("Authorization", cloud_auth.clone())
+            .send()
+            .await
+            .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;
+
+        if !resp.status().is_success() {
+            break;
+        }
+
+        let page: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
+        let page_len = page.len();
+        all_users.extend(page);
+
+        if page_len < PAGE_SIZE {
+            // Last page — no more results
+            break;
+        }
+        start_at += PAGE_SIZE;
     }
 
-    let users: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
-    Ok(users)
+    Ok(all_users)
 }
 
 // --- Connection meta commands ---
