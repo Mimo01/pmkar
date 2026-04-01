@@ -346,11 +346,14 @@ describe('SettingsPage — Watched Users section', () => {
 
   it('shows existing watched users', () => {
     useTicketStore.setState({
-      watchedUsers: ['alice'],
+      watchedUsers: [
+        { identifier: 'alice', displayName: 'Alice Smith', email: 'alice@example.com' },
+      ],
     } as Parameters<typeof useTicketStore.setState>[0]);
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
-    expect(screen.getByText('alice')).toBeInTheDocument();
+    expect(screen.getByText('Alice Smith')).toBeInTheDocument();
+    expect(screen.getByText('alice@example.com')).toBeInTheDocument();
   });
 });
 
@@ -487,14 +490,83 @@ describe('SettingsPage — Domain Search sub-section', () => {
 
     await waitFor(() => {
       const watchedUsers = useTicketStore.getState().watchedUsers;
-      expect(watchedUsers).toContain('Jane Doe');
+      expect(watchedUsers).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ identifier: 'acc-1', displayName: 'Jane Doe' }),
+        ]),
+      );
+    });
+  });
+
+  // Test 5b: Searching same domain again shows "Already watching" for previously added users
+  it('prevents duplicate adds when searching same domain twice', async () => {
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    // First search + add
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add selected/i })).toBeInTheDocument();
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /add selected/i }));
+    });
+    const afterFirst = useTicketStore.getState().watchedUsers.length;
+
+    // Second search of same domain
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    // All previously added users should show "Already watching"
+    await waitFor(() => {
+      const badges = screen.getAllByText(/already watching/i);
+      expect(badges.length).toBeGreaterThanOrEqual(2); // Jane Doe + Chris Smith at minimum
+    });
+
+    // Count should not increase
+    expect(useTicketStore.getState().watchedUsers.length).toBe(afterFirst);
+  });
+
+  // Test 5c: Migrated data (identifier=displayName) still detects duplicates
+  it('detects already-watched users from migrated data where identifier equals displayName', async () => {
+    // Simulates old string[] data migrated to WatchedUser[] — identifier is the displayName, not accountId
+    useTicketStore.setState({
+      watchedUsers: [{ identifier: 'Jane Doe', displayName: 'Jane Doe' }],
+    } as Parameters<typeof useTicketStore.setState>[0]);
+
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
+
+    const domainInput = screen.getByRole('textbox', { name: /search users by email domain/i });
+    fireEvent.change(domainInput, { target: { value: 'example.com' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /search domain/i }));
+    });
+
+    // Jane Doe should show "Already watching" even though identifier doesn't match accountId
+    await waitFor(() => {
+      expect(screen.getByText(/already watching/i)).toBeInTheDocument();
     });
   });
 
   // Test 6: Already-watched users show "Already watching" badge
   it('shows Already watching badge for users already in watchedUsers', async () => {
     useTicketStore.setState({
-      watchedUsers: ['Jane Doe'],
+      watchedUsers: [{ identifier: 'acc-1', displayName: 'Jane Doe', email: 'jdoe@example.com' }],
     } as Parameters<typeof useTicketStore.setState>[0]);
 
     mockInvoke.mockImplementation((cmd: string) => {

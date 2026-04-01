@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useTicketStore } from '../ticketStore';
-import type { FetchConfig, JiraTicket, TriageEntry } from '../types';
+import type { FetchConfig, JiraTicket, TriageEntry, WatchedUser } from '../types';
 
 const makeTicket = (key: string): JiraTicket => ({
   id: key,
@@ -226,8 +226,14 @@ describe('ticketStore', () => {
     });
 
     it('setWatchedUsers updates watchedUsers array', () => {
-      useTicketStore.getState().setWatchedUsers(['alice', 'bob']);
-      expect(useTicketStore.getState().watchedUsers).toEqual(['alice', 'bob']);
+      useTicketStore.getState().setWatchedUsers([
+        { identifier: 'alice', displayName: 'Alice Smith', email: 'alice@example.com' },
+        { identifier: 'bob', displayName: 'Bob Jones' },
+      ]);
+      expect(useTicketStore.getState().watchedUsers).toEqual([
+        { identifier: 'alice', displayName: 'Alice Smith', email: 'alice@example.com' },
+        { identifier: 'bob', displayName: 'Bob Jones' },
+      ]);
     });
   });
 
@@ -236,7 +242,7 @@ describe('ticketStore', () => {
       const config: FetchConfig = {
         jqlPreset: 'custom',
         jqlCustom: 'project = MYPROJ',
-        watchedUsers: ['alice'],
+        watchedUsers: [{ identifier: 'alice', displayName: 'Alice Smith' }],
         lastFetchedAt: '2024-01-15T08:00:00.000Z',
       };
       useTicketStore.getState().hydrateFetchConfig(config);
@@ -244,7 +250,7 @@ describe('ticketStore', () => {
       const state = useTicketStore.getState();
       expect(state.jqlPreset).toBe('custom');
       expect(state.jqlCustom).toBe('project = MYPROJ');
-      expect(state.watchedUsers).toEqual(['alice']);
+      expect(state.watchedUsers).toEqual([{ identifier: 'alice', displayName: 'Alice Smith' }]);
       expect(state.lastFetchedAt).toBe('2024-01-15T08:00:00.000Z');
     });
 
@@ -268,7 +274,7 @@ describe('ticketStore', () => {
       const config = {
         jqlPreset: 'assigned',
         jqlCustom: null,
-        watchedUsers: 'alice' as unknown as string[],
+        watchedUsers: 'alice' as unknown as WatchedUser[],
         lastFetchedAt: null,
       } as FetchConfig;
       useTicketStore.getState().hydrateFetchConfig(config);

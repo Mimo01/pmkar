@@ -18,14 +18,16 @@ import { isDoneTicket } from './utils';
 function buildJql(
   preset: JqlPreset,
   custom: string | null,
-  watchedUsers: string[],
+  watchedUsers: { identifier: string }[],
   currentUser: string,
 ): string {
   if (preset === 'custom' && custom) return custom;
   if (preset === 'assigned') return `assignee = "${currentUser}" ORDER BY updated DESC`;
   if (preset === 'mentioned') return `text ~ "${currentUser}" ORDER BY updated DESC`;
   // 'all_watched': combine current user + watched users
-  const allUsers = [currentUser, ...watchedUsers].map((u) => `"${u}"`).join(', ');
+  const allUsers = [currentUser, ...watchedUsers.map((u) => u.identifier)]
+    .map((u) => `"${u}"`)
+    .join(', ');
   return `assignee in (${allUsers}) ORDER BY updated DESC`;
 }
 

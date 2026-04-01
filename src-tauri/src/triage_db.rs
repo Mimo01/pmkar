@@ -4,12 +4,21 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct WatchedUser {
+    pub identifier: String,
+    pub display_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchConfig {
     pub jql_preset: String,
     pub jql_custom: Option<String>,
-    pub watched_users: Vec<String>,
+    pub watched_users: Vec<WatchedUser>,
     pub last_fetched_at: Option<String>,
 }
 
@@ -156,10 +165,24 @@ impl TriageDb {
             let jql_custom: Option<String> = row.get(1)?;
             let watched_users_json: String = row.get(2)?;
             let last_fetched_at: Option<String> = row.get(3)?;
+            // Migrate: old format was ["alice","bob"], new format is [{identifier,displayName,email}]
+            let watched_users = serde_json::from_str::<Vec<WatchedUser>>(&watched_users_json)
+                .unwrap_or_else(|_| {
+                    // Try parsing as old string array and convert
+                    serde_json::from_str::<Vec<String>>(&watched_users_json)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|s| WatchedUser {
+                            display_name: s.clone(),
+                            identifier: s,
+                            email: None,
+                        })
+                        .collect()
+                });
             Ok(FetchConfig {
                 jql_preset,
                 jql_custom,
-                watched_users: serde_json::from_str(&watched_users_json).unwrap_or_default(),
+                watched_users,
                 last_fetched_at,
             })
         })?;
@@ -421,7 +444,18 @@ mod tests {
         let config = FetchConfig {
             jql_preset: "custom".to_string(),
             jql_custom: Some("project = MYPROJ".to_string()),
-            watched_users: vec!["alice".to_string(), "bob".to_string()],
+            watched_users: vec![
+                WatchedUser {
+                    identifier: "alice".into(),
+                    display_name: "Alice Smith".into(),
+                    email: Some("alice@example.com".into()),
+                },
+                WatchedUser {
+                    identifier: "bob".into(),
+                    display_name: "Bob Jones".into(),
+                    email: None,
+                },
+            ],
             last_fetched_at: Some("2024-01-01T00:00:00Z".to_string()),
         };
         db.set_fetch_config(&config)
@@ -429,7 +463,16 @@ mod tests {
         let retrieved = db.get_fetch_config().expect("get_fetch_config failed");
         assert_eq!(retrieved.jql_preset, "custom");
         assert_eq!(retrieved.jql_custom.as_deref(), Some("project = MYPROJ"));
-        assert_eq!(retrieved.watched_users, vec!["alice", "bob"]);
+        assert_eq!(retrieved.watched_users.len(), 2);
+        assert_eq!(retrieved.watched_users[0].identifier, "alice");
+        assert_eq!(retrieved.watched_users[0].display_name, "Alice Smith");
+        assert_eq!(
+            retrieved.watched_users[0].email,
+            Some("alice@example.com".into())
+        );
+        assert_eq!(retrieved.watched_users[1].identifier, "bob");
+        assert_eq!(retrieved.watched_users[1].display_name, "Bob Jones");
+        assert_eq!(retrieved.watched_users[1].email, None);
         assert_eq!(
             retrieved.last_fetched_at.as_deref(),
             Some("2024-01-01T00:00:00Z")

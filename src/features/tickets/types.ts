@@ -138,11 +138,17 @@ export interface JiraTicketDetail {
   };
 }
 
+export interface WatchedUser {
+  identifier: string;
+  displayName: string;
+  email?: string;
+}
+
 // Fetch config — mirrors Rust FetchConfig struct
 export interface FetchConfig {
   jqlPreset: JqlPreset;
   jqlCustom: string | null;
-  watchedUsers: string[];
+  watchedUsers: WatchedUser[];
   lastFetchedAt: string | null;
 }
 

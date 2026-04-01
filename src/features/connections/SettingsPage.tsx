@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 import { type Language, useLanguageStore } from '../../i18n/languageStore';
 import { type ThemeMode, useThemeStore } from '../theme/themeStore';
 import { useTicketStore } from '../tickets/ticketStore';
-import type { FetchConfig, JqlPreset } from '../tickets/types';
+import type { FetchConfig, JqlPreset, WatchedUser } from '../tickets/types';
 import { AboutSection } from '../update/AboutSection';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
@@ -207,6 +207,17 @@ interface JiraUser {
   emailAddress?: string;
 }
 
+/** Stable identifier: prefers accountId (Cloud) or name (Server), falls back to displayName */
+function jiraUserId(u: JiraUser): string {
+  return u.accountId || u.name || u.displayName;
+}
+
+/** Check if a Jira user is already watched (matches by identifier OR displayName for migrated data) */
+function isUserWatched(u: JiraUser, watched: WatchedUser[]): boolean {
+  const id = jiraUserId(u);
+  return watched.some((w) => w.identifier === id || w.displayName === u.displayName);
+}
+
 type ActiveSection =
   | 'source'
   | 'destination'
@@ -269,7 +280,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
   const jqlPreset = useTicketStore((s) => s.jqlPreset);
   const jqlCustom = useTicketStore((s) => s.jqlCustom);
   const watchedUsers = useTicketStore((s) => s.watchedUsers);
-  const safeWatchedUsers = Array.isArray(watchedUsers) ? watchedUsers : [];
+  const safeWatchedUsers: WatchedUser[] = Array.isArray(watchedUsers) ? watchedUsers : [];
   const [editingConnection, setEditingConnection] = useState<ConnectionType | null>(null);
 
   const [userQuery, setUserQuery] = useState('');
@@ -314,7 +325,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
         query: userQuery.trim(),
       })
         .then((users) => {
-          const filtered = users.filter((u) => !safeWatchedUsers.includes(u.name ?? ''));
+          const filtered = users.filter((u) => !isUserWatched(u, safeWatchedUsers));
           setSuggestions(filtered);
           setShowSuggestions(filtered.length > 0);
           setNoResults(filtered.length === 0);
@@ -347,9 +358,15 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     persistFetchConfig();
   }
 
-  function handleAddUser(username: string) {
-    if (!username || safeWatchedUsers.includes(username)) return;
-    const updated = [...safeWatchedUsers, username];
+  function handleAddUser(user: JiraUser) {
+    const id = jiraUserId(user);
+    if (!id || isUserWatched(user, safeWatchedUsers)) return;
+    const entry: WatchedUser = {
+      identifier: id,
+      displayName: user.displayName,
+      email: user.emailAddress,
+    };
+    const updated = [...safeWatchedUsers, entry];
     useTicketStore.getState().setWatchedUsers(updated);
     setUserQuery('');
     setSuggestions([]);
@@ -359,8 +376,8 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     persistFetchConfigWith(updated);
   }
 
-  function handleRemoveUser(username: string) {
-    const updated = safeWatchedUsers.filter((u) => u !== username);
+  function handleRemoveUser(identifier: string) {
+    const updated = safeWatchedUsers.filter((u) => u.identifier !== identifier);
     useTicketStore.getState().setWatchedUsers(updated);
     persistFetchConfigWith(updated);
   }
@@ -375,7 +392,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (selectedIdx >= 0 && suggestions[selectedIdx]) {
-        handleAddUser(suggestions[selectedIdx].name ?? '');
+        handleAddUser(suggestions[selectedIdx]);
       }
     } else if (e.key === 'Escape') {
       setShowSuggestions(false);
@@ -387,7 +404,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
     persistFetchConfigWith(state.watchedUsers);
   }
 
-  function persistFetchConfigWith(users: string[]) {
+  function persistFetchConfigWith(users: WatchedUser[]) {
     const state = useTicketStore.getState();
     const config: FetchConfig = {
       jqlPreset: state.jqlPreset,
@@ -425,8 +442,8 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
         setDomainResults(users);
         const newSelected = new Set<string>();
         users.forEach((u) => {
-          const id = u.displayName;
-          if (id && !safeWatchedUsers.includes(id)) newSelected.add(id);
+          const id = jiraUserId(u);
+          if (id && !isUserWatched(u, safeWatchedUsers)) newSelected.add(id);
         });
         setSelectedAccountIds(newSelected);
         setDomainSearchState('results');
@@ -439,15 +456,27 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
 
   function handleAddDomainResults() {
     const current = safeWatchedUsers;
-    const newNames = domainResults
+    const newEntries: WatchedUser[] = domainResults
       .filter((u) => {
-        const id = u.displayName;
+        const id = jiraUserId(u);
         return selectedAccountIds.has(id);
       })
-      .map((u) => u.displayName)
-      .filter((name) => name && !current.includes(name));
-    if (newNames.length === 0) return;
-    const updated = [...current, ...newNames];
+      .map(
+        (u): WatchedUser => ({
+          identifier: jiraUserId(u),
+          displayName: u.displayName,
+          email: u.emailAddress,
+        }),
+      )
+      .filter(
+        (entry) =>
+          entry.identifier &&
+          !current.some(
+            (w) => w.identifier === entry.identifier || w.displayName === entry.displayName,
+          ),
+      );
+    if (newEntries.length === 0) return;
+    const updated = [...current, ...newEntries];
     useTicketStore.getState().setWatchedUsers(updated);
     persistFetchConfigWith(updated);
     setDomainResults([]);
@@ -791,7 +820,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                       aria-selected={i === selectedIdx}
                       onMouseDown={(e) => {
                         e.preventDefault();
-                        handleAddUser(user.name ?? '');
+                        handleAddUser(user);
                       }}
                       className={`w-full text-left flex items-center gap-2.5 px-3.5 py-2 transition-colors duration-100 ${
                         i > 0 ? 'border-t border-brand-border-subtle' : ''
@@ -872,11 +901,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                       className="text-xs text-brand hover:underline cursor-pointer"
                       onClick={() => {
                         const allSelectable = domainResults
-                          .map((u) => u.displayName)
-                          .filter((name) => name && !safeWatchedUsers.includes(name));
-                        const allSelected = allSelectable.every((name) =>
-                          selectedAccountIds.has(name),
-                        );
+                          .filter((u) => !isUserWatched(u, safeWatchedUsers))
+                          .map((u) => jiraUserId(u));
+                        const allSelected = allSelectable.every((id) => selectedAccountIds.has(id));
                         if (allSelected) {
                           setSelectedAccountIds(new Set());
                         } else {
@@ -885,17 +912,17 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                       }}
                     >
                       {domainResults
-                        .map((u) => u.displayName)
-                        .filter((name) => name && !safeWatchedUsers.includes(name))
-                        .every((name) => selectedAccountIds.has(name))
+                        .filter((u) => !isUserWatched(u, safeWatchedUsers))
+                        .map((u) => jiraUserId(u))
+                        .every((id) => selectedAccountIds.has(id))
                         ? t('settings.watchedUsers.domainSearch.deselectAll')
                         : t('settings.watchedUsers.domainSearch.selectAll')}
                     </button>
                   </div>
                   <ul className="list-none m-0 p-0">
                     {domainResults.map((user, i) => {
-                      const userId = user.displayName;
-                      const isAlreadyWatching = safeWatchedUsers.includes(userId);
+                      const userId = jiraUserId(user);
+                      const isAlreadyWatching = isUserWatched(user, safeWatchedUsers);
                       const isChecked = selectedAccountIds.has(userId);
                       return (
                         <li
@@ -1000,20 +1027,29 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
               <div className="space-y-0.5">
                 {safeWatchedUsers.map((user) => (
                   <div
-                    key={user}
+                    key={user.identifier}
                     className="flex items-center justify-between px-3 py-2 rounded-lg group hover:bg-brand-surface-hover transition-colors duration-150"
                   >
                     <div className="flex items-center gap-2.5">
                       <span className="w-6 h-6 rounded-full bg-brand/8 flex items-center justify-center text-[11px] font-semibold text-brand">
-                        {user.charAt(0).toUpperCase()}
+                        {user.displayName.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-[13px] text-brand-text-secondary">{user}</span>
+                      <div className="min-w-0">
+                        <span className="text-[13px] text-brand-text-secondary block">
+                          {user.displayName}
+                        </span>
+                        {user.email && (
+                          <span className="text-[11px] text-brand-muted block truncate">
+                            {user.email}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleRemoveUser(user)}
+                      onClick={() => handleRemoveUser(user.identifier)}
                       className="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      aria-label={t('settings.watchedUsers.remove', { user })}
+                      aria-label={t('settings.watchedUsers.remove', { user: user.displayName })}
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

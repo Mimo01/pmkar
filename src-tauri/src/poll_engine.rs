@@ -2,7 +2,7 @@ use crate::jira_client;
 use crate::keychain;
 use crate::notification_dispatcher;
 use crate::snapshot_db::{self, FieldChange, SnapshotDb};
-use crate::triage_db::{FetchConfig, TriageDb};
+use crate::triage_db::{FetchConfig, TriageDb, WatchedUser};
 use chrono::Utc;
 use serde::Serialize;
 use std::sync::{Arc, Mutex};
@@ -266,7 +266,7 @@ async fn process_tickets(
 fn build_poll_jql(
     preset: &str,
     custom: Option<&str>,
-    watched_users: &[String],
+    watched_users: &[WatchedUser],
     username: &str,
 ) -> String {
     match preset {
@@ -277,7 +277,11 @@ fn build_poll_jql(
         "mentioned" => format!("text ~ \"{username}\" ORDER BY updated DESC"),
         "all_watched" => {
             let all: Vec<String> = std::iter::once(format!("\"{username}\""))
-                .chain(watched_users.iter().map(|u| format!("\"{u}\"")))
+                .chain(
+                    watched_users
+                        .iter()
+                        .map(|u| format!("\"{}\"", u.identifier)),
+                )
                 .collect();
             format!("assignee in ({}) ORDER BY updated DESC", all.join(", "))
         }

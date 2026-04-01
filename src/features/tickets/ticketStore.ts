@@ -6,6 +6,7 @@ import type {
   JqlPreset,
   TriageEntry,
   TriageState,
+  WatchedUser,
 } from './types';
 
 interface TicketState {
@@ -26,7 +27,7 @@ interface TicketState {
   // Fetch config (mirrors SQLite fetch_config)
   jqlPreset: JqlPreset;
   jqlCustom: string | null;
-  watchedUsers: string[];
+  watchedUsers: WatchedUser[];
 
   // Actions — ticket data
   setTickets: (
@@ -50,7 +51,7 @@ interface TicketState {
   // Actions — fetch config
   setJqlPreset: (preset: JqlPreset) => void;
   setJqlCustom: (jql: string | null) => void;
-  setWatchedUsers: (users: string[]) => void;
+  setWatchedUsers: (users: WatchedUser[]) => void;
   hydrateFetchConfig: (config: FetchConfig) => void;
 
   // Unseen changes tracking (Phase 15)
