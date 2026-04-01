@@ -250,7 +250,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-03-29
-Last session: 2026-03-29T15:08:15.302Z
-Stopped at: Completed quick task 260329-nha: Replace GitHub Actions with local processes
+Last activity: 2026-04-01
+Last session: 2026-04-01T10:42:29Z
+Stopped at: Completed quick task 260401-hhp: Add MSI Windows build back to release workflow
 Resume file: None
