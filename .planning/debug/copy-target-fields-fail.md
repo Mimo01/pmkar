@@ -1,16 +1,16 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "copy-target-fields-fail — copy to company Jira fails with real Jira Cloud but works with mock server"
 created: 2026-03-25T00:00:00Z
-updated: 2026-03-25T00:00:02Z
+updated: 2026-04-01T00:00:00Z
 ---
 
 ## Current Focus
 <!-- OVERWRITE on each update - reflects NOW -->
 
-hypothesis: CONFIRMED and FIXED — replaced /rest/api/3/project/MYPROJ/statuses with /rest/api/3/status
-test: compiled cleanly; all Rust tests (9) and frontend tests (389) pass
-expecting: user confirms fix works with real Jira Cloud instance
+hypothesis: CONFIRMED AND FIXED — extra baseUrl parameter removed from invoke call; priority parsing updated to handle both flat array and paginated response format
+test: cargo build clean, cargo test 9/9, npm test 536/536
+expecting: user confirms clicking "Copy to Company Jira" now loads the preview modal with real Jira Cloud
 next_action: await human verification
 
 ## Symptoms
@@ -32,6 +32,14 @@ started: Feature works with mock server but fails with real Jira Cloud
 - hypothesis: CORS or network issue
   evidence: all other API calls succeed; failure is specific to /project/MYPROJ/statuses endpoint
   timestamp: 2026-03-25T00:00:01Z
+
+- hypothesis: hardcoded MYPROJ project key in URL
+  evidence: FIXED in previous session — commands.rs now uses /rest/api/3/status flat endpoint
+  timestamp: 2026-03-25T00:00:02Z
+
+- hypothesis: connection_type stored as wrong value
+  evidence: SetupWizard.tsx:102 stores connectionType: 'cloud'; get_cloud_credentials looks for m.connection_type == "cloud" — matches; keychain credential stored under "jira-cloud" and retrieved under "jira-cloud" — matches
+  timestamp: 2026-04-01T00:00:00Z
 
 ## Evidence
 <!-- APPEND only - facts discovered -->
@@ -62,17 +70,42 @@ started: Feature works with mock server but fails with real Jira Cloud
   implication: switching to /rest/api/3/status (flat array) requires updated parsing — iterate directly without .first()["statuses"]
 
 - timestamp: 2026-03-25T00:00:02Z
-  checked: build and test results after fix
+  checked: build and test results after MYPROJ fix
   found: cargo build clean; cargo test 9/9 pass; npm test 389/389 pass
-  implication: fix is non-breaking
+  implication: MYPROJ fix is non-breaking but error still persists with real Jira Cloud
+
+- timestamp: 2026-04-01T00:00:00Z
+  checked: src-tauri/src/commands.rs line 142 — fetch_cloud_meta signature
+  found: pub async fn fetch_cloud_meta(db: State<...>, triage_db: State<...>) — zero caller-supplied parameters; State<> args are Tauri-injected managed state, not passed from JS
+  implication: the function accepts no JS-side args; passing { baseUrl: cloudBaseUrl } from JS triggers Tauri v2 InvalidArgs deserialization error
+
+- timestamp: 2026-04-01T00:00:00Z
+  checked: src/features/tickets/copyStore.ts line 80-82
+  found: invoke<CloudMeta>('fetch_cloud_meta', { baseUrl: cloudBaseUrl }) — passes baseUrl that Rust does not expect
+  implication: THIS IS THE BUG — Tauri v2 fails to deserialize the unknown arg; real Jira Cloud call never even starts
+
+- timestamp: 2026-04-01T00:00:00Z
+  checked: src/features/tickets/__tests__/copyStore.test.ts line 91
+  found: mockInvoke.mockResolvedValue(makeCloudMeta()) — mock ignores all args; tests pass regardless of what args are sent
+  implication: explains why tests did not catch the parameter mismatch
+
+- timestamp: 2026-04-01T00:00:00Z
+  checked: SetupWizard.tsx:84,102 vs commands.rs:69,73
+  found: store_credential called with connectionType:'jira-cloud', set_connection_meta with connectionType:'cloud'; get_cloud_credentials looks for connection_type=="cloud" (matches) and calls keychain::get_credential("jira-cloud", email) (matches)
+  implication: credential retrieval chain is correct — hypothesis 1 eliminated
+
+- timestamp: 2026-04-01T00:00:00Z
+  checked: commands.rs line 191-201 — priority parsing
+  found: prio_body.as_array().unwrap_or(&vec![]) — expects flat array; real Jira Cloud /rest/api/3/priority may return paginated SearchResult { values: [...], isLast: true }
+  implication: secondary risk — if priority returns paginated format, priorities will be empty (no error thrown, just silent empty list); fix defensively
 
 ## Resolution
 <!-- OVERWRITE as understanding evolves -->
 
-root_cause: fetch_cloud_meta in commands.rs used hardcoded project key MYPROJ in the URL /rest/api/3/project/MYPROJ/statuses. The mock server ignores the key and always responds with 200. Real Jira Cloud returns 404 for MYPROJ (a project that does not exist in the user's instance), causing the command to return an AppError, which the frontend catches and displays as "Could not load target fields".
+root_cause: copyStore.ts:80 passes { baseUrl: cloudBaseUrl } to invoke('fetch_cloud_meta') but the Rust command accepts zero caller parameters (only Tauri-injected State<>). In Tauri v2, passing an unknown parameter causes an InvalidArgs deserialization error before the command even executes. This error propagates to the catch block at line 112 which swallows it and shows the generic "Could not load target fields" message. Mock tests pass because mockInvoke ignores all arguments entirely.
 
-fix: Replaced /rest/api/3/project/MYPROJ/statuses with the global /rest/api/3/status endpoint that returns all statuses without requiring a project key. Updated the response parsing to handle the flat array format (removed .first()["statuses"] unwrapping). Added /rest/api/3/status handler to mock server so all existing tests continue to pass.
+fix: Removed { baseUrl: cloudBaseUrl } from invoke('fetch_cloud_meta') in copyStore.ts:80. The Rust command already retrieves base_url from triage_db via get_cloud_credentials — the JS side must not pass it. Also updated priority parsing in commands.rs to handle both flat array (older Jira Cloud) and paginated SearchResult { values: [...] } (newer Jira Cloud). Added console.error logging in the catch block for future diagnosability.
 
-verification: cargo build clean; cargo test 9/9 pass; npm test 389/389 pass. Awaiting user confirmation with real Jira Cloud.
+verification: cargo build clean; cargo test 9/9 pass; npm test 536/536 pass. Awaiting user confirmation with real Jira Cloud.
 
-files_changed: [src-tauri/src/commands.rs, src-tauri/src/mock_server.rs]
+files_changed: [src/features/tickets/copyStore.ts, src-tauri/src/commands.rs]

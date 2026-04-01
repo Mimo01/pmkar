@@ -344,9 +344,13 @@ pub async fn fetch_cloud_projects(
         .await
         .map_err(|_| AppError::Http("Failed to parse /project response".into()))?;
 
-    let projects: Vec<JiraProject> = body
-        .as_array()
-        .unwrap_or(&vec![])
+    // Jira Cloud /rest/api/3/project returns either a flat array (older) or a
+    // paginated object { values: [...] } (newer). Handle both defensively.
+    let items: Vec<serde_json::Value> = match body.as_array() {
+        Some(arr) => arr.clone(),
+        None => body["values"].as_array().cloned().unwrap_or_default(),
+    };
+    let projects: Vec<JiraProject> = items
         .iter()
         .filter_map(|p| {
             Some(JiraProject {
