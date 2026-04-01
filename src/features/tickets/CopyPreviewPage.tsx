@@ -1,8 +1,8 @@
+import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -244,10 +244,7 @@ export function CopyPreviewPage() {
 
             {/* Target project selector */}
             <div className="mb-4">
-              <label
-                htmlFor="copy-target-project"
-                className="text-xs text-brand-muted block mb-1"
-              >
+              <label htmlFor="copy-target-project" className="text-xs text-brand-muted block mb-1">
                 {t('copy.targetProject')}
               </label>
               <select
@@ -256,9 +253,7 @@ export function CopyPreviewPage() {
                 onChange={(e) => setTargetProjectKey(e.target.value)}
                 className="w-full bg-brand-bg border border-brand-border rounded px-2 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
               >
-                {!targetProjectKey && (
-                  <option value="">{t('settings.project.select')}</option>
-                )}
+                {!targetProjectKey && <option value="">{t('settings.project.select')}</option>}
                 {cloudProjects.map((p) => (
                   <option key={p.key} value={p.key}>
                     {p.name} ({p.key})

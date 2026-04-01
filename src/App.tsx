@@ -59,7 +59,10 @@ function App() {
         }
         // Load persisted project config so targetProjectKey is available
         // before the user opens Settings.
-        useConnectionStore.getState().loadProjectConfig().catch(() => {});
+        useConnectionStore
+          .getState()
+          .loadProjectConfig()
+          .catch(() => {});
       })
       .catch(() => {})
       .finally(() => setHydrated(true));
