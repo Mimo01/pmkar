@@ -150,11 +150,9 @@ jobs:
           BUNDLE="target/${{ matrix.target }}/release/bundle"
           mkdir -p artifacts
           cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.exe" artifacts/ 2>/dev/null || true
-          cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.nsis.zip" artifacts/ 2>/dev/null || true
-          cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.nsis.zip.sig" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.exe.sig" artifacts/ 2>/dev/null || true
           cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi" artifacts/ 2>/dev/null || true
-          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.zip" artifacts/ 2>/dev/null || true
-          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.zip.sig" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.sig" artifacts/ 2>/dev/null || true
           ls -la artifacts/
 
       - name: Upload artifacts
@@ -292,10 +290,10 @@ jobs:
           if os.path.exists(linux_sig):
               with open(linux_sig) as f:
                   platforms["linux-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_amd64.AppImage.tar.gz"}
-          win_sig = f"all-artifacts/windows-artifacts/pmkar_{version}_x64-setup.nsis.zip.sig"
+          win_sig = f"all-artifacts/windows-artifacts/pmkar_{version}_x64-setup.exe.sig"
           if os.path.exists(win_sig):
               with open(win_sig) as f:
-                  platforms["windows-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_x64-setup.nsis.zip"}
+                  platforms["windows-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_x64-setup.exe"}
           result = {"version": existing.get("version", version), "notes": existing.get("notes", f"Release v{version}"), "pub_date": existing.get("pub_date", ""), "platforms": platforms}
           print(json.dumps(result, indent=2))
           PYEOF
