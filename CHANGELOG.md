@@ -1,4 +1,22 @@
 
+## [0.3.2]
+
+### Bug Fixes
+
+- store watched users as structured objects with name, email, and JQL identifier
+- load target project at startup and add project selector to copy preview
+- paginate domain user search to return all results
+- treat pub_date parse errors as up-to-date instead of showing error
+- ensure pub_date is never empty in CI latest.json builder
+
+### Documentation
+
+- update debug knowledge base with watched-users-domain-pagination
+- resolve debug watched-users-domain-pagination
+
+### Miscellaneous
+
+- formatting and Cargo.lock sync for v0.3.1 release prep
 ## [0.3.1]
 
 ### Bug Fixes
