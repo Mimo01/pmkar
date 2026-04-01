@@ -9,6 +9,15 @@ on:
       version:
         description: "Version tag (e.g. v0.3.0)"
         required: true
+      platform:
+        description: "Platform to build (all, linux, windows)"
+        required: false
+        default: "all"
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
 
 permissions:
   contents: read
@@ -38,7 +47,21 @@ jobs:
           fetch-tags: true
           fetch-depth: 0
 
+      - name: Check if this platform should run
+        id: should_run
+        shell: bash
+        run: |
+          PLATFORM="${{ github.event.inputs.platform || 'all' }}"
+          OS_NAME="${{ matrix.os_name }}"
+          if [ "$PLATFORM" = "all" ] || [ "$PLATFORM" = "$OS_NAME" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping $OS_NAME build (requested: $PLATFORM)"
+          fi
+
       - name: Resolve version
+        if: steps.should_run.outputs.run == 'true'
         id: version
         shell: bash
         run: |
@@ -53,7 +76,7 @@ jobs:
           git tag "$TAG" 2>/dev/null || true
 
       - name: Install Linux dependencies
-        if: matrix.os_name == 'linux'
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'linux'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq \
@@ -61,32 +84,39 @@ jobs:
             libappindicator3-dev librsvg2-dev patchelf
 
       - name: Setup Node.js
+        if: steps.should_run.outputs.run == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
 
       - name: Setup Rust
+        if: steps.should_run.outputs.run == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
       - name: Rust cache
+        if: steps.should_run.outputs.run == 'true'
         uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
 
       - name: Install frontend dependencies
+        if: steps.should_run.outputs.run == 'true'
         run: npm ci
 
       - name: Inject version
+        if: steps.should_run.outputs.run == 'true'
         shell: bash
         run: eval "$(node scripts/inject-version.cjs)"
 
       - name: Build frontend
+        if: steps.should_run.outputs.run == 'true'
         run: npm run build
 
       - name: Build Tauri app
+        if: steps.should_run.outputs.run == 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,7 +131,7 @@ jobs:
           args: --target ${{ matrix.target }}
 
       - name: Collect Linux artifacts
-        if: matrix.os_name == 'linux'
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'linux'
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.bare }}"
@@ -113,7 +143,7 @@ jobs:
           ls -la artifacts/
 
       - name: Collect Windows artifacts
-        if: matrix.os_name == 'windows'
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'windows'
         shell: bash
         run: |
           VERSION="${{ steps.version.outputs.bare }}"
@@ -122,9 +152,13 @@ jobs:
           cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.exe" artifacts/ 2>/dev/null || true
           cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.nsis.zip" artifacts/ 2>/dev/null || true
           cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.nsis.zip.sig" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.zip" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.zip.sig" artifacts/ 2>/dev/null || true
           ls -la artifacts/
 
       - name: Upload artifacts
+        if: steps.should_run.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os_name }}-artifacts
