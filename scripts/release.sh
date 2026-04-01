@@ -394,12 +394,15 @@ if [[ "$LINUX_BUILD_SUCCESS" == "true" ]]; then
 else
   README_CONTENT+="
 ### Linux
-Linux builds are not yet available from this release. Docker is required for cross-compilation from macOS.
-
-### Windows
-Windows builds are not yet available. Windows cross-compilation is experimental (requires Docker + cargo-xwin).
+- [pmkar_${VERSION}_amd64.deb](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_amd64.deb) (Debian/Ubuntu)
 "
 fi
+
+README_CONTENT+="
+### Windows
+- [pmkar_${VERSION}_x64-setup.exe](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_x64-setup.exe) (NSIS installer)
+- [pmkar_${VERSION}_x64_en-US.msi](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_${VERSION}_x64_en-US.msi) (MSI installer)
+"
 
 README_CONTENT+="
 ---
