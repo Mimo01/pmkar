@@ -1050,6 +1050,8 @@ pub async fn search_jira_users_by_domain(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<Vec<serde_json::Value>, AppError> {
+    const PAGE_SIZE: usize = 50;
+
     let (base_url, cloud_email, api_token) = get_cloud_credentials(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
@@ -1063,7 +1065,6 @@ pub async fn search_jira_users_by_domain(
         base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
     );
 
-    const PAGE_SIZE: usize = 50;
     let mut all_users: Vec<serde_json::Value> = Vec::new();
     let mut start_at: usize = 0;
 
