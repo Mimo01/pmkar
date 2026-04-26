@@ -1,8 +1,8 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "copy-modal-broken: The copy modal window doesn't display correctly. It needs to be made full-page (like the issue detail view) and fixed up."
 created: 2026-03-25T00:00:00Z
-updated: 2026-03-25T00:00:00Z
+updated: 2026-04-26T00:00:00Z
 ---
 
 ## Current Focus

@@ -1,8 +1,8 @@
 ---
-status: awaiting_human_verify
+status: resolved
 trigger: "audit-log-display: response bodies not logged, URLs are percent-encoded"
 created: 2026-03-23T00:00:00Z
-updated: 2026-03-23T02:00:00Z
+updated: 2026-04-26T00:00:00Z
 ---
 
 ## Current Focus
