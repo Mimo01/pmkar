@@ -151,6 +151,12 @@ pub struct FixtureState {
     pub server_v2_issues: HashMap<String, JiraIssue>,
     pub cloud_v3_issues: HashMap<String, JiraIssue>,
     pub next_issue_id: u32,
+    pub v2_fields: Vec<serde_json::Value>,
+    pub v3_fields: Vec<serde_json::Value>,
+    pub v3_createmeta_issuetypes: serde_json::Value,
+    pub v3_createmeta_fields: HashMap<String, Vec<serde_json::Value>>,
+    pub v3_project_versions: Vec<serde_json::Value>,
+    pub v3_project_components: Vec<serde_json::Value>,
 }
 
 pub type SharedFixtures = Arc<Mutex<FixtureState>>;
@@ -233,6 +239,43 @@ fn v3_comment(
         "author": { "accountId": account_id, "displayName": author_display },
         "body": adf_paragraph(body),
         "created": created
+    })
+}
+
+// Helper to build a createmeta field entry
+fn createmeta_field(
+    field_id: &str,
+    name: &str,
+    required: bool,
+    schema: serde_json::Value,
+    allowed_values: Option<serde_json::Value>,
+) -> serde_json::Value {
+    let mut field = json!({
+        "fieldId": field_id,
+        "key": field_id,
+        "name": name,
+        "required": required,
+        "hasDefaultValue": false,
+        "operations": ["set"],
+        "schema": schema,
+    });
+    if let Some(av) = allowed_values {
+        field["allowedValues"] = av;
+    }
+    field
+}
+
+// Helper to build a global field entry (for /field endpoint)
+fn global_field(id: &str, name: &str, custom: bool, schema: serde_json::Value) -> serde_json::Value {
+    json!({
+        "id": id,
+        "name": name,
+        "custom": custom,
+        "orderable": true,
+        "navigable": true,
+        "searchable": !custom,
+        "clauseNames": [id, name],
+        "schema": schema,
     })
 }
 
@@ -1255,9 +1298,144 @@ pub fn build_fixtures() -> SharedFixtures {
         );
     }
 
+    // === Phase 17: field discovery fixtures ===
+
+    // Severity custom field allowed values (Bug-specific)
+    let severity_allowed = json!([
+        { "id": "10300", "value": "Critical" },
+        { "id": "10301", "value": "Major" },
+        { "id": "10302", "value": "Minor" }
+    ]);
+
+    // Team multi-select allowed values
+    let team_allowed = json!([
+        { "id": "10100", "value": "Backend",  "disabled": false },
+        { "id": "10101", "value": "Frontend", "disabled": false },
+        { "id": "10102", "value": "Platform", "disabled": true }
+    ]);
+
+    // Cascading-select Department/Team allowed values (D-10)
+    let dept_allowed = json!([
+        { "id": "10200", "value": "Engineering", "children": [
+            { "id": "10201", "value": "Backend" },
+            { "id": "10202", "value": "Frontend" }
+        ]},
+        { "id": "10210", "value": "Product", "children": [
+            { "id": "10211", "value": "Design" },
+            { "id": "10212", "value": "Management" }
+        ]}
+    ]);
+
+    // Schemas reused across global field list AND createmeta entries
+    let sp_schema     = json!({ "type": "number", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float", "customId": 10001 });
+    let sprint_schema = json!({ "type": "array", "items": "string", "custom": "com.pyxis.greenhopper.jira:gh-sprint", "customId": 10002 });
+    let epic_schema   = json!({ "type": "string", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:epic-link", "customId": 10003 });
+    let team_schema   = json!({ "type": "array", "items": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multiselect", "customId": 10004 });
+    let dept_schema   = json!({ "type": "option-with-child", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect", "customId": 10005 });
+    let sev_schema    = json!({ "type": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select", "customId": 10006 });
+
+    let summary_schema  = json!({ "type": "string",   "system": "summary" });
+    let assignee_schema = json!({ "type": "user",     "system": "assignee" });
+    let reporter_schema = json!({ "type": "user",     "system": "reporter" });
+    let priority_schema = json!({ "type": "priority", "system": "priority" });
+    let labels_schema   = json!({ "type": "array",    "items": "string", "system": "labels" });
+    let fixv_schema     = json!({ "type": "array",    "items": "version", "system": "fixVersions" });
+    let comp_schema     = json!({ "type": "array",    "items": "component", "system": "components" });
+    let desc_schema_v2  = json!({ "type": "string",   "system": "description" });
+
+    // Global field list — v2
+    let v2_fields = vec![
+        global_field("summary",     "Summary",      false, summary_schema.clone()),
+        global_field("description", "Description",  false, desc_schema_v2.clone()),
+        global_field("priority",    "Priority",     false, priority_schema.clone()),
+        global_field("assignee",    "Assignee",     false, assignee_schema.clone()),
+        global_field("reporter",    "Reporter",     false, reporter_schema.clone()),
+        global_field("labels",      "Labels",       false, labels_schema.clone()),
+        global_field("fixVersions", "Fix Versions", false, fixv_schema.clone()),
+        global_field("components",  "Components",   false, comp_schema.clone()),
+        global_field("customfield_10001", "Story Points",    true, sp_schema.clone()),
+        global_field("customfield_10002", "Sprint",          true, sprint_schema.clone()),
+        global_field("customfield_10003", "Epic Link",       true, epic_schema.clone()),
+        global_field("customfield_10004", "Team",            true, team_schema.clone()),
+        global_field("customfield_10005", "Department/Team", true, dept_schema.clone()),
+        global_field("customfield_10006", "Severity",        true, sev_schema.clone()),
+    ];
+
+    // Global field list — v3 (same logical fields; divergences enforced at createmeta level)
+    let v3_fields = v2_fields.clone();
+
+    // Issue-type list (paginated wrapper, total:3)
+    let v3_createmeta_issuetypes = json!({
+        "startAt": 0,
+        "maxResults": 50,
+        "total": 3,
+        "issueTypes": [
+            { "id": "10001", "name": "Bug",   "description": "A defect or problem", "iconUrl": "https://example.com/bug.png" },
+            { "id": "10002", "name": "Task",  "description": "A task to do",        "iconUrl": "https://example.com/task.png" },
+            { "id": "10003", "name": "Story", "description": "A user story",        "iconUrl": "https://example.com/story.png" }
+        ]
+    });
+
+    let priority_allowed = json!([
+        { "id": "1", "name": "Highest" },
+        { "id": "2", "name": "High" },
+        { "id": "3", "name": "Medium" },
+        { "id": "4", "name": "Low" },
+        { "id": "5", "name": "Lowest" }
+    ]);
+
+    // Bug — 7 fields total (Pitfall F pagination boundary). Required: summary + priority + Severity
+    let bug_fields = vec![
+        createmeta_field("summary",           "Summary",         true,  summary_schema.clone(),  None),
+        createmeta_field("priority",          "Priority",        true,  priority_schema.clone(), Some(priority_allowed.clone())),
+        createmeta_field("customfield_10006", "Severity",        true,  sev_schema.clone(),      Some(severity_allowed)),
+        createmeta_field("assignee",          "Assignee",        false, assignee_schema.clone(), None),
+        createmeta_field("customfield_10001", "Story Points",    false, sp_schema.clone(),       None),
+        createmeta_field("customfield_10004", "Team",            false, team_schema.clone(),     Some(team_allowed.clone())),
+        createmeta_field("customfield_10005", "Department/Team", false, dept_schema.clone(),     Some(dept_allowed.clone())),
+    ];
+
+    // Task — only summary required
+    let task_fields = vec![
+        createmeta_field("summary",           "Summary",  true,  summary_schema.clone(),  None),
+        createmeta_field("priority",          "Priority", false, priority_schema.clone(), Some(priority_allowed.clone())),
+        createmeta_field("assignee",          "Assignee", false, assignee_schema.clone(), None),
+        createmeta_field("customfield_10002", "Sprint",   false, sprint_schema.clone(),   None),
+    ];
+
+    // Story — Story Points required
+    let story_fields = vec![
+        createmeta_field("summary",           "Summary",      false, summary_schema.clone(),  None),
+        createmeta_field("customfield_10001", "Story Points", true,  sp_schema.clone(),       None),
+        createmeta_field("priority",          "Priority",     false, priority_schema.clone(), Some(priority_allowed)),
+        createmeta_field("customfield_10004", "Team",         false, team_schema.clone(),     Some(team_allowed)),
+    ];
+
+    let mut v3_createmeta_fields: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
+    v3_createmeta_fields.insert("10001".into(), bug_fields);
+    v3_createmeta_fields.insert("10002".into(), task_fields);
+    v3_createmeta_fields.insert("10003".into(), story_fields);
+
+    // D-12 divergence 2: target version IDs differ from v2 source version IDs
+    let v3_project_versions = vec![
+        json!({ "id": "20010", "name": "1.2.0", "released": false, "archived": false }),
+        json!({ "id": "20011", "name": "1.3.0", "released": false, "archived": false }),
+    ];
+
+    let v3_project_components = vec![
+        json!({ "id": "30001", "name": "API",      "description": "Backend API" }),
+        json!({ "id": "30002", "name": "Frontend", "description": "Web UI" }),
+    ];
+
     Arc::new(Mutex::new(FixtureState {
         server_v2_issues: v2,
         cloud_v3_issues: v3,
         next_issue_id: 10013,
+        v2_fields,
+        v3_fields,
+        v3_createmeta_issuetypes,
+        v3_createmeta_fields,
+        v3_project_versions,
+        v3_project_components,
     }))
 }
