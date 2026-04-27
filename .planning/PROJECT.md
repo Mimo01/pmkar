@@ -38,6 +38,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Configurable notification preferences with per-event toggles — v0.3.0
 - ✓ Change diff view with blue dot indicators and field-level diff table — v0.3.0
 - ✓ Enhanced watch configuration with email domain search and bulk user add — v0.3.0
+- ✓ v2→v3 translation layer: typed gap variants, batch user resolution (TRAN-01/06), ADF post-processor (TRAN-02/05), version/component name→id resolvers (TRAN-03/04), two-phase pipeline — v0.4.0 Phase 18
 
 ### Active
 
@@ -137,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 after starting v0.4.0 milestone*
+*Last updated: 2026-04-27 after Phase 18 completion (v2→v3 translation layer)*
