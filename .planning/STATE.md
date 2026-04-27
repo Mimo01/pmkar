@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
-status: in_progress
-last_updated: "2026-04-27T10:00:00.000Z"
-last_activity: 2026-04-27
+status: "Roadmap created (7 phases: 17-23, ~14-16 plans), ready for `/gsd-plan-phase 17`"
+stopped_at: Phase 17 context gathered
+last_updated: "2026-04-27T11:00:38.059Z"
+last_activity: 2026-04-27 — v0.4.0 roadmap written
 progress:
-  total_phases: 23
-  completed_phases: 16
-  total_plans: 15
+  total_phases: 7
+  completed_phases: 0
+  total_plans: 0
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -108,6 +108,7 @@ Recent decisions affecting current work (v0.4.0 Configurable Field Mapping):
 - Separate `mapping.db` SQLite file: do NOT extend `triage_db.rs` (already 5 concerns); follow `snapshot_db.rs` precedent
 
 Recent v0.3.0 / v0.1.0 decisions retained for reference:
+
 - Tauri over Electron: Rust backend enforces credential isolation by architecture, not convention
 - OS keychain for credentials: macOS Keychain / Windows Credential Manager / Linux Secret Service via keyring crate
 - One-time copy with origin tracking: full sync deferred as out of scope
@@ -268,6 +269,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-27
-Last session: 2026-04-27T10:00:00Z
-Stopped at: v0.4.0 roadmap created (Phases 17-23 mapped to all 41 requirements). Ready for `/gsd-plan-phase 17`.
-Resume file: None
+Last session: 2026-04-27T11:00:38.054Z
+Stopped at: Phase 17 context gathered
+Resume file: .planning/phases/17-field-discovery-mock-schema-fidelity/17-CONTEXT.md
