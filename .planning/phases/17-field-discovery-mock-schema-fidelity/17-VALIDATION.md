@@ -2,7 +2,7 @@
 phase: 17
 slug: field-discovery-mock-schema-fidelity
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-27
 ---
