@@ -68,17 +68,6 @@ pub(crate) fn walk_adf_node_mut<S: BuildHasher>(
         next_ctx.in_code_context = true;
     }
 
-    // Inline-code mark on a text node: check marks array.
-    let inline_code = kind == "text"
-        && node
-            .get("marks")
-            .and_then(|m| m.as_array())
-            .is_some_and(|arr| {
-                arr.iter()
-                    .any(|m| m.get("type").and_then(|t| t.as_str()) == Some("code"))
-            });
-    let effective_in_code = ctx.in_code_context || inline_code;
-
     // Recurse into `content` first — child nodes get the propagated `next_ctx`.
     if let Some(content) = node.get_mut("content").and_then(|c| c.as_array_mut()) {
         // Use index-based walking so we can in-place mutate AND splice arrays.
@@ -90,16 +79,13 @@ pub(crate) fn walk_adf_node_mut<S: BuildHasher>(
 
         // Second pass: splice text nodes containing `[~user]` into [text, mention, text, …]
         // chains. Skip if the parent enters code context (Pitfall F applies).
+        // Note: splice_mentions_in_content_array independently skips text nodes
+        // that carry a `code` mark (Pitfall F). No additional gating is needed here.
         if !next_ctx.in_code_context {
             splice_mentions_in_content_array(content, user_map);
             splice_macros_in_content_array(content);
         }
     }
-
-    // For TEXT nodes that are inline-code-marked, do NOTHING (Pitfall F).
-    // For non-code text nodes, mention/macro rewriting happens at the parent
-    // level via the splice helpers above (so we can replace one node with many).
-    let _ = effective_in_code; // explicit guard — informational, see splice helpers
 }
 
 /// Walks a content array, replacing each text node containing one or more
@@ -134,7 +120,13 @@ fn splice_mentions_in_content_array<S: BuildHasher>(
             continue;
         }
         let replacement = expand_mentions_in_text(text, user_map);
-        if replacement.len() == 1 {
+        // Only use the in-place rewrite when the single result is a plain text
+        // node. If it's a mention node (whole text was "[~username]" with no
+        // prefix or suffix), fall through to the splice path so the original
+        // text node is removed and the mention node is inserted correctly.
+        let only_text_node = replacement.len() == 1
+            && replacement[0].get("type").and_then(|t| t.as_str()) == Some("text");
+        if only_text_node {
             // Single text node, no mention found. Rewrite text in-place (handles
             // the case where pattern was malformed and got passed through unchanged).
             if let Some(s) = replacement[0].get("text").and_then(|x| x.as_str()) {
