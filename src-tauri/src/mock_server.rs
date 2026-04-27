@@ -57,8 +57,8 @@ pub struct IssueQuery {
 
 // --- Search response helpers ---
 
-fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
-    make_search_response_paged(&issues, 0, 50)
+fn make_search_response(issues: &[&JiraIssue]) -> Value {
+    make_search_response_paged(issues, 0, 50)
 }
 
 /// Paginated variant of `make_search_response`: returns the slice
@@ -629,7 +629,7 @@ mod v3 {
         let state = fixtures.lock().unwrap();
         let jql = body["jql"].as_str().map(std::string::ToString::to_string);
         let filtered = filter_issues(&state.cloud_v3_issues, jql.as_ref());
-        let response = make_search_response(filtered);
+        let response = make_search_response(&filtered);
         (StatusCode::OK, Json(response)).into_response()
     }
 
