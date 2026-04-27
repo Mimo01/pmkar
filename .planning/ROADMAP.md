@@ -63,7 +63,12 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   2. System fetches all required-field metadata for a (project, issue type) pair via the paginated `createmeta/{key}/issuetypes/{id}` endpoint, including projects whose issue-type list spans multiple pages.
   3. Mock Jira server exposes ≥4 custom field fixtures (number, multi-select, user, date) plus realistic v2 vs v3 shape divergence (priority, user, versions) so renderer registry tests cover production-like variety.
   4. Connection-time probe at app launch verifies the paginated createmeta endpoint is reachable on the configured Cloud target and surfaces a clear error if a proxy/firewall only exposes the legacy endpoint.
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 17-01-PLAN.md — Mock fixtures + v2/v3 routes (custom fields, createmeta pagination, versions/components per D-09/D-10/D-11/D-12)
+- [ ] 17-02-PLAN.md — Rust FieldSchemaType + FieldMappingDb (mapping.db with field_schema_cache table + SHA-256 schema_hash per D-04)
+- [ ] 17-03-PLAN.md — TypeScript fieldSchema types + schemaCacheStore (Zustand cache by side/projectKey/issuetypeId)
+- [ ] 17-04-PLAN.md — Rust field_discovery HTTP module + 5 Tauri commands (discover/probe/prewarm/refresh)
+- [ ] 17-05-PLAN.md — Probe banner + ConnectionCard status pill + App-launch wiring (D-05/D-07/D-08)
 **UI hint**: no
 
 ### Phase 18: v2→v3 Translation Layer
@@ -160,7 +165,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 15. Change Diff View | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 2/2 | Complete | 2026-03-29 |
-| 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/? | Not started | - |
+| 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/5 | Not started | - |
 | 18. v2→v3 Translation Layer | v0.4.0 | 0/? | Not started | - |
 | 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/? | Not started | - |
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/? | Not started | - |
