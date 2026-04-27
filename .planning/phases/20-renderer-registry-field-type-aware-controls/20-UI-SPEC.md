@@ -54,10 +54,10 @@ All sizes are Tailwind v4 utility values mapped to their rem equivalents. Source
 |------|------|--------|-------------|----------------|
 | Body / input value | 14px (0.875rem) | 400 regular | 1.5 | `text-sm` |
 | Label / field name | 12px (0.75rem) | 500 medium | 1.4 | `text-xs font-medium` |
-| UnsupportedType pill | 12px (0.75rem) | 600 semibold | 1 | `text-xs font-semibold` |
+| UnsupportedType pill | 12px (0.75rem) | 500 medium | 1 | `text-xs font-medium` |
 | Combobox option row | 14px (0.875rem) | 400 regular | 1.5 | `text-sm` |
 
-Two weights only: regular (400) for all input values and option rows, medium/semibold (500/600) for labels and badges. Source: existing badge uses `font-semibold`, button uses `font-medium`.
+Two weights only: regular (400) for all input values and option rows, medium (500) for labels and badges. The UnsupportedType pill's visual distinction comes from the Badge variant=outline shape, not weight alone. Source: existing button uses `font-medium`.
 
 ---
 
@@ -178,6 +178,7 @@ New components Phase 20 must deliver. Each maps to one renderer file. All follow
 
 - Read-only `Badge` variant=outline, icon: lucide `AlertCircle` (12px, `text-muted-foreground`)
 - Text: `"Unsupported: {field.schema.type}"` — includes type for debugging (CONTEXT.md Specifics)
+- Classes: `text-xs font-medium` (visual distinction from the Badge variant=outline shape, not weight)
 - No `onChange`. Not interactive.
 
 ---
