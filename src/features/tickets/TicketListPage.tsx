@@ -63,6 +63,7 @@ export function TicketListPage() {
   const lastCheckedAt = useTicketStore((s) => s.lastCheckedAt);
   const totalCount = useTicketStore((s) => s.totalCount);
   const newCount = useTicketStore((s) => s.newCount);
+  const truncated = useTicketStore((s) => s.truncated);
 
   const isLoading = fetchStatus === 'loading';
 
@@ -89,7 +90,7 @@ export function TicketListPage() {
         baseUrl: serverConn.baseUrl,
         jql,
       });
-      store.setTickets(result.issues, result.triageMap, result.total);
+      store.setTickets(result.issues, result.triageMap, result.total, result.truncated);
       const now = new Date().toISOString();
       store.setLastFetchedAt(now);
       store.setLastCheckedAt(now);
@@ -280,6 +281,18 @@ export function TicketListPage() {
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sortedCandidates.length}
       />
+
+      {/* Truncation warning — backend pagination cap was hit (jira-fetch-pagination-50-cap) */}
+      {truncated && fetchStatus !== 'error' && (
+        <div
+          className="mx-4 mt-3 rounded-lg border border-yellow-400/30 bg-yellow-400/5 px-4 py-3"
+          role="alert"
+          data-testid="truncation-warning"
+        >
+          <p className="text-sm text-yellow-400">{t('tickets.truncationWarning')}</p>
+          <p className="text-xs text-brand-muted mt-1">{t('tickets.truncationWarningHint')}</p>
+        </div>
+      )}
 
       {/* Error state */}
       {fetchStatus === 'error' && fetchError && (

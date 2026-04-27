@@ -19,6 +19,8 @@ interface TicketState {
   lastFetchedAt: string | null;
   totalCount: number;
   newCount: number;
+  /** True when the last fetch exceeded the backend pagination cap. UI surfaces a warning. */
+  truncated: boolean;
 
   // Polling state (D-04, D-13, D-15)
   pollFrequency: string; // "off" | "5m" | "15m" | "30m" | "1h"
@@ -34,6 +36,7 @@ interface TicketState {
     tickets: JiraTicket[],
     triageMap: Record<string, TriageEntry>,
     total: number,
+    truncated?: boolean,
   ) => void;
   selectTicket: (key: string | null) => void;
   markSeen: (key: string) => void;
@@ -73,6 +76,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   lastFetchedAt: null,
   totalCount: 0,
   newCount: 0,
+  truncated: false,
 
   pollFrequency: 'off',
   lastCheckedAt: null,
@@ -84,7 +88,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   unseenChanges: {},
 
   // Actions
-  setTickets: (tickets, triageMap, total) => {
+  setTickets: (tickets, triageMap, total, truncated = false) => {
     const safeMap = triageMap ?? {};
     const newCount = Object.values(safeMap).filter((e) => e.state === 'new').length;
     set({
@@ -92,6 +96,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       triageMap: safeMap,
       totalCount: total,
       newCount,
+      truncated,
       fetchStatus: 'idle',
       fetchError: null,
     });

@@ -533,7 +533,8 @@ mod tests {
     #[test]
     fn test_set_handled_state_accepted() {
         let db = new_db();
-        db.set_triage("PROJ-1", "handled").expect("handled state should be accepted");
+        db.set_triage("PROJ-1", "handled")
+            .expect("handled state should be accepted");
         let all = db.get_all_triage().expect("get_all_triage failed");
         assert_eq!(all["PROJ-1"].0, "handled");
     }

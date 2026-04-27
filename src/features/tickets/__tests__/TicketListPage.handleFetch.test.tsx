@@ -28,11 +28,12 @@ function makeTicket(key: string): JiraTicket {
   };
 }
 
-function makeFetchResult(keys: string[]): FetchTicketsResult {
+function makeFetchResult(keys: string[], truncated = false): FetchTicketsResult {
   return {
     issues: keys.map(makeTicket),
     total: keys.length,
     triageMap: Object.fromEntries(keys.map((k) => [k, { state: 'new', copiedKey: null }])),
+    truncated,
   };
 }
 
@@ -62,6 +63,7 @@ describe('TicketListPage — manual fetch change-detection IPC contract', () => 
       pollFrequency: 'off',
       totalCount: 0,
       newCount: 0,
+      truncated: false,
       jqlPreset: 'assigned',
       jqlCustom: null,
       watchedUsers: [],

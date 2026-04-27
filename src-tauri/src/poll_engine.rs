@@ -157,13 +157,22 @@ async fn do_poll(
     };
 
     // Step 2: Fetch tickets via HTTP (async — no locks held)
-    let tickets = match jira_client::search_tickets(&base_url, &jql, &pat).await {
-        Ok(t) => t,
+    // search_tickets paginates internally; on partial-page failure it returns Err,
+    // so the watermark guarantee (advance only on fully-successful fetch) is preserved.
+    let (tickets, truncated) = match jira_client::search_tickets(&base_url, &jql, &pat).await {
+        Ok(result) => result,
         Err(e) => {
             eprintln!("[poll] fetch error: {e}");
             return PollCompletePayload::error(now);
         }
     };
+
+    if truncated {
+        eprintln!(
+            "[poll] WARNING: pagination cap hit at {} issues — some matching tickets were not fetched. Tighten your JQL.",
+            jira_client::MAX_PAGINATION_ITEMS
+        );
+    }
 
     // Step 3: For each ticket, fetch detail and run change detection (enriched)
     let results = process_tickets(&tickets, &base_url, &pat, snapshot_db).await;

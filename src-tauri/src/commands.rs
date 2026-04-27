@@ -680,6 +680,10 @@ pub struct FetchTicketsResult {
     pub issues: Vec<serde_json::Value>,
     pub total: u64,
     pub triage_map: HashMap<String, TriageEntryResponse>,
+    /// True when the matching set exceeded `MAX_PAGINATION_ITEMS` and the result
+    /// was capped. The frontend should display a warning so users know to tighten
+    /// their JQL.
+    pub truncated: bool,
 }
 
 #[tauri::command]
@@ -689,46 +693,89 @@ pub async fn fetch_tickets(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<FetchTicketsResult, AppError> {
+    use crate::jira_client::{MAX_PAGINATION_ITEMS, SEARCH_PAGE_SIZE};
+
     let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let trimmed_url = base_url.trim_end_matches('/');
 
     let encoded_jql = urlencoding::encode(&jql);
-    let url = format!(
-        "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions&maxResults=50"
-    );
 
-    let resp = client
-        .get(&url)
-        .header("Authorization", format!("Bearer {pat}"))
-        .send()
-        .await
-        .map_err(|_| AppError::Http("Failed to fetch tickets".into()))?;
+    // Paginate `/rest/api/2/search` using `startAt`. We iterate until either the
+    // matching set is fully drained (`all_issues.len() >= total`) or we hit the
+    // `MAX_PAGINATION_ITEMS` upper bound, in which case we set `truncated=true`
+    // so the frontend can warn the user. On any HTTP/parse error we return Err
+    // so the caller does not act on a partial result.
+    //
+    // See debug session: jira-fetch-pagination-50-cap.
+    let mut all_issues: Vec<serde_json::Value> = Vec::new();
+    // `total` is assigned inside the loop on each page. The initial 0 is the
+    // sentinel for "no pages fetched yet"; in practice the loop always runs at
+    // least once so the value is overwritten before use.
+    #[allow(unused_assignments)]
+    let mut total: u64 = 0;
+    let mut start_at: u64 = 0;
+    let mut truncated = false;
 
-    if !resp.status().is_success() {
-        return Err(AppError::Http(format!(
-            "Jira search returned status {}",
-            resp.status().as_u16()
-        )));
+    loop {
+        let url = format!(
+            "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
+        );
+
+        let resp = client
+            .get(&url)
+            .header("Authorization", format!("Bearer {pat}"))
+            .send()
+            .await
+            .map_err(|_| AppError::Http("Failed to fetch tickets".into()))?;
+
+        if !resp.status().is_success() {
+            return Err(AppError::Http(format!(
+                "Jira search returned status {}",
+                resp.status().as_u16()
+            )));
+        }
+
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|_| AppError::Http("Failed to parse search response".into()))?;
+
+        let page_issues = body["issues"].as_array().cloned().unwrap_or_default();
+        // The server's reported `total` from the most recent page is authoritative.
+        total = body["total"].as_u64().unwrap_or(0);
+        let page_len = page_issues.len() as u64;
+
+        all_issues.extend(page_issues);
+
+        // Stop when we've drained the matching set, or the server returned an
+        // empty page (defensive against servers that report `total` larger than
+        // what they actually serve, which would otherwise spin forever).
+        if page_len == 0 || all_issues.len() as u64 >= total {
+            break;
+        }
+
+        if all_issues.len() as u64 >= MAX_PAGINATION_ITEMS {
+            truncated = true;
+            // MAX_PAGINATION_ITEMS = 1000 fits in usize on every supported target.
+            all_issues.truncate(usize::try_from(MAX_PAGINATION_ITEMS).unwrap_or(usize::MAX));
+            break;
+        }
+
+        start_at += SEARCH_PAGE_SIZE;
     }
 
-    let body: serde_json::Value = resp
-        .json()
-        .await
-        .map_err(|_| AppError::Http("Failed to parse search response".into()))?;
-
-    let issues = body["issues"].as_array().cloned().unwrap_or_default();
-    let total = body["total"].as_u64().unwrap_or(0);
-
-    // Update triage state for new tickets; remove done tickets
+    // Update triage state for new tickets; remove done tickets.
+    // IMPORTANT: this must iterate over ALL fetched issues across pages so the
+    // triage_map stays in sync with the full result set.
     {
         let tdb = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
         let existing = tdb.get_all_triage()?;
         let mut done_keys: Vec<String> = Vec::new();
-        for issue in &issues {
+        for issue in &all_issues {
             if let Some(key) = issue["key"].as_str() {
                 let status_category = issue["fields"]["status"]["statusCategory"]["key"]
                     .as_str()
@@ -760,9 +807,10 @@ pub async fn fetch_tickets(
     };
 
     Ok(FetchTicketsResult {
-        issues,
+        issues: all_issues,
         total,
         triage_map,
+        truncated,
     })
 }
 

@@ -157,6 +157,10 @@ export interface FetchTicketsResult {
   issues: JiraTicket[];
   total: number;
   triageMap: Record<string, TriageEntry>;
+  // True when the matching set exceeded the backend's MAX_PAGINATION_ITEMS cap
+  // and the result was truncated. The UI surfaces a warning so users know to
+  // tighten their JQL. See debug session: jira-fetch-pagination-50-cap.
+  truncated: boolean;
 }
 
 // --- Copy Pipeline Types (Phase 4) ---

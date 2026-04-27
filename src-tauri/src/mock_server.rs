@@ -43,6 +43,10 @@ pub struct V3UserSearchQuery {
 #[derive(Debug, Deserialize)]
 pub struct SearchQuery {
     pub jql: Option<String>,
+    #[serde(rename = "startAt")]
+    pub start_at: Option<u64>,
+    #[serde(rename = "maxResults")]
+    pub max_results: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,9 +58,24 @@ pub struct IssueQuery {
 // --- Search response helpers ---
 
 fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
+    make_search_response_paged(&issues, 0, 50)
+}
+
+/// Paginated variant of `make_search_response`: returns the slice
+/// `[start_at .. start_at + max_results]` of `issues`, while still reporting the
+/// full `total`. Used to drive multi-page regression tests for
+/// `fetch_tickets` / `search_tickets`.
+fn make_search_response_paged(issues: &[&JiraIssue], start_at: u64, max_results: u64) -> Value {
     let total = issues.len() as u64;
-    let issues_json: Vec<Value> = issues
-        .into_iter()
+    let start = usize::try_from(start_at.min(total)).unwrap_or(usize::MAX);
+    let end = usize::try_from((start_at + max_results).min(total)).unwrap_or(usize::MAX);
+    let page_slice = if start < end {
+        &issues[start..end]
+    } else {
+        &[]
+    };
+    let issues_json: Vec<Value> = page_slice
+        .iter()
         .map(|i| {
             json!({
                 "id": i.id,
@@ -66,8 +85,8 @@ fn make_search_response(issues: Vec<&JiraIssue>) -> Value {
         })
         .collect();
     json!({
-        "startAt": 0,
-        "maxResults": 50,
+        "startAt": start_at,
+        "maxResults": max_results,
         "total": total,
         "issues": issues_json
     })
@@ -133,8 +152,8 @@ fn extract_jql_assignee(jql: &str) -> Option<String> {
 
 mod v2 {
     use super::{
-        filter_issues, json, make_search_response, IntoResponse, IssueQuery, JiraIssue, Json, Path,
-        Query, SearchQuery, SharedFixtures, State, StatusCode, UserSearchQuery, Value,
+        filter_issues, json, IntoResponse, IssueQuery, JiraIssue, Json, Path, Query, SearchQuery,
+        SharedFixtures, State, StatusCode, UserSearchQuery, Value,
     };
 
     pub async fn get_myself() -> impl IntoResponse {
@@ -278,7 +297,9 @@ mod v2 {
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
         let filtered = filter_issues(&state.server_v2_issues, params.jql.as_ref());
-        let response = make_search_response(filtered);
+        let start_at = params.start_at.unwrap_or(0);
+        let max_results = params.max_results.unwrap_or(50);
+        let response = super::make_search_response_paged(&filtered, start_at, max_results);
         (StatusCode::OK, Json(response)).into_response()
     }
 

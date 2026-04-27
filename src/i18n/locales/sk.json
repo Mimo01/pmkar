@@ -96,7 +96,7 @@
   "detail.tab.changes.empty": "Neboli zistené žiadne zmeny od posledného načítania",
   "detail.changes.error": "Nepodarilo sa načítať zmeny. Skontrolujte pripojenie a skúste znova.",
   "detail.changes.descriptionChanged": "Popis sa zmenil",
-  "detail.changes.noPreview": "\u2014",
+  "detail.changes.noPreview": "—",
   "detail.copy": "Kopírovať do {{name}}",
   "detail.copied": "Skopírované",
   "detail.openInJira": "Otvoriť v Jira",
@@ -321,5 +321,7 @@
   "changelog.testing": "Testovanie",
   "changelog.documentation": "Dokumentácia",
   "changelog.miscellaneous": "Rôzne",
-  "changelog.cicd": "CI/CD"
+  "changelog.cicd": "CI/CD",
+  "tickets.truncationWarning": "Výsledky boli skrátené",
+  "tickets.truncationWarningHint": "Váš dopyt vrátil viac tiketov, než je maximum. Niektoré tikety sa nezobrazujú — upravte JQL, aby ste výsledky zúžili."
 }
