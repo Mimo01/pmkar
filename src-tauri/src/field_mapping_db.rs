@@ -31,6 +31,55 @@ const CREATE_FIELD_SCHEMA_CACHE: &str = "
 const CREATE_INDEX: &str =
     "CREATE INDEX IF NOT EXISTS idx_fsc_key ON field_schema_cache(side, project_key, issuetype_id);";
 
+const CREATE_FIELD_MAPPING: &str = "
+    CREATE TABLE IF NOT EXISTS field_mapping (
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        source_field_id     TEXT NOT NULL UNIQUE,
+        target_field_id     TEXT NOT NULL,
+        transformer_kind    TEXT NOT NULL,
+        source_schema_json  TEXT,
+        target_schema_json  TEXT,
+        created_at          TEXT NOT NULL,
+        updated_at          TEXT NOT NULL
+    );
+";
+
+const CREATE_MAPPING_META: &str = "
+    CREATE TABLE IF NOT EXISTS mapping_meta (
+        key    TEXT PRIMARY KEY,
+        value  TEXT NOT NULL
+    );
+";
+
+fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM field_mapping",
+        [],
+        |r| r.get(0),
+    )?;
+    if count > 0 {
+        return Ok(());
+    }
+    let now = Utc::now().to_rfc3339();
+    let defaults: [(&str, &str, &str); 5] = [
+        ("description", "description", "wiki_to_adf"),
+        ("labels",      "labels",      "identity"),
+        ("priority",    "priority",    "priority"),
+        ("assignee",    "assignee",    "user"),
+        ("reporter",    "reporter",    "user"),
+    ];
+    for (src, tgt, kind) in defaults {
+        conn.execute(
+            "INSERT OR IGNORE INTO field_mapping
+                 (source_field_id, target_field_id, transformer_kind,
+                  source_schema_json, target_schema_json, created_at, updated_at)
+             VALUES (?1, ?2, ?3, NULL, NULL, ?4, ?4)",
+            params![src, tgt, kind, now],
+        )?;
+    }
+    Ok(())
+}
+
 pub struct FieldMappingDb {
     conn: Connection,
 }
@@ -40,6 +89,9 @@ impl FieldMappingDb {
         let conn = Connection::open(path)?;
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
+        conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(CREATE_MAPPING_META)?;
+        seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
 
@@ -47,6 +99,9 @@ impl FieldMappingDb {
         let conn = Connection::open_in_memory()?;
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
+        conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(CREATE_MAPPING_META)?;
+        seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
 
