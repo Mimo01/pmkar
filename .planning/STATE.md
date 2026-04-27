@@ -248,10 +248,11 @@ None yet.
 | 260329-nha | Replace GitHub Actions with local processes (pre-commit hook + release.sh) | 2026-03-29 | a4d6b34 | Gaps (fixed) | [260329-nha-replace-github-actions-with-local-proces](./quick/260329-nha-replace-github-actions-with-local-proces/) |
 | 260401-hhp | Add MSI Windows build artifacts and platform-selective dispatch | 2026-04-01 | b64c8e5 | | [260401-hhp-add-msi-windows-build-back-to-release-wo](./quick/260401-hhp-add-msi-windows-build-back-to-release-wo/) |
 | 260401-j1u | Fix target Jira project selection failure | 2026-04-01 | | Verified | [260401-j1u-fix-target-jira-project-selection-failur](./quick/260401-j1u-fix-target-jira-project-selection-failur/) |
+| 260427-dss | Add 'Mark as Handled' triage action alongside Copy and Dismiss | 2026-04-27 | b86ebe6 | | [260427-dss-i-want-to-add-another-option-to-the-tick](./quick/260427-dss-i-want-to-add-another-option-to-the-tick/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-01
-Last session: 2026-04-01T10:42:29Z
-Stopped at: Completed quick task 260401-j1u: Fix target Jira project selection failure
+Last activity: 2026-04-27
+Last session: 2026-04-27T07:56:08Z
+Stopped at: Completed quick task 260427-dss: Add 'Mark as Handled' triage action alongside Copy and Dismiss
 Resume file: None
