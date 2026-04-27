@@ -94,7 +94,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 **Plans**: 5 plans
 
 **Wave 1** *(scaffolding — no parallel siblings)*:
-- [ ] 18-01-PLAN.md — Skeleton: field_transform/mod.rs (shared types ResolvedFields/GapVariant/UnresolvedPerson/Version/Component/TransformContext) + 6 stub files + lib.rs registration
+- [x] 18-01-PLAN.md — Skeleton: field_transform/mod.rs (shared types ResolvedFields/GapVariant/UnresolvedPerson/Version/Component/TransformContext) + 6 stub files + lib.rs registration
 
 **Wave 2** *(parallel-safe — disjoint files)*:
 - [ ] 18-02-PLAN.md — Twin transformers: version.rs + component.rs (cached HTTP fetch, case-insensitive name match, partial-array resolution)
