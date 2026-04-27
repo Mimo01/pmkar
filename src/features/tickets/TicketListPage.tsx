@@ -98,9 +98,14 @@ export function TicketListPage() {
       // Also hydrate unseen changes for frontend indicators (Phase 15)
       for (const ticket of result.issues) {
         try {
+          // NOTE: Tauri command `fetch_ticket_detail` takes Rust param `issue_key`,
+          // which Tauri exposes to JS as `issueKey`. Passing the wrong key (e.g.
+          // `ticketKey`) causes a silent IPC rejection swallowed by the catch
+          // below, which previously caused manual-fetch change detection to never
+          // run. See debug session: manual-fetch-misses-changes.
           const detail = await invoke<unknown>('fetch_ticket_detail', {
             baseUrl: serverConn.baseUrl,
-            ticketKey: ticket.key,
+            issueKey: ticket.key,
           });
           const changes = await invoke<
             { field: string; oldValue: string | null; newValue: string | null }[]
@@ -114,8 +119,10 @@ export function TicketListPage() {
               changes.map((c) => c.field),
             );
           }
-        } catch {
-          // Skip change detection for this ticket if detail fetch fails (POLL-06: no watermark advance)
+        } catch (err) {
+          // Skip change detection for this ticket if detail fetch fails (POLL-06: no watermark advance).
+          // Log to console so silent IPC parameter mismatches surface during development.
+          console.error(`[manual-fetch] change detection failed for ${ticket.key}:`, err);
         }
       }
 
