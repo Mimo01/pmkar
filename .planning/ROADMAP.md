@@ -45,7 +45,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 **Milestone Goal:** Replace the hardcoded core-field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly, supports custom fields, gates on required-field completeness, and surfaces every mapping decision in the audit log. Comments, attachments, worklogs, sub-tasks, summary, and the origin remote link stay hardcoded inside the existing copy pipeline; the mapping engine governs core fields and custom fields only.
 
 - [x] **Phase 17: Field Discovery + Mock Schema Fidelity** - Source v2 + target v3 schema discovery with paginated createmeta, custom-field type detection, and mock fixtures exercising the renderer registry
-- [ ] **Phase 18: v2→v3 Translation Layer** - Pure Rust transformer pipeline for user/version/component lookups and wiki→ADF gap-fill
+- [x] **Phase 18: v2→v3 Translation Layer** - Pure Rust transformer pipeline for user/version/component lookups and wiki→ADF gap-fill
 - [ ] **Phase 19: Mapping Persistence + CRUD Commands** - New `mapping.db` SQLite database with schema cache, mapping rows, and seeded defaults
 - [ ] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers
 - [ ] **Phase 21: Mapping Editor (Settings UI)** - Settings page for editing the global mapping with name-match suggestions, manual schema refresh, and drift warnings
