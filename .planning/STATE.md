@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
-status: "Phase 17 planned (5 plans in 2 waves), ready to execute"
-stopped_at: Phase 17 planned
-last_updated: "2026-04-27T12:30:00.000Z"
-last_activity: 2026-04-27 — Phase 17 plans written and verified
+status: "Phase 17 Wave 2 in progress — plan 17-04 complete, plan 17-05 pending"
+stopped_at: Phase 17-04 completed
+last_updated: "2026-04-27T14:05:00.000Z"
+last_activity: 2026-04-27 — Phase 17-04 executed (HTTP discovery layer + 5 Tauri commands)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 4
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 
 ## Current Position
 
-Phase: 17 (Field Discovery + Mock Schema Fidelity) — planned (5 plans in 2 waves)
-Plan: ready to execute
-Status: Phase 17 planned, ready for `/gsd-execute-phase 17`
-Last activity: 2026-04-27 — Phase 17 plans written and verified
+Phase: 17 (Field Discovery + Mock Schema Fidelity) — Wave 2 in progress
+Plan: 17-05 (probe-banner-status-pill-wiring) — pending execution
+Status: 17-04 complete; Wave 2 final plan (17-05) ready to execute
+Last activity: 2026-04-27 — Phase 17-04 executed (HTTP discovery + 5 Tauri commands)
 
 ## Performance Metrics
 
@@ -91,6 +91,7 @@ Last activity: 2026-04-27 — Phase 17 plans written and verified
 | Phase 11-add-deployment-auto-updates-and-release-management P03 | 12 | 2 tasks | 11 files |
 | Phase 16-enhanced-watch-configuration P01 | 12 | 2 tasks | 6 files |
 | Phase 16-enhanced-watch-configuration P02 | 18 | 1 tasks | 2 files |
+| Phase 17-field-discovery P04 | 55 | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -201,6 +202,10 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - [Phase 16-01]: Privacy-simulation user in mock omits emailAddress entirely (JSON key absent, not null) — accurately simulates Jira Cloud email visibility restriction
 - [Phase 16-02]: Updated local JiraUser interface to support optional name/accountId for Cloud v3 domain search users
 - [Phase 16-02]: Privacy warning gated to cloudConn non-null — server-only connections never show amber banner
+- [Phase 17-04]: probe_createmeta returns ProbeResult ok=false (not Err) for missing project key / credentials — Pitfall C: first-run users never see failure banner pre-setup
+- [Phase 17-04]: #[allow(unused_assignments)] on loop accumulator variables — canonical Rust fix for false-positive liveness lint on loop-accumulated scalars
+- [Phase 17-04]: refresh_field_schema_cache is synchronous (fn not async fn) — no await points; clippy unused_async enforced by -D warnings
+- [Phase 17-04]: SHA-256 hash computed over concatenated raw response bytes per page (D-04) — preserves byte-level drift signal for Phase 21
 
 ### Roadmap Evolution
 
@@ -269,6 +274,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-27
-Last session: 2026-04-27T11:00:38.054Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-field-discovery-mock-schema-fidelity/17-CONTEXT.md
+Last session: 2026-04-27T14:05:00Z
+Stopped at: Completed 17-04 — HTTP discovery layer + 5 Tauri commands
+Resume file: .planning/phases/17-field-discovery-mock-schema-fidelity/17-04-SUMMARY.md

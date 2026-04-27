@@ -9,9 +9,9 @@ Requirements for Configurable Field Mapping milestone. Each maps to roadmap phas
 
 ### Field Discovery
 
-- [ ] **DISC-01**: User can fetch field schemas from source Jira Server v2 including custom fields with type detection
-- [ ] **DISC-02**: User can fetch field schemas from target Jira Cloud v3 including custom fields with type detection
-- [ ] **DISC-03**: System fetches target required-field metadata per (project, issue type) via paginated `createmeta/{key}/issuetypes/{id}` endpoint
+- [x] **DISC-01**: User can fetch field schemas from source Jira Server v2 including custom fields with type detection _(17-04)_
+- [x] **DISC-02**: User can fetch field schemas from target Jira Cloud v3 including custom fields with type detection _(17-04)_
+- [x] **DISC-03**: System fetches target required-field metadata per (project, issue type) via paginated `createmeta/{key}/issuetypes/{id}` endpoint _(17-04)_
 - [ ] **DISC-04**: Mock Jira server exposes realistic field schemas including ≥4 custom fields (number, multi-select, user, date) covering renderer registry
 - [ ] **DISC-05**: User can manually refresh the schema cache via a button in Settings
 
