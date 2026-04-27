@@ -144,7 +144,29 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   2. User sees a read-only "Unsupported type" pill (never a crash, never a silent fallback to text input) when a target field's type is not in the renderer registry.
   3. User can scroll/keyboard-navigate a combobox containing 5,000+ items (e.g., user picker on a 10k-user org) without observable lag — virtualized rendering is wired through cmdk + `@tanstack/react-virtual` with `useFlushSync: false` for React 19.
   4. Each renderer is unit-testable in isolation via the registry — adding a new field type requires only a new renderer file and one registry entry, never a switch-statement edit in `DynamicTargetForm`.
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 0** *(scaffolding — types contracts + test stubs + npm install)*:
+- [ ] 20-01-PLAN.md — Install cmdk + @tanstack/react-virtual; create types.ts (RendererProps, SearchCallbacks, JiraComponent, JiraVersion); create 13 test stub files tagged by CTRL-0X requirement IDs
+
+**Wave 1** *(parallel-safe — disjoint files)*:
+- [ ] 20-02-PLAN.md — VirtualizedCombobox shared base (cmdk + useVirtualizer with useFlushSync:false; mitigates Pitfalls 1-4) + tests (CTRL-08)
+- [ ] 20-03-PLAN.md — 9 simple renderers: String / TextArea / Url / Date / DateTime / Number / Checkbox / Radio / UnsupportedType + 6 tests (CTRL-01, CTRL-05, CTRL-06, CTRL-07 file-level)
+
+**Wave 2** *(blocked on Wave 1)*:
+- [ ] 20-04-PLAN.md — 8 picker renderers wrapping VirtualizedCombobox: User / MultiUser / Group / SingleSelect / MultiSelect / Labels / Component / Version + 5 tests (CTRL-02, CTRL-03, CTRL-04) — depends on 20-02
+
+**Wave 3** *(integration)*:
+- [ ] 20-05-PLAN.md — registry.ts (getRenderer dispatch) + DynamicTargetForm.tsx (stateless shell) + 7 fieldRenderer.* i18n keys (en + sk) + registry/integration tests (CTRL-07 routing closure + CTRL-01..08 integration) — depends on 20-03, 20-04
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- RendererProps interface (D-04) defined in Plan 01 and consumed by all 17 renderer files across Plans 02-05
+- VirtualizedCombobox<T> exported from Plan 02 is the single virtualization implementation; Plan 04 picker renderers wrap it without re-implementation (D-08, D-09)
+- D-01 (no invoke in renderers): grep gate `grep -r @tauri-apps/api/core src/features/field-renderers/` must return 0 in Plans 02, 03, 04
+- D-02 (MultiUserPicker filters out UnresolvedPerson): isJiraUser type guard in Plan 04 enforces this; tested in MultiUserPickerRenderer.test.tsx
+- D-03 (initialQuery on mount): VirtualizedCombobox useEffect (Plan 02) + UserPickerRenderer pass-through (Plan 04) + assertion in UserPickerRenderer.test.tsx
+- D-12 (extension contract): Adding a new field type is one file under renderers/ + one switch case in registry.ts; verified by 19-case registry.test.ts in Plan 05
+- i18n parity (Pitfall 6): en.json + sk.json have identical fieldRenderer.* key sets; translations.test.ts gate enforced in Plan 05
 **UI hint**: yes
 
 ### Phase 21: Mapping Editor (Settings UI)
@@ -209,7 +231,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/5 | Not started | - |
 | 18. v2→v3 Translation Layer | v0.4.0 | 0/5 | Not started | - |
 | 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/2 | Not started | - |
-| 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/? | Not started | - |
+| 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/5 | Not started | - |
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 0/? | Not started | - |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/? | Not started | - |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/? | Not started | - |
