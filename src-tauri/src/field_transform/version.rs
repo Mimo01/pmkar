@@ -12,10 +12,10 @@ const VERSIONS_PAGE_SIZE: usize = 100;
 const MAX_VERSIONS_PAGES: usize = 50;
 
 pub struct VersionResolver {
-    pub client: reqwest::Client,
-    pub cloud_auth: String,
-    pub cloud_base_url: String,
-    pub cache: SessionVersionCache,
+    pub(crate) client: reqwest::Client,
+    pub(crate) cloud_auth: String,
+    pub(crate) cloud_base_url: String,
+    pub(crate) cache: SessionVersionCache,
 }
 
 impl VersionResolver {

@@ -10,10 +10,10 @@ const COMPONENTS_PAGE_SIZE: usize = 100;
 const MAX_COMPONENTS_PAGES: usize = 50;
 
 pub struct ComponentResolver {
-    pub client: reqwest::Client,
-    pub cloud_auth: String,
-    pub cloud_base_url: String,
-    pub cache: SessionComponentCache,
+    pub(crate) client: reqwest::Client,
+    pub(crate) cloud_auth: String,
+    pub(crate) cloud_base_url: String,
+    pub(crate) cache: SessionComponentCache,
 }
 
 impl ComponentResolver {
