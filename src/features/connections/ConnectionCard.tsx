@@ -1,11 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { formatRelativeTime } from '../../lib/format';
-import type { ConnectionMeta } from './types';
+import { useConnectionStore } from './connectionStore';
+import type { ConnectionMeta, ConnectionType } from './types';
 
 interface ConnectionCardProps {
   label: string;
   connection: ConnectionMeta | null;
   onEdit: () => void;
+  connectionType?: ConnectionType;
 }
 
 function getStatusDotClass(connection: ConnectionMeta | null): string {
@@ -20,12 +22,15 @@ function getStatusDotClass(connection: ConnectionMeta | null): string {
   }
 }
 
-export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProps) {
+export function ConnectionCard({ label, connection, onEdit, connectionType }: ConnectionCardProps) {
   const { t } = useTranslation();
   const dotClass = getStatusDotClass(connection);
   const lastTestedText = connection?.lastTestedAt
     ? formatRelativeTime(connection.lastTestedAt)
     : t('connection.notYetTested');
+
+  const probeStatus = useConnectionStore((s) => s.probeStatus);
+  const isCloudCard = connectionType === 'cloud';
 
   return (
     <div className="rounded-xl border border-brand-border bg-brand-surface p-4 mb-3 hover:border-brand-border/80 transition-colors duration-200">
@@ -34,6 +39,14 @@ export function ConnectionCard({ label, connection, onEdit }: ConnectionCardProp
           <div className="flex items-center gap-2 mb-1">
             <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
             <span className="text-sm font-medium text-brand-text">{label}</span>
+            {isCloudCard && probeStatus === 'failed' && (
+              <span
+                data-testid="probe-status-pill"
+                className="rounded-full border border-red-400/30 bg-red-400/10 px-2 py-0.5 text-xs text-red-400"
+              >
+                Discovery unavailable
+              </span>
+            )}
           </div>
           {connection?.baseUrl && (
             <p className="text-xs text-brand-muted ml-4 truncate">{connection.baseUrl}</p>
