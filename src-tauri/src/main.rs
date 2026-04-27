@@ -1,8 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use pmkar_lib::{
-    audit::AuditDb, commands, fixtures::build_fixtures, poll_engine::PollFrequency,
-    snapshot_db::SnapshotDb, triage_db::TriageDb,
+    audit::AuditDb, commands, field_mapping_db::FieldMappingDb, fixtures::build_fixtures,
+    poll_engine::PollFrequency, snapshot_db::SnapshotDb, triage_db::TriageDb,
 };
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
@@ -136,6 +136,11 @@ fn main() {
             let snapshot_db =
                 SnapshotDb::open(&snapshot_db_path).expect("Failed to open snapshot database");
             app.manage(Arc::new(Mutex::new(snapshot_db)));
+
+            let mapping_db_path = app_dir.join("mapping.db");
+            let mapping_db =
+                FieldMappingDb::open(&mapping_db_path).expect("Failed to open mapping database");
+            app.manage(Arc::new(Mutex::new(mapping_db)));
 
             app.manage(fixtures.clone());
 
