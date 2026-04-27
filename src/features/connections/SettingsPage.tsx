@@ -619,6 +619,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   })}
                   connection={serverConn}
                   onEdit={() => handleEdit('server')}
+                  connectionType="server"
                 />
                 {serverConn && (
                   <ProjectSelector
@@ -675,6 +676,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
                   })}
                   connection={cloudConn}
                   onEdit={() => handleEdit('cloud')}
+                  connectionType="cloud"
                 />
                 {cloudConn && (
                   <ProjectSelector

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { useConnectionStore } from './features/connections/connectionStore';
+import ProbeStatusBanner from './features/connections/ProbeStatusBanner';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
@@ -35,6 +36,8 @@ interface StoredConnectionMeta {
 
 function App() {
   const hasSetup = useConnectionStore((s) => s.hasCompletedSetup());
+  const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
+  const runProbe = useConnectionStore((s) => s.runProbe);
   const [hydrated, setHydrated] = useState(false);
   useApplyTheme();
   useUpdateCheck();
@@ -82,6 +85,13 @@ function App() {
       unlisten.then((fn) => fn());
     };
   }, []);
+
+  // Fire probe after setup + project key is available; re-run when targetProjectKey changes
+  useEffect(() => {
+    if (hasSetup && targetProjectKey) {
+      void runProbe();
+    }
+  }, [hasSetup, targetProjectKey, runProbe]);
 
   const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
   const copyPhase = useCopyStore((s) => s.phase);
@@ -195,6 +205,7 @@ function App() {
           setShowAuditLog(true);
         }}
       >
+        <ProbeStatusBanner />
         {currentTab === 'new' && <TicketListPage />}
         {currentTab === 'not-mine' && <IgnoredTicketsPage />}
         {currentTab === 'linked' && <LinkedTicketsPage />}
