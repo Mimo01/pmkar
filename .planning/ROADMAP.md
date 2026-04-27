@@ -44,7 +44,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 
 **Milestone Goal:** Replace the hardcoded core-field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly, supports custom fields, gates on required-field completeness, and surfaces every mapping decision in the audit log. Comments, attachments, worklogs, sub-tasks, summary, and the origin remote link stay hardcoded inside the existing copy pipeline; the mapping engine governs core fields and custom fields only.
 
-- [ ] **Phase 17: Field Discovery + Mock Schema Fidelity** - Source v2 + target v3 schema discovery with paginated createmeta, custom-field type detection, and mock fixtures exercising the renderer registry
+- [x] **Phase 17: Field Discovery + Mock Schema Fidelity** - Source v2 + target v3 schema discovery with paginated createmeta, custom-field type detection, and mock fixtures exercising the renderer registry
 - [ ] **Phase 18: v2→v3 Translation Layer** - Pure Rust transformer pipeline for user/version/component lookups and wiki→ADF gap-fill
 - [ ] **Phase 19: Mapping Persistence + CRUD Commands** - New `mapping.db` SQLite database with schema cache, mapping rows, and seeded defaults
 - [ ] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers
@@ -66,13 +66,13 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 **Plans**: 5 plans
 
 **Wave 1** *(parallel-safe — disjoint files)*:
-- [ ] 17-01-PLAN.md — Mock fixtures + v2/v3 routes (custom fields, createmeta pagination, versions/components per D-09/D-10/D-11/D-12)
-- [ ] 17-02-PLAN.md — Rust FieldSchemaType + FieldMappingDb (mapping.db with field_schema_cache table + SHA-256 schema_hash per D-04)
-- [ ] 17-03-PLAN.md — TypeScript fieldSchema types + schemaCacheStore (Zustand cache by side/projectKey/issuetypeId)
+- [x] 17-01-PLAN.md — Mock fixtures + v2/v3 routes (custom fields, createmeta pagination, versions/components per D-09/D-10/D-11/D-12)
+- [x] 17-02-PLAN.md — Rust FieldSchemaType + FieldMappingDb (mapping.db with field_schema_cache table + SHA-256 schema_hash per D-04)
+- [x] 17-03-PLAN.md — TypeScript fieldSchema types + schemaCacheStore (Zustand cache by side/projectKey/issuetypeId)
 
 **Wave 2** *(blocked on Wave 1 completion)*:
-- [ ] 17-04-PLAN.md — Rust field_discovery HTTP module + 5 Tauri commands (discover/probe/prewarm/refresh) — depends on 17-01, 17-02
-- [ ] 17-05-PLAN.md — Probe banner + ConnectionCard status pill + App-launch wiring (D-05/D-07/D-08) — depends on 17-03, 17-04
+- [x] 17-04-PLAN.md — Rust field_discovery HTTP module + 5 Tauri commands (discover/probe/prewarm/refresh) — depends on 17-01, 17-02
+- [x] 17-05-PLAN.md — Probe banner + ConnectionCard status pill + App-launch wiring (D-05/D-07/D-08) — depends on 17-03, 17-04
 
 **Cross-cutting constraints** *(truths shared by 2+ plans)*:
 - FieldSchema discriminated union locked by RESEARCH.md §3 — Rust enum (Plan 17-02) and TypeScript union (Plan 17-03) must stay 1-to-1; consumed by Plan 17-04
