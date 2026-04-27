@@ -432,6 +432,11 @@ mod v2 {
             { "key": "TEST", "name": "Test Project" }
         ]))
     }
+
+    pub async fn get_fields(State(fixtures): State<SharedFixtures>) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        (StatusCode::OK, Json(state.v2_fields.clone())).into_response()
+    }
 }
 
 // --- Cloud v3 handlers ---
@@ -441,6 +446,15 @@ mod v3 {
         filter_issues, json, make_search_response, AdfDoc, IntoResponse, IssueQuery, JiraIssue,
         Json, Path, Query, SharedFixtures, State, StatusCode, V3UserSearchQuery, Value,
     };
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    pub struct CreametaPageQuery {
+        #[serde(rename = "startAt")]
+        pub start_at: Option<u64>,
+        #[serde(rename = "maxResults")]
+        pub max_results: Option<u64>,
+    }
 
     pub async fn search_users(Query(params): Query<V3UserSearchQuery>) -> impl IntoResponse {
         let mock_users = vec![
@@ -795,6 +809,69 @@ mod v3 {
             { "key": "DEV", "name": "Development" }
         ]))
     }
+
+    pub async fn get_fields(State(fixtures): State<SharedFixtures>) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        (StatusCode::OK, Json(state.v3_fields.clone())).into_response()
+    }
+
+    pub async fn get_createmeta_issuetypes(
+        State(fixtures): State<SharedFixtures>,
+        Path(_key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        (StatusCode::OK, Json(state.v3_createmeta_issuetypes.clone())).into_response()
+    }
+
+    pub async fn get_createmeta_fields(
+        State(fixtures): State<SharedFixtures>,
+        Path((_key, issuetype_id)): Path<(String, String)>,
+        Query(params): Query<CreametaPageQuery>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        let all_fields = match state.v3_createmeta_fields.get(&issuetype_id) {
+            Some(fields) => fields.clone(),
+            None => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(json!({"error": "Issue type not found"})),
+                )
+                    .into_response();
+            }
+        };
+        let start_at = usize::try_from(params.start_at.unwrap_or(0)).unwrap_or(usize::MAX);
+        let max_results = usize::try_from(params.max_results.unwrap_or(50)).unwrap_or(usize::MAX);
+        let total = all_fields.len();
+        let end = (start_at + max_results).min(total);
+        let page_fields: Vec<Value> = if start_at < total {
+            all_fields[start_at..end].to_vec()
+        } else {
+            vec![]
+        };
+        let response = json!({
+            "startAt": start_at,
+            "maxResults": max_results,
+            "total": total,
+            "fields": page_fields
+        });
+        (StatusCode::OK, Json(response)).into_response()
+    }
+
+    pub async fn get_project_versions(
+        State(fixtures): State<SharedFixtures>,
+        Path(_key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        (StatusCode::OK, Json(state.v3_project_versions.clone())).into_response()
+    }
+
+    pub async fn get_project_components(
+        State(fixtures): State<SharedFixtures>,
+        Path(_key): Path<String>,
+    ) -> impl IntoResponse {
+        let state = fixtures.lock().unwrap();
+        (StatusCode::OK, Json(state.v3_project_components.clone())).into_response()
+    }
 }
 
 // --- Router construction ---
@@ -821,6 +898,7 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
             get(v2::download_attachment),
         )
         .route("/rest/api/2/project", get(v2::get_projects))
+        .route("/rest/api/2/field", get(v2::get_fields))
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
@@ -856,6 +934,23 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
             get(v3::get_project_statuses),
         )
         .route("/rest/api/3/user/search", get(v3::search_users))
+        .route("/rest/api/3/field", get(v3::get_fields))
+        .route(
+            "/rest/api/3/issue/createmeta/{key}/issuetypes",
+            get(v3::get_createmeta_issuetypes),
+        )
+        .route(
+            "/rest/api/3/issue/createmeta/{key}/issuetypes/{id}",
+            get(v3::get_createmeta_fields),
+        )
+        .route(
+            "/rest/api/3/project/{key}/versions",
+            get(v3::get_project_versions),
+        )
+        .route(
+            "/rest/api/3/project/{key}/components",
+            get(v3::get_project_components),
+        )
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }

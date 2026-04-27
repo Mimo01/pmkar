@@ -243,6 +243,7 @@ fn v3_comment(
 }
 
 // Helper to build a createmeta field entry
+#[allow(clippy::needless_pass_by_value)]
 fn createmeta_field(
     field_id: &str,
     name: &str,
@@ -266,6 +267,7 @@ fn createmeta_field(
 }
 
 // Helper to build a global field entry (for /field endpoint)
+#[allow(clippy::needless_pass_by_value)]
 fn global_field(id: &str, name: &str, custom: bool, schema: serde_json::Value) -> serde_json::Value {
     json!({
         "id": id,
