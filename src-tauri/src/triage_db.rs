@@ -46,8 +46,8 @@ const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
 
 const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
 
-/// Rebuilds the triage_state table to widen the CHECK constraint to include 'handled'.
-/// Run after CREATE TABLE IF NOT EXISTS so that fresh DBs get the right constraint directly
+/// Rebuilds the `triage_state` table to widen the `CHECK` constraint to include 'handled'.
+/// Run after `CREATE TABLE IF NOT EXISTS` so that fresh DBs get the right constraint directly
 /// and existing DBs (which have the old 4-value CHECK) are migrated in-place.
 const MIGRATE_TRIAGE_CHECK_HANDLED: &str = "
     BEGIN TRANSACTION;
@@ -102,7 +102,7 @@ const CREATE_APP_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS app_config (
 );";
 
 impl TriageDb {
-    /// Detects whether the existing triage_state table's CHECK constraint already
+    /// Detects whether the existing `triage_state` table's `CHECK` constraint already
     /// includes 'handled'. If not, rebuilds the table to widen the constraint.
     /// This is idempotent — running it on a DB that already has 'handled' is a no-op.
     fn migrate_triage_check_constraint(conn: &Connection) {
