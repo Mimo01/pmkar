@@ -739,22 +739,25 @@ describe('getRenderer registry coverage', () => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Popover implementation: Radix Popover vs CSS div**
    - What we know: `@radix-ui/react-popover` is not installed; CSS-positioned div pattern exists in `TicketFilterBar.tsx`
    - What's unclear: Whether portal mounting is required (to avoid z-index stacking inside a dialog/modal)
    - Recommendation: Since the `DynamicTargetForm` will render inside `CopyPreviewModal` (Phase 22), a CSS-positioned absolute div may be clipped by the modal's `overflow: hidden` boundary. Radix Popover uses a portal to escape this. Planner should decide: install `@radix-ui/react-popover` (safe) or use `position: fixed` coordinates (workable but fragile).
+   - **RESOLVED:** Plan 02 implements VirtualizedCombobox using a CSS-positioned `absolute` div with a `mousedown` outside-click handler (TicketFilterBar pattern). `@radix-ui/react-popover` is NOT installed. Phase 22 will revisit only if portal mounting becomes necessary (e.g., clipping inside `CopyPreviewModal`); the `DynamicTargetForm` shell does not currently nest inside a clipping container in Phase 20.
 
 2. **cmdk keyboard nav with virtual children behavior under extreme scroll**
    - What we know: cmdk's arrow key handler iterates rendered `Command.Item` elements; virtualizer renders only visible items
    - What's unclear: Whether pressing ArrowDown past the last visible item scrolls the virtual list (cmdk would need to scroll its container)
    - Recommendation: Implement and test with a 500-item fixture in Wave 1. If arrow keys don't scroll past visible items, add a `scrollToIndex` call in the `Command.Item` `onSelect` for keyboard-triggered selection.
+   - **RESOLVED:** Plan 02 ships `VirtualizedCombobox` with `overscan: 5` and 36px row height; jsdom-level tests cover trigger/popover/filter/onChange/outside-click only. The "extreme scroll" keyboard behavior is documented as an out-of-jsdom concern (per VALIDATION.md "Manual-Only Verifications") — if Phase 22 manual UAT surfaces a regression, a `scrollToIndex` patch lands in `VirtualizedCombobox.tsx` (one place per D-09) without changing any picker renderer.
 
 3. **`GroupPickerRenderer` allowedValues shape**
    - What we know: `type: 'array', items: 'group'` maps to GroupPickerRenderer; allowedValues presumably contains group objects
    - What's unclear: The exact shape of group objects from Phase 17 discovery (is it `{ name: string }` or `{ groupId: string; name: string }`)
    - Recommendation: Read `src-tauri/src/field_discovery.rs` before implementing `GroupPickerRenderer` to confirm the struct fields. [ASSUMED shape: `{ name: string }` based on Jira Server API knowledge]
+   - **RESOLVED:** Plan 04 GroupPickerRenderer defines a local `GroupRef` interface = `{ name: string; groupId?: string }` with an `isGroupRef` type guard that filters `allowedValues` to entries with a string `name`. This shape accepts BOTH the Server (`{ name: string }`) and Cloud (`{ name: string; groupId?: string }`) forms — no breakage if Phase 17 discovery returns either. The renderer's `displayLabel` uses `g.name` regardless.
 
 ---
 
