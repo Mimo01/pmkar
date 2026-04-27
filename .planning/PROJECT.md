@@ -39,6 +39,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Change diff view with blue dot indicators and field-level diff table — v0.3.0
 - ✓ Enhanced watch configuration with email domain search and bulk user add — v0.3.0
 - ✓ v2→v3 translation layer: typed gap variants, batch user resolution (TRAN-01/06), ADF post-processor (TRAN-02/05), version/component name→id resolvers (TRAN-03/04), two-phase pipeline — v0.4.0 Phase 18
+- ✓ Mapping persistence: `field_mapping` + `mapping_meta` SQLite tables in `mapping.db`, 5 seeded defaults (description/labels/priority/assignee/reporter), CRUD methods + 3 Tauri commands (get/set/delete_field_mapping) — v0.4.0 Phase 19 (MAP-01, MAP-02)
 
 ### Active
 
@@ -138,4 +139,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 after Phase 18 completion (v2→v3 translation layer)*
+*Last updated: 2026-04-27 after Phase 19 completion (mapping persistence + CRUD commands)*
