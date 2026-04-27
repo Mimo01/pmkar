@@ -1,8 +1,19 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
+import { useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { ConnectionMeta } from './types';
 
+export type ProbeStatus = 'idle' | 'ok' | 'failed' | 'skipped';
+
+export interface ProbeResult {
+  ok: boolean;
+  endpointUrl: string;
+  statusCode: number | null;
+  hint: string | null;
+}
+
 interface ConnectionState {
+  // ─── Existing ─────────────────────────────────────────────────────────────
   serverConnection: ConnectionMeta | null;
   cloudConnection: ConnectionMeta | null;
   sourceProjectKey: string | null;
@@ -24,6 +35,16 @@ interface ConnectionState {
     sourceName?: string | null,
     targetName?: string | null,
   ) => Promise<void>;
+
+  // ─── Phase 17 probe (D-05/D-07/D-08) ──────────────────────────────────────
+  probeStatus: ProbeStatus;
+  probeError: string | null;
+  probeEndpointUrl: string | null;
+  probeStatusCode: number | null;
+  probeBannerDismissed: boolean;
+  runProbe: () => Promise<void>;
+  dismissProbeBanner: () => void;
+  prewarmIssueTypes: () => Promise<void>;
 }
 
 export const useConnectionStore = create<ConnectionState>((set, get) => ({
@@ -33,9 +54,26 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   targetProjectKey: null,
   sourceProjectName: null,
   targetProjectName: null,
+
+  // ─── Phase 17 probe initial state ──────────────────────────────────────────
+  probeStatus: 'idle',
+  probeError: null,
+  probeEndpointUrl: null,
+  probeStatusCode: null,
+  probeBannerDismissed: false,
+
   setServerConnection: (meta) => set({ serverConnection: meta }),
   setCloudConnection: (meta) => set({ cloudConnection: meta }),
-  clearConnections: () => set({ serverConnection: null, cloudConnection: null }),
+  clearConnections: () =>
+    set({
+      serverConnection: null,
+      cloudConnection: null,
+      probeStatus: 'idle',
+      probeError: null,
+      probeEndpointUrl: null,
+      probeStatusCode: null,
+      probeBannerDismissed: false,
+    }),
   hasCompletedSetup: () => get().serverConnection !== null && get().cloudConnection !== null,
   setSourceProjectKey: (key) => set({ sourceProjectKey: key }),
   setTargetProjectKey: (key) => set({ targetProjectKey: key }),
@@ -70,5 +108,49 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
     } catch {
       // Non-fatal: best-effort persistence
     }
+  },
+
+  runProbe: async () => {
+    const target = get().targetProjectKey;
+    if (!target) {
+      set({ probeStatus: 'skipped', probeError: null, probeEndpointUrl: null, probeStatusCode: null });
+      return;
+    }
+    try {
+      const result = await invoke<ProbeResult>('probe_createmeta');
+      if (result.ok) {
+        set({
+          probeStatus: 'ok',
+          probeError: null,
+          probeEndpointUrl: result.endpointUrl,
+          probeStatusCode: result.statusCode,
+        });
+        // Fire D-01 pre-warm (best effort, non-blocking)
+        await get().prewarmIssueTypes();
+      } else {
+        set({
+          probeStatus: 'failed',
+          probeError: result.hint,
+          probeEndpointUrl: result.endpointUrl,
+          probeStatusCode: result.statusCode,
+        });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
+      set({
+        probeStatus: 'failed',
+        probeError: `Probe call rejected: ${msg}`,
+        probeEndpointUrl: null,
+        probeStatusCode: null,
+      });
+    }
+  },
+
+  dismissProbeBanner: () => set({ probeBannerDismissed: true }),
+
+  prewarmIssueTypes: async () => {
+    const target = get().targetProjectKey;
+    if (!target) return;
+    await useSchemaCacheStore.getState().preWarm(target);
   },
 }));
