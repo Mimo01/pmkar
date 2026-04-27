@@ -247,8 +247,8 @@ impl FieldMappingDb {
     }
 
     /// Upsert a single mapping row keyed on `source_field_id` (D-04).
-    /// On conflict, replaces target_field_id, transformer_kind, schema JSON
-    /// and updated_at. created_at stays as the original insert time.
+    /// On conflict, replaces `target_field_id`, `transformer_kind`, schema JSON
+    /// and `updated_at`. `created_at` stays as the original insert time.
     pub fn upsert_mapping_row(&self, row: &FieldMappingRow) -> AppResult<()> {
         let source_schema_json = serde_json::to_string(&row.source_schema)?;
         let target_schema_json = serde_json::to_string(&row.target_schema)?;
@@ -276,9 +276,9 @@ impl FieldMappingDb {
         Ok(())
     }
 
-    /// Return all mapping rows in insertion order (id ASC) per D-06.
+    /// Return all mapping rows in insertion order (`id ASC`) per D-06.
     /// Seed rows store NULL schema JSON; row-mapper falls back to
-    /// `FieldSchemaType::Any` (Pitfall 3 — schema_json columns are nullable).
+    /// `FieldSchemaType::Any` (Pitfall 3 — `schema_json` columns are nullable).
     pub fn get_all_mapping_rows(&self) -> AppResult<Vec<FieldMappingRow>> {
         let mut stmt = self.conn.prepare(
             "SELECT source_field_id, target_field_id, transformer_kind,
@@ -330,7 +330,7 @@ impl FieldMappingDb {
         Ok(out)
     }
 
-    /// Delete a mapping row by `source_field_id` (D-05). Idempotent — returns
+    /// Delete a mapping row by `source_field_id` (D-05). Idempotent: returns
     /// `Ok(())` even when the row does not exist.
     pub fn delete_mapping_row(&self, source_field_id: &str) -> AppResult<()> {
         self.conn.execute(
