@@ -235,6 +235,11 @@ fn main() {
             commands::get_unseen_change_keys,
             commands::get_ticket_changes,
             commands::mark_changes_seen,
+            commands::discover_source_fields,
+            commands::get_target_field_schema_for_issuetype,
+            commands::probe_createmeta,
+            commands::pre_warm_target_issue_types,
+            commands::refresh_field_schema_cache,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
-status: "Phase 17 Wave 2 complete — Plan 17-05 (probe banner + status pill wiring) done"
+status: "Phase 17 complete — all 5 plans done (Wave 1: 17-01/02/03, Wave 2: 17-04/05)"
 stopped_at: Phase 17 Plan 05 complete
-last_updated: "2026-04-27T13:18:00.000Z"
-last_activity: 2026-04-27 — Phase 17 Plan 05 executed (probe banner + status pill wiring)
+last_updated: "2026-04-27T14:10:00.000Z"
+last_activity: 2026-04-27 — Phase 17 Wave 2 complete (17-04: HTTP discovery + commands, 17-05: probe banner + pill wiring)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 
 ## Current Position
 
-Phase: 17 (Field Discovery + Mock Schema Fidelity) — Wave 2 complete
-Plan: 17-05 complete (probe banner + status pill wiring)
-Status: Phase 17 Plans 17-01 through 17-05 complete (Plan 17-04 Rust pending separate executor); Wave 2 frontend work complete
-Last activity: 2026-04-27 — Phase 17 Plan 05 complete
+Phase: 17 (Field Discovery + Mock Schema Fidelity) — ALL PLANS COMPLETE
+Plan: 17-05 complete (probe banner + status pill wiring) — final plan
+Status: Phase 17 Plans 17-01 through 17-05 all complete; ready for phase verification
+Last activity: 2026-04-27 — Phase 17 Wave 2 complete (17-04 + 17-05)
 
 ## Performance Metrics
 
@@ -91,6 +91,7 @@ Last activity: 2026-04-27 — Phase 17 Plan 05 complete
 | Phase 11-add-deployment-auto-updates-and-release-management P03 | 12 | 2 tasks | 11 files |
 | Phase 16-enhanced-watch-configuration P01 | 12 | 2 tasks | 6 files |
 | Phase 16-enhanced-watch-configuration P02 | 18 | 1 tasks | 2 files |
+| Phase 17-field-discovery-mock-schema-fidelity P04 | 55 | 3 tasks | 5 files |
 | Phase 17-field-discovery-mock-schema-fidelity P05 | 8 | 3 tasks | 7 files |
 
 ## Accumulated Context
@@ -202,6 +203,10 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - [Phase 16-01]: Privacy-simulation user in mock omits emailAddress entirely (JSON key absent, not null) — accurately simulates Jira Cloud email visibility restriction
 - [Phase 16-02]: Updated local JiraUser interface to support optional name/accountId for Cloud v3 domain search users
 - [Phase 16-02]: Privacy warning gated to cloudConn non-null — server-only connections never show amber banner
+- [Phase 17-04]: probe_createmeta returns ProbeResult ok=false (not Err) for missing project key / credentials — Pitfall C: first-run users never see failure banner pre-setup
+- [Phase 17-04]: #[allow(unused_assignments)] on loop accumulator variables — canonical Rust fix for false-positive liveness lint on loop-accumulated scalars
+- [Phase 17-04]: refresh_field_schema_cache is synchronous (fn not async fn) — no await points; clippy unused_async enforced by -D warnings
+- [Phase 17-04]: SHA-256 hash computed over concatenated raw response bytes per page (D-04) — preserves byte-level drift signal for Phase 21
 - [Phase 17-05]: ConnectionCard gets explicit connectionType prop rather than URL-heuristic cloud detection — reliable and explicit; SettingsPage passes 'server'/'cloud'
 - [Phase 17-05]: ProbeStatusBanner rendered in main shell only (not settings/audit/detail branches) — banner internally gated, zero cost when probe OK
 - [Phase 17-05]: runProbe useEffect deps [hasSetup, targetProjectKey, runProbe] — Zustand create produces stable refs, no infinite re-render (T-17-20 mitigated)
@@ -273,6 +278,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-27
-Last session: 2026-04-27T13:18:00.000Z
-Stopped at: Completed Phase 17 Plan 05 (probe-banner-status-pill-wiring)
+Last session: 2026-04-27T14:10:00Z
+Stopped at: Phase 17 all plans complete — pending phase verification
 Resume file: .planning/phases/17-field-discovery-mock-schema-fidelity/17-05-SUMMARY.md

@@ -1146,6 +1146,181 @@ pub async fn search_jira_users_by_domain(
     Ok(all_users)
 }
 
+// --- Field discovery commands (Phase 17) ---
+
+use crate::field_discovery::{self, FieldSchema, FieldSide, IssueTypeRef, ProbeResult};
+use crate::field_mapping_db::FieldMappingDb;
+
+/// Source v2 global field list. Cache-first via `get_or_fetch_source_global`
+/// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
+#[tauri::command]
+pub async fn discover_source_fields(
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<Vec<FieldSchema>, AppError> {
+    let pat = get_server_pat(triage_db.inner())?;
+    let base_url = {
+        let db_guard = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let metas = db_guard.get_all_connection_meta()?;
+        metas
+            .iter()
+            .find(|m| m.connection_type == "server")
+            .map(|m| m.base_url.trim_end_matches('/').to_string())
+            .ok_or_else(|| AppError::Keychain("No server connection configured".into()))?
+    };
+    // Arm audit middleware side-effects (request-id seeding) for downstream calls.
+    let _audit = build_audited_client(Arc::clone(db.inner()));
+    let client = reqwest::Client::new();
+    field_discovery::get_or_fetch_source_global(mapping_db.inner(), &client, &base_url, &pat).await
+}
+
+/// Target v3 paginated createmeta for a specific issue type. Cache-first via
+/// `get_or_fetch_target_schema`; subsequent calls hit the cache (D-15).
+#[tauri::command]
+pub async fn get_target_field_schema_for_issuetype(
+    project_key: String,
+    issuetype_id: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<Vec<FieldSchema>, AppError> {
+    let (base_url, cloud_email, api_token) = get_cloud_credentials(triage_db.inner())?;
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{api_token}"))
+    );
+    let _audit = build_audited_client(Arc::clone(db.inner()));
+    let client = reqwest::Client::new();
+    field_discovery::get_or_fetch_target_schema(
+        mapping_db.inner(),
+        &client,
+        &base_url,
+        &cloud_auth,
+        &project_key,
+        &issuetype_id,
+    )
+    .await
+}
+
+/// Connection-time probe (D-05/D-07/D-08). Returns a structured `ProbeResult`
+/// so the frontend can render a banner deterministically. Never returns `Err`
+/// for HTTP/network/auth failures — always returns `ProbeResult` so the banner
+/// renders correctly. Returns `Err` only for fatal local errors (lock poison).
+///
+/// Pitfall C: short-circuits gracefully when target project key is not yet
+/// configured (first-run users must not see a failure banner).
+#[tauri::command]
+pub async fn probe_createmeta(
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<ProbeResult, AppError> {
+    // Pitfall C: skip probe when target project key is absent
+    let target_project_key: Option<String> = {
+        let db_guard = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let (_, target, _, _) = db_guard.get_project_keys()?;
+        target
+    };
+    let project_key = match target_project_key {
+        Some(k) if !k.is_empty() => k,
+        _ => {
+            return Ok(ProbeResult {
+                ok: false,
+                endpoint_url: String::new(),
+                status_code: None,
+                hint: Some("No target project key configured. Probe skipped.".into()),
+            });
+        }
+    };
+    let Ok((base_url, cloud_email, api_token)) = get_cloud_credentials(triage_db.inner()) else {
+        return Ok(ProbeResult {
+            ok: false,
+            endpoint_url: String::new(),
+            status_code: None,
+            hint: Some("No cloud credential configured. Probe skipped.".into()),
+        });
+    };
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{api_token}"))
+    );
+    let _audit = build_audited_client(Arc::clone(db.inner()));
+    let client = reqwest::Client::new();
+    field_discovery::probe_paginated_createmeta(&client, &base_url, &cloud_auth, &project_key)
+        .await
+}
+
+/// Pre-warm the issue-type list for the given target project (D-01 + D-15
+/// reconciliation). Best-effort: returns an empty `Vec` on failure rather than
+/// `Err` so the frontend pre-warm does not block the UI.
+///
+/// Note: pre-warm fires from the frontend AFTER probe success (Pitfall E —
+/// all managed states are ready before spawn).
+#[tauri::command]
+pub async fn pre_warm_target_issue_types(
+    project_key: String,
+    db: State<'_, Arc<Mutex<AuditDb>>>,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<IssueTypeRef>, AppError> {
+    let Ok((base_url, cloud_email, api_token)) = get_cloud_credentials(triage_db.inner()) else {
+        return Ok(vec![]);
+    };
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{api_token}"))
+    );
+    let _audit = build_audited_client(Arc::clone(db.inner()));
+    let client = reqwest::Client::new();
+    match field_discovery::fetch_target_issue_types(
+        &client,
+        &base_url,
+        &cloud_auth,
+        &project_key,
+    )
+    .await
+    {
+        Ok(list) => Ok(list),
+        Err(_) => Ok(vec![]),
+    }
+}
+
+/// Manual cache refresh (Phase 21 wires the UI button). Accepts `side` =
+/// "source"|"target" and optional `project_key` + `issuetype_id`.
+/// Passing both as `null` clears the source global cache (D-14).
+#[tauri::command]
+pub fn refresh_field_schema_cache(
+    side: String,
+    project_key: Option<String>,
+    issuetype_id: Option<String>,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<(), AppError> {
+    let side_enum = match side.as_str() {
+        "source" => FieldSide::Source,
+        "target" => FieldSide::Target,
+        _ => {
+            return Err(AppError::Internal(format!(
+                "refresh_field_schema_cache: invalid side '{side}'"
+            )));
+        }
+    };
+    let guard = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+    guard.clear_cache_for(
+        side_enum,
+        project_key.as_deref(),
+        issuetype_id.as_deref(),
+    )?;
+    Ok(())
+}
+
 // --- Connection meta commands ---
 
 #[tauri::command]
