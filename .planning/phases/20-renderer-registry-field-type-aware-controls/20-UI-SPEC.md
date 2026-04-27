@@ -1,10 +1,11 @@
 ---
 phase: 20
 slug: renderer-registry-field-type-aware-controls
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "style=default base=neutral cssVariables=true iconLibrary=lucide tsx=true"
 created: 2026-04-27
+reviewed_at: 2026-04-27
 ---
 
 # Phase 20 — UI Design Contract
