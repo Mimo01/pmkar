@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
-status: "Phase 17 complete — all 5 plans done (Wave 1: 17-01/02/03, Wave 2: 17-04/05)"
-stopped_at: Phase 17 Plan 05 complete
-last_updated: "2026-04-27T14:10:00.000Z"
-last_activity: 2026-04-27 — Phase 17 Wave 2 complete (17-04: HTTP discovery + commands, 17-05: probe banner + pill wiring)
+status: "Phase 17 complete — Phase 18 context captured, ready to plan"
+stopped_at: Phase 18 context gathered
+last_updated: "2026-04-27T15:00:00.000Z"
+last_activity: 2026-04-27 — Phase 18 context gathered (discuss mode)
 progress:
   total_phases: 7
   completed_phases: 0
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 
 ## Current Position
 
-Phase: 17 (Field Discovery + Mock Schema Fidelity) — ALL PLANS COMPLETE
-Plan: 17-05 complete (probe banner + status pill wiring) — final plan
-Status: Phase 17 Plans 17-01 through 17-05 all complete; ready for phase verification
-Last activity: 2026-04-27 — Phase 17 Wave 2 complete (17-04 + 17-05)
+Phase: 18 (v2→v3 Translation Layer) — context captured, ready to plan
+Plan: none yet
+Status: Phase 18 context gathered; /gsd-plan-phase 18 is next step
+Last activity: 2026-04-27 — Phase 18 context gathered
 
 ## Performance Metrics
 
@@ -279,5 +279,5 @@ None yet.
 
 Last activity: 2026-04-27
 Last session: 2026-04-27T14:10:00Z
-Stopped at: Phase 17 all plans complete — pending phase verification
-Resume file: .planning/phases/17-field-discovery-mock-schema-fidelity/17-05-SUMMARY.md
+Stopped at: Phase 18 context gathered
+Resume file: .planning/phases/18-v2-v3-translation-layer/18-CONTEXT.md
