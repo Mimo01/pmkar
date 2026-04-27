@@ -10,7 +10,7 @@ import {
   parseFieldSchemas,
 } from './fieldSchema';
 
-const BUG_PAGE_1: unknown = [
+const BUG_PAGE_1: unknown[] = [
   { fieldId: 'summary', key: 'summary', name: 'Summary', required: true, schema: { type: 'string', system: 'summary' } },
   { fieldId: 'priority', key: 'priority', name: 'Priority', required: true, schema: { type: 'priority', system: 'priority' } },
   { fieldId: 'customfield_10006', key: 'customfield_10006', name: 'Severity', required: true, schema: { type: 'option', custom: '...:select', customId: 10006 } },
