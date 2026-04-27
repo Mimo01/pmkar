@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.3.0
-milestone_name: Notifications & Change Tracking
-status: v0.3.0 milestone complete
-stopped_at: "Completed quick task 260401-hhp: Add MSI Windows build artifacts and platform-selective dispatch"
-last_updated: "2026-04-01T10:42:29Z"
-last_activity: 2026-04-01
+milestone: v0.4.0
+milestone_name: Configurable Field Mapping
+status: planning
+last_updated: "2026-04-27T09:09:46.672Z"
+last_activity: 2026-04-27
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -24,8 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-27 — Milestone v0.4.0 started
 
 ## Performance Metrics
 

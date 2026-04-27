@@ -41,11 +41,28 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Active
 
+- [ ] Configurable field mapping engine (v0.4.0 — current milestone)
 - [ ] Excel export capability (scope TBD)
-- [ ] Configurable cloud project key (currently hardcoded as MYPROJ)
 - [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
 - [ ] Taskbar/dock badge count showing unread change count
 - [ ] In-app notification history panel
+
+## Current Milestone: v0.4.0 Configurable Field Mapping
+
+**Goal:** Replace hardcoded field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly and supports custom fields.
+
+**Target features:**
+- Dynamic field discovery (source v2 + target v3) with type detection covering all common Jira field types
+- Saved global source→target field mapping with sensible defaults and user-extensible custom-field rows
+- Per-copy override panel in copy preview (saved mapping + inline tweaks)
+- Field-type-aware target controls (text, ADF, person picker, multi-select, version picker, date, etc.)
+- Person selector with exact-email pre-fill, always available; reuses Phase 16 user search
+- Issue-type chooser at copy time (defaults to source-name match)
+- Required-field gating: Copy button disabled until target-required fields have values
+- v2 → v3 schema translation layer (wiki→ADF, version/component lookup, user identity)
+- Audit logging of mapping selections, overrides, and required-gap fills
+
+**Out of scope for v0.4.0:** comments, attachments, worklogs, sub-tasks, summary, origin remote link — these remain hardcoded in the existing copy pipeline.
 
 ## Shipped Milestones
 
@@ -81,6 +98,11 @@ Background polling with OS notifications and field-level change tracking fully o
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
+| Configurable field mapping (v0.4.0) | Hardcoded fields don't survive real-world Jira diversity; custom fields and per-customer schemas need user control | — Pending |
+| Global mapping scope (one mapping for app) | Simpler than per-project-pair or per-issue-type; combined with per-copy override gives flexibility without config explosion | — Pending |
+| Person picker always visible with email-match pre-fill | Avoids silent assignment failures; user sees outcome before commit | — Pending |
+| Block copy on unmapped required target fields | Prevents Jira Cloud rejection mid-pipeline; explicit better than auto-default | — Pending |
+| Target issue type chosen at copy time | Source/target type semantics differ across Jiras; auto-match too brittle | — Pending |
 | Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v0.1.0 |
 | OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v0.1.0 |
 | One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v0.1.0 |
@@ -115,4 +137,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 after v0.3.0 milestone*
+*Last updated: 2026-04-27 after starting v0.4.0 milestone*
