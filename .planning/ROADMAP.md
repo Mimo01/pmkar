@@ -91,7 +91,24 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   2. Given source `versions`, `fixVersions`, or `components` referenced by name, the pipeline produces a target POST body referencing the correct target Cloud IDs, looked up against the target project's `/versions` and `/components` endpoints.
   3. Given a source description containing wiki markup with links, blockquotes, mentions, hard-breaks, and `mediaSingle` references, the produced ADF document includes those nodes (post-processor wraps `htmltoadf`'s documented coverage gaps).
   4. Round-trip integration tests for ≥4 custom-field types (number, multi-select, user, date) pass against mock fixtures that exhibit the read-shape vs write-shape asymmetry documented in pitfall research.
-**Plans**: TBD
+**Plans**: 5 plans
+
+**Wave 1** *(scaffolding — no parallel siblings)*:
+- [ ] 18-01-PLAN.md — Skeleton: field_transform/mod.rs (shared types ResolvedFields/GapVariant/UnresolvedPerson/Version/Component/TransformContext) + 6 stub files + lib.rs registration
+
+**Wave 2** *(parallel-safe — disjoint files)*:
+- [ ] 18-02-PLAN.md — Twin transformers: version.rs + component.rs (cached HTTP fetch, case-insensitive name match, partial-array resolution)
+- [ ] 18-03-PLAN.md — user.rs: batch user resolution (TRAN-06 one-HTTP-per-domain) + hand-written [~username] / HTML profile-link scanners (D-06, Pitfall C)
+- [ ] 18-04-PLAN.md — wiki_to_adf.rs (htmltoadf + ADF post-processor with mention resolution D-04, plain-text fallback D-05, unsupported-macro placeholder D-07, codeBlock guard Pitfall F) + identity.rs (write-shape stripping per Pitfall 4)
+
+**Wave 3** *(integration — depends on all of Wave 1+2)*:
+- [ ] 18-05-PLAN.md — pipeline.rs: two-phase apply_mapping + per-row dispatch + round-trip integration test exercising ≥4 custom-field types against mock fixtures
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- Typed gap variants (UnresolvedPerson/Version/Component in ResolvedFields.gaps, NEVER Err) per D-01 — defined in Plan 01, consumed by Plans 02/03/05
+- TransformContext.user_map is built ONCE in Phase 1 by Plan 03 resolve_batch and consumed by Plan 04 (wiki_to_adf) + Plan 05 (pipeline dispatch)
+- Cache pattern (Arc<Mutex<HashMap>>, short lock windows, no lock during HTTP) shared between Plan 02 (version + component caches) — analog: field_discovery.rs:498-529
+- Write-shape correctness (Pitfall 4) — Plan 04 identity owns it for symmetric types; Plan 05 pipeline enforces {accountId} for users (Pitfall 1)
 **UI hint**: no
 
 ### Phase 19: Mapping Persistence + CRUD Commands
@@ -177,7 +194,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 15. Change Diff View | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 2/2 | Complete | 2026-03-29 |
 | 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/5 | Not started | - |
-| 18. v2→v3 Translation Layer | v0.4.0 | 0/? | Not started | - |
+| 18. v2→v3 Translation Layer | v0.4.0 | 0/5 | Not started | - |
 | 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/? | Not started | - |
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/? | Not started | - |
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 0/? | Not started | - |
