@@ -191,6 +191,10 @@ None - no external service configuration required.
 - Plans 03-05 implement individual renderers against `RendererProps` and fill in their respective stub files
 - Full test suite: 573 passing + 74 pending (stubs) + 0 failing — clean baseline for Wave 1
 
+## Self-Check: PASSED
+
+All 16 files verified present. Both task commits (2506f1a, 22de60e) and summary commit (1eb5b14) verified in git log.
+
 ---
 *Phase: 20-renderer-registry-field-type-aware-controls*
 *Completed: 2026-04-28*
