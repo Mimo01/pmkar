@@ -10,7 +10,6 @@ files_modified:
   - src/features/connections/ProbeStatusBanner.tsx
   - src/features/connections/__tests__/ProbeStatusBanner.test.tsx
   - src/features/connections/ConnectionCard.tsx
-  - src/features/connections/SettingsPage.tsx
   - src/App.tsx
 autonomous: true
 requirements:

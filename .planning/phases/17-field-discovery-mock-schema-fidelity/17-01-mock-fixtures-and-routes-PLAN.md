@@ -180,7 +180,7 @@ Concrete content of `src-tauri/tests/createmeta_pagination.rs`:
 Do NOT implement the routes or fixtures in this task. This task only writes the failing tests.
   </action>
   <verify>
-    <automated>cargo test --manifest-path src-tauri/Cargo.toml --features mock-server --test mock_server_field_routes 2>&1 | grep -E '(FAILED|ok\.\.\.\.\.\.\.\.|test result)' || true; cargo test --manifest-path src-tauri/Cargo.toml --features mock-server --test createmeta_pagination 2>&1 | grep -E '(FAILED|ok\.\.\.\.\.\.\.\.|test result)' || true</automated>
+    <automated>cargo test --manifest-path src-tauri/Cargo.toml --features mock-server --test mock_server_field_routes 2>&1 | tee /tmp/w0-routes.txt; cargo test --manifest-path src-tauri/Cargo.toml --features mock-server --test createmeta_pagination 2>&1 | tee /tmp/w0-pag.txt; grep -q FAILED /tmp/w0-routes.txt && grep -q FAILED /tmp/w0-pag.txt</automated>
   </verify>
   <acceptance_criteria>
     - File `src-tauri/tests/mock_server_field_routes.rs` exists

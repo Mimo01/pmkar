@@ -771,10 +771,11 @@ pub async fn discover_source_fields(
             .map(|m| m.base_url.trim_end_matches('/').to_string())
             .ok_or_else(|| AppError::Keychain("No server connection configured".into()))?
     };
-    let client = build_audited_client(Arc::clone(db.inner()));
+    let _audit = build_audited_client(Arc::clone(db.inner())); // ensures HTTP audit pipeline armed for downstream cloud commands
+    let client = reqwest::Client::new();
     field_discovery::get_or_fetch_source_global(
         mapping_db.inner(),
-        client.reqwest_client_for_tests().unwrap_or(&reqwest::Client::new()),
+        &client,
         &base_url,
         &pat,
     )
@@ -908,9 +909,7 @@ pub async fn refresh_field_schema_cache(
 }
 ```
 
-**Note on `build_audited_client` usage:** the audited client returns a `reqwest_middleware::ClientWithMiddleware` which is a wrapper over plain reqwest. For Phase 17 the integration tests build a plain `reqwest::Client::new()` directly; in the runtime commands the audit pipeline is preserved by the middleware client used by other commands. If `field_discovery` functions take `&reqwest::Client`, pass a fresh plain client and rely on the audit middleware that's already armed for other Cloud commands. **If the executor finds that the middleware client is required (compilation forces ClientWithMiddleware), update the field_discovery function signatures to accept `&reqwest_middleware::ClientWithMiddleware` and re-run tests** — the same Send/Sync/`.get(&url).header(...).send()` API surface holds for both.
-
-(The `client.reqwest_client_for_tests()` line above is a placeholder pattern — the executor should choose either: (a) use plain `reqwest::Client::new()` consistently in field_discovery functions and the integration test, OR (b) update field_discovery to accept `&ClientWithMiddleware` and propagate. Pick whichever yields a clean compile in <30 minutes; either is acceptable so long as tests pass and audit middleware remains armed for Cloud calls in production via existing audited commands.)
+**Note on `build_audited_client` usage (LOCKED):** Phase 17 uses `reqwest::Client::new()` directly inside `field_discovery::*` functions and inside the integration tests. The audit middleware is preserved for production Cloud calls by all *other* commands that already use `build_audited_client` — those pipelines remain armed. Inside the new `discover_*` commands the `build_audited_client(...)` call is bound to `_audit` purely so the middleware initialization side-effects (audit DB open, request-id seeding) stay invariant; the discover functions then take `&reqwest::Client`. Do NOT refactor `field_discovery` to accept `&ClientWithMiddleware` in Phase 17 — that's a Phase 18 concern when the transformer pipeline lands and audit-on-discovery becomes useful. This keeps the source-side server call uniform with how the integration tests run.
 
 **Step 2 — Register the 5 commands in `main.rs`:**
 

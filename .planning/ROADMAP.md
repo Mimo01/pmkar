@@ -64,11 +64,22 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   3. Mock Jira server exposes ≥4 custom field fixtures (number, multi-select, user, date) plus realistic v2 vs v3 shape divergence (priority, user, versions) so renderer registry tests cover production-like variety.
   4. Connection-time probe at app launch verifies the paginated createmeta endpoint is reachable on the configured Cloud target and surfaces a clear error if a proxy/firewall only exposes the legacy endpoint.
 **Plans**: 5 plans
+
+**Wave 1** *(parallel-safe — disjoint files)*:
 - [ ] 17-01-PLAN.md — Mock fixtures + v2/v3 routes (custom fields, createmeta pagination, versions/components per D-09/D-10/D-11/D-12)
 - [ ] 17-02-PLAN.md — Rust FieldSchemaType + FieldMappingDb (mapping.db with field_schema_cache table + SHA-256 schema_hash per D-04)
 - [ ] 17-03-PLAN.md — TypeScript fieldSchema types + schemaCacheStore (Zustand cache by side/projectKey/issuetypeId)
-- [ ] 17-04-PLAN.md — Rust field_discovery HTTP module + 5 Tauri commands (discover/probe/prewarm/refresh)
-- [ ] 17-05-PLAN.md — Probe banner + ConnectionCard status pill + App-launch wiring (D-05/D-07/D-08)
+
+**Wave 2** *(blocked on Wave 1 completion)*:
+- [ ] 17-04-PLAN.md — Rust field_discovery HTTP module + 5 Tauri commands (discover/probe/prewarm/refresh) — depends on 17-01, 17-02
+- [ ] 17-05-PLAN.md — Probe banner + ConnectionCard status pill + App-launch wiring (D-05/D-07/D-08) — depends on 17-03, 17-04
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- FieldSchema discriminated union locked by RESEARCH.md §3 — Rust enum (Plan 17-02) and TypeScript union (Plan 17-03) must stay 1-to-1; consumed by Plan 17-04
+- Cache key shape `(side, project_key, issuetype_id)` per D-13 — used by Plans 17-02 and 17-04
+- No legacy `/createmeta?expand=…` fallback per D-06 — paginated endpoint only across all plans
+- Pre-warm fetches issue-type list only, NOT per-issuetype field schemas (D-01 + D-15 reconciled) — affects Plans 17-04 and 17-05
+
 **UI hint**: no
 
 ### Phase 18: v2→v3 Translation Layer

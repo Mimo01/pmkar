@@ -1013,17 +1013,22 @@ All Phase 17 dependencies are already present in the project. No installation st
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Issuetype list caching key:** Should the pre-warmed issuetype list be stored in `field_schema_cache` (with a sentinel `field_id = '__issuetypes__'` and `issuetype_id = NULL`) or in a separate `field_issuetype_list` table? The sentinel approach avoids a schema migration but is semantically impure. Recommendation: sentinel approach for Phase 17 simplicity; Phase 19 can introduce a proper table if needed.
+   **RESOLVED:** Adopted — sentinel approach inside `field_schema_cache`. Phase 19 may introduce a dedicated table without migrating existing rows since `CREATE TABLE IF NOT EXISTS` is additive.
 
 2. **Probe command naming:** Should the Tauri command be `probe_createmeta` or `check_field_discovery_availability`? Recommendation: `probe_createmeta` — short, specific to the endpoint being tested.
+   **RESOLVED:** Adopted `probe_createmeta`. Plan 17-04 registers the command under this exact name; Plan 17-05 invokes it.
 
 3. **Pre-warm error handling:** If the pre-warm issuetype-list fetch fails (network error after probe succeeded), should it silently fail or retry? Recommendation: silent fail with a warning logged to audit; the probe already told us the endpoint is reachable, so a transient failure here is non-blocking.
+   **RESOLVED:** Adopted silent fail with audit-log warning. Plan 17-04 guards the spawned pre-warm with a `match` that logs but does not surface to the user; UI banner only fires on probe failure (D-05/D-08), not pre-warm failure.
 
 4. **`priority` Jira schema type:** Jira returns `"type": "priority"` for the priority system field, which is NOT in the standard type list (`string`, `number`, `date`, etc.). The Rust enum needs an explicit `Priority` variant OR the catch-all `Any`. Recommendation: explicit `Priority` variant so Phase 18's transform pipeline can match it exhaustively.
+   **RESOLVED:** Adopted explicit `Priority` variant. Plan 17-02 defines `FieldSchemaType::Priority` alongside the other variants; Plan 17-03 mirrors it on the TypeScript side.
 
 5. **v2 legacy createmeta mock endpoint:** Should the mock return a helpful 404 with a message (to test D-06 no-fallback enforcement), or simply not register the route? Recommendation: register it but return `{ "error": "Use paginated v3 endpoint /rest/api/3/issue/createmeta/{key}/issuetypes" }` with status 410 (Gone) — provides a clear developer signal without routing ambiguity.
+   **RESOLVED:** Omitted from Phase 17 (Claude's Discretion). D-06 enforces "no legacy fallback" at the Rust caller — `field_discovery.rs` never invokes the legacy endpoint, so a mock route is unnecessary. Phase 18 may add the 410 mock if a proxy-misconfiguration regression test becomes useful.
 
 ---
 
