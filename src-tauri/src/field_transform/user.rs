@@ -2,6 +2,12 @@
 //!
 //! TRAN-06 invariant: ONE HTTP `/user/search` per unique email domain in the
 //! whole source issue, regardless of how many person fields reference users.
+//! NOTE: TRAN-06 applies only to the domain-based path (step 4). Usernames
+//! without an associated email address (description-only mentions, step 5)
+//! each incur a separate HTTP `/user/search` call because no domain key is
+//! available to group them. This is uncommon in practice but can occur when
+//! a description contains several bare `[~username]` patterns for users who
+//! have no email visible to the source instance.
 //!
 //! Pre-scan (D-06) covers BOTH:
 //!
@@ -20,9 +26,9 @@ use std::collections::{HashMap, HashSet};
 const MAX_DESCRIPTION_SCAN_BYTES: usize = 500 * 1024;
 
 pub struct UserResolver {
-    pub client: reqwest::Client,
-    pub cloud_auth: String,
-    pub cloud_base_url: String,
+    pub(crate) client: reqwest::Client,
+    pub(crate) cloud_auth: String,
+    pub(crate) cloud_base_url: String,
 }
 
 impl UserResolver {
