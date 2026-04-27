@@ -962,10 +962,10 @@ pub fn set_triage_state(
 ) -> Result<(), AppError> {
     // Validate state value
     match state.as_str() {
-        "new" | "seen" | "ignored" | "copied" => {}
+        "new" | "seen" | "ignored" | "copied" | "handled" => {}
         _ => {
             return Err(AppError::Internal(format!(
-                "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, copied"
+                "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, copied, handled"
             )));
         }
     }

@@ -39,12 +39,31 @@ pub struct TriageDb {
 
 const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
     ticket_key   TEXT PRIMARY KEY,
-    state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied')),
+    state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled')),
     first_seen   TEXT NOT NULL,
     last_updated TEXT NOT NULL
 );";
 
 const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
+
+/// Rebuilds the triage_state table to widen the CHECK constraint to include 'handled'.
+/// Run after CREATE TABLE IF NOT EXISTS so that fresh DBs get the right constraint directly
+/// and existing DBs (which have the old 4-value CHECK) are migrated in-place.
+const MIGRATE_TRIAGE_CHECK_HANDLED: &str = "
+    BEGIN TRANSACTION;
+    CREATE TABLE IF NOT EXISTS triage_state_new (
+        ticket_key   TEXT PRIMARY KEY,
+        state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled')),
+        first_seen   TEXT NOT NULL,
+        last_updated TEXT NOT NULL,
+        copied_key   TEXT
+    );
+    INSERT INTO triage_state_new (ticket_key, state, first_seen, last_updated, copied_key)
+        SELECT ticket_key, state, first_seen, last_updated, copied_key FROM triage_state;
+    DROP TABLE triage_state;
+    ALTER TABLE triage_state_new RENAME TO triage_state;
+    COMMIT;
+";
 
 const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT: &str =
     "ALTER TABLE app_config ADD COLUMN source_project_key TEXT;";
@@ -83,6 +102,25 @@ const CREATE_APP_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS app_config (
 );";
 
 impl TriageDb {
+    /// Detects whether the existing triage_state table's CHECK constraint already
+    /// includes 'handled'. If not, rebuilds the table to widen the constraint.
+    /// This is idempotent — running it on a DB that already has 'handled' is a no-op.
+    fn migrate_triage_check_constraint(conn: &Connection) {
+        let sql: Option<String> = conn
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='triage_state'",
+                [],
+                |row| row.get(0),
+            )
+            .ok()
+            .flatten();
+        if let Some(existing_sql) = sql {
+            if !existing_sql.contains("'handled'") {
+                let _ = conn.execute_batch(MIGRATE_TRIAGE_CHECK_HANDLED);
+            }
+        }
+    }
+
     pub fn open(path: &std::path::Path) -> AppResult<Self> {
         let conn = Connection::open(path)?;
         conn.execute_batch(CREATE_TRIAGE_STATE_SQL)?;
@@ -90,6 +128,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        Self::migrate_triage_check_constraint(&conn);
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
@@ -108,6 +147,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        Self::migrate_triage_check_constraint(&conn);
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
@@ -482,12 +522,20 @@ mod tests {
     #[test]
     fn test_invalid_triage_state_rejected() {
         let db = new_db();
-        // SQLite CHECK constraint enforces state IN ('new','seen','ignored','copied')
+        // SQLite CHECK constraint enforces state IN ('new','seen','ignored','copied','handled')
         let result = db.set_triage("PROJ-1", "invalid_state");
         assert!(
             result.is_err(),
             "invalid state should be rejected by CHECK constraint"
         );
+    }
+
+    #[test]
+    fn test_set_handled_state_accepted() {
+        let db = new_db();
+        db.set_triage("PROJ-1", "handled").expect("handled state should be accepted");
+        let all = db.get_all_triage().expect("get_all_triage failed");
+        assert_eq!(all["PROJ-1"].0, "handled");
     }
 
     #[test]

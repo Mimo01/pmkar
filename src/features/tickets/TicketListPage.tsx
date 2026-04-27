@@ -209,7 +209,7 @@ export function TicketListPage() {
 
   const candidateTickets = tickets.filter((t) => {
     const s = triageMap[t.key]?.state;
-    return s !== 'ignored' && s !== 'copied' && !isDoneTicket(t);
+    return s !== 'ignored' && s !== 'copied' && s !== 'handled' && !isDoneTicket(t);
   });
 
   const sortedCandidates = useMemo(() => {
