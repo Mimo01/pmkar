@@ -102,7 +102,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] 18-04-PLAN.md — wiki_to_adf.rs (htmltoadf + ADF post-processor with mention resolution D-04, plain-text fallback D-05, unsupported-macro placeholder D-07, codeBlock guard Pitfall F) + identity.rs (write-shape stripping per Pitfall 4)
 
 **Wave 3** *(integration — depends on all of Wave 1+2)*:
-- [ ] 18-05-PLAN.md — pipeline.rs: two-phase apply_mapping + per-row dispatch + round-trip integration test exercising ≥4 custom-field types against mock fixtures
+- [x] 18-05-PLAN.md — pipeline.rs: two-phase apply_mapping + per-row dispatch + round-trip integration test exercising ≥4 custom-field types against mock fixtures
 
 **Cross-cutting constraints** *(truths shared by 2+ plans)*:
 - Typed gap variants (UnresolvedPerson/Version/Component in ResolvedFields.gaps, NEVER Err) per D-01 — defined in Plan 01, consumed by Plans 02/03/05
