@@ -39,6 +39,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
+  const isHandled = triageEntry?.state === 'handled';
   const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
   const hasUnseenChanges = !!unseenFields;
   const changeCount = unseenFields?.length ?? 0;
@@ -58,6 +59,22 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   }, [issueKey]);
 
   const handleUnignore = useCallback(() => {
+    invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
+    useTicketStore.getState().hydrateTriageMap({
+      ...useTicketStore.getState().triageMap,
+      [issueKey]: { state: 'seen', copiedKey: null },
+    });
+  }, [issueKey]);
+
+  const handleMarkHandled = useCallback(() => {
+    invoke('set_triage_state', { ticketKey: issueKey, state: 'handled' }).catch(() => {});
+    useTicketStore.getState().hydrateTriageMap({
+      ...useTicketStore.getState().triageMap,
+      [issueKey]: { state: 'handled', copiedKey: null },
+    });
+  }, [issueKey]);
+
+  const handleUnhandle = useCallback(() => {
     invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
     useTicketStore.getState().hydrateTriageMap({
       ...useTicketStore.getState().triageMap,
@@ -217,7 +234,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {/* Action buttons */}
           <TooltipProvider delayDuration={300}>
             <div className="flex items-center gap-3 flex-wrap mb-6">
-              {!isCopied && !isIgnored && (
+              {!isCopied && !isIgnored && !isHandled && (
                 <Button
                   variant="default"
                   size="lg"
@@ -250,7 +267,18 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 </>
               ) : (
                 <>
-                  {isIgnored ? (
+                  {isHandled ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="secondary" size="lg" onClick={handleUnhandle}>
+                          {t('detail.handled')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.handled.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : isIgnored ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button variant="secondary" size="lg" onClick={handleUnignore}>
@@ -262,16 +290,28 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="secondary" size="lg" onClick={handleIgnore}>
-                          {t('detail.ignore')}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent aria-hidden="true">
-                        {t('detail.ignore.tooltip')}
-                      </TooltipContent>
-                    </Tooltip>
+                    <>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                            {t('detail.ignore')}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent aria-hidden="true">
+                          {t('detail.ignore.tooltip')}
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="secondary" size="lg" onClick={handleMarkHandled}>
+                            {t('detail.markHandled')}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent aria-hidden="true">
+                          {t('detail.markHandled.tooltip')}
+                        </TooltipContent>
+                      </Tooltip>
+                    </>
                   )}
                   <Button variant="outline" size="lg" onClick={handleOpenInJira}>
                     <ExternalLink className="w-4 h-4" aria-hidden="true" />

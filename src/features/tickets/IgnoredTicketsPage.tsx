@@ -26,7 +26,11 @@ export function IgnoredTicketsPage() {
   const triageMap = useTicketStore((s) => s.triageMap);
 
   const ignoredTickets = useMemo(
-    () => tickets.filter((t) => triageMap[t.key]?.state === 'ignored' && !isDoneTicket(t)),
+    () =>
+      tickets.filter((t) => {
+        const s = triageMap[t.key]?.state;
+        return (s === 'ignored' || s === 'handled') && !isDoneTicket(t);
+      }),
     [tickets, triageMap],
   );
 
@@ -100,16 +104,23 @@ export function IgnoredTicketsPage() {
               triageEntry={triageMap[ticket.key]}
               onClick={() => handleSelectTicket(ticket.key)}
               actionSlot={
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRestore(ticket.key);
-                  }}
-                  className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
-                >
-                  {t('ignored.restore')}
-                </button>
+                <div className="flex items-center gap-2">
+                  {triageMap[ticket.key]?.state === 'handled' && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
+                      {t('tickets.card.handledBadge')}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRestore(ticket.key);
+                    }}
+                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
+                  >
+                    {t('ignored.restore')}
+                  </button>
+                </div>
               }
             />
           ))}

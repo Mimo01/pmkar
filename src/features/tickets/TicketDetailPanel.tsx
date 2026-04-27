@@ -39,6 +39,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
+  const isHandled = triageEntry?.state === 'handled';
   const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
   const hasUnseenChanges = !!unseenFields;
   const changeCount = unseenFields?.length ?? 0;
@@ -58,6 +59,22 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   };
 
   const handleUnignore = () => {
+    invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
+    useTicketStore.getState().hydrateTriageMap({
+      ...useTicketStore.getState().triageMap,
+      [issueKey]: { state: 'seen', copiedKey: null },
+    });
+  };
+
+  const handleMarkHandled = () => {
+    invoke('set_triage_state', { ticketKey: issueKey, state: 'handled' }).catch(() => {});
+    useTicketStore.getState().hydrateTriageMap({
+      ...useTicketStore.getState().triageMap,
+      [issueKey]: { state: 'handled', copiedKey: null },
+    });
+  };
+
+  const handleUnhandle = () => {
     invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
     useTicketStore.getState().hydrateTriageMap({
       ...useTicketStore.getState().triageMap,
@@ -251,7 +268,20 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     {t('detail.openInJira')}
                   </button>
                 )}
-                {isCopied ? null : isIgnored ? (
+                {isCopied ? null : isHandled ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={handleUnhandle}
+                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                      >
+                        {t('detail.handled')}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent aria-hidden="true">{t('detail.handled.tooltip')}</TooltipContent>
+                  </Tooltip>
+                ) : isIgnored ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
@@ -267,20 +297,34 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     </TooltipContent>
                   </Tooltip>
                 ) : (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={handleIgnore}
-                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
-                      >
-                        {t('detail.ignore')}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
-                  </Tooltip>
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleIgnore}
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                        >
+                          {t('detail.ignore')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={handleMarkHandled}
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                        >
+                          {t('detail.markHandled')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">{t('detail.markHandled.tooltip')}</TooltipContent>
+                    </Tooltip>
+                  </>
                 )}
-                {isCopied || isIgnored ? null : (
+                {isCopied || isIgnored || isHandled ? null : (
                   <button
                     type="button"
                     onClick={handleStartCopy}
