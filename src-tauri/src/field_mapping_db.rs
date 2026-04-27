@@ -245,6 +245,100 @@ impl FieldMappingDb {
         )?;
         Ok(n)
     }
+
+    /// Upsert a single mapping row keyed on `source_field_id` (D-04).
+    /// On conflict, replaces target_field_id, transformer_kind, schema JSON
+    /// and updated_at. created_at stays as the original insert time.
+    pub fn upsert_mapping_row(&self, row: &FieldMappingRow) -> AppResult<()> {
+        let source_schema_json = serde_json::to_string(&row.source_schema)?;
+        let target_schema_json = serde_json::to_string(&row.target_schema)?;
+        let now = Utc::now().to_rfc3339();
+        self.conn.execute(
+            "INSERT INTO field_mapping
+                 (source_field_id, target_field_id, transformer_kind,
+                  source_schema_json, target_schema_json, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+             ON CONFLICT(source_field_id) DO UPDATE SET
+                 target_field_id     = excluded.target_field_id,
+                 transformer_kind    = excluded.transformer_kind,
+                 source_schema_json  = excluded.source_schema_json,
+                 target_schema_json  = excluded.target_schema_json,
+                 updated_at          = excluded.updated_at",
+            params![
+                row.source_field_id,
+                row.target_field_id,
+                row.transformer_kind,
+                source_schema_json,
+                target_schema_json,
+                now,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Return all mapping rows in insertion order (id ASC) per D-06.
+    /// Seed rows store NULL schema JSON; row-mapper falls back to
+    /// `FieldSchemaType::Any` (Pitfall 3 — schema_json columns are nullable).
+    pub fn get_all_mapping_rows(&self) -> AppResult<Vec<FieldMappingRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT source_field_id, target_field_id, transformer_kind,
+                    source_schema_json, target_schema_json
+             FROM field_mapping
+             ORDER BY id ASC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let source_field_id: String = row.get(0)?;
+            let target_field_id: String = row.get(1)?;
+            let transformer_kind: String = row.get(2)?;
+            let source_schema_json: Option<String> = row.get(3)?;
+            let target_schema_json: Option<String> = row.get(4)?;
+            Ok((
+                source_field_id,
+                target_field_id,
+                transformer_kind,
+                source_schema_json,
+                target_schema_json,
+            ))
+        })?;
+        let mut out: Vec<FieldMappingRow> = Vec::new();
+        for r in rows {
+            let (source_field_id, target_field_id, transformer_kind, src_json, tgt_json) = r?;
+            let source_schema = match src_json {
+                Some(s) => serde_json::from_str(&s).map_err(|e| {
+                    crate::error::AppError::Internal(format!(
+                        "source_schema_json parse failed for '{source_field_id}': {e}"
+                    ))
+                })?,
+                None => crate::field_discovery::FieldSchemaType::Any,
+            };
+            let target_schema = match tgt_json {
+                Some(s) => serde_json::from_str(&s).map_err(|e| {
+                    crate::error::AppError::Internal(format!(
+                        "target_schema_json parse failed for '{source_field_id}': {e}"
+                    ))
+                })?,
+                None => crate::field_discovery::FieldSchemaType::Any,
+            };
+            out.push(FieldMappingRow {
+                source_field_id,
+                target_field_id,
+                transformer_kind,
+                source_schema,
+                target_schema,
+            });
+        }
+        Ok(out)
+    }
+
+    /// Delete a mapping row by `source_field_id` (D-05). Idempotent — returns
+    /// `Ok(())` even when the row does not exist.
+    pub fn delete_mapping_row(&self, source_field_id: &str) -> AppResult<()> {
+        self.conn.execute(
+            "DELETE FROM field_mapping WHERE source_field_id = ?1",
+            params![source_field_id],
+        )?;
+        Ok(())
+    }
 }
 
 /// SHA-256 hex of the raw response bytes. D-04 specifies hashing the raw JSON
