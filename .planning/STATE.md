@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
-status: planning
-last_updated: "2026-04-27T09:09:46.672Z"
+status: in_progress
+last_updated: "2026-04-27T10:00:00.000Z"
 last_activity: 2026-04-27
 progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
+  total_phases: 23
+  completed_phases: 16
+  total_plans: 15
   completed_plans: 0
   percent: 0
 ---
@@ -17,17 +17,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-29)
+See: .planning/PROJECT.md (updated 2026-04-27)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v0.3.0 shipped — planning next milestone
+**Current focus:** v0.4.0 Configurable Field Mapping — roadmap drafted, ready to plan Phase 17
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 17 (Field Discovery + Mock Schema Fidelity) — pending
 Plan: —
-Status: Defining requirements
-Last activity: 2026-04-27 — Milestone v0.4.0 started
+Status: Roadmap created (7 phases: 17-23, ~14-16 plans), ready for `/gsd-plan-phase 17`
+Last activity: 2026-04-27 — v0.4.0 roadmap written
 
 ## Performance Metrics
 
@@ -97,8 +97,17 @@ Last activity: 2026-04-27 — Milestone v0.4.0 started
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent decisions affecting current work (v0.4.0 Configurable Field Mapping):
 
+- Configurable field mapping (v0.4.0): hardcoded fields don't survive real-world Jira diversity; custom fields and per-customer schemas need user control
+- Global mapping scope (one mapping for app): simpler than per-project-pair or per-issue-type; combined with per-copy override gives flexibility without config explosion
+- Person picker always visible with email-match pre-fill: avoids silent assignment failures; user sees outcome before commit
+- Block copy on unmapped required target fields: prevents Jira Cloud rejection mid-pipeline; explicit better than auto-default
+- Target issue type chosen at copy time: source/target type semantics differ across Jiras; auto-match too brittle
+- Defer real ADF rich-text editor to post-v0.4.0: `@atlaskit/editor-core` adds 2-3 MB gzip; v0.4.0 ships textarea + htmltoadf preview using existing pipeline
+- Separate `mapping.db` SQLite file: do NOT extend `triage_db.rs` (already 5 concerns); follow `snapshot_db.rs` precedent
+
+Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - Tauri over Electron: Rust backend enforces credential isolation by architecture, not convention
 - OS keychain for credentials: macOS Keychain / Windows Credential Manager / Linux Secret Service via keyring crate
 - One-time copy with origin tracking: full sync deferred as out of scope
@@ -198,6 +207,7 @@ Recent decisions affecting current work:
 - Phase 9 added: Increase accessibility — ARIA compatible inputs, sufficient contrast in light and dark modes, and general a11y improvements
 - Phase 10 added: Improve codebase quality — add linting, increase test coverage, apply best practices, fix tech debt, update dependencies, and improve overall app quality
 - Phase 11 added: Add deployment, auto-updates, and release management
+- v0.4.0 milestone added (2026-04-27): Configurable Field Mapping (Phases 17-23) — replaces hardcoded copy logic with discovery + persistence + renderer registry + transform pipeline + cutover
 
 ### Pending Todos
 
@@ -205,9 +215,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1: ADF schema for fixture construction needs verification against current Atlassian OpenAPI spec before mock server build
-- Phase 4: Wiki Markup to ADF conversion has no official library — renderedFields HTML approach needs prototype to validate fidelity
-- Phase 5: Self-hosted Jira Server attachment auth model (PAT vs cookie-based) cannot be confirmed without a real Server instance — seek early customer confirmation
+- Phase 18: htmltoadf coverage gaps need empirical verification against representative source tickets — `/gsd-research-phase 18` recommended before planning
+- Phase 22: UX detail of how required-field gating surfaces gaps (banner? inline? per-field?) — short Plan-time discuss recommended
+- Phase 17: Cloud target paginated createmeta endpoint availability through proxies/firewalls — speculation; verify with connection-time probe
+- (Carried) Phase 1: ADF schema for fixture construction needs verification against current Atlassian OpenAPI spec before mock server build
+- (Carried) Phase 4: Wiki Markup to ADF conversion has no official library — renderedFields HTML approach needs prototype to validate fidelity
+- (Carried) Phase 5: Self-hosted Jira Server attachment auth model (PAT vs cookie-based) cannot be confirmed without a real Server instance — seek early customer confirmation
 
 ### Quick Tasks Completed
 
@@ -255,6 +268,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-27
-Last session: 2026-04-27T07:56:08Z
-Stopped at: Completed quick task 260427-dss: Add 'Mark as Handled' triage action alongside Copy and Dismiss
+Last session: 2026-04-27T10:00:00Z
+Stopped at: v0.4.0 roadmap created (Phases 17-23 mapped to all 41 requirements). Ready for `/gsd-plan-phase 17`.
 Resume file: None

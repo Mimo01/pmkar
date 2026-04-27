@@ -4,6 +4,7 @@
 
 - ✅ **v0.1.0 MVP** — Phases 1-11 (shipped 2026-03-25)
 - ✅ **v0.3.0 Notifications & Change Tracking** — Phases 12-16 (shipped 2026-03-29)
+- 🚧 **v0.4.0 Configurable Field Mapping** — Phases 17-23 (in progress)
 
 ## Phases
 
@@ -39,6 +40,106 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 
 </details>
 
+### 🚧 v0.4.0 Configurable Field Mapping (In Progress)
+
+**Milestone Goal:** Replace the hardcoded core-field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly, supports custom fields, gates on required-field completeness, and surfaces every mapping decision in the audit log. Comments, attachments, worklogs, sub-tasks, summary, and the origin remote link stay hardcoded inside the existing copy pipeline; the mapping engine governs core fields and custom fields only.
+
+- [ ] **Phase 17: Field Discovery + Mock Schema Fidelity** - Source v2 + target v3 schema discovery with paginated createmeta, custom-field type detection, and mock fixtures exercising the renderer registry
+- [ ] **Phase 18: v2→v3 Translation Layer** - Pure Rust transformer pipeline for user/version/component lookups and wiki→ADF gap-fill
+- [ ] **Phase 19: Mapping Persistence + CRUD Commands** - New `mapping.db` SQLite database with schema cache, mapping rows, and seeded defaults
+- [ ] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers
+- [ ] **Phase 21: Mapping Editor (Settings UI)** - Settings page for editing the global mapping with name-match suggestions, manual schema refresh, and drift warnings
+- [ ] **Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating** - Integration phase that wires the mapping engine into CopyPreviewModal with always-visible person picker and reactive required-field gating
+- [ ] **Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks** - Cutover phase with `CopyContext` seam, helper extraction, full-pipeline integration test, audit redaction, and `MYPROJ` debt fix
+
+## Phase Details
+
+### Phase 17: Field Discovery + Mock Schema Fidelity
+**Goal**: The app can discover the full set of source Jira Server v2 and target Jira Cloud v3 fields (system + custom) for a given project / issue type, including required-field metadata, and the mock server returns realistic schemas that exercise every renderer the milestone will ship.
+**Depends on**: Nothing within v0.4.0 (extends existing v0.1.0 Jira clients and v0.3.0 mock infrastructure)
+**Requirements**: DISC-01, DISC-02, DISC-03, DISC-04
+**Success Criteria** (what must be TRUE):
+  1. User opening a copy preview against the mock server sees source v2 and target v3 field schemas (system + ≥4 custom field types) populated with correct `schema.type`, `schema.items`, and `custom` discriminators.
+  2. System fetches all required-field metadata for a (project, issue type) pair via the paginated `createmeta/{key}/issuetypes/{id}` endpoint, including projects whose issue-type list spans multiple pages.
+  3. Mock Jira server exposes ≥4 custom field fixtures (number, multi-select, user, date) plus realistic v2 vs v3 shape divergence (priority, user, versions) so renderer registry tests cover production-like variety.
+  4. Connection-time probe at app launch verifies the paginated createmeta endpoint is reachable on the configured Cloud target and surfaces a clear error if a proxy/firewall only exposes the legacy endpoint.
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 18: v2→v3 Translation Layer
+**Goal**: Pure Rust transformer pipeline that turns a source v2 issue + a saved mapping into a v3-shaped POST body, handling user identity, version/component name→id lookups, wiki→ADF translation with documented gap-fills, and batched HTTP to avoid N×M round trips.
+**Depends on**: Phase 17 (consumes `FieldSchema` types and the discovery cache)
+**Requirements**: TRAN-01, TRAN-02, TRAN-03, TRAN-04, TRAN-05, TRAN-06
+**Success Criteria** (what must be TRUE):
+  1. Given a source ticket with assignee/reporter user values, the pipeline resolves each unique user to a Cloud `accountId` in a single batched lookup pass per email domain (no N×M call explosion).
+  2. Given source `versions`, `fixVersions`, or `components` referenced by name, the pipeline produces a target POST body referencing the correct target Cloud IDs, looked up against the target project's `/versions` and `/components` endpoints.
+  3. Given a source description containing wiki markup with links, blockquotes, mentions, hard-breaks, and `mediaSingle` references, the produced ADF document includes those nodes (post-processor wraps `htmltoadf`'s documented coverage gaps).
+  4. Round-trip integration tests for ≥4 custom-field types (number, multi-select, user, date) pass against mock fixtures that exhibit the read-shape vs write-shape asymmetry documented in pitfall research.
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 19: Mapping Persistence + CRUD Commands
+**Goal**: A separate `mapping.db` SQLite database that persists the global source→target field mapping (one mapping for the app), seeded with sensible defaults on first run and exposed through Tauri CRUD commands.
+**Depends on**: Phase 17 (uses the `FieldSchema` types so default-mapping seeding can target real field IDs)
+**Requirements**: MAP-01, MAP-02
+**Success Criteria** (what must be TRUE):
+  1. On first launch after the milestone ships, the app creates `mapping.db` separately from `triage.db` / `snapshot.db` / `audit.db` (following the established db-per-concern pattern).
+  2. On first run with discovered schemas, the saved mapping is pre-populated with default rows for description, labels, priority, assignee, and reporter — the user does not face an empty mapping screen.
+  3. CRUD Tauri commands (`get_field_mapping`, `set_field_mapping`, `delete_field_mapping`, `refresh_field_schema_cache`) load and persist mapping rows; mapping changes survive an app restart.
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 20: Renderer Registry + Field-Type-Aware Controls
+**Goal**: Frontend component registry that maps each Jira `schema.type` (+ `schema.items`) to a dedicated React renderer covering all 15+ standard Jira field types, with virtualized pickers for any list >500 items and a clear fallback for unsupported types.
+**Depends on**: Phase 17 (uses `FieldSchema` discriminated unions)
+**Requirements**: CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05, CTRL-06, CTRL-07, CTRL-08
+**Success Criteria** (what must be TRUE):
+  1. User sees a control matching the field type for every standard schema variant: text/multi-line/URL, single/multi user, group, single/multi select, labels, components, versions, date/datetime/number, checkboxes, and radio.
+  2. User sees a read-only "Unsupported type" pill (never a crash, never a silent fallback to text input) when a target field's type is not in the renderer registry.
+  3. User can scroll/keyboard-navigate a combobox containing 5,000+ items (e.g., user picker on a 10k-user org) without observable lag — virtualized rendering is wired through cmdk + `@tanstack/react-virtual` with `useFlushSync: false` for React 19.
+  4. Each renderer is unit-testable in isolation via the registry — adding a new field type requires only a new renderer file and one registry entry, never a switch-statement edit in `DynamicTargetForm`.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 21: Mapping Editor (Settings UI)
+**Goal**: A new "Field Mapping" section in Settings where the user can view, edit, and persist the global source→target mapping, including custom-field rows, with heuristic name-match suggestions and a manual "Refresh schema" button. Drift warnings surface when a saved row references a target field that no longer exists.
+**Depends on**: Phase 19 (persistence) and Phase 20 (renderers)
+**Requirements**: DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03
+**Success Criteria** (what must be TRUE):
+  1. User can open a "Field Mapping" section in Settings showing the current mapping (defaults + user additions) with one row per source→target pair.
+  2. User can add custom-field mapping rows, edit any row's target field or transformer, remove default rows, and save changes; saved changes survive an app restart.
+  3. User opening the editor for the first time after a fresh discovery sees heuristic name-match suggestions for unmapped source fields (case-insensitive equality + a small synonym set), accepted with one click.
+  4. User can click a "Refresh schema" button to re-fetch field schemas from both Jiras, with a visible "Last refreshed Xm ago" timestamp.
+  5. User opening the editor when the target Jira's schema has drifted (a saved row references a now-missing target field) sees an inline warning per affected row with a one-click remove option (drift detected via stored schema hashes).
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating
+**Goal**: Integration phase that replaces the hardcoded right column of CopyPreviewModal with a `DynamicTargetForm` driven by the saved mapping, layered with per-copy in-memory overrides, gated by reactive required-field validation that re-evaluates on issue-type change, and anchored by an always-visible person picker that pre-fills via exact-email match.
+**Depends on**: Phases 18, 19, 20, 21
+**Requirements**: PERS-01, PERS-02, PERS-03, PERS-04, OVRD-01, OVRD-02, OVRD-03, OVRD-04, OVRD-05, OVRD-06
+**Success Criteria** (what must be TRUE):
+  1. User opens a copy preview and sees an issue-type chooser that defaults to the source-name match (or to the target project's first issue type when no name match exists, with a clear "defaulted" notice).
+  2. User changing the target issue type triggers a fresh createmeta lookup and re-evaluates required-field gating before re-rendering the form (no stale gate from the previous type).
+  3. User can override any saved-mapping row inline in the Copy Preview (target field, transformer, or value) without mutating the saved global mapping; closing the modal clears all overrides.
+  4. User sees the Copy button disabled with an inline tooltip listing missing required fields until every target-required field has a resolved value; the button enables the instant the last gap is filled.
+  5. User sees the person picker rendered for every person and multi-person field — even when an exact-email match is found (the match is shown as a green-check pre-fill), and the picker stays visible (with no error) when source has no email due to Cloud privacy mode.
+  6. User can search target users by name or email inside the picker (reusing the Phase 16 user-search command) and see required-but-unmapped target fields surfaced inline at the top of the panel with a clear "fill in or map" affordance.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks
+**Goal**: Cutover phase that introduces a new `copy_ticket_v2` Tauri command consuming the mapping engine end-to-end, extracts the existing attachment/comment/worklog/sub-task helpers behind a `CopyContext` seam so they're shared between the old and new paths, audits every mapping decision with PII redaction, and pulls the v0.1.0 INT-02 hardcoded `MYPROJ` debt forward in the same refactor.
+**Depends on**: Phase 22
+**Requirements**: CUTV-01, CUTV-02, CUTV-03, CUTV-04
+**Success Criteria** (what must be TRUE):
+  1. Confirming a copy in the preview modal invokes `copy_ticket_v2`, which produces a Cloud-accepted POST body via the mapping engine and returns the same `CopyTicketResult` shape as today's `copy_ticket` — the existing 528 frontend tests still pass.
+  2. Existing copy paths for comments, attachments, worklogs, sub-tasks, and the origin remote link continue to work after cutover (full-pipeline integration test against mock target verifies attachments downloadable, comment authors resolved correctly, sub-tasks parented correctly, remote link present).
+  3. Every mapping decision, per-copy override, and required-gap fill is recorded in the audit log with hash-based redaction by default and a verbose-mode opt-in for full-value logging, gated by a credential-pattern sanitizer (Bearer/Basic/JWT/AWS/Slack token regexes).
+  4. The previously-hardcoded `MYPROJ` cloud project key is parameterized end-to-end (read from `CopyContext` / connection settings) — copying against a Cloud project whose key is not `MYPROJ` succeeds in the integration test.
+**Plans**: TBD
+**UI hint**: no
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -59,3 +160,10 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 15. Change Diff View | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 2/2 | Complete | 2026-03-29 |
+| 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/? | Not started | - |
+| 18. v2→v3 Translation Layer | v0.4.0 | 0/? | Not started | - |
+| 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/? | Not started | - |
+| 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/? | Not started | - |
+| 21. Mapping Editor (Settings UI) | v0.4.0 | 0/? | Not started | - |
+| 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/? | Not started | - |
+| 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/? | Not started | - |
