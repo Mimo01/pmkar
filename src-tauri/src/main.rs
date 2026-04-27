@@ -240,6 +240,9 @@ fn main() {
             commands::probe_createmeta,
             commands::pre_warm_target_issue_types,
             commands::refresh_field_schema_cache,
+            commands::get_field_mapping,
+            commands::set_field_mapping,
+            commands::delete_field_mapping,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

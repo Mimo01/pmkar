@@ -6,6 +6,7 @@
 
 use crate::error::AppResult;
 use crate::field_discovery::{FieldSchema, FieldSchemaType, FieldSide};
+use crate::field_transform::FieldMappingRow;
 use chrono::Utc;
 use rusqlite::{params, Connection, OptionalExtension};
 use sha2::{Digest, Sha256};
@@ -243,6 +244,100 @@ impl FieldMappingDb {
             params![side.as_str(), project_key, issuetype_id],
         )?;
         Ok(n)
+    }
+
+    /// Upsert a single mapping row keyed on `source_field_id` (D-04).
+    /// On conflict, replaces `target_field_id`, `transformer_kind`, schema JSON
+    /// and `updated_at`. `created_at` stays as the original insert time.
+    pub fn upsert_mapping_row(&self, row: &FieldMappingRow) -> AppResult<()> {
+        let source_schema_json = serde_json::to_string(&row.source_schema)?;
+        let target_schema_json = serde_json::to_string(&row.target_schema)?;
+        let now = Utc::now().to_rfc3339();
+        self.conn.execute(
+            "INSERT INTO field_mapping
+                 (source_field_id, target_field_id, transformer_kind,
+                  source_schema_json, target_schema_json, created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+             ON CONFLICT(source_field_id) DO UPDATE SET
+                 target_field_id     = excluded.target_field_id,
+                 transformer_kind    = excluded.transformer_kind,
+                 source_schema_json  = excluded.source_schema_json,
+                 target_schema_json  = excluded.target_schema_json,
+                 updated_at          = excluded.updated_at",
+            params![
+                row.source_field_id,
+                row.target_field_id,
+                row.transformer_kind,
+                source_schema_json,
+                target_schema_json,
+                now,
+            ],
+        )?;
+        Ok(())
+    }
+
+    /// Return all mapping rows in insertion order (`id ASC`) per D-06.
+    /// Seed rows store NULL schema JSON; row-mapper falls back to
+    /// `FieldSchemaType::Any` (Pitfall 3 — `schema_json` columns are nullable).
+    pub fn get_all_mapping_rows(&self) -> AppResult<Vec<FieldMappingRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT source_field_id, target_field_id, transformer_kind,
+                    source_schema_json, target_schema_json
+             FROM field_mapping
+             ORDER BY id ASC",
+        )?;
+        let rows = stmt.query_map([], |row| {
+            let source_field_id: String = row.get(0)?;
+            let target_field_id: String = row.get(1)?;
+            let transformer_kind: String = row.get(2)?;
+            let source_schema_json: Option<String> = row.get(3)?;
+            let target_schema_json: Option<String> = row.get(4)?;
+            Ok((
+                source_field_id,
+                target_field_id,
+                transformer_kind,
+                source_schema_json,
+                target_schema_json,
+            ))
+        })?;
+        let mut out: Vec<FieldMappingRow> = Vec::new();
+        for r in rows {
+            let (source_field_id, target_field_id, transformer_kind, src_json, tgt_json) = r?;
+            let source_schema = match src_json {
+                Some(s) => serde_json::from_str(&s).map_err(|e| {
+                    crate::error::AppError::Internal(format!(
+                        "source_schema_json parse failed for '{source_field_id}': {e}"
+                    ))
+                })?,
+                None => crate::field_discovery::FieldSchemaType::Any,
+            };
+            let target_schema = match tgt_json {
+                Some(s) => serde_json::from_str(&s).map_err(|e| {
+                    crate::error::AppError::Internal(format!(
+                        "target_schema_json parse failed for '{source_field_id}': {e}"
+                    ))
+                })?,
+                None => crate::field_discovery::FieldSchemaType::Any,
+            };
+            out.push(FieldMappingRow {
+                source_field_id,
+                target_field_id,
+                transformer_kind,
+                source_schema,
+                target_schema,
+            });
+        }
+        Ok(out)
+    }
+
+    /// Delete a mapping row by `source_field_id` (D-05). Idempotent: returns
+    /// `Ok(())` even when the row does not exist.
+    pub fn delete_mapping_row(&self, source_field_id: &str) -> AppResult<()> {
+        self.conn.execute(
+            "DELETE FROM field_mapping WHERE source_field_id = ?1",
+            params![source_field_id],
+        )?;
+        Ok(())
     }
 }
 
@@ -483,5 +578,103 @@ mod tests {
             count_after_reseed, 4,
             "seed must NOT re-run when table is non-empty (D-02 INSERT OR IGNORE + COUNT guard)"
         );
+    }
+
+    #[test]
+    fn get_returns_rows_in_insertion_order() {
+        use crate::field_transform::FieldMappingRow;
+        let _ = std::any::type_name::<FieldMappingRow>(); // prove import works
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let rows = db.get_all_mapping_rows().expect("get_all_mapping_rows");
+        assert_eq!(rows.len(), 5, "5 default rows seeded");
+        assert_eq!(rows[0].source_field_id, "description", "D-06 ORDER BY id ASC: description first");
+        assert_eq!(rows[0].transformer_kind, "wiki_to_adf");
+        assert_eq!(rows[1].source_field_id, "labels");
+        assert_eq!(rows[2].source_field_id, "priority");
+        assert_eq!(rows[3].source_field_id, "assignee");
+        assert_eq!(rows[4].source_field_id, "reporter");
+    }
+
+    #[test]
+    fn upsert_mapping_row_replaces_existing() {
+        use crate::field_transform::FieldMappingRow;
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        // Override the seeded `description -> wiki_to_adf` row with `identity`.
+        let row = FieldMappingRow {
+            source_field_id: "description".into(),
+            target_field_id: "description".into(),
+            transformer_kind: "identity".into(),
+            source_schema: FieldSchemaType::Any,
+            target_schema: FieldSchemaType::Any,
+        };
+        db.upsert_mapping_row(&row).expect("upsert");
+        let rows = db.get_all_mapping_rows().expect("get");
+        assert_eq!(rows.len(), 5, "upsert must replace, not duplicate");
+        let desc = rows
+            .iter()
+            .find(|r| r.source_field_id == "description")
+            .expect("description row exists");
+        assert_eq!(desc.transformer_kind, "identity", "transformer_kind replaced");
+
+        // Inserting a brand new row increases the count.
+        let custom = FieldMappingRow {
+            source_field_id: "customfield_10001".into(),
+            target_field_id: "customfield_99999".into(),
+            transformer_kind: "identity".into(),
+            source_schema: FieldSchemaType::Any,
+            target_schema: FieldSchemaType::Any,
+        };
+        db.upsert_mapping_row(&custom).expect("upsert custom");
+        let rows = db.get_all_mapping_rows().expect("get");
+        assert_eq!(rows.len(), 6, "new source_field_id appends a row");
+        let cf = rows
+            .iter()
+            .find(|r| r.source_field_id == "customfield_10001")
+            .expect("custom row exists");
+        assert_eq!(cf.target_field_id, "customfield_99999");
+    }
+
+    #[test]
+    fn delete_mapping_row_is_idempotent() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        db.delete_mapping_row("description").expect("first delete");
+        db.delete_mapping_row("description").expect("second delete must not error (D-05)");
+        let rows = db.get_all_mapping_rows().expect("get");
+        assert_eq!(rows.len(), 4, "after delete, 4 rows remain");
+        // Deleting a non-existent id is also Ok.
+        db.delete_mapping_row("never_existed_field").expect("delete unknown id");
+        let rows = db.get_all_mapping_rows().expect("get");
+        assert_eq!(rows.len(), 4, "deleting unknown id does not change count");
+    }
+
+    #[test]
+    fn round_trip_survives_reopen() {
+        use crate::field_transform::FieldMappingRow;
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("mapping.db");
+        // Open #1: seed runs, add a custom row.
+        {
+            let db = FieldMappingDb::open(&path).expect("open #1");
+            let custom = FieldMappingRow {
+                source_field_id: "customfield_10010".into(),
+                target_field_id: "customfield_10010".into(),
+                transformer_kind: "identity".into(),
+                source_schema: FieldSchemaType::Any,
+                target_schema: FieldSchemaType::Any,
+            };
+            db.upsert_mapping_row(&custom).expect("upsert");
+            let rows = db.get_all_mapping_rows().expect("get");
+            assert_eq!(rows.len(), 6, "5 seeded + 1 custom in same connection");
+        } // db drops here, releasing SQLite file handle
+        // Open #2: same path, no re-seed (D-02), custom row still present.
+        let db2 = FieldMappingDb::open(&path).expect("open #2");
+        let rows = db2.get_all_mapping_rows().expect("get after reopen");
+        assert_eq!(rows.len(), 6, "round-trip: rows persist across reopen");
+        let cf = rows
+            .iter()
+            .find(|r| r.source_field_id == "customfield_10010")
+            .expect("custom row survived reopen");
+        assert_eq!(cf.target_field_id, "customfield_10010");
+        assert_eq!(cf.transformer_kind, "identity");
     }
 }

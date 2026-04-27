@@ -1150,6 +1150,7 @@ pub async fn search_jira_users_by_domain(
 
 use crate::field_discovery::{self, FieldSchema, FieldSide, IssueTypeRef, ProbeResult};
 use crate::field_mapping_db::FieldMappingDb;
+use crate::field_transform::FieldMappingRow;
 
 /// Source v2 global field list. Cache-first via `get_or_fetch_source_global`
 /// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
@@ -1319,6 +1320,48 @@ pub fn refresh_field_schema_cache(
         issuetype_id.as_deref(),
     )?;
     Ok(())
+}
+
+// --- Field mapping CRUD commands (Phase 19) ---
+
+/// Return all mapping rows ordered by `id ASC` (D-06). Returns the seeded defaults
+/// from Plan 01 plus any user-added rows. Phase 21 (editor) and Phase 23 (cutover)
+/// consume this.
+#[tauri::command]
+pub fn get_field_mapping(
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<Vec<FieldMappingRow>, AppError> {
+    let guard = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+    guard.get_all_mapping_rows()
+}
+
+/// Upsert a single mapping row by `source_field_id` (D-04). On conflict, replaces
+/// `target_field_id`, `transformer_kind`, and schema JSON; `created_at` is preserved.
+/// Phase 21 calls once per changed row.
+#[tauri::command]
+pub fn set_field_mapping(
+    row: FieldMappingRow,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<(), AppError> {
+    let guard = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+    guard.upsert_mapping_row(&row)
+}
+
+/// Delete a mapping row by `source_field_id` (D-05). Idempotent: returns `Ok(())`
+/// even when the row does not exist. Phase 21's "remove row" button calls this.
+#[tauri::command]
+pub fn delete_field_mapping(
+    source_field_id: String,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<(), AppError> {
+    let guard = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+    guard.delete_mapping_row(&source_field_id)
 }
 
 // --- Connection meta commands ---
