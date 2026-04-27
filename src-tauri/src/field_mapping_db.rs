@@ -348,4 +348,85 @@ mod tests {
             .unwrap();
         assert_eq!(got[0].allowed_values.as_ref().unwrap().len(), 1);
     }
+
+    #[test]
+    fn open_in_memory_creates_field_mapping_and_meta_tables() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        // field_mapping must be queryable
+        let _: i64 = db
+            .conn
+            .query_row("SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0))
+            .expect("field_mapping table should exist");
+        // mapping_meta must be queryable
+        let _: i64 = db
+            .conn
+            .query_row("SELECT COUNT(*) FROM mapping_meta", [], |r| r.get(0))
+            .expect("mapping_meta table should exist");
+    }
+
+    #[test]
+    fn seed_inserts_five_defaults_on_empty_table() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let count: i64 = db
+            .conn
+            .query_row("SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0))
+            .expect("count");
+        assert_eq!(count, 5, "must seed exactly 5 default rows on empty table");
+    }
+
+    #[test]
+    fn default_transformer_kinds_are_correct() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let mut stmt = db
+            .conn
+            .prepare(
+                "SELECT source_field_id, target_field_id, transformer_kind
+                 FROM field_mapping ORDER BY id ASC",
+            )
+            .unwrap();
+        let rows: Vec<(String, String, String)> = stmt
+            .query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))
+            .unwrap()
+            .map(|r| r.unwrap())
+            .collect();
+        assert_eq!(
+            rows,
+            vec![
+                ("description".into(), "description".into(), "wiki_to_adf".into()),
+                ("labels".into(),      "labels".into(),      "identity".into()),
+                ("priority".into(),    "priority".into(),    "priority".into()),
+                ("assignee".into(),    "assignee".into(),    "user".into()),
+                ("reporter".into(),    "reporter".into(),    "user".into()),
+            ],
+            "default seed must match D-07/D-08 transformer_kind values exactly"
+        );
+    }
+
+    #[test]
+    fn seed_does_not_run_when_table_has_rows() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        // Initial state: 5 seeded rows.
+        // Simulate user deleting the `description` default row.
+        db.conn
+            .execute(
+                "DELETE FROM field_mapping WHERE source_field_id = 'description'",
+                [],
+            )
+            .expect("delete description row");
+        let count_after_delete: i64 = db
+            .conn
+            .query_row("SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count_after_delete, 4, "after delete, table has 4 rows");
+        // Calling seed again must not re-add the deleted row (D-02).
+        super::seed_defaults_if_empty(&db.conn).expect("seed again");
+        let count_after_reseed: i64 = db
+            .conn
+            .query_row("SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            count_after_reseed, 4,
+            "seed must NOT re-run when table is non-empty (D-02 INSERT OR IGNORE + COUNT guard)"
+        );
+    }
 }
