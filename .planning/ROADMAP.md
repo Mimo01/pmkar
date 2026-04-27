@@ -119,7 +119,20 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   1. On first launch after the milestone ships, the app creates `mapping.db` separately from `triage.db` / `snapshot.db` / `audit.db` (following the established db-per-concern pattern).
   2. On first run with discovered schemas, the saved mapping is pre-populated with default rows for description, labels, priority, assignee, and reporter — the user does not face an empty mapping screen.
   3. CRUD Tauri commands (`get_field_mapping`, `set_field_mapping`, `delete_field_mapping`, `refresh_field_schema_cache`) load and persist mapping rows; mapping changes survive an app restart.
-**Plans**: TBD
+**Plans**: 2 plans
+
+**Wave 1** *(scaffolding — extends `field_mapping_db.rs` with new tables + seed)*:
+- [ ] 19-01-PLAN.md — `field_mapping` + `mapping_meta` DDL added to existing `field_mapping_db.rs`; `seed_defaults_if_empty` inserts 5 default rows (description→wiki_to_adf, labels→identity, priority→priority, assignee→user, reporter→user) at `open()` when table empty (D-01/D-02/D-03/D-07/D-08)
+
+**Wave 2** *(blocked on Wave 1 — adds CRUD methods + Tauri commands + main.rs registration)*:
+- [ ] 19-02-PLAN.md — `upsert_mapping_row` / `get_all_mapping_rows` / `delete_mapping_row` methods + 3 sync Tauri commands (`get_field_mapping`, `set_field_mapping`, `delete_field_mapping`) + `invoke_handler!` registration — depends on 19-01
+
+**Cross-cutting constraints** *(truths shared by both plans)*:
+- All commands are synchronous `pub fn` (not `async fn`) — workspace clippy enforces `unused_async`
+- All commands take only `Arc<Mutex<FieldMappingDb>>` state — Pitfall 4 (lock-ordering deadlock)
+- `FieldMappingRow` stays in `field_transform/mod.rs` (Phase 18); `field_mapping_db.rs` imports it — avoids circular dep
+- Seed rows store `source_schema_json = NULL` / `target_schema_json = NULL`; row-mapper falls back to `FieldSchemaType::Any` (Pitfall 3)
+- All SQL values bound via rusqlite `params![]` — no string interpolation (security mitigation T-19-01/06/07)
 **UI hint**: no
 
 ### Phase 20: Renderer Registry + Field-Type-Aware Controls
@@ -195,7 +208,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 16. Enhanced Watch Configuration | v0.3.0 | 2/2 | Complete | 2026-03-29 |
 | 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/5 | Not started | - |
 | 18. v2→v3 Translation Layer | v0.4.0 | 0/5 | Not started | - |
-| 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/? | Not started | - |
+| 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/2 | Not started | - |
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/? | Not started | - |
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 0/? | Not started | - |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/? | Not started | - |
