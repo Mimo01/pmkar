@@ -97,9 +97,9 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] 18-01-PLAN.md — Skeleton: field_transform/mod.rs (shared types ResolvedFields/GapVariant/UnresolvedPerson/Version/Component/TransformContext) + 6 stub files + lib.rs registration
 
 **Wave 2** *(parallel-safe — disjoint files)*:
-- [ ] 18-02-PLAN.md — Twin transformers: version.rs + component.rs (cached HTTP fetch, case-insensitive name match, partial-array resolution)
-- [ ] 18-03-PLAN.md — user.rs: batch user resolution (TRAN-06 one-HTTP-per-domain) + hand-written [~username] / HTML profile-link scanners (D-06, Pitfall C)
-- [ ] 18-04-PLAN.md — wiki_to_adf.rs (htmltoadf + ADF post-processor with mention resolution D-04, plain-text fallback D-05, unsupported-macro placeholder D-07, codeBlock guard Pitfall F) + identity.rs (write-shape stripping per Pitfall 4)
+- [x] 18-02-PLAN.md — Twin transformers: version.rs + component.rs (cached HTTP fetch, case-insensitive name match, partial-array resolution)
+- [x] 18-03-PLAN.md — user.rs: batch user resolution (TRAN-06 one-HTTP-per-domain) + hand-written [~username] / HTML profile-link scanners (D-06, Pitfall C)
+- [x] 18-04-PLAN.md — wiki_to_adf.rs (htmltoadf + ADF post-processor with mention resolution D-04, plain-text fallback D-05, unsupported-macro placeholder D-07, codeBlock guard Pitfall F) + identity.rs (write-shape stripping per Pitfall 4)
 
 **Wave 3** *(integration — depends on all of Wave 1+2)*:
 - [ ] 18-05-PLAN.md — pipeline.rs: two-phase apply_mapping + per-row dispatch + round-trip integration test exercising ≥4 custom-field types against mock fixtures
