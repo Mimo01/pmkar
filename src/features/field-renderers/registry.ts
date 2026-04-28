@@ -98,6 +98,37 @@ export function getRenderer(schema: FieldSchemaType): React.ComponentType<Render
   }
 }
 
+/**
+ * Returns true when a schema type has an editable renderer in GapsSection.
+ * Types that fall through to UnsupportedTypeRenderer (priority, option-with-child,
+ * issuetype, any, unknown array items) return false.
+ */
+export function isEditableSchemaType(schema: FieldSchemaType): boolean {
+  switch (schema.type) {
+    case 'string':
+    case 'number':
+    case 'date':
+    case 'datetime':
+    case 'user':
+    case 'option':
+      return true;
+    case 'array':
+      switch (schema.items) {
+        case 'user':
+        case 'option':
+        case 'component':
+        case 'version':
+        case 'string':
+        case 'group':
+          return true;
+        default:
+          return false;
+      }
+    default:
+      return false;
+  }
+}
+
 // Re-export CheckboxRenderer + RadioRenderer so Phase 21 (Mapping Editor) can opt into them
 // when a renderer override is selected (e.g., admin forces a non-default routing).
 export { CheckboxRenderer, RadioRenderer };

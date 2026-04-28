@@ -127,6 +127,7 @@
   "copy.preview.issueTypeDefaulted": "Predvolené — žiadna zhoda pre '{{sourceTypeName}}'",
   "copy.preview.gapsHeader": "Povinné polia bez mapovania",
   "copy.preview.mapLink": "Mapovať pole",
+  "copy.preview.unsupportedGapHint": "Tento typ poľa sa tu nedá vyplniť — použite 'Mapovať pole' na automatické kopírovanie.",
   "copy.preview.missingFields": "Vyplňte povinné polia: {{fields}}",
   "copy.result.complete": "Kopírovanie dokončené",
   "copy.result.withErrors": "Kopírovanie dokončené s chybami",

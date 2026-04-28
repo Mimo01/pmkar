@@ -1,7 +1,7 @@
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { getRenderer } from '@/features/field-renderers/registry';
+import { getRenderer, isEditableSchemaType } from '@/features/field-renderers/registry';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
 import type { JiraUser } from './types';
 
@@ -31,6 +31,7 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
   const { t } = useTranslation();
   const Renderer = getRenderer(field.schema);
   const isUser = isUserSchema(field.schema);
+  const isEditable = isEditableSchemaType(field.schema);
 
   return (
     <div
@@ -45,17 +46,32 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
         <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
       </label>
       <div className="flex-1 [&_button]:min-h-9">
-        <Renderer
-          field={field}
-          value={value}
-          onChange={onChange}
-          required={true}
-          onSearch={isUser ? onSearchUsers : undefined}
-        />
+        {isEditable ? (
+          <Renderer
+            field={field}
+            value={value}
+            onChange={onChange}
+            required={true}
+            onSearch={isUser ? onSearchUsers : undefined}
+          />
+        ) : (
+          <div
+            className="flex items-start gap-1.5 pt-1.5"
+            data-testid={`gap-unsupported-${field.fieldId}`}
+          >
+            <AlertCircle
+              className="w-3.5 h-3.5 text-amber-600/70 dark:text-amber-400/70 shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              {t('copy.preview.unsupportedGapHint')}
+            </p>
+          </div>
+        )}
       </div>
       <Button
         type="button"
-        variant="ghost"
+        variant={isEditable ? 'ghost' : 'outline'}
         size="sm"
         onClick={onMapLink}
         className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"

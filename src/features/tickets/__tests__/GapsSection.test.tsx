@@ -7,6 +7,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => {
       if (key === 'copy.preview.gapsHeader') return 'Required fields with no mapping';
       if (key === 'copy.preview.mapLink') return 'Map field';
+      if (key === 'copy.preview.unsupportedGapHint') return "Can't fill this field type here — map it to copy automatically.";
       return key;
     },
   }),
@@ -14,6 +15,8 @@ vi.mock('react-i18next', () => ({
 
 // Capture renderer props per fieldId so we can assert on them.
 const capturedRendererProps: Record<string, any> = {};
+
+const UNSUPPORTED_TYPES = new Set(['priority', 'option-with-child', 'issuetype', 'any']);
 
 vi.mock('@/features/field-renderers/registry', () => ({
   getRenderer: (schema: any) => {
@@ -31,6 +34,7 @@ vi.mock('@/features/field-renderers/registry', () => ({
     };
     return RendererStub;
   },
+  isEditableSchemaType: (schema: any) => !UNSUPPORTED_TYPES.has(schema.type),
 }));
 
 import { GapsSection } from '../GapsSection';
@@ -180,5 +184,46 @@ describe('GapsSection', () => {
     );
     const input = screen.getByTestId('renderer-environment') as HTMLInputElement;
     expect(input.value).toBe('staging');
+  });
+
+  it('shows hint instead of renderer for unsupported field types (priority)', () => {
+    render(
+      <GapsSection
+        gapFields={[{ fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } }]}
+        overrideValues={{}}
+        onOverrideChange={vi.fn()}
+        onMapLink={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('gap-unsupported-priority')).toBeInTheDocument();
+    expect(screen.queryByTestId('renderer-priority')).not.toBeInTheDocument();
+    expect(screen.getByTestId('gap-unsupported-priority').textContent).toMatch(/map/i);
+  });
+
+  it('shows hint for option-with-child (cascading select)', () => {
+    render(
+      <GapsSection
+        gapFields={[{ fieldId: 'department', name: 'Department', required: true, schema: { type: 'option-with-child' } }]}
+        overrideValues={{}}
+        onOverrideChange={vi.fn()}
+        onMapLink={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('gap-unsupported-department')).toBeInTheDocument();
+    expect(screen.queryByTestId('renderer-department')).not.toBeInTheDocument();
+  });
+
+  it('Map field button still fires onMapLink for unsupported field types', () => {
+    const onMapLink = vi.fn();
+    render(
+      <GapsSection
+        gapFields={[{ fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } }]}
+        overrideValues={{}}
+        onOverrideChange={vi.fn()}
+        onMapLink={onMapLink}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('gap-map-link-priority'));
+    expect(onMapLink).toHaveBeenCalledTimes(1);
   });
 });
