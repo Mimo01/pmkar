@@ -1,5 +1,44 @@
 # Milestones
 
+## v0.4.0 Configurable Field Mapping (Shipped: 2026-04-29)
+
+**Phases:** 7 (17-23) | **Plans:** 28
+**Timeline:** 3 days (2026-04-26 → 2026-04-29)
+**Codebase:** ~35,744 LOC (22,718 TypeScript + 13,026 Rust) | 270 commits
+**Git range:** 1397502 → 3c32d8e
+
+**Delivered:** Full user-configurable field mapping engine bridging Jira Server v2 → Cloud v3 — field discovery with paginated createmeta, pure Rust translation pipeline (user/version/component/ADF), SQLite mapping persistence with seeded defaults, renderer registry covering 17 field types with virtualized pickers, mapping editor UI in Settings, copy preview override panel with issue-type chooser and required-field gating, and copy_ticket_v2 pipeline cutover with audit logging.
+
+**Key accomplishments:**
+
+1. Field discovery engine — source v2 + target v3 schema discovery with paginated createmeta, custom field type detection, connection-time probe banner and status pill
+2. Pure Rust v2→v3 translation pipeline — batch user resolution (no N×M calls), version/component name→id lookups, wiki→ADF with post-processor gap-fills, two-phase apply_mapping
+3. Mapping persistence in `mapping.db` with 5 seeded defaults (description/labels/priority/assignee/reporter) and CRUD Tauri commands
+4. Renderer registry with 17 Jira field types, VirtualizedCombobox (cmdk + TanStack Virtual), DynamicTargetForm stateless shell
+5. Mapping Editor in Settings — auto-save rows, drift warnings, heuristic name-match suggestions (3-tier), schema refresh button, 29 i18n keys (EN+SK)
+6. Copy Preview override panel — issue-type chooser, per-copy in-memory overrides, required-field gating (copy blocked until all required fields resolved), always-visible person picker with email pre-fill
+7. `copy_ticket_v2` cutover — CopyContext seam, 5 extracted pipeline helpers, audit logging with credential redaction, parameterized target project key (INT-02 debt resolved)
+
+### Known Gaps
+
+Phase 22 VERIFICATION.md deferred at milestone close (code confirmed wired by integration checker):
+- PERS-01..04, OVRD-01..06: 10 requirements — all code paths verified by integration checker; formal VERIFICATION.md not produced
+
+Tech debt items acknowledged:
+- DISC-04: 3 human verification items pending (probe banner visual, status pill, per-session dismiss/restart)
+- TRAN-05: wiki ADF links/blockquotes/hard-breaks coverage — human spot-check recommended
+- CTRL-08: VirtualizedCombobox 500+ item performance — human browser observation deferred
+
+Known deferred items at close: 1 open debug session file (resolved), 0 unresolved items (see STATE.md Deferred Items)
+
+### Archives
+
+- [Roadmap](milestones/v0.4.0-ROADMAP.md)
+- [Requirements](milestones/v0.4.0-REQUIREMENTS.md)
+- [Audit](milestones/v0.4.0-MILESTONE-AUDIT.md)
+
+---
+
 ## v0.3.0 Notifications & Change Tracking (Shipped: 2026-03-29)
 
 **Phases:** 5 | **Plans:** 10 | **Tasks:** 10

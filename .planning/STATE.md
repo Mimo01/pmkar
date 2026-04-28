@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.1.0
-milestone_name: milestone
+milestone: v0.4.0
+milestone_name: Configurable Field Mapping
 status: completed
-stopped_at: context exhaustion at 75% (2026-04-28)
-last_updated: "2026-04-28T21:40:22.319Z"
-last_activity: "2026-04-28 -- Phase 23 Plan 04 complete: full-pipeline integration test (CUTV-02 + CUTV-04), grep gate confirms zero MYPROJ literals in production paths"
+stopped_at: milestone close 2026-04-29
+last_updated: "2026-04-29T00:00:00.000Z"
+last_activity: "2026-04-29 -- v0.4.0 milestone closed: 7 phases, 28 plans, archived to milestones/, tagged v0.4.0"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -18,17 +18,27 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-27)
+See: .planning/PROJECT.md (updated 2026-04-29)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v0.4.0 Configurable Field Mapping — Phase 23 planned, ready to execute
+**Current focus:** Planning next milestone (v0.5.0)
 
 ## Current Position
 
-Phase: 23 (copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks)
-Plan: 4 plans, ALL complete (Plan 01 — copy_pipeline.rs; Plan 02 — audit infrastructure; Plan 03 — copy_ticket_v2 cutover; Plan 04 — integration test)
-Status: Phase 23 COMPLETE — all 28 plans done, milestone v0.4.0 ready
-Last activity: 2026-04-28 -- Phase 23 Plan 04 complete: full-pipeline integration test (CUTV-02 + CUTV-04), grep gate confirms zero MYPROJ literals in production paths
+Milestone v0.4.0 COMPLETE — archived 2026-04-29.
+All 7 phases (17-23), 28 plans done.
+Ready to start v0.5.0 with `/gsd-new-milestone`.
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-04-29:
+
+| Category | Item | Status |
+|----------|------|--------|
+| verification | Phase 22 VERIFICATION.md (PERS-01..04, OVRD-01..06) | code confirmed wired; formal doc deferred |
+| tech-debt | DISC-04 human verification items (probe banner visual, status pill, dismiss/restart) | deferred |
+| tech-debt | TRAN-05 wiki ADF spot-check (links/blockquotes/hard-breaks) | deferred |
+| tech-debt | CTRL-08 VirtualizedCombobox 500+ item browser observation | deferred |
 
 ## Performance Metrics
 

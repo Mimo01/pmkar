@@ -38,30 +38,21 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Configurable notification preferences with per-event toggles — v0.3.0
 - ✓ Change diff view with blue dot indicators and field-level diff table — v0.3.0
 - ✓ Enhanced watch configuration with email domain search and bulk user add — v0.3.0
+- ✓ Field discovery engine: source v2 + target v3 schema discovery with paginated createmeta, FieldSchemaType discriminated union (Rust+TS), SHA-256 schema_hash, field_schema_cache table in mapping.db, 5 Tauri commands (discover/probe/prewarm/refresh), probe banner + ConnectionCard status pill — v0.4.0 Phase 17 (DISC-01, DISC-02, DISC-03, DISC-04)
 - ✓ v2→v3 translation layer: typed gap variants, batch user resolution (TRAN-01/06), ADF post-processor (TRAN-02/05), version/component name→id resolvers (TRAN-03/04), two-phase pipeline — v0.4.0 Phase 18
 - ✓ Mapping persistence: `field_mapping` + `mapping_meta` SQLite tables in `mapping.db`, 5 seeded defaults (description/labels/priority/assignee/reporter), CRUD methods + 3 Tauri commands (get/set/delete_field_mapping) — v0.4.0 Phase 19 (MAP-01, MAP-02)
+- ✓ Renderer registry: 17 Jira field type renderers (String/TextArea/Url/Date/DateTime/Number/Checkbox/Radio/UnsupportedType + User/MultiUser/Group/SingleSelect/MultiSelect/Labels/Component/Version/Priority), VirtualizedCombobox (cmdk + TanStack Virtual, useFlushSync:false for React 19), DynamicTargetForm stateless shell, 7 fieldRenderer.* i18n keys — v0.4.0 Phase 20 (CTRL-01..08)
 - ✓ Mapping Editor Settings UI: Settings → Copying → Field Mapping section with MappingRow auto-save, DriftWarning, SuggestionsPanel heuristics (3-tier: exact-id / normalized-name / synonym set), FieldMappingSection orchestrator, Refresh schema + Last refreshed timestamp, 29 i18n keys (EN+SK), 70 tests — v0.4.0 Phase 21 (DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03)
+- ✓ Copy Preview override panel: IssueTypeChooser (defaults to source-name match), per-copy in-memory overrides, computeGapFields + GapsSection with required-field gating, always-visible person picker with email pre-fill (initialQueriesByFieldId), Copy button disabled until all required fields resolved — v0.4.0 Phase 22 (PERS-01..04, OVRD-01..06) — VERIFICATION.md deferred
 - ✓ copy_ticket_v2: mapping-aware copy command replacing copy_ticket — CopyContext seam, 5 extracted helpers, mapping load + UserResolver + apply_mapping + per-field audit with credential redaction, parameterized target project key (zero MYPROJ literals), full-pipeline integration test with ACME project key — v0.4.0 Phase 23 (CUTV-01, CUTV-02, CUTV-03, CUTV-04)
 
 ### Active
 
-- [ ] Excel export capability (scope TBD)
-- [ ] Excel export capability (scope TBD)
-- [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
-- [ ] Taskbar/dock badge count showing unread change count
-- [ ] In-app notification history panel
-
-## Completed Milestone: v0.4.0 Configurable Field Mapping (2026-04-28)
-
-**Goal:** Replace hardcoded field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly and supports custom fields.
-
-**Delivered:** Field discovery (Phases 17), v2→v3 translation layer (Phase 18), mapping persistence (Phase 19), renderer registry (Phase 20), mapping editor UI (Phase 21), copy preview override panel + required-field gating (Phase 22), copy_ticket_v2 pipeline cutover + integration test (Phase 23). All 7 phases, 28 plans complete. 221 Rust tests, 682 frontend tests passing.
-
-## Shipped Milestones
-
-- **v0.1.0 MVP** — shipped 2026-03-25
-- **v0.3.0 Notifications & Change Tracking** — shipped 2026-03-29
-- **v0.4.0 Configurable Field Mapping** — complete 2026-04-28
+- [ ] Excel export capability (scope TBD) — tracked as EXPRT-01
+- [ ] CopyResultModal step label i18n coverage (raw strings for some steps) — tracked as CONI-01
+- [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
+- [ ] In-app notification history panel — tracked as NHIST-01
+- [ ] Phase 22 VERIFICATION.md — formal verification of PERS-01..04, OVRD-01..06 (code confirmed wired; human verification deferred)
 
 ### Out of Scope
 
@@ -73,12 +64,12 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ## Context
 
-Shipped v0.3.0 with 23,250 LOC (16,048 TypeScript + 7,202 Rust).
-Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf, tauri-plugin-notification).
-528 frontend tests (Vitest), 75 Rust tests.
+Shipped v0.4.0 with ~35,744 LOC (22,718 TypeScript + 13,026 Rust).
+Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf, tauri-plugin-notification). Added: cmdk, @tanstack/react-virtual, sonner.
+682+ frontend tests (Vitest), 221+ Rust tests.
 Local pre-commit hook replaces GitHub Actions CI (lint + type-check + test + clippy + fmt).
 Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
-Background polling with OS notifications and field-level change tracking fully operational.
+Mapping engine fully operational: field discovery → SQLite persistence → renderer registry → copy preview → copy_ticket_v2 pipeline.
 
 ## Constraints
 
@@ -92,11 +83,14 @@ Background polling with OS notifications and field-level change tracking fully o
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Configurable field mapping (v0.4.0) | Hardcoded fields don't survive real-world Jira diversity; custom fields and per-customer schemas need user control | — Pending |
-| Global mapping scope (one mapping for app) | Simpler than per-project-pair or per-issue-type; combined with per-copy override gives flexibility without config explosion | — Pending |
-| Person picker always visible with email-match pre-fill | Avoids silent assignment failures; user sees outcome before commit | — Pending |
-| Block copy on unmapped required target fields | Prevents Jira Cloud rejection mid-pipeline; explicit better than auto-default | — Pending |
-| Target issue type chosen at copy time | Source/target type semantics differ across Jiras; auto-match too brittle | — Pending |
+| Configurable field mapping (v0.4.0) | Hardcoded fields don't survive real-world Jira diversity; custom fields and per-customer schemas need user control | ✓ Good — v0.4.0 |
+| Global mapping scope (one mapping for app) | Simpler than per-project-pair or per-issue-type; combined with per-copy override gives flexibility without config explosion | ✓ Good — v0.4.0 |
+| Person picker always visible with email-match pre-fill | Avoids silent assignment failures; user sees outcome before commit | ✓ Good — v0.4.0 |
+| Block copy on unmapped required target fields | Prevents Jira Cloud rejection mid-pipeline; explicit better than auto-default | ✓ Good — v0.4.0 |
+| Target issue type chosen at copy time | Source/target type semantics differ across Jiras; auto-match too brittle | ✓ Good — v0.4.0 |
+| CopyContext seam for v2 pipeline | Clean boundary for helper extraction; enables testing helpers independently | ✓ Good — v0.4.0 |
+| Hash-based audit redaction by default | PII protection on by default; verbose mode opt-in for debugging | ✓ Good — v0.4.0 |
+| db-per-concern for mapping.db | Follows established pattern (triage.db / snapshot.db / audit.db); avoids cross-domain schema coupling | ✓ Good — v0.4.0 |
 | Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v0.1.0 |
 | OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v0.1.0 |
 | One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v0.1.0 |
@@ -131,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-27 after Phase 19 completion (mapping persistence + CRUD commands)*
+*Last updated: 2026-04-29 after v0.4.0 milestone*

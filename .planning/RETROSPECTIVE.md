@@ -92,6 +92,58 @@
 
 ---
 
+## Milestone: v0.4.0 — Configurable Field Mapping
+
+**Shipped:** 2026-04-29
+**Phases:** 7 (17-23) | **Plans:** 28
+
+### What Was Built
+
+- Field discovery engine — source v2 + target v3 schema discovery with paginated createmeta, FieldSchemaType discriminated union, SHA-256 schema hash, connection-time probe banner and status pill
+- Pure Rust v2→v3 translation pipeline — batch user resolution (no N×M calls), version/component name→id lookups, wiki→ADF with post-processor gap-fills, two-phase apply_mapping
+- Mapping persistence in `mapping.db` — separate SQLite DB per concern, 5 seeded defaults, CRUD Tauri commands
+- Renderer registry — 17 field type renderers including PriorityRenderer, VirtualizedCombobox with TanStack Virtual (cmdk + useFlushSync:false for React 19), DynamicTargetForm stateless shell
+- Mapping Editor in Settings — auto-save rows, drift warnings, 3-tier heuristic suggestions (exact-id / normalized-name / synonym), schema refresh button, 29 i18n keys (EN+SK)
+- Copy Preview override panel — IssueTypeChooser (source-name default), per-copy in-memory overrides, computeGapFields + GapsSection, always-visible person picker with email pre-fill, Copy button disabled until all required fields resolved
+- `copy_ticket_v2` cutover — CopyContext seam, 5 extracted pipeline helpers, audit logging with credential redaction, parameterized target project key (INT-02 debt resolved)
+
+### What Worked
+
+- Quick tasks (`/gsd:quick`) handled high-frequency post-phase bug fixes without disrupting the milestone plan — copy-mandatory-field-warning, duplicate-field-mapping, field-mapping-prefill, priority-renderer were all handled cleanly
+- Debug sessions (`/gsd:debug`) resolved the UNIQUE INDEX / empty-sentinel bug (B-01) systematically with evidence-gathering before coding
+- Milestone audit before close (`/gsd:audit-milestone`) surfaced the missing Phase 22 VERIFICATION.md and allowed making a deliberate defer decision rather than discovering it retroactively
+- db-per-concern pattern scaled correctly — mapping.db added without friction alongside triage.db / snapshot.db / audit.db
+- Wave-based parallel execution within phases (Wave 1 ∥ Wave 2 after scaffold) continued to be effective
+
+### What Was Inefficient
+
+- REQUIREMENTS.md checkbox drift happened again for the third milestone in a row — 34/41 requirements were never ticked off despite all phases being complete
+- Phase 22 VERIFICATION.md was never produced — integration checker confirmed wiring but formal verification was deferred, surfacing only at milestone audit
+- B-05 (user prefill excluded from PREFILLABLE_KINDS) slipped through Phase 22 and required a dedicated quick-task fix after the milestone was nominally complete
+- B-01 (UNIQUE INDEX blocking gap resolution) was a correctness bug that also slipped through Phase 22 — both B-01 and B-05 point to insufficient integration testing for Phase 22 before calling it complete
+
+### Patterns Established
+
+- `computeGapFields` pure function pattern — field validation logic fully decoupled from UI components
+- `initialQueriesByFieldId` threading pattern — pre-fill data flows from store to DynamicTargetForm without component coupling
+- `CopyContext` seam — clean boundary between orchestration (copy_ticket_v2) and helpers (attachment/comment/worklog/subtask/link)
+- Credential pattern sanitizer (Bearer/Basic/JWT/AWS/Slack regexes) as a utility — reusable across audit log contexts
+
+### Key Lessons
+
+1. **Checkbox drift is confirmed systemic** — three milestones now. The retro has named it each time; it needs to be fixed with tooling (automated traceability update at phase completion), not discipline.
+2. **Integration phases need integration tests before SUMMARY** — Phase 22 shipped with B-01 and B-05 undetected. An integration test exercising the full copy preview flow (person picker + required gating + override) before writing 22-04-SUMMARY.md would have caught both.
+3. **VERIFICATION.md should be mandatory for integration phases** — discovery phases and persistence phases can defer; integration phases that wire multiple subsystems together are the highest-value verification targets.
+4. **Quick tasks are underrated** — 6 quick tasks during/after the milestone handled real user-visible issues rapidly without derailing phase planning.
+
+### Cost Observations
+
+- Model mix: primarily sonnet for execution, opus for planning and architecture decisions
+- Sessions: ~12-15 across 3 days (2026-04-26 → 2026-04-29)
+- Notable: 270 commits in 3 days for a 28-plan milestone — highest velocity yet; wave-based parallel plans and established patterns drove efficiency
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -100,6 +152,7 @@
 |-----------|--------|-------|------------|
 | v0.1.0 | 11 | 45 | Baseline established — mock-first, phase-gated, Zustand-centric |
 | v0.3.0 | 5 | 10 | Parallel phase execution, milestone audit before completion, Rust-side background loops |
+| v0.4.0 | 7 | 28 | Quick tasks for post-phase bugs, debug sessions for systematic investigation, wave-based parallel within phases |
 
 ### Cumulative Quality
 
@@ -107,10 +160,13 @@
 |-----------|-------|----------|-----|
 | v0.1.0 | 389 + 28 Rust | 80.11% | 16,284 |
 | v0.3.0 | 528 + 75 Rust | — | 23,250 |
+| v0.4.0 | 682+ frontend + 221+ Rust | — | ~35,744 |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. **Checkbox/traceability drift is systemic** — happened in both v0.1.0 and v0.3.0. Manual updates are insufficient; needs automation.
-2. Mock-first development enables rapid parallel progress but requires discipline on parameterizing config values
-3. Phase verification gates catch real gaps — milestone audits before completion are worth the time investment
-4. Parallel phase execution (when dependency graph allows) significantly improves velocity
+1. **Checkbox/traceability drift is systemic** — happened in all three milestones (v0.1.0, v0.3.0, v0.4.0). Manual updates are insufficient; needs automation at phase completion.
+2. **Integration phases are the highest-risk phases** — v0.4.0 Phase 22 shipped two bugs (B-01, B-05) undetected. Integration phases need integration tests before marking complete.
+3. **VERIFICATION.md matters most for integration phases** — they wire subsystems; informal wiring confirmation is not enough.
+4. Mock-first development enables rapid parallel progress but requires discipline on parameterizing config values
+5. Phase verification gates catch real gaps — milestone audits before completion are worth the time investment
+6. Quick tasks (`/gsd:quick`) + debug sessions (`/gsd:debug`) are production-quality tools, not workarounds — embrace them for post-phase bugs instead of backlogging
