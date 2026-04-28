@@ -1222,7 +1222,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
 
         {/* Section content — scrollable */}
         <div className="flex-1 overflow-y-auto px-8 py-6">
-          <div className="max-w-[560px]">{renderContent()}</div>
+          <div className="max-w-[760px]">{renderContent()}</div>
         </div>
       </div>
     </div>
