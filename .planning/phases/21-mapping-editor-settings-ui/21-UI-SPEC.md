@@ -29,14 +29,14 @@ Source: `components.json` + `src/index.css` (detected from project).
 
 ## Spacing Scale
 
-Declared values (must be multiples of 4):
+Declared values (multiples of 4 only):
 
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps, chip padding, inline element separation |
-| sm | 8px | Compact element spacing, `space-y-0.5` nav stacking (2px visual; 8px unit) |
+| sm | 8px | Compact element spacing |
 | md | 16px | Default element spacing inside section cards, combobox row padding |
-| lg | 24px | Section card inner padding (`p-5` = 20px; section content `py-6` = 24px) |
+| lg | 24px | Section content vertical padding (`py-6`) |
 | xl | 32px | Section content horizontal padding (`px-8`) |
 | 2xl | 48px | Major section breaks |
 | 3xl | 64px | Page-level empty state vertical centering (`py-16`) |
@@ -44,7 +44,9 @@ Declared values (must be multiples of 4):
 Exceptions:
 - Touch targets for [Accept] / [Dismiss] / [Remove] row actions: minimum 32px height (keyboard accessible, compact density)
 - Drift warning badge: 4px padding around icon (xs)
-- Sidebar nav item: `px-3 py-1.5` (12px / 6px) — matches existing NavItem pattern exactly
+
+**Inherited Component Spacing (not a Phase 21 design decision):**
+The existing `NavItem` and nav group sidebar structure in `SettingsPage.tsx` uses `py-1.5` (6px), `mb-1.5` (6px), and `space-y-0.5` (2px) — these are Tailwind defaults baked into the existing component. Phase 21 reuses `NavItem` and the nav group pattern as-is, inheriting their spacing without redeclaring these values as new design tokens. The spacing scale above governs only NEW components introduced by Phase 21.
 
 Source: `SettingsPage.tsx` patterns measured directly.
 
@@ -138,6 +140,8 @@ Position: between "Fetching" group and "Polling" group (after the Fetching `<Sep
 </div>
 <Separator className="my-2" />
 ```
+
+Note: `mb-1.5` and `space-y-0.5` in the snippet above are inherited from the existing nav group pattern in `SettingsPage.tsx` — they appear here as implementation reference only, not as declared spacing tokens.
 
 ### Field Mapping section — content area
 
@@ -377,6 +381,7 @@ No third-party registries declared for this phase.
 | WCAG AA / i18n requirements | `PROJECT.md` |
 | Phase requirements | `REQUIREMENTS.md` DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03 |
 | Typography revision | UI checker block — 2026-04-28 (collapsed 12px into 13px; weight 500 removed) |
+| Spacing revision | UI checker block — 2026-04-28 (removed py-1.5/mb-1.5/space-y-0.5 from declared tokens; documented as inherited component spacing) |
 
 ---
 
