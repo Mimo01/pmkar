@@ -55,15 +55,15 @@ Source: `SettingsPage.tsx` patterns measured directly.
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body / row label | 14px (text-sm) | 400 (normal) | 1.5 |
-| Label / nav item | 13px (text-[13px]) | 400 normal / 600 semibold when active | 1.5 |
+| Label / nav item | 13px (text-[13px]) | 400 (normal) / 600 (semibold) when active | 1.5 |
 | Section heading | 11px (text-[11px]) | 600 (semibold), uppercase, tracking-wider | 1.2 |
 | Group heading | 10px (text-[10px]) | 600 (semibold), uppercase, tracking-widest, muted/70 | 1.2 |
 
 Notes:
 - Active nav item uses `font-semibold text-brand-text` (600 weight)
 - Inactive nav item uses `font-normal text-brand-muted` (400 weight)
-- "Last refreshed Xm ago" timestamp: 12px (text-xs), weight 400, muted color
-- Drift warning text: 13px (text-[13px]), weight 500 (medium), amber/orange color
+- "Last refreshed Xm ago" timestamp: `text-[13px]` weight 400, `text-muted-foreground` — collapsed into the 13px size; the muted color distinguishes it visually without a separate size
+- Drift warning text: 13px (text-[13px]), weight 400 (normal), amber/orange color — the amber color provides sufficient visual differentiation; a third weight is not needed
 
 Source: `SettingsPage.tsx:232–241`, `553–568` measured directly.
 
@@ -150,7 +150,7 @@ Content area: `max-w-[560px]` (inherits from `SettingsPage.tsx:1189`).
 ```
 - `SectionCard` extended with `headerAction` prop renders the right side
 - "Refresh schema" button: `Button` variant="outline" size="sm" with `RefreshCw w-3.5 h-3.5` icon, left of timestamp
-- "Last refreshed" text: `text-xs text-brand-muted` (12px, 400 weight)
+- "Last refreshed" text: `text-[13px] text-muted-foreground` weight 400
 - While refreshing: button shows spinning `Loader2 w-3.5 h-3.5 animate-spin`, disabled
 
 #### Suggestions panel (above table)
@@ -200,7 +200,7 @@ A drifted row replaces its target combobox content with an inline warning:
 labels  [! custom_labels no longer exists ▲ Remove]  [identity ▼]  [×]
 ```
 - Left border: `border-l-2 border-amber-500 pl-2`
-- Warning area: `flex items-center gap-1.5 text-[13px] text-amber-600 dark:text-amber-400`
+- Warning area: `flex items-center gap-1.5 text-[13px] font-normal text-amber-600 dark:text-amber-400`
 - Icon: `AlertTriangle w-3.5 h-3.5`
 - Text: "Field no longer in schema"
 - [Remove] button: inline `Button` variant="ghost" size="sm" `text-destructive` immediately right of warning text
@@ -376,6 +376,7 @@ No third-party registries declared for this phase.
 | Drift warning pattern | `21-CONTEXT.md` D-14, D-15 |
 | WCAG AA / i18n requirements | `PROJECT.md` |
 | Phase requirements | `REQUIREMENTS.md` DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03 |
+| Typography revision | UI checker block — 2026-04-28 (collapsed 12px into 13px; weight 500 removed) |
 
 ---
 
