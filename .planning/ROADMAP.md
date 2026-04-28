@@ -242,7 +242,22 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   2. Existing copy paths for comments, attachments, worklogs, sub-tasks, and the origin remote link continue to work after cutover (full-pipeline integration test against mock target verifies attachments downloadable, comment authors resolved correctly, sub-tasks parented correctly, remote link present).
   3. Every mapping decision, per-copy override, and required-gap fill is recorded in the audit log with hash-based redaction by default and a verbose-mode opt-in for full-value logging, gated by a credential-pattern sanitizer (Bearer/Basic/JWT/AWS/Slack token regexes).
   4. The previously-hardcoded `MYPROJ` cloud project key is parameterized end-to-end (read from `CopyContext` / connection settings) — copying against a Cloud project whose key is not `MYPROJ` succeeds in the integration test.
-**Plans**: TBD
+**Plans**: 4 plans
+
+**Wave 1** *(parallel-safe — disjoint files)*:
+- [ ] 23-01-PLAN.md — copy_pipeline.rs extraction (CopyContext + 5 free helpers; refactor old copy_ticket onto helpers)
+- [ ] 23-02-PLAN.md — TriageDb audit_verbose flag + FieldMappingDb mapping_audit_log table + sanitizer/hasher utilities
+
+**Wave 2** *(blocked on Wave 1 completion)*:
+- [ ] 23-03-PLAN.md — copy_ticket_v2 command (apply_mapping + audit logging) + main.rs invoke_handler swap + frontend confirmCopy IPC swap — depends on 23-01, 23-02
+
+**Wave 3** *(blocked on Wave 2 completion)*:
+- [ ] 23-04-PLAN.md — Full-pipeline integration test (CUTV-02 + CUTV-04) using target_project_key="ACME" — depends on 23-01, 23-02, 23-03
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- `CopyContext` struct (D-09) defined in Plan 23-01, consumed by Plans 23-03 (command body) and 23-04 (integration test)
+- `insert_mapping_audit` / `redact_credential_value` / `hash_field_value` defined in Plan 23-02, wired into Plan 23-03 command body
+- No hardcoded `MYPROJ` literal in production paths — enforced by Plan 23-04 grep gate across commands.rs + copy_pipeline.rs
 **UI hint**: no
 
 ## Progress
@@ -271,4 +286,4 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/5 | Not started | - |
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 0/3 | Not started | - |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/4 | Not started | - |
-| 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/? | Not started | - |
+| 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/4 | Not started | - |
