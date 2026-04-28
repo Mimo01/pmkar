@@ -1,30 +1,46 @@
 ---
 quick_id: 260428-abc
 status: complete
-commit: 4f1bf65
+commit: 7959d56
 date: 2026-04-28
 ---
 
 # Summary: Improve copy unsupported type warnings
 
-## What changed
+## Problem
 
-**Problem:** When copying with clean mapping rules, required fields with types like `priority` or `option-with-child` showed a cryptic badge: "Nepodporovaný typ: priority". Users didn't know if this was an error or what action to take.
+When copying with clean mapping rules, fields with types like `priority` or
+`option-with-child` showed a cryptic badge: "Nepodporovaný typ: priority".
+Users had no idea if this was an error or what to do about it.
 
-**Fix:** In the GapsSection (copy preview), unsupported field types now show a friendly amber message:
-> "Can't fill this field type here — use 'Map field' to copy it automatically."
+## What was built
 
-The "Map field" button is also rendered with `variant="outline"` instead of `ghost` for unsupported rows, making it more visually prominent as the action to take.
+A shared `UnsupportedFieldHint` component that replaces the badge everywhere
+an unsupported field type appears in the copy flow. Renders an amber info box
+(same `amber-500/{opacity}` tokens as `DriftWarning` and `GapsSection`) with
+an `Info` icon, an explanatory message, and a **Map field →** link.
+
+The fix covers both surfaces:
+- **GapsSection** — required fields with no mapping (field can't be filled, needs mapping)
+- **DynamicTargetForm** — mapped/optional fields (field is handled by copy process)
+
+Both now look identical. `DynamicTargetForm` gained an `onMapLink` prop so
+`CopyPreviewModal` and `CopyPreviewPage` can thread the handler through.
 
 ## Files changed
 
 | File | Change |
 |------|--------|
-| `src/features/field-renderers/registry.ts` | Added `isEditableSchemaType()` export |
-| `src/features/tickets/GapsSection.tsx` | GapRow branches on editable vs unsupported |
-| `src/i18n/locales/en.json` | Added `copy.preview.unsupportedGapHint` |
-| `src/i18n/locales/sk.json` | Added Slovak translation |
+| `src/features/field-renderers/UnsupportedFieldHint.tsx` | New shared component |
+| `src/features/field-renderers/registry.ts` | Added `isEditableSchemaType()` |
+| `src/features/field-renderers/DynamicTargetForm.tsx` | Uses shared component + `onMapLink` prop |
+| `src/features/tickets/GapsSection.tsx` | Uses shared component |
+| `src/features/tickets/CopyPreviewModal.tsx` | Passes `onMapLink` to DynamicTargetForm |
+| `src/features/tickets/CopyPreviewPage.tsx` | Passes `onMapLink` to DynamicTargetForm |
+| `src/i18n/locales/en.json` | Single unified key `copy.preview.unsupportedFieldHint` |
+| `src/i18n/locales/sk.json` | Slovak translation |
 | `src/features/tickets/__tests__/GapsSection.test.tsx` | 3 new tests, updated mock |
+| `src/features/field-renderers/__tests__/DynamicTargetForm.test.tsx` | Updated CTRL-07 test |
 
 ## Tests
-12/12 GapsSection tests pass. 86/86 field-renderer tests pass.
+18/18 across GapsSection and DynamicTargetForm test suites.
