@@ -217,151 +217,149 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-6">
-          {/* Ticket header: summary + updated time */}
-          <h1 className="text-base font-semibold text-brand-text mb-1">{detail.fields.summary}</h1>
-          <p className="text-xs text-brand-muted mb-6">
-            {detail.fields.created && (
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        {/* Ticket header: summary + updated time */}
+        <h1 className="text-base font-semibold text-brand-text mb-1">{detail.fields.summary}</h1>
+        <p className="text-xs text-brand-muted mb-6">
+          {detail.fields.created && (
+            <>
+              {t('tickets.card.created', { time: formatDate(detail.fields.created) })}
+              {' · '}
+            </>
+          )}
+          {t('tickets.card.updated', { time: formatRelativeTime(detail.fields.updated) })}
+        </p>
+
+        {/* Action buttons */}
+        <TooltipProvider delayDuration={300}>
+        <div className="flex items-center gap-3 flex-wrap mb-6">
+            {!isCopied && !isIgnored && !isHandled && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handleStartCopy}
+                disabled={copyPhase === 'loading_preview'}
+              >
+                {copyPhase === 'loading_preview' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : null}
+                {t('detail.copy', {
+                  name: targetProjectName || t('wizard.destination.subtitle'),
+                })}
+              </Button>
+            )}
+            {isCopied && triageEntry?.copiedKey ? (
               <>
-                {t('tickets.card.created', { time: formatDate(detail.fields.created) })}
-                {' · '}
+                {/* Linked status badge */}
+                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
+                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.copied')} → {triageEntry.copiedKey}
+                </span>
+                <Button variant="outline" size="sm" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {sourceProjectName || t('wizard.source.subtitle')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
+                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  {triageEntry.copiedKey}
+                </Button>
+              </>
+            ) : (
+              <>
+                {isHandled ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" size="lg" onClick={handleUnhandle}>
+                        {t('detail.handled')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent aria-hidden="true">
+                      {t('detail.handled.tooltip')}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : isIgnored ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="secondary" size="lg" onClick={handleUnignore}>
+                        {t('detail.ignored')}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent aria-hidden="true">
+                      {t('detail.ignored.tooltip')}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                          {t('detail.ignore')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.ignore.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="secondary" size="lg" onClick={handleMarkHandled}>
+                          {t('detail.markHandled')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.markHandled.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                  </>
+                )}
+                <Button variant="outline" size="lg" onClick={handleOpenInJira}>
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
+                  {t('detail.openInJira')}
+                </Button>
               </>
             )}
-            {t('tickets.card.updated', { time: formatRelativeTime(detail.fields.updated) })}
-          </p>
-
-          {/* Action buttons */}
-          <TooltipProvider delayDuration={300}>
-            <div className="flex items-center gap-3 flex-wrap mb-6">
-              {!isCopied && !isIgnored && !isHandled && (
-                <Button
-                  variant="default"
-                  size="lg"
-                  onClick={handleStartCopy}
-                  disabled={copyPhase === 'loading_preview'}
-                >
-                  {copyPhase === 'loading_preview' ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  ) : null}
-                  {t('detail.copy', {
-                    name: targetProjectName || t('wizard.destination.subtitle'),
-                  })}
-                </Button>
-              )}
-              {isCopied && triageEntry?.copiedKey ? (
-                <>
-                  {/* Linked status badge */}
-                  <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
-                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                    {t('detail.copied')} → {triageEntry.copiedKey}
-                  </span>
-                  <Button variant="outline" size="sm" onClick={handleOpenInJira}>
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    {sourceProjectName || t('wizard.source.subtitle')}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                    {triageEntry.copiedKey}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {isHandled ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="secondary" size="lg" onClick={handleUnhandle}>
-                          {t('detail.handled')}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent aria-hidden="true">
-                        {t('detail.handled.tooltip')}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : isIgnored ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="secondary" size="lg" onClick={handleUnignore}>
-                          {t('detail.ignored')}
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent aria-hidden="true">
-                        {t('detail.ignored.tooltip')}
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="secondary" size="lg" onClick={handleIgnore}>
-                            {t('detail.ignore')}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent aria-hidden="true">
-                          {t('detail.ignore.tooltip')}
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button variant="secondary" size="lg" onClick={handleMarkHandled}>
-                            {t('detail.markHandled')}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent aria-hidden="true">
-                          {t('detail.markHandled.tooltip')}
-                        </TooltipContent>
-                      </Tooltip>
-                    </>
-                  )}
-                  <Button variant="outline" size="lg" onClick={handleOpenInJira}>
-                    <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                    {t('detail.openInJira')}
-                  </Button>
-                </>
-              )}
-            </div>
-          </TooltipProvider>
-
-          {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
-
-          {/* Tab bar */}
-          <div className="flex border-b border-brand-border mb-6" role="tablist">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                id={`tab-${tab.id}`}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab.id}
-                aria-controls={`tabpanel-${tab.id}`}
-                onClick={() => setActiveTab(tab.id)}
-                className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
-                  activeTab === tab.id
-                    ? 'text-brand-text font-semibold border-brand'
-                    : 'font-normal text-brand-muted hover:text-brand-text border-transparent'
-                }`}
-              >
-                {tab.label}
-                {tab.id === 'changes' && hasUnseenChanges && (
-                  <Badge className="text-[10px] px-1.5 py-0 min-w-[16px] h-4 leading-none bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 border-0">
-                    {changeCount || '!'}
-                  </Badge>
-                )}
-              </button>
-            ))}
           </div>
+        </TooltipProvider>
 
-          {/* Tab content */}
-          <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
-            {activeTab === 'overview' && <OverviewTab detail={detail} baseUrl={baseUrl} />}
-            {activeTab === 'comments' && <CommentsTab comments={detail.fields.comment.comments} />}
-            {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
-            {activeTab === 'attachments' && (
-              <AttachmentsTab attachments={detail.fields.attachment} />
-            )}
-            {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
-            {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
-          </div>
+        {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
+
+        {/* Tab bar */}
+        <div className="flex border-b border-brand-border mb-6" role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              id={`tab-${tab.id}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`tabpanel-${tab.id}`}
+              onClick={() => setActiveTab(tab.id)}
+              className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
+                activeTab === tab.id
+                  ? 'text-brand-text font-semibold border-brand'
+                  : 'font-normal text-brand-muted hover:text-brand-text border-transparent'
+              }`}
+            >
+              {tab.label}
+              {tab.id === 'changes' && hasUnseenChanges && (
+                <Badge className="text-[10px] px-1.5 py-0 min-w-[16px] h-4 leading-none bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 border-0">
+                  {changeCount || '!'}
+                </Badge>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab content */}
+        <div role="tabpanel" id={`tabpanel-${activeTab}`} aria-labelledby={`tab-${activeTab}`}>
+          {activeTab === 'overview' && <OverviewTab detail={detail} baseUrl={baseUrl} />}
+          {activeTab === 'comments' && <CommentsTab comments={detail.fields.comment.comments} />}
+          {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
+          {activeTab === 'attachments' && (
+            <AttachmentsTab attachments={detail.fields.attachment} />
+          )}
+          {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
+          {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
         </div>
       </div>
     </div>
