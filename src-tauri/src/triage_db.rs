@@ -110,7 +110,7 @@ impl TriageDb {
     /// Detects whether the existing `triage_state` table's `CHECK` constraint already
     /// includes 'handled'. If not, rebuilds the table to widen the constraint.
     /// This is idempotent — running it on a DB that already has 'handled' is a no-op.
-    fn migrate_triage_check_constraint(conn: &Connection) {
+    fn migrate_triage_check_constraint(conn: &Connection) -> AppResult<()> {
         let sql: Option<String> = conn
             .query_row(
                 "SELECT sql FROM sqlite_master WHERE type='table' AND name='triage_state'",
@@ -121,9 +121,10 @@ impl TriageDb {
             .flatten();
         if let Some(existing_sql) = sql {
             if !existing_sql.contains("'handled'") {
-                let _ = conn.execute_batch(MIGRATE_TRIAGE_CHECK_HANDLED);
+                conn.execute_batch(MIGRATE_TRIAGE_CHECK_HANDLED)?;
             }
         }
+        Ok(())
     }
 
     pub fn open(path: &std::path::Path) -> AppResult<Self> {
@@ -133,7 +134,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
-        Self::migrate_triage_check_constraint(&conn);
+        Self::migrate_triage_check_constraint(&conn)?;
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
@@ -153,7 +154,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
-        Self::migrate_triage_check_constraint(&conn);
+        Self::migrate_triage_check_constraint(&conn)?;
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_SOURCE_PROJECT);
