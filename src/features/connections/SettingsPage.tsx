@@ -25,6 +25,7 @@ import { type ThemeMode, useThemeStore } from '../theme/themeStore';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { FetchConfig, JqlPreset, WatchedUser } from '../tickets/types';
 import { AboutSection } from '../update/AboutSection';
+import { FieldMappingSection, FieldMappingSectionHeader } from '../field-mapping/FieldMappingSection';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useConnectionStore } from './connectionStore';
@@ -223,6 +224,7 @@ type ActiveSection =
   | 'destination'
   | 'jql-presets'
   | 'watched-users'
+  | 'field-mapping'
   | 'polling'
   | 'notifications'
   | 'theme'
@@ -1073,6 +1075,16 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
           </SectionCard>
         );
 
+      case 'field-mapping':
+        return (
+          <SectionCard
+            title={t('settings.section.fieldMapping')}
+            headerAction={<FieldMappingSectionHeader />}
+          >
+            <FieldMappingSection />
+          </SectionCard>
+        );
+
       case 'polling':
         return (
           <SectionCard title={t('settings.section.polling')}>
@@ -1153,6 +1165,18 @@ export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
             <div className="space-y-0.5">
               <NavItem section="jql-presets" label={t('settings.nav.jqlPresets')} />
               <NavItem section="watched-users" label={t('settings.nav.watchedUsers')} />
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* Copying group — Phase 21 */}
+          <div className="mb-4">
+            <p className="text-[10px] font-semibold text-brand-muted/70 uppercase tracking-widest mb-1.5 px-3">
+              {t('settings.group.copying')}
+            </p>
+            <div className="space-y-0.5">
+              <NavItem section="field-mapping" label={t('settings.nav.fieldMapping')} />
             </div>
           </div>
 
