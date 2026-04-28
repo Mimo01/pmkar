@@ -2,10 +2,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
-import { Loader2, Plus, RefreshCw, X } from 'lucide-react';
+import { HelpCircle, Loader2, Plus, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
 import { useConnectionStore } from '@/features/connections/connectionStore';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
@@ -323,7 +324,19 @@ export function FieldMappingSection() {
       <div className="grid grid-cols-[35fr_35fr_20fr_10fr] gap-3 pb-2 mb-2 border-b border-brand-border text-[11px] font-semibold text-brand-muted uppercase tracking-wider">
         <span>{t('settings.fieldMapping.colSource')}</span>
         <span>{t('settings.fieldMapping.colTarget')}</span>
-        <span>{t('settings.fieldMapping.colTransformer')}</span>
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex items-center gap-1 cursor-default">
+                {t('settings.fieldMapping.colTransformer')}
+                <HelpCircle className="h-3 w-3 text-brand-muted/60" aria-hidden="true" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[220px] text-xs">
+              {t('settings.fieldMapping.colTransformerHelp')}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <span aria-hidden="true" />
       </div>
 
@@ -339,6 +352,7 @@ export function FieldMappingSection() {
             <MappingRow
               key={row.sourceFieldId}
               row={row}
+              sourceName={sourceFields.find((f) => f.fieldId === row.sourceFieldId)?.name}
               targetFields={targetFields}
               isDrifted={driftedSourceFieldIds.has(row.sourceFieldId)}
               onRowUpdate={updateRow}

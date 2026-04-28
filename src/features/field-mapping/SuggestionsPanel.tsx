@@ -77,9 +77,14 @@ export function SuggestionsPanel({ suggestions, onAccept, onDismiss }: Suggestio
       <div className="mt-2 divide-y divide-brand-border">
         {suggestions.map((s) => (
           <div key={s.sourceFieldId} className="flex items-center gap-2 py-1.5 text-sm">
-            <span className="truncate text-brand-text-secondary" title={s.sourceFieldId}>
-              {s.sourceFieldId}
-            </span>
+            <div className="min-w-0">
+              <span className="block truncate text-brand-text" title={s.sourceName}>
+                {s.sourceName}
+              </span>
+              <span className="block text-[11px] text-brand-muted truncate" title={s.sourceFieldId}>
+                {s.sourceFieldId}
+              </span>
+            </div>
             <span className="text-brand-muted px-1" aria-hidden="true">→</span>
             <span className="truncate text-brand-text" title={s.target.name}>
               {s.target.name}

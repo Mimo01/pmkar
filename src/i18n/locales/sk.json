@@ -356,6 +356,7 @@
   "settings.fieldMapping.colSource": "Zdrojové pole",
   "settings.fieldMapping.colTarget": "Cieľové pole",
   "settings.fieldMapping.colTransformer": "Transformátor",
+  "settings.fieldMapping.colTransformerHelp": "Ako sa hodnota prevedie pri kopírovaní do cieľovej Jiry",
   "settings.fieldMapping.sourcePlaceholder": "Vyberte zdrojové pole",
   "settings.fieldMapping.cancelAdd": "Zrušiť nové mapovanie",
   "settings.fieldMapping.targetPlaceholder": "Vyberte cieľové pole",

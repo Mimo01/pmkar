@@ -12,13 +12,14 @@ import { getTransformerOptions, type TransformerOption } from './transformerOpti
 
 export interface MappingRowProps {
   row: FieldMappingRow;
+  sourceName?: string;
   targetFields: FieldSchema[];
   isDrifted: boolean;
   onRowUpdate: (row: FieldMappingRow) => void;
   onRowDelete: (sourceFieldId: string) => void;
 }
 
-export function MappingRow({ row, targetFields, isDrifted, onRowUpdate, onRowDelete }: MappingRowProps) {
+export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpdate, onRowDelete }: MappingRowProps) {
   const { t } = useTranslation();
   const [feedback, setFeedback] = useState<'saved' | null>(null);
 
@@ -77,9 +78,16 @@ export function MappingRow({ row, targetFields, isDrifted, onRowUpdate, onRowDel
         isDrifted && 'border-l-2 border-l-amber-500 pl-2',
       )}
     >
-      <span className="text-sm text-brand-text-secondary truncate" title={row.sourceFieldId}>
-        {row.sourceFieldId}
-      </span>
+      <div className="min-w-0">
+        <span className="block text-sm text-brand-text truncate" title={sourceName ?? row.sourceFieldId}>
+          {sourceName ?? row.sourceFieldId}
+        </span>
+        {sourceName && (
+          <span className="block text-[11px] text-brand-muted truncate" title={row.sourceFieldId}>
+            {row.sourceFieldId}
+          </span>
+        )}
+      </div>
 
       {/* Target column: combobox OR DriftWarning */}
       {isDrifted ? (
@@ -114,6 +122,12 @@ export function MappingRow({ row, targetFields, isDrifted, onRowUpdate, onRowDel
           filterFn={(o, q) => o.label.toLowerCase().includes(q.toLowerCase())}
           placeholder={t('settings.fieldMapping.transformerPlaceholder')}
           ariaLabel={`${row.sourceFieldId} transformer`}
+          renderItem={(o) => (
+            <div>
+              <span className="text-sm">{o.label}</span>
+              <span className="block text-xs text-muted-foreground">{o.description}</span>
+            </div>
+          )}
         />
       </div>
 
