@@ -332,18 +332,20 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                 >
                   {t('copy.targetProject')}
                 </label>
-                <VirtualizedCombobox<{ key: string; name: string }>
-                  items={cloudProjects}
-                  value={cloudProjects.find((p) => p.key === targetProjectKey) ?? null}
-                  onChange={(p) => setTargetProjectKey(p.key)}
-                  displayLabel={(p) => `${p.name} (${p.key})`}
-                  filterFn={(p, q) =>
-                    p.name.toLowerCase().includes(q.toLowerCase()) ||
-                    p.key.toLowerCase().includes(q.toLowerCase())
-                  }
-                  placeholder={t('settings.project.select')}
-                  ariaLabel={t('copy.targetProject')}
-                />
+                <div className="[&_button]:min-h-9">
+                  <VirtualizedCombobox<{ key: string; name: string }>
+                    items={cloudProjects}
+                    value={cloudProjects.find((p) => p.key === targetProjectKey) ?? null}
+                    onChange={(p) => setTargetProjectKey(p.key)}
+                    displayLabel={(p) => `${p.name} (${p.key})`}
+                    filterFn={(p, q) =>
+                      p.name.toLowerCase().includes(q.toLowerCase()) ||
+                      p.key.toLowerCase().includes(q.toLowerCase())
+                    }
+                    placeholder={t('settings.project.select')}
+                    ariaLabel={t('copy.targetProject')}
+                  />
+                </div>
               </div>
 
               {/* Issue-type chooser (D-03..D-06) */}
