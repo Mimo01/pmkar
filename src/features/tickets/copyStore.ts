@@ -1,6 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
 import { useConnectionStore } from '../connections/connectionStore';
+import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
+import type { FieldSchema } from '@/types/fieldSchema';
 import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
 
 interface CopyState {
@@ -27,6 +29,11 @@ interface CopyState {
   // Progress step label
   progressStep: string;
 
+  // Phase 22 override state (D-11 / D-12 / D-13)
+  targetIssueTypeId: string | null;
+  overrideValues: Record<string, unknown>;
+  resolvedTargetFields: FieldSchema[];
+
   // Actions
   startPreview: (
     ticket: JiraTicketDetail,
@@ -41,6 +48,12 @@ interface CopyState {
   toggleLabel: (label: string) => void;
   confirmCopy: (sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
   reset: () => void;
+
+  // Phase 22 actions (D-11)
+  setTargetIssueTypeId: (id: string) => Promise<void>;
+  setResolvedTargetFields: (fields: FieldSchema[]) => void;
+  setOverrideValue: (fieldId: string, v: unknown) => void;
+  clearOverrides: () => void;
 }
 
 const initialState = {
@@ -58,6 +71,10 @@ const initialState = {
   result: null,
   error: null,
   progressStep: '',
+  // Phase 22 (D-11):
+  targetIssueTypeId: null as string | null,
+  overrideValues: {} as Record<string, unknown>,
+  resolvedTargetFields: [] as FieldSchema[],
 };
 
 export const useCopyStore = create<CopyState>((set, get) => ({
@@ -107,6 +124,44 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         targetStatus: defaultStatus,
         targetPriorityId: defaultPriorityId,
       });
+
+      // Phase 22: pre-warm + default issue-type selection (D-04, D-05)
+      try {
+        const projectKey = useConnectionStore.getState().targetProjectKey ?? '';
+        if (projectKey) {
+          const cacheStore = useSchemaCacheStore.getState();
+          let prewarmed = cacheStore.prewarmedIssueTypes[projectKey] ?? [];
+          if (prewarmed.length === 0) {
+            await cacheStore.preWarm(projectKey);
+            prewarmed = useSchemaCacheStore.getState().prewarmedIssueTypes[projectKey] ?? [];
+          }
+          if (prewarmed.length > 0) {
+            const sourceTypeName = ticket.fields.issuetype?.name ?? '';
+            const matched = sourceTypeName
+              ? prewarmed.find(
+                  (it) => it.name.toLowerCase() === sourceTypeName.toLowerCase(),
+                )
+              : null;
+            const defaultTypeId = matched?.id ?? prewarmed[0]?.id ?? null;
+            if (defaultTypeId) {
+              await useSchemaCacheStore
+                .getState()
+                .loadSchema('target', projectKey, defaultTypeId);
+              const entry =
+                useSchemaCacheStore.getState().cache[
+                  schemaCacheKey('target', projectKey, defaultTypeId)
+                ];
+              set({
+                targetIssueTypeId: defaultTypeId,
+                resolvedTargetFields: entry?.fields ?? [],
+              });
+            }
+          }
+        }
+      } catch (innerErr) {
+        // Schema pre-warm failures must NOT block the existing preview UX (graceful degradation D-04).
+        console.error('[copyStore] issue-type pre-warm failed:', innerErr);
+      }
     } catch (err) {
       console.error('[copyStore] fetch_cloud_meta failed:', err);
       set({
@@ -130,6 +185,28 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       set({ selectedLabels: [...current, label] });
     }
   },
+
+  setTargetIssueTypeId: async (id) => {
+    if (!id) {
+      set({ targetIssueTypeId: null, resolvedTargetFields: [] });
+      return;
+    }
+    set({ targetIssueTypeId: id });
+    const projectKey = get().targetProjectKey;
+    if (!projectKey) return;
+    await useSchemaCacheStore.getState().loadSchema('target', projectKey, id);
+    const entry =
+      useSchemaCacheStore.getState().cache[schemaCacheKey('target', projectKey, id)];
+    set({ resolvedTargetFields: entry?.fields ?? [] });
+  },
+
+  setResolvedTargetFields: (fields) => set({ resolvedTargetFields: fields }),
+
+  setOverrideValue: (fieldId, v) =>
+    set({ overrideValues: { ...get().overrideValues, [fieldId]: v } }),
+
+  clearOverrides: () =>
+    set({ targetIssueTypeId: null, overrideValues: {}, resolvedTargetFields: [] }),
 
   confirmCopy: async (sourceBaseUrl, cloudBaseUrl) => {
     const state = get();
