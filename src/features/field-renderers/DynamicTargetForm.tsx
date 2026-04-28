@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import type { FieldSchema } from '@/types/fieldSchema';
-import { getRenderer } from './registry';
+import { getRenderer, isEditableSchemaType } from './registry';
 import type { SearchCallbacks } from './types';
 
 export interface DynamicTargetFormProps {
@@ -18,11 +19,13 @@ export function DynamicTargetForm({
   searchCallbacks,
   initialQueries,
 }: DynamicTargetFormProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-6">
       {fields.map((field) => {
         const Renderer = getRenderer(field.schema);
         const labelId = `${field.fieldId}-label`;
+        const isEditable = isEditableSchemaType(field.schema);
         // Route onSearchUsers only to user/multi-user pickers (D-05)
         const isUserPicker =
           field.schema.type === 'user' ||
@@ -41,14 +44,23 @@ export function DynamicTargetForm({
                 </span>
               )}
             </label>
-            <Renderer
-              field={field}
-              value={values[field.fieldId]}
-              onChange={(v) => onChange(field.fieldId, v)}
-              required={field.required}
-              onSearch={isUserPicker ? searchCallbacks?.onSearchUsers : undefined}
-              initialQuery={initialQueries?.[field.fieldId]}
-            />
+            {isEditable ? (
+              <Renderer
+                field={field}
+                value={values[field.fieldId]}
+                onChange={(v) => onChange(field.fieldId, v)}
+                required={field.required}
+                onSearch={isUserPicker ? searchCallbacks?.onSearchUsers : undefined}
+                initialQuery={initialQueries?.[field.fieldId]}
+              />
+            ) : (
+              <p
+                className="text-xs text-muted-foreground italic"
+                data-testid={`unsupported-field-${field.fieldId}`}
+              >
+                {t('copy.preview.unsupportedFieldHint')}
+              </p>
+            )}
           </div>
         );
       })}

@@ -94,12 +94,12 @@ describe('DynamicTargetForm', () => {
     ).not.toThrow();
   });
 
-  it('CTRL-07 routes type=any to UnsupportedTypeRenderer (read-only Badge with role=status)', () => {
+  it('CTRL-07 shows informational hint for unsupported types (no editable input, no error badge)', () => {
     render(
       <DynamicTargetForm fields={[unknownField]} values={{}} onChange={vi.fn()} />,
     );
-    expect(screen.getByRole('status')).toBeInTheDocument();
-    // No editable input present for the unsupported field
+    expect(screen.getByTestId('unsupported-field-cf_strange')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 });

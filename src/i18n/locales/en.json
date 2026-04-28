@@ -128,6 +128,7 @@
   "copy.preview.gapsHeader": "Required fields with no mapping",
   "copy.preview.mapLink": "Map field",
   "copy.preview.unsupportedGapHint": "Can't fill this field type here — use 'Map field' to copy it automatically.",
+  "copy.preview.unsupportedFieldHint": "Can't edit this field type manually — it will be handled by the copy process.",
   "copy.preview.missingFields": "Fill in required fields: {{fields}}",
   "copy.result.complete": "Copy Complete",
   "copy.result.withErrors": "Copy Finished with Errors",
