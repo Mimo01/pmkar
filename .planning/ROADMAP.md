@@ -210,7 +210,27 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   4. User sees the Copy button disabled with an inline tooltip listing missing required fields until every target-required field has a resolved value; the button enables the instant the last gap is filled.
   5. User sees the person picker rendered for every person and multi-person field — even when an exact-email match is found (the match is shown as a green-check pre-fill), and the picker stays visible (with no error) when source has no email due to Cloud privacy mode.
   6. User can search target users by name or email inside the picker (reusing the Phase 16 user-search command) and see required-but-unmapped target fields surfaced inline at the top of the panel with a clear "fill in or map" affordance.
-**Plans**: TBD
+**Plans**: 4 plans
+
+**Wave 1** *(foundation — store contract)*:
+- [ ] 22-01-PLAN.md — copyStore.ts extension with override + issue-type state (targetIssueTypeId, overrideValues, resolvedTargetFields), schema-aware setTargetIssueTypeId, startPreview pre-warm + name-match default selection, reset clears all override state — covers OVRD-01/02/03/06
+
+**Wave 2** *(parallel-safe leaf components — disjoint files)*:
+- [ ] 22-02-PLAN.md — IssueTypeChooser.tsx component: VirtualizedCombobox of IssueTypeRefs, three-state defaulted-notice logic, inline loading spinner, [&_button]:min-h-9 wrapper — depends on 22-01; covers OVRD-01/02
+- [ ] 22-03-PLAN.md — computeGapFields.ts pure function + GapsSection.tsx amber-bordered component with renderer-registry-dispatched fill-ins and Map field link — depends on 22-01; covers OVRD-04/05
+
+**Wave 3** *(integration — wire everything into CopyPreviewPage)*:
+- [ ] 22-04-PLAN.md — CopyPreviewPage + CopyPreviewModal right-column rebuild (chooser + summary + gaps + DynamicTargetForm + Tooltip-gated Copy button), DynamicTargetForm.initialQueries prop for email pre-fill, search_jira_users_by_domain wiring with domain-extract heuristic, SettingsPage.initialSection prop, App.tsx onOpenSettingsSection wiring, 8 new copy.preview.* i18n keys with en/sk parity, human-verify checkpoint — depends on 22-01, 22-02, 22-03; covers PERS-01/02/03/04, OVRD-01..06
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- `copyStore.targetIssueTypeId / overrideValues / resolvedTargetFields` contract (D-11) defined in Plan 22-01 and consumed by Plans 22-02 (chooser value), 22-03 (gap computation input), 22-04 (form values + initialQueries derivation)
+- Empty-string `targetFieldId` sentinel from Phase 21 — `computeGapFields` (Plan 22-03) MUST treat empty-string as NOT covering; `MappingRow` consumers in Phase 21 already handle this on the editor side
+- `summary` field is unconditionally excluded from gaps (D-01) — enforced once in `computeGapFields` (Plan 22-03) and the form filter (Plan 22-04)
+- VirtualizedCombobox compactness `[&_button]:min-h-9` (Phase 21 pattern) applied to IssueTypeChooser (Plan 22-02) and gap-row controls (Plan 22-03)
+- D-01 (no invoke in renderers): grep gate `grep -c '@tauri-apps/api/core' src/features/tickets/IssueTypeChooser.tsx src/features/tickets/GapsSection.tsx src/features/tickets/computeGapFields.ts` must return 0 — Tauri calls live only in CopyPreviewPage (Plan 22-04) and copyStore (Plan 22-01)
+- i18n parity: 8 new `copy.preview.*` keys MUST exist with identical key sets in en.json + sk.json (Plan 22-04 owns; consumers in Plans 22-02 + 22-03 reference the keys)
+- `onSearchUsers` is a single shared callback (`searchUsersForPicker`) defined in Plan 22-04 and threaded into BOTH GapsSection (Plan 22-03 consumer) and DynamicTargetForm (Plan 22-04 direct consumer); domain-extract heuristic lives only in Plan 22-04
+
 **UI hint**: yes
 
 ### Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks
@@ -250,5 +270,5 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/2 | Not started | - |
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/5 | Not started | - |
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 0/3 | Not started | - |
-| 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/? | Not started | - |
+| 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/4 | Not started | - |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/? | Not started | - |
