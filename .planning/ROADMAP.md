@@ -47,7 +47,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] **Phase 17: Field Discovery + Mock Schema Fidelity** - Source v2 + target v3 schema discovery with paginated createmeta, custom-field type detection, and mock fixtures exercising the renderer registry
 - [x] **Phase 18: v2→v3 Translation Layer** - Pure Rust transformer pipeline for user/version/component lookups and wiki→ADF gap-fill
 - [x] **Phase 19: Mapping Persistence + CRUD Commands** - New `mapping.db` SQLite database with schema cache, mapping rows, and seeded defaults — completed 2026-04-27
-- [ ] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers
+- [x] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers — completed 2026-04-28
 - [ ] **Phase 21: Mapping Editor (Settings UI)** - Settings page for editing the global mapping with name-match suggestions, manual schema refresh, and drift warnings
 - [ ] **Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating** - Integration phase that wires the mapping engine into CopyPreviewModal with always-visible person picker and reactive required-field gating
 - [ ] **Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks** - Cutover phase with `CopyContext` seam, helper extraction, full-pipeline integration test, audit redaction, and `MYPROJ` debt fix
