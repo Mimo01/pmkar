@@ -4,7 +4,7 @@
 
 - ✅ **v0.1.0 MVP** — Phases 1-11 (shipped 2026-03-25)
 - ✅ **v0.3.0 Notifications & Change Tracking** — Phases 12-16 (shipped 2026-03-29)
-- 🚧 **v0.4.0 Configurable Field Mapping** — Phases 17-23 (in progress)
+- ✅ **v0.4.0 Configurable Field Mapping** — Phases 17-23 (complete 2026-04-28)
 
 ## Phases
 
@@ -40,7 +40,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 
 </details>
 
-### 🚧 v0.4.0 Configurable Field Mapping (In Progress)
+### ✅ v0.4.0 Configurable Field Mapping (COMPLETE — 2026-04-28)
 
 **Milestone Goal:** Replace the hardcoded core-field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly, supports custom fields, gates on required-field completeness, and surfaces every mapping decision in the audit log. Comments, attachments, worklogs, sub-tasks, summary, and the origin remote link stay hardcoded inside the existing copy pipeline; the mapping engine governs core fields and custom fields only.
 
@@ -49,8 +49,8 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] **Phase 19: Mapping Persistence + CRUD Commands** - New `mapping.db` SQLite database with schema cache, mapping rows, and seeded defaults — completed 2026-04-27
 - [x] **Phase 20: Renderer Registry + Field-Type-Aware Controls** - Component-per-type registry covering 15+ Jira field types with virtualized pickers — completed 2026-04-28
 - [x] **Phase 21: Mapping Editor (Settings UI)** - Settings page for editing the global mapping with name-match suggestions, manual schema refresh, and drift warnings — completed 2026-04-28
-- [ ] **Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating** - Integration phase that wires the mapping engine into CopyPreviewModal with always-visible person picker and reactive required-field gating
-- [ ] **Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks** - Cutover phase with `CopyContext` seam, helper extraction, full-pipeline integration test, audit redaction, and `MYPROJ` debt fix
+- [x] **Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating** - Integration phase that wires the mapping engine into CopyPreviewModal with always-visible person picker and reactive required-field gating — completed 2026-04-28
+- [x] **Phase 23: copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks** - Cutover phase with `CopyContext` seam, helper extraction, full-pipeline integration test, audit redaction, and `MYPROJ` debt fix — completed 2026-04-28
 
 ## Phase Details
 
@@ -252,7 +252,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] 23-03-PLAN.md — copy_ticket_v2 command (apply_mapping + audit logging) + main.rs invoke_handler swap + frontend confirmCopy IPC swap — depends on 23-01, 23-02
 
 **Wave 3** *(blocked on Wave 2 completion)*:
-- [ ] 23-04-PLAN.md — Full-pipeline integration test (CUTV-02 + CUTV-04) using target_project_key="ACME" — depends on 23-01, 23-02, 23-03
+- [x] 23-04-PLAN.md — Full-pipeline integration test (CUTV-02 + CUTV-04) using target_project_key="ACME" — depends on 23-01, 23-02, 23-03
 
 **Cross-cutting constraints** *(truths shared by 2+ plans)*:
 - `CopyContext` struct (D-09) defined in Plan 23-01, consumed by Plans 23-03 (command body) and 23-04 (integration test)
@@ -280,10 +280,10 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 14. Notification Dispatch | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 15. Change Diff View | v0.3.0 | 2/2 | Complete | 2026-03-28 |
 | 16. Enhanced Watch Configuration | v0.3.0 | 2/2 | Complete | 2026-03-29 |
-| 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 0/5 | Not started | - |
-| 18. v2→v3 Translation Layer | v0.4.0 | 0/5 | Not started | - |
-| 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/2 | Not started | - |
-| 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/5 | Not started | - |
-| 21. Mapping Editor (Settings UI) | v0.4.0 | 0/3 | Not started | - |
-| 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/4 | Not started | - |
-| 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/4 | Not started | - |
+| 17. Field Discovery + Mock Schema Fidelity | v0.4.0 | 5/5 | Complete | 2026-04-28 |
+| 18. v2→v3 Translation Layer | v0.4.0 | 5/5 | Complete | 2026-04-28 |
+| 19. Mapping Persistence + CRUD Commands | v0.4.0 | 2/2 | Complete | 2026-04-27 |
+| 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 5/5 | Complete | 2026-04-28 |
+| 21. Mapping Editor (Settings UI) | v0.4.0 | 3/3 | Complete | 2026-04-28 |
+| 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 4/4 | Complete | 2026-04-28 |
+| 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
