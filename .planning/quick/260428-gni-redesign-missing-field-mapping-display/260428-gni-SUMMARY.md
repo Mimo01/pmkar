@@ -21,5 +21,16 @@ date: 2026-04-28
 
 **en.json / sk.json** — New translation key `copy.preview.fieldNoManualInput` ("No manual input" / "Bez manuálneho vstupu") for the GapRow placeholder.
 
+## Final iterations (user feedback)
+- Removed group container — each field is now independent (no shared amber box)
+- Removed "Required fields with no mapping" header — amber cards are self-explanatory
+- Label styled standard (`text-xs font-medium text-foreground`) — only content is amber
+- Layout changed to label-above-content matching `DynamicTargetForm` exactly
+- Non-editable content uses `UnsupportedFieldHint` (amber box) instead of custom placeholder
+- `UnsupportedFieldHint` map link button unified to `<Button variant="ghost" size="sm">` so all "Mapovať pole" buttons look identical
+
+## Final commit: f25b566
+## Status: Approved
+
 ## Test results
-23/23 tests pass (GapsSection, DynamicTargetForm, UnsupportedTypeRenderer).
+18/18 tests pass (GapsSection, DynamicTargetForm).
