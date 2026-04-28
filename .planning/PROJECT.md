@@ -40,6 +40,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Enhanced watch configuration with email domain search and bulk user add — v0.3.0
 - ✓ v2→v3 translation layer: typed gap variants, batch user resolution (TRAN-01/06), ADF post-processor (TRAN-02/05), version/component name→id resolvers (TRAN-03/04), two-phase pipeline — v0.4.0 Phase 18
 - ✓ Mapping persistence: `field_mapping` + `mapping_meta` SQLite tables in `mapping.db`, 5 seeded defaults (description/labels/priority/assignee/reporter), CRUD methods + 3 Tauri commands (get/set/delete_field_mapping) — v0.4.0 Phase 19 (MAP-01, MAP-02)
+- ✓ Mapping Editor Settings UI: Settings → Copying → Field Mapping section with MappingRow auto-save, DriftWarning, SuggestionsPanel heuristics (3-tier: exact-id / normalized-name / synonym set), FieldMappingSection orchestrator, Refresh schema + Last refreshed timestamp, 29 i18n keys (EN+SK), 70 tests — v0.4.0 Phase 21 (DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03)
 
 ### Active
 
