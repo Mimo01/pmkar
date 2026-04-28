@@ -73,6 +73,12 @@ function App() {
   }, []);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [settingsInitialSection, setSettingsInitialSection] = useState<
+    | 'source' | 'destination' | 'jql-presets' | 'watched-users'
+    | 'field-mapping' | 'polling' | 'notifications' | 'theme'
+    | 'language' | 'about'
+    | undefined
+  >(undefined);
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
   const [currentTab, setCurrentTab] = useState<'new' | 'not-mine' | 'linked'>('new');
   const [showAuditLog, setShowAuditLog] = useState(false);
@@ -110,6 +116,17 @@ function App() {
     useTicketStore.getState().selectTicket(null);
   }, []);
 
+  const handleOpenSettingsSection = useCallback(
+    (section: 'field-mapping') => {
+      setShowDetail(false);
+      setDetailTicketKey(null);
+      useTicketStore.getState().selectTicket(null);
+      setSettingsInitialSection(section);
+      setShowSettings(true);
+    },
+    [],
+  );
+
   // Wait for hydration before deciding what to show
   if (!hydrated) {
     return null;
@@ -141,11 +158,16 @@ function App() {
       <ErrorBoundary>
         <AppShell>
           <SettingsPage
-            onClose={() => setShowSettings(false)}
+            onClose={() => {
+              setShowSettings(false);
+              setSettingsInitialSection(undefined);
+            }}
             onEdit={(connectionType) => {
               setShowSettings(false);
+              setSettingsInitialSection(undefined);
               setEditStep(connectionType);
             }}
+            initialSection={settingsInitialSection}
           />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
@@ -179,7 +201,7 @@ function App() {
             copyPhase === 'result' ? (
               <CopyResultPage />
             ) : (
-              <CopyPreviewPage />
+              <CopyPreviewPage onOpenSettingsSection={handleOpenSettingsSection} />
             )
           ) : (
             <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />

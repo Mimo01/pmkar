@@ -199,6 +199,7 @@ function ProjectSelector({ connectionType, baseUrl, currentKey, onSelect }: Proj
 interface SettingsPageProps {
   onClose: () => void;
   onEdit?: (connectionType: ConnectionType) => void;
+  initialSection?: ActiveSection;
 }
 
 interface JiraUser {
@@ -253,10 +254,10 @@ function SectionCard({
   );
 }
 
-export function SettingsPage({ onClose, onEdit: _onEdit }: SettingsPageProps) {
+export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: SettingsPageProps) {
   const { t } = useTranslation();
 
-  const [activeSection, setActiveSection] = useState<ActiveSection>('source');
+  const [activeSection, setActiveSection] = useState<ActiveSection>(initialSection ?? 'source');
 
   const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
     {
