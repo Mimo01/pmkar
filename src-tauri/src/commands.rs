@@ -3,6 +3,9 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::audit::{build_audited_client, AuditDb, AuditEntry};
+use crate::copy_pipeline::{
+    add_remote_link, copy_attachments, copy_comments, copy_subtasks, copy_worklogs, CopyContext,
+};
 use crate::error::AppError;
 use crate::fixtures::SharedFixtures;
 use crate::keychain;
@@ -1825,400 +1828,41 @@ pub async fn copy_ticket(
         },
     });
 
+    // Phase 23 D-08/D-09 — construct CopyContext and delegate the remaining
+    // helper blocks (remote link, attachments, comments, worklogs, subtasks)
+    // to the extracted free helpers. copy_ticket_v2 (Plan 23-03) reuses the
+    // same helpers — refactoring the OLD path first proves they work before
+    // copy_ticket is deleted.
+    let ctx = CopyContext {
+        client: client.clone(),
+        cloud_auth: cloud_auth.clone(),
+        server_pat: server_pat.clone(),
+        source_base_url: trimmed_source.to_string(),
+        target_base_url: trimmed_target.to_string(),
+        source_key: source_key.clone(),
+        target_key: target_key.clone(),
+        target_project_key: target_project_key.clone(),
+    };
+
     // Step 8: Add remote link back to source ticket (origin tracking, D-15)
-    let encoded_source_url = urlencoding::encode(trimmed_source).to_string();
-    let remote_link_body = serde_json::json!({
-        "globalId": format!("pmkar-source={}&key={}", encoded_source_url, source_key),
-        "object": {
-            "url": format!("{}/browse/{}", trimmed_source, source_key),
-            "title": format!("{}: {}", source_key, source_summary)
-        },
-        "relationship": "copied from"
-    });
-    let remote_link_body_str = serde_json::to_string(&remote_link_body).map_err(|e| {
-        AppError::Serialization(format!("Failed to serialize remotelink body: {e}"))
-    })?;
-
-    let remotelink_resp = client
-        .post(format!(
-            "{trimmed_target}/rest/api/3/issue/{target_key}/remotelink"
-        ))
-        .header("Authorization", &cloud_auth)
-        .header("Content-Type", "application/json")
-        .body(remote_link_body_str)
-        .send()
-        .await
-        .map_err(|_| AppError::Http("Failed to create remote link in Cloud Jira".into()))?;
-
-    let remotelink_status = remotelink_resp.status().as_u16();
-    let remotelink_success = remotelink_status < 300;
-    steps.push(CopyStepResult {
-        step: "add_remotelink".to_string(),
-        success: remotelink_success,
-        detail: if remotelink_success {
-            None
-        } else {
-            Some(format!(
-                "Remote link creation returned status {remotelink_status}"
-            ))
-        },
-    });
+    steps.push(add_remote_link(&ctx, &source_summary).await);
 
     // Attachment copy loop (per D-05, D-06)
-    let attachments = source_body["fields"]["attachment"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-
-    for att in &attachments {
-        let download_url = att["content"].as_str().unwrap_or("");
-        let filename = att["filename"].as_str().unwrap_or("file").to_string();
-        let mime = att["mimeType"]
-            .as_str()
-            .unwrap_or("application/octet-stream")
-            .to_string();
-
-        if download_url.is_empty() {
-            steps.push(CopyStepResult {
-                step: format!("attach:{filename}"),
-                success: false,
-                detail: Some("No download URL".to_string()),
-            });
-            continue;
-        }
-
-        // Download from source
-        let dl_resp = client
-            .get(download_url)
-            .header("Authorization", format!("Bearer {server_pat}"))
-            .send()
-            .await;
-
-        match dl_resp {
-            Ok(resp) if resp.status().is_success() => match resp.bytes().await {
-                Ok(file_bytes) => {
-                    let plain_client = reqwest::Client::new();
-                    let part = reqwest::multipart::Part::bytes(file_bytes.to_vec())
-                        .file_name(filename.clone())
-                        .mime_str(&mime)
-                        .unwrap_or_else(|_| {
-                            reqwest::multipart::Part::bytes(file_bytes.to_vec())
-                                .file_name(filename.clone())
-                        });
-                    let form = reqwest::multipart::Form::new().part("file", part);
-
-                    let up_resp = plain_client
-                        .post(format!(
-                            "{trimmed_target}/rest/api/3/issue/{target_key}/attachments"
-                        ))
-                        .header("Authorization", &cloud_auth)
-                        .header("X-Atlassian-Token", "no-check")
-                        .multipart(form)
-                        .send()
-                        .await;
-
-                    match up_resp {
-                        Ok(r) if r.status().is_success() => {
-                            steps.push(CopyStepResult {
-                                step: format!("attach:{filename}"),
-                                success: true,
-                                detail: None,
-                            });
-                        }
-                        Ok(r) => {
-                            let status = r.status().as_u16();
-                            steps.push(CopyStepResult {
-                                step: format!("attach:{filename}"),
-                                success: false,
-                                detail: Some(format!("{status} upload error")),
-                            });
-                        }
-                        Err(_) => {
-                            steps.push(CopyStepResult {
-                                step: format!("attach:{filename}"),
-                                success: false,
-                                detail: Some("Network error during upload".to_string()),
-                            });
-                        }
-                    }
-                }
-                Err(_) => {
-                    steps.push(CopyStepResult {
-                        step: format!("attach:{filename}"),
-                        success: false,
-                        detail: Some("Failed to read attachment bytes".to_string()),
-                    });
-                }
-            },
-            Ok(resp) => {
-                let status = resp.status().as_u16();
-                let detail = if status == 302 {
-                    "Failed to download attachment (server may require Jira Server 8.17+)"
-                        .to_string()
-                } else {
-                    format!("Download returned status {status}")
-                };
-                steps.push(CopyStepResult {
-                    step: format!("attach:{filename}"),
-                    success: false,
-                    detail: Some(detail),
-                });
-            }
-            Err(_) => {
-                steps.push(CopyStepResult {
-                    step: format!("attach:{filename}"),
-                    success: false,
-                    detail: Some("Failed to download attachment".to_string()),
-                });
-            }
-        }
-    }
+    steps.extend(copy_attachments(&ctx, &source_body).await);
 
     // Comment copy loop (per D-01 through D-04)
-    let rendered_comments = source_body["renderedFields"]["comment"]["comments"]
-        .as_array()
-        .cloned();
-    let raw_comments = source_body["fields"]["comment"]["comments"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-
-    let mut comments_to_copy: Vec<&serde_json::Value> = raw_comments.iter().collect();
-    // Sort by created field (ISO 8601 — lexicographic = chronological per D-04)
-    comments_to_copy.sort_by(|a, b| {
-        let a_date = a["created"].as_str().unwrap_or("");
-        let b_date = b["created"].as_str().unwrap_or("");
-        a_date.cmp(b_date)
-    });
-
-    for (idx, raw_comment) in comments_to_copy.iter().enumerate() {
-        let author_name = raw_comment["author"]["displayName"]
-            .as_str()
-            .unwrap_or("Unknown");
-        let created = raw_comment["created"].as_str().unwrap_or("");
-        // Format: take YYYY-MM-DDTHH:MM -> YYYY-MM-DD HH:MM
-        let date_formatted = if created.len() >= 16 {
-            format!("{} {}", &created[..10], &created[11..16])
-        } else {
-            created.to_string()
-        };
-        let attribution = format!("{author_name} \u{2014} {date_formatted}");
-
-        // Get HTML body from renderedFields if available, otherwise use raw body as text
-        let comment_id = raw_comment["id"].as_str().unwrap_or("");
-        let html_body: Option<String> = rendered_comments.as_ref().and_then(|rendered| {
-            rendered
-                .iter()
-                .find(|rc| rc["id"].as_str() == Some(comment_id))
-                .and_then(|rc| rc["body"].as_str().map(std::string::ToString::to_string))
-        });
-
-        let mut adf_doc: serde_json::Value = if let Some(html) = html_body {
-            let adf_str = htmltoadf::convert_html_str_to_adf_str(html);
-            serde_json::from_str(&adf_str).unwrap_or(serde_json::json!({
-                "version": 1, "type": "doc", "content": []
-            }))
-        } else {
-            // Fallback: wrap raw text as plain ADF paragraph
-            let body_text = raw_comment["body"].as_str().unwrap_or("");
-            serde_json::json!({
-                "version": 1,
-                "type": "doc",
-                "content": [{
-                    "type": "paragraph",
-                    "content": [{ "type": "text", "text": body_text }]
-                }]
-            })
-        };
-
-        // Prepend attribution paragraph with bold mark
-        let attribution_node = serde_json::json!({
-            "type": "paragraph",
-            "content": [{
-                "type": "text",
-                "text": attribution,
-                "marks": [{ "type": "strong" }]
-            }]
-        });
-        if let Some(content) = adf_doc["content"].as_array_mut() {
-            content.insert(0, attribution_node);
-        }
-
-        // POST comment to Cloud
-        let comment_body_str = serde_json::json!({ "body": adf_doc }).to_string();
-        let comment_resp = client
-            .post(format!(
-                "{trimmed_target}/rest/api/3/issue/{target_key}/comment"
-            ))
-            .header("Authorization", &cloud_auth)
-            .header("Content-Type", "application/json")
-            .body(comment_body_str)
-            .send()
-            .await;
-
-        match comment_resp {
-            Ok(r) if r.status().is_success() => {
-                steps.push(CopyStepResult {
-                    step: format!("comment:{}", idx + 1),
-                    success: true,
-                    detail: None,
-                });
-            }
-            Ok(r) => {
-                let status = r.status().as_u16();
-                steps.push(CopyStepResult {
-                    step: format!("comment:{}", idx + 1),
-                    success: false,
-                    detail: Some(format!("Comment POST returned {status}")),
-                });
-            }
-            Err(_) => {
-                steps.push(CopyStepResult {
-                    step: format!("comment:{}", idx + 1),
-                    success: false,
-                    detail: Some("Network error posting comment".to_string()),
-                });
-            }
-        }
-    }
+    steps.extend(copy_comments(&ctx, &source_body).await);
 
     // Work log copy (per D-07, D-08)
-    let worklog_url = format!("{trimmed_source}/rest/api/2/issue/{source_key}/worklog");
-    let wl_resp = client
-        .get(&worklog_url)
-        .header("Authorization", format!("Bearer {server_pat}"))
-        .send()
-        .await;
-
-    if let Ok(wl_response) = wl_resp {
-        if wl_response.status().is_success() {
-            if let Ok(wl_body) = wl_response.json::<serde_json::Value>().await {
-                let worklogs = wl_body["worklogs"].as_array().cloned().unwrap_or_default();
-
-                for (idx, wl) in worklogs.iter().enumerate() {
-                    let author_name = wl["author"]["displayName"].as_str().unwrap_or("Unknown");
-                    let started = wl["started"].as_str().unwrap_or("");
-                    let started_date = if started.len() >= 10 {
-                        &started[..10]
-                    } else {
-                        started
-                    };
-                    let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
-                    let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
-
-                    let attribution =
-                        format!("{author_name} \u{2014} {started_date} ({time_spent})");
-
-                    let wl_comment_adf = serde_json::json!({
-                        "version": 1,
-                        "type": "doc",
-                        "content": [{
-                            "type": "paragraph",
-                            "content": [{
-                                "type": "text",
-                                "text": attribution,
-                                "marks": [{ "type": "strong" }]
-                            }]
-                        }]
-                    });
-
-                    let wl_post_body = serde_json::json!({
-                        "timeSpentSeconds": time_spent_seconds,
-                        "started": started,
-                        "comment": wl_comment_adf
-                    });
-
-                    let wl_post_resp = client
-                        .post(format!(
-                            "{trimmed_target}/rest/api/3/issue/{target_key}/worklog"
-                        ))
-                        .header("Authorization", &cloud_auth)
-                        .header("Content-Type", "application/json")
-                        .body(wl_post_body.to_string())
-                        .send()
-                        .await;
-
-                    match wl_post_resp {
-                        Ok(r) if r.status().is_success() => {
-                            steps.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: true,
-                                detail: None,
-                            });
-                        }
-                        Ok(r) => {
-                            let status = r.status().as_u16();
-                            steps.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: false,
-                                detail: Some(format!("Worklog POST returned {status}")),
-                            });
-                        }
-                        Err(_) => {
-                            steps.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: false,
-                                detail: Some("Network error posting worklog".to_string()),
-                            });
-                        }
-                    }
-                }
-            }
-        }
-    }
+    steps.extend(copy_worklogs(&ctx).await);
 
     // Sub-task child issue creation (COPY-05)
     // Note: subtasks variable already defined above for description footer
-    for st in &subtasks {
-        let st_summary = st["fields"]["summary"].as_str().unwrap_or("Sub-task");
-        let st_source_key = st["key"].as_str().unwrap_or("?");
-
-        let st_create_body = serde_json::json!({
-            "fields": {
-                "project": { "key": target_project_key },
-                "issuetype": { "name": "Sub-task" },
-                "summary": st_summary,
-                "parent": { "key": target_key }
-            }
-        });
-
-        let st_create_resp = client
-            .post(format!("{trimmed_target}/rest/api/3/issue"))
-            .header("Authorization", &cloud_auth)
-            .header("Content-Type", "application/json")
-            .body(serde_json::to_string(&st_create_body).unwrap_or_default())
-            .send()
-            .await;
-
-        match st_create_resp {
-            Ok(r) if r.status().is_success() => {
-                let resp_text = r.text().await.unwrap_or_default();
-                let resp_json: serde_json::Value =
-                    serde_json::from_str(&resp_text).unwrap_or(serde_json::json!({}));
-                let child_key = resp_json["key"].as_str().unwrap_or("?");
-                steps.push(CopyStepResult {
-                    step: format!("subtask:{st_source_key}"),
-                    success: true,
-                    detail: Some(format!("Created as {child_key}")),
-                });
-            }
-            Ok(r) => {
-                let status = r.status().as_u16();
-                steps.push(CopyStepResult {
-                    step: format!("subtask:{st_source_key}"),
-                    success: false,
-                    detail: Some(format!("Sub-task creation returned {status}")),
-                });
-            }
-            Err(_) => {
-                steps.push(CopyStepResult {
-                    step: format!("subtask:{st_source_key}"),
-                    success: false,
-                    detail: Some("Network error creating sub-task".to_string()),
-                });
-            }
-        }
-    }
+    let subtasks_arr = source_body["fields"]["subtasks"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    steps.extend(copy_subtasks(&ctx, &subtasks_arr).await);
 
     // Step 9: Update triage state to copied
     {
