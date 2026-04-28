@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { Toaster } from './components/ui/sonner';
 import { useConnectionStore } from './features/connections/connectionStore';
 import ProbeStatusBanner from './features/connections/ProbeStatusBanner';
 import { SettingsPage } from './features/connections/SettingsPage';
@@ -130,6 +131,7 @@ function App() {
         </AppShell>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
+        <Toaster />
       </ErrorBoundary>
     );
   }
@@ -148,6 +150,7 @@ function App() {
         </AppShell>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
+        <Toaster />
       </ErrorBoundary>
     );
   }
@@ -160,6 +163,7 @@ function App() {
         </AppShell>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
+        <Toaster />
       </ErrorBoundary>
     );
   }
@@ -183,6 +187,7 @@ function App() {
         </AppShell>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
+        <Toaster />
       </ErrorBoundary>
     );
   }
@@ -212,6 +217,7 @@ function App() {
       </AppShell>
       <UpdateModal open={showUpdateModal} />
       <AboutModal open={showAbout} onOpenChange={setShowAbout} />
+      <Toaster />
     </ErrorBoundary>
   );
 }
