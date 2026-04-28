@@ -138,14 +138,16 @@ None — no new network endpoints, auth paths, file access patterns, or schema c
 
 The supply-chain addition (sonner@^2.0.7) is covered by T-21-01 in the plan's threat model. Lock file committed with exact resolved version.
 
-## Self-Check
+## Self-Check: PASSED
 
-Files to verify:
-- `src/components/ui/sonner.tsx` — created
-- `src/features/field-mapping/types.ts` — created
-- `src/features/field-mapping/transformerOptions.ts` — created
-- `src/features/field-mapping/heuristics.ts` — created
-- `src/features/field-mapping/__tests__/heuristics.test.ts` — created
-- `src/features/field-mapping/__tests__/MappingRow.test.tsx` — created
-- `src/features/field-mapping/__tests__/SuggestionsPanel.test.tsx` — created
-- `src/features/field-mapping/__tests__/FieldMappingSection.test.tsx` — created
+All created files exist on disk. All task commits (55ac2dd, ed97540, 5e140ac) confirmed in git history.
+
+Files verified:
+- `src/components/ui/sonner.tsx` — FOUND
+- `src/features/field-mapping/types.ts` — FOUND
+- `src/features/field-mapping/transformerOptions.ts` — FOUND
+- `src/features/field-mapping/heuristics.ts` — FOUND
+- `src/features/field-mapping/__tests__/heuristics.test.ts` — FOUND
+- `src/features/field-mapping/__tests__/MappingRow.test.tsx` — FOUND
+- `src/features/field-mapping/__tests__/SuggestionsPanel.test.tsx` — FOUND
+- `src/features/field-mapping/__tests__/FieldMappingSection.test.tsx` — FOUND
