@@ -44,7 +44,7 @@ pub fn set_app_language(
 
 /// Retrieve the Jira Server PAT from the OS keychain using the
 /// `connection_meta` table to look up the stored username.
-fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> {
+pub(crate) fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> {
     let db = triage_db
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
@@ -59,7 +59,7 @@ fn get_server_pat(triage_db: &Arc<Mutex<TriageDb>>) -> Result<String, AppError> 
 }
 
 /// Retrieve Cloud credentials (`base_url`, email, `api_token`) from `connection_meta` and keychain.
-fn get_cloud_credentials(
+pub(crate) fn get_cloud_credentials(
     triage_db: &Arc<Mutex<TriageDb>>,
 ) -> Result<(String, String, String), AppError> {
     let db = triage_db

@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod commands;
+pub mod copy_pipeline;
 pub mod error;
 pub mod field_discovery;
 pub mod field_mapping_db;
