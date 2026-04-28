@@ -35,15 +35,15 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
 
   return (
     <div
-      className="flex items-start gap-2 px-3 py-2"
+      className="flex items-start gap-2 rounded border border-amber-500/40 bg-amber-500/5 px-3 py-2"
       data-testid={`gap-row-${field.fieldId}`}
     >
       <label
         htmlFor={isEditable ? `gap-input-${field.fieldId}` : undefined}
-        className="text-sm text-brand-text min-w-[110px] shrink-0 pt-1.5"
+        className="text-sm text-amber-700 dark:text-amber-400 min-w-[110px] shrink-0 pt-1.5"
       >
         {field.name}
-        <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
+        <span className="ml-0.5" aria-hidden="true">*</span>
       </label>
       {isEditable ? (
         <div className="flex-1 [&_button]:min-h-9">
@@ -57,11 +57,11 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
         </div>
       ) : (
         <div
-          className="flex-1 flex items-center rounded border border-border/60 bg-muted/40 px-3 h-9"
+          className="flex-1 flex items-center rounded border border-amber-500/30 bg-amber-500/10 px-3 h-9"
           data-testid={`gap-unsupported-${field.fieldId}`}
           aria-disabled="true"
         >
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-amber-700 dark:text-amber-400">
             {t('copy.preview.fieldNoManualInput')}
           </span>
         </div>
@@ -71,7 +71,7 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
         variant="ghost"
         size="sm"
         onClick={onMapLink}
-        className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"
+        className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-500/10"
         data-testid={`gap-map-link-${field.fieldId}`}
       >
         <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -96,30 +96,28 @@ export function GapsSection({
   if (gapFields.length === 0) return null;
 
   return (
-    <section
+    <div
       role="region"
       aria-label={t('copy.preview.gapsHeader')}
-      className="mb-4 rounded border-l-2 border-amber-500 bg-amber-500/5 p-3"
+      className="mb-4 flex flex-col gap-2"
       data-testid="gaps-section"
     >
-      <div className="flex items-center gap-1.5 mb-2 text-amber-700 dark:text-amber-400">
+      <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
         <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         <span className="text-[13px] font-medium">
           {t('copy.preview.gapsHeader')}
         </span>
       </div>
-      <div className="divide-y divide-amber-200/60 dark:divide-amber-800/60">
-        {gapFields.map((field) => (
-          <GapRow
-            key={field.fieldId}
-            field={field}
-            value={overrideValues[field.fieldId]}
-            onChange={(v) => onOverrideChange(field.fieldId, v)}
-            onMapLink={onMapLink}
-            onSearchUsers={onSearchUsers}
-          />
-        ))}
-      </div>
-    </section>
+      {gapFields.map((field) => (
+        <GapRow
+          key={field.fieldId}
+          field={field}
+          value={overrideValues[field.fieldId]}
+          onChange={(v) => onOverrideChange(field.fieldId, v)}
+          onMapLink={onMapLink}
+          onSearchUsers={onSearchUsers}
+        />
+      ))}
+    </div>
   );
 }
