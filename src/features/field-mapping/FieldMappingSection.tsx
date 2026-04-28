@@ -252,6 +252,16 @@ export function FieldMappingSection() {
     return out;
   }, [mappingRows, sourceFields, targetFields]);
 
+  // ── Used target field IDs (DEDUP-01) ──────────────────────────────────────
+  // Set of all target_field_ids currently in use. Excludes empty sentinel ('')
+  // so the "no target selected" state does not block any real target selection.
+  // Passed to each MappingRow so its target combobox can filter out taken targets
+  // while keeping the row's OWN current target visible in the list.
+  const usedTargetFieldIds = useMemo(
+    () => new Set(mappingRows.map((r) => r.targetFieldId).filter((id) => id !== '')),
+    [mappingRows],
+  );
+
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   function handleAcceptSuggestion(sourceFieldId: string, target: import('@/types/fieldSchema').FieldSchema) {
@@ -354,6 +364,7 @@ export function FieldMappingSection() {
               row={row}
               sourceName={sourceFields.find((f) => f.fieldId === row.sourceFieldId)?.name}
               targetFields={targetFields}
+              usedTargetFieldIds={usedTargetFieldIds}
               isDrifted={driftedSourceFieldIds.has(row.sourceFieldId)}
               onRowUpdate={updateRow}
               onRowDelete={deleteRow}
