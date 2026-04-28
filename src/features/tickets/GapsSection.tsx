@@ -1,4 +1,4 @@
-import { AlertCircle, AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertTriangle, ExternalLink, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { getRenderer, isEditableSchemaType } from '@/features/field-renderers/registry';
@@ -56,14 +56,11 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
           />
         ) : (
           <div
-            className="flex items-start gap-1.5 pt-1.5"
+            className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5"
             data-testid={`gap-unsupported-${field.fieldId}`}
           >
-            <AlertCircle
-              className="w-3.5 h-3.5 text-amber-600/70 dark:text-amber-400/70 shrink-0 mt-0.5"
-              aria-hidden="true"
-            />
-            <p className="text-xs text-amber-700 dark:text-amber-400">
+            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
               {t('copy.preview.unsupportedGapHint')}
             </p>
           </div>

@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { FieldSchema } from '@/types/fieldSchema';
 import { getRenderer, isEditableSchemaType } from './registry';
@@ -54,12 +55,15 @@ export function DynamicTargetForm({
                 initialQuery={initialQueries?.[field.fieldId]}
               />
             ) : (
-              <p
-                className="text-xs text-muted-foreground italic"
+              <div
+                className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5"
                 data-testid={`unsupported-field-${field.fieldId}`}
               >
-                {t('copy.preview.unsupportedFieldHint')}
-              </p>
+                <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('copy.preview.unsupportedFieldHint')}
+                </p>
+              </div>
             )}
           </div>
         );
