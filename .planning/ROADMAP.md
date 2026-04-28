@@ -245,7 +245,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 **Plans**: 4 plans
 
 **Wave 1** *(parallel-safe — disjoint files)*:
-- [ ] 23-01-PLAN.md — copy_pipeline.rs extraction (CopyContext + 5 free helpers; refactor old copy_ticket onto helpers)
+- [x] 23-01-PLAN.md — copy_pipeline.rs extraction (CopyContext + 5 free helpers; refactor old copy_ticket onto helpers)
 - [ ] 23-02-PLAN.md — TriageDb audit_verbose flag + FieldMappingDb mapping_audit_log table + sanitizer/hasher utilities
 
 **Wave 2** *(blocked on Wave 1 completion)*:

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 23 planning complete
-last_updated: "2026-04-28T00:00:00.000Z"
-last_activity: 2026-04-28 -- Phase 23 planned (4 plans, 3 waves) — ready to execute
+stopped_at: Phase 23 Plan 01 complete
+last_updated: "2026-04-28T21:00:00.000Z"
+last_activity: "2026-04-28 -- Phase 23 Plan 01 complete: copy_pipeline.rs created, copy_ticket refactored to use CopyContext helpers (D-08/D-09/CUTV-04)"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 28
-  completed_plans: 24
-  percent: 86
+  completed_plans: 25
+  percent: 89
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 23 (copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks)
-Plan: 4 plans ready, 0 complete
-Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 23 planning complete (4 plans, 3 waves: CopyContext extraction → audit infra → copy_ticket_v2 cutover → integration test)
+Plan: 4 plans, 1 complete (Plan 01 done — copy_pipeline.rs + D-08 refactor)
+Status: Executing — Plan 02 next
+Last activity: 2026-04-28 -- Phase 23 Plan 01 complete: copy_pipeline.rs created, copy_ticket refactored to use CopyContext helpers (D-08/D-09/CUTV-04)
 
 ## Performance Metrics
 
@@ -94,6 +94,7 @@ Last activity: 2026-04-28 -- Phase 23 planning complete (4 plans, 3 waves: CopyC
 | Phase 16-enhanced-watch-configuration P02 | 18 | 1 tasks | 2 files |
 | Phase 17-field-discovery-mock-schema-fidelity P04 | 55 | 3 tasks | 5 files |
 | Phase 17-field-discovery-mock-schema-fidelity P05 | 8 | 3 tasks | 7 files |
+| Phase 23-copy-ticket-v2-wiring P01 | 25 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work (v0.4.0 Configurable Field Mapping):
 - Target issue type chosen at copy time: source/target type semantics differ across Jiras; auto-match too brittle
 - Defer real ADF rich-text editor to post-v0.4.0: `@atlaskit/editor-core` adds 2-3 MB gzip; v0.4.0 ships textarea + htmltoadf preview using existing pipeline
 - Separate `mapping.db` SQLite file: do NOT extend `triage_db.rs` (already 5 concerns); follow `snapshot_db.rs` precedent
+- [Phase 23-01] CopyContext.client uses reqwest_middleware::ClientWithMiddleware (not plain reqwest::Client) — matches build_audited_client return type; all helper HTTP calls flow through audit middleware
+- [Phase 23-01] copy_attachments annotated #[allow(clippy::too_many_lines)] — 107-line verbatim extraction has no logical split point; annotation preferred over artificial split
+- [Phase 23-01] MYPROJ in copy_pipeline.rs doc comments only (2x) — no production code uses literal; ctx.target_project_key used in all JSON payloads (CUTV-04)
 
 Recent v0.3.0 / v0.1.0 decisions retained for reference:
 
@@ -277,7 +281,7 @@ None yet.
 
 ## Session Continuity
 
-Last activity: 2026-04-27
-Last session: 2026-04-28T14:00:00.000Z
-Stopped at: Phase 22 complete, awaiting next phase
-Resume file: .planning/ROADMAP.md
+Last activity: 2026-04-28
+Last session: 2026-04-28T21:00:00.000Z
+Stopped at: Completed Phase 23 Plan 01 (copy_pipeline.rs extraction + copy_ticket refactor)
+Resume file: .planning/phases/23-copy-ticket-v2-wiring/23-02-PLAN.md
