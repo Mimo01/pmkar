@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 21 context gathered
-last_updated: "2026-04-28T09:20:57.913Z"
-last_activity: 2026-04-28 -- Phase 21 planning complete
+stopped_at: Phase 21 complete
+last_updated: "2026-04-28T12:20:00.000Z"
+last_activity: 2026-04-28 -- Phase 21 Mapping Editor Settings UI complete
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 20
-  completed_plans: 17
-  percent: 85
+  completed_plans: 20
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-27)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** v0.4.0 Configurable Field Mapping — Phase 20 complete, ready for Phase 21
+**Current focus:** v0.4.0 Configurable Field Mapping — Phase 21 complete, ready for Phase 22
 
 ## Current Position
 
-Phase: 21 (Mapping Editor Settings UI) — next up
+Phase: 22 (Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating) — next up
 Plan: none yet
-Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 21 planning complete
+Status: Ready to discuss/plan
+Last activity: 2026-04-28 -- Phase 21 Mapping Editor Settings UI complete (3/3 plans, 70 tests passing)
 
 ## Performance Metrics
 
