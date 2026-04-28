@@ -93,10 +93,10 @@ pub async fn add_remote_link(
                 },
             }
         }
-        Err(_) => CopyStepResult {
+        Err(e) => CopyStepResult {
             step: "add_remotelink".to_string(),
             success: false,
-            detail: Some("Failed to create remote link in Cloud Jira".to_string()),
+            detail: Some(format!("Network error creating remote link: {e}")),
         },
     }
 }
@@ -182,11 +182,11 @@ pub async fn copy_attachments(
                                 detail: Some(format!("{status} upload error")),
                             });
                         }
-                        Err(_) => {
+                        Err(e) => {
                             out.push(CopyStepResult {
                                 step: format!("attach:{filename}"),
                                 success: false,
-                                detail: Some("Network error during upload".to_string()),
+                                detail: Some(format!("Network error during upload: {e}")),
                             });
                         }
                     }
@@ -213,11 +213,11 @@ pub async fn copy_attachments(
                     detail: Some(detail),
                 });
             }
-            Err(_) => {
+            Err(e) => {
                 out.push(CopyStepResult {
                     step: format!("attach:{filename}"),
                     success: false,
-                    detail: Some("Failed to download attachment".to_string()),
+                    detail: Some(format!("Network error downloading attachment: {e}")),
                 });
             }
         }
@@ -333,11 +333,11 @@ pub async fn copy_comments(
                     detail: Some(format!("Comment POST returned {status}")),
                 });
             }
-            Err(_) => {
+            Err(e) => {
                 out.push(CopyStepResult {
                     step: format!("comment:{}", idx + 1),
                     success: false,
-                    detail: Some("Network error posting comment".to_string()),
+                    detail: Some(format!("Network error posting comment: {e}")),
                 });
             }
         }
@@ -527,11 +527,11 @@ pub async fn copy_subtasks(
                     detail: Some(format!("Sub-task creation returned {status}")),
                 });
             }
-            Err(_) => {
+            Err(e) => {
                 out.push(CopyStepResult {
                     step: format!("subtask:{st_source_key}"),
                     success: false,
-                    detail: Some("Network error creating sub-task".to_string()),
+                    detail: Some(format!("Network error creating sub-task: {e}")),
                 });
             }
         }
