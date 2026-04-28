@@ -260,6 +260,7 @@ describe('copyStore', () => {
         targetStatus: 'To Do',
         targetPriorityId: '3',
         selectedLabels: [],
+        targetIssueTypeId: 'it-1',
       });
 
       await useCopyStore.getState().confirmCopy('http://server', 'https://cloud');
