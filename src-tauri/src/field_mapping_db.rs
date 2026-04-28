@@ -52,6 +52,17 @@ const CREATE_MAPPING_META: &str = "
     );
 ";
 
+/// Migration: add a unique index on `target_field_id` so no two rows can map
+/// different source fields to the same target. Uses `CREATE UNIQUE INDEX IF NOT
+/// EXISTS` (not ALTER TABLE) so it is safe to run against an existing DB that
+/// already has the table. SQLite will return `UNIQUE constraint failed:
+/// field_mapping.target_field_id` (or `idx_fm_target_unique`) if a caller
+/// attempts to insert a second row with the same `target_field_id`.
+const ADD_UNIQUE_TARGET: &str = "
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_fm_target_unique
+        ON field_mapping(target_field_id);
+";
+
 /// Phase 23 CUTV-03 — per-mapping-decision audit table. Lives in mapping.db
 /// (not audit.db) because its structure mirrors mapping data, NOT HTTP calls.
 /// Hash columns store SHA-256 hex (64 chars). `gap_kind` is one of NULL,
@@ -109,6 +120,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         seed_defaults_if_empty(&conn)?;
@@ -120,6 +132,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         seed_defaults_if_empty(&conn)?;
@@ -890,5 +903,35 @@ mod tests {
         assert_eq!(super::redact_credential_value("a normal description with no secrets"), "a normal description with no secrets");
         // 'eye' ≠ 'eyJ' — should not be redacted
         assert_eq!(super::redact_credential_value("eyes are blue"), "eyes are blue");
+    }
+
+    #[test]
+    fn duplicate_target_field_id_is_rejected() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        // Wipe seed defaults so we control exactly what's in the table.
+        db.conn.execute("DELETE FROM field_mapping", []).unwrap();
+        let row_a = FieldMappingRow {
+            source_field_id: "src_a".into(),
+            target_field_id: "tgt_shared".into(),
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        let row_b = FieldMappingRow {
+            source_field_id: "src_b".into(),
+            target_field_id: "tgt_shared".into(), // same target — must fail
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        db.upsert_mapping_row(&row_a).expect("first insert ok");
+        let err = db
+            .upsert_mapping_row(&row_b)
+            .expect_err("second insert must fail — duplicate target");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("UNIQUE") || msg.contains("constraint") || msg.contains("idx_fm_target_unique"),
+            "error should mention unique constraint, got: {msg}"
+        );
     }
 }
