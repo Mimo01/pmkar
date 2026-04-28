@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useConnectionStore } from '../connections/connectionStore';
 import { DynamicTargetForm } from '@/features/field-renderers/DynamicTargetForm';
+import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import type { FieldMappingRow } from '@/features/field-mapping/types';
 import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
 import { useCopyStore } from './copyStore';
@@ -331,19 +332,18 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                 >
                   {t('copy.targetProject')}
                 </label>
-                <select
-                  id="copy-target-project-modal"
-                  value={targetProjectKey}
-                  onChange={(e) => setTargetProjectKey(e.target.value)}
-                  className="w-full bg-brand-surface border border-brand-border rounded px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-brand"
-                >
-                  {!targetProjectKey && <option value="">{t('settings.project.select')}</option>}
-                  {cloudProjects.map((p) => (
-                    <option key={p.key} value={p.key}>
-                      {p.name} ({p.key})
-                    </option>
-                  ))}
-                </select>
+                <VirtualizedCombobox<{ key: string; name: string }>
+                  items={cloudProjects}
+                  value={cloudProjects.find((p) => p.key === targetProjectKey) ?? null}
+                  onChange={(p) => setTargetProjectKey(p.key)}
+                  displayLabel={(p) => `${p.name} (${p.key})`}
+                  filterFn={(p, q) =>
+                    p.name.toLowerCase().includes(q.toLowerCase()) ||
+                    p.key.toLowerCase().includes(q.toLowerCase())
+                  }
+                  placeholder={t('settings.project.select')}
+                  ariaLabel={t('copy.targetProject')}
+                />
               </div>
 
               {/* Issue-type chooser (D-03..D-06) */}
