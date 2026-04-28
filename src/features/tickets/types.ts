@@ -129,6 +129,8 @@ export interface JiraTicketDetail {
     issuelinks: JiraIssueLink[];
     created?: string; // ISO 8601
     updated: string;
+    // Phase 22: issue type for default selection in copy preview (D-05)
+    issuetype?: { id?: string; name: string };
   };
   renderedFields?: {
     description?: string; // HTML from expand=renderedFields (v2 only)

@@ -1,6 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FieldSchema } from '@/types/fieldSchema';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+
+// Phase 22 mocks for schemaCacheStore and connectionStore
+const mockPreWarm = vi.fn();
+const mockLoadSchema = vi.fn();
+let mockPrewarmedIssueTypes: Record<string, Array<{ id: string; name: string }>> = {};
+let mockCache: Record<string, { status: string; fields?: unknown[] }> = {};
+
+vi.mock('@/stores/schemaCacheStore', () => ({
+  useSchemaCacheStore: {
+    getState: () => ({
+      preWarm: mockPreWarm,
+      loadSchema: mockLoadSchema,
+      get prewarmedIssueTypes() {
+        return mockPrewarmedIssueTypes;
+      },
+      get cache() {
+        return mockCache;
+      },
+    }),
+  },
+  schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
+    `${side}|${pk ?? '__null__'}|${it ?? '__null__'}`,
+}));
+
+vi.mock('../../connections/connectionStore', () => ({
+  useConnectionStore: {
+    getState: () => ({ targetProjectKey: 'PROJ' }),
+  },
+}));
 
 import { invoke } from '@tauri-apps/api/core';
 import { useCopyStore } from '../copyStore';
@@ -286,5 +316,218 @@ describe('copyStore', () => {
       expect(state.result).toBeNull();
       expect(state.error).toBeNull();
     });
+  });
+});
+
+const initialPhase22State = {
+  targetIssueTypeId: null as string | null,
+  overrideValues: {} as Record<string, unknown>,
+  resolvedTargetFields: [] as FieldSchema[],
+};
+
+describe('copyStore — Phase 22 override state', () => {
+  beforeEach(() => {
+    mockPreWarm.mockReset();
+    mockLoadSchema.mockReset();
+    mockPrewarmedIssueTypes = {};
+    mockCache = {};
+    useCopyStore.setState({
+      ...initialPhase22State,
+      // also reset the rest to known-good baseline
+      phase: 'idle',
+      sourceTicket: null,
+      sourceKey: null,
+      targetSummary: '',
+      targetDescription: '',
+      targetStatus: '',
+      targetPriorityId: '',
+      targetLabels: [],
+      selectedLabels: [],
+      targetProjectKey: 'PROJ',
+      cloudMeta: null,
+      result: null,
+      error: null,
+      progressStep: '',
+    });
+  });
+
+  it('initial state has empty override fields', () => {
+    const s = useCopyStore.getState();
+    expect(s.targetIssueTypeId).toBeNull();
+    expect(s.overrideValues).toEqual({});
+    expect(s.resolvedTargetFields).toEqual([]);
+  });
+
+  it('setOverrideValue accumulates and replaces by key', () => {
+    useCopyStore.getState().setOverrideValue('customfield_10001', 'a');
+    useCopyStore.getState().setOverrideValue('customfield_10002', 7);
+    useCopyStore.getState().setOverrideValue('customfield_10001', 'b');
+    expect(useCopyStore.getState().overrideValues).toEqual({
+      customfield_10001: 'b',
+      customfield_10002: 7,
+    });
+  });
+
+  it('clearOverrides resets override fields without touching unrelated fields', () => {
+    useCopyStore.setState({
+      targetIssueTypeId: 'it-1',
+      overrideValues: { x: 1 },
+      resolvedTargetFields: [{ fieldId: 'f', name: 'F', required: false, schema: { type: 'any' } } as never],
+      targetSummary: 'KEEP ME',
+    });
+    useCopyStore.getState().clearOverrides();
+    const s = useCopyStore.getState();
+    expect(s.targetIssueTypeId).toBeNull();
+    expect(s.overrideValues).toEqual({});
+    expect(s.resolvedTargetFields).toEqual([]);
+    expect(s.targetSummary).toBe('KEEP ME');
+  });
+
+  it('reset clears override fields back to initial', () => {
+    useCopyStore.setState({
+      targetIssueTypeId: 'it-1',
+      overrideValues: { x: 1 },
+    });
+    useCopyStore.getState().reset();
+    const s = useCopyStore.getState();
+    expect(s.targetIssueTypeId).toBeNull();
+    expect(s.overrideValues).toEqual({});
+    expect(s.resolvedTargetFields).toEqual([]);
+  });
+
+  it('setTargetIssueTypeId loads target schema and updates resolvedTargetFields', async () => {
+    mockCache['target|PROJ|it-1'] = {
+      status: 'success',
+      fields: [{ fieldId: 'f1', name: 'F1', required: true, schema: { type: 'string' } }],
+    };
+    mockLoadSchema.mockResolvedValueOnce(undefined);
+    await useCopyStore.getState().setTargetIssueTypeId('it-1');
+    expect(mockLoadSchema).toHaveBeenCalledWith('target', 'PROJ', 'it-1');
+    expect(useCopyStore.getState().targetIssueTypeId).toBe('it-1');
+    expect(useCopyStore.getState().resolvedTargetFields).toHaveLength(1);
+  });
+
+  it("setTargetIssueTypeId('') clears without invoking loadSchema", async () => {
+    await useCopyStore.getState().setTargetIssueTypeId('');
+    expect(mockLoadSchema).not.toHaveBeenCalled();
+    expect(useCopyStore.getState().targetIssueTypeId).toBeNull();
+    expect(useCopyStore.getState().resolvedTargetFields).toEqual([]);
+  });
+
+  it('startPreview picks case-insensitive name-match default issue type', async () => {
+    mockPrewarmedIssueTypes = {
+      PROJ: [
+        { id: 'it-bug', name: 'Bug' },
+        { id: 'it-task', name: 'Task' },
+      ],
+    };
+    mockCache['target|PROJ|it-task'] = { status: 'success', fields: [] };
+    mockLoadSchema.mockResolvedValue(undefined);
+    const { invoke } = await import('@tauri-apps/api/core');
+    vi.mocked(invoke).mockResolvedValueOnce({
+      availableStatuses: [{ id: 's1', name: 'To Do' }],
+      availablePriorities: [{ id: 'p1', name: 'Medium' }],
+      currentAccountId: 'acc-1',
+      cloudBaseUrl: 'https://cloud.example.com',
+    });
+
+    const ticket = {
+      key: 'SRC-1',
+      fields: {
+        summary: 'X',
+        description: '',
+        status: { name: 'Open', id: '1' },
+        priority: { name: 'Medium', id: '2' },
+        labels: [],
+        issuetype: { id: 'src-task', name: 'task' }, // lowercase to test case-insensitive
+      },
+    } as never;
+
+    await useCopyStore.getState().startPreview(ticket, '', '');
+    expect(useCopyStore.getState().targetIssueTypeId).toBe('it-task');
+  });
+
+  it('startPreview falls back to first issue type when no name match', async () => {
+    mockPrewarmedIssueTypes = { PROJ: [{ id: 'it-bug', name: 'Bug' }] };
+    mockCache['target|PROJ|it-bug'] = { status: 'success', fields: [] };
+    mockLoadSchema.mockResolvedValue(undefined);
+    const { invoke } = await import('@tauri-apps/api/core');
+    vi.mocked(invoke).mockResolvedValueOnce({
+      availableStatuses: [{ id: 's1', name: 'To Do' }],
+      availablePriorities: [{ id: 'p1', name: 'Medium' }],
+      currentAccountId: 'acc-1',
+      cloudBaseUrl: 'https://cloud.example.com',
+    });
+
+    const ticket = {
+      key: 'SRC-1',
+      fields: {
+        summary: 'X',
+        description: '',
+        status: { name: 'Open', id: '1' },
+        priority: { name: 'Medium', id: '2' },
+        labels: [],
+        issuetype: { id: 'src-story', name: 'Story' },
+      },
+    } as never;
+
+    await useCopyStore.getState().startPreview(ticket, '', '');
+    expect(useCopyStore.getState().targetIssueTypeId).toBe('it-bug');
+  });
+
+  it('startPreview calls preWarm when prewarmedIssueTypes is empty', async () => {
+    mockPrewarmedIssueTypes = {};
+    mockPreWarm.mockImplementationOnce(async () => {
+      mockPrewarmedIssueTypes = { PROJ: [{ id: 'it-1', name: 'Story' }] };
+    });
+    mockCache['target|PROJ|it-1'] = { status: 'success', fields: [] };
+    mockLoadSchema.mockResolvedValue(undefined);
+    const { invoke } = await import('@tauri-apps/api/core');
+    vi.mocked(invoke).mockResolvedValueOnce({
+      availableStatuses: [{ id: 's1', name: 'To Do' }],
+      availablePriorities: [{ id: 'p1', name: 'Medium' }],
+      currentAccountId: 'acc-1',
+      cloudBaseUrl: 'https://cloud.example.com',
+    });
+    const ticket = {
+      key: 'SRC-1',
+      fields: {
+        summary: 'X',
+        description: '',
+        status: { name: 'Open', id: '1' },
+        priority: { name: 'Medium', id: '2' },
+        labels: [],
+        issuetype: { name: 'Story' },
+      },
+    } as never;
+    await useCopyStore.getState().startPreview(ticket, '', '');
+    expect(mockPreWarm).toHaveBeenCalledWith('PROJ');
+    expect(useCopyStore.getState().targetIssueTypeId).toBe('it-1');
+  });
+
+  it('startPreview leaves targetIssueTypeId null when no issue types are available', async () => {
+    mockPrewarmedIssueTypes = { PROJ: [] };
+    mockPreWarm.mockResolvedValue(undefined); // still empty after preWarm
+    const { invoke } = await import('@tauri-apps/api/core');
+    vi.mocked(invoke).mockResolvedValueOnce({
+      availableStatuses: [{ id: 's1', name: 'To Do' }],
+      availablePriorities: [{ id: 'p1', name: 'Medium' }],
+      currentAccountId: 'acc-1',
+      cloudBaseUrl: 'https://cloud.example.com',
+    });
+    const ticket = {
+      key: 'SRC-1',
+      fields: {
+        summary: 'X',
+        description: '',
+        status: { name: 'Open', id: '1' },
+        priority: { name: 'Medium', id: '2' },
+        labels: [],
+        issuetype: { name: 'Bug' },
+      },
+    } as never;
+    await useCopyStore.getState().startPreview(ticket, '', '');
+    expect(useCopyStore.getState().targetIssueTypeId).toBeNull();
+    expect(mockLoadSchema).not.toHaveBeenCalled();
   });
 });
