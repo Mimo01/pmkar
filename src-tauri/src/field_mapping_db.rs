@@ -52,6 +52,24 @@ const CREATE_MAPPING_META: &str = "
     );
 ";
 
+/// Phase 23 CUTV-03 — per-mapping-decision audit table. Lives in mapping.db
+/// (not audit.db) because its structure mirrors mapping data, NOT HTTP calls.
+/// Hash columns store SHA-256 hex (64 chars). `gap_kind` is one of NULL,
+/// "person", "version", "component" (matches `GapVariant` tag in `field_transform/mod.rs`).
+const CREATE_MAPPING_AUDIT_LOG: &str = "
+    CREATE TABLE IF NOT EXISTS mapping_audit_log (
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        copy_id             TEXT NOT NULL,
+        field_id            TEXT NOT NULL,
+        source_value_hash   TEXT NOT NULL,
+        target_value_hash   TEXT NOT NULL,
+        was_overridden      INTEGER NOT NULL DEFAULT 0,
+        gap_kind            TEXT,
+        timestamp           TEXT NOT NULL,
+        created_at          INTEGER DEFAULT (strftime('%s','now'))
+    );
+";
+
 fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
     let count: i64 = conn.query_row(
         "SELECT COUNT(*) FROM field_mapping",
@@ -92,6 +110,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
+        conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
@@ -102,6 +121,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
+        conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
@@ -339,6 +359,40 @@ impl FieldMappingDb {
         )?;
         Ok(())
     }
+
+    /// Phase 23 CUTV-03 — insert one row into `mapping_audit_log`.
+    ///
+    /// All non-static values are bound via `rusqlite::params![]` — NEVER
+    /// interpolated into the SQL string (T-23-T2 SQL-injection mitigation,
+    /// since `field_id` is read from untrusted `FieldMappingRow` rows on disk).
+    #[allow(clippy::too_many_arguments)]
+    pub fn insert_mapping_audit(
+        &self,
+        copy_id: &str,
+        field_id: &str,
+        source_value_hash: &str,
+        target_value_hash: &str,
+        was_overridden: bool,
+        gap_kind: Option<&str>,
+        timestamp: &str,
+    ) -> AppResult<()> {
+        self.conn.execute(
+            "INSERT INTO mapping_audit_log
+                 (copy_id, field_id, source_value_hash, target_value_hash,
+                  was_overridden, gap_kind, timestamp)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            rusqlite::params![
+                copy_id,
+                field_id,
+                source_value_hash,
+                target_value_hash,
+                i64::from(was_overridden),
+                gap_kind,
+                timestamp,
+            ],
+        )?;
+        Ok(())
+    }
 }
 
 /// SHA-256 hex of the raw response bytes. D-04 specifies hashing the raw JSON
@@ -346,6 +400,34 @@ impl FieldMappingDb {
 pub fn compute_schema_hash(raw_json_bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
     hasher.update(raw_json_bytes);
+    hex::encode(hasher.finalize())
+}
+
+/// Phase 23 D-07 — credential sanitizer using plain `str::contains` (no regex
+/// dep — see project convention at `commands.rs:1403` and `field_transform/user.rs:202`).
+/// Returns `"[REDACTED]"` if the input contains any known credential marker.
+///
+/// Patterns: Bearer (OAuth/server PAT), Basic (HTTP Basic auth), `eyJ` (JWT prefix
+/// — base64-encoded JSON `{"`), `xoxb-` / `xoxp-` (Slack tokens), AKIA / ASIA (AWS
+/// access key prefixes).
+pub fn redact_credential_value(s: &str) -> String {
+    const CREDENTIAL_MARKERS: &[&str] = &[
+        "Bearer ", "Basic ", "eyJ", "xoxb-", "xoxp-", "AKIA", "ASIA",
+    ];
+    for marker in CREDENTIAL_MARKERS {
+        if s.contains(marker) {
+            return "[REDACTED]".to_string();
+        }
+    }
+    s.to_string()
+}
+
+/// Phase 23 CUTV-03 — deterministic SHA-256 hex digest of a JSON value.
+/// Mirrors `compute_schema_hash` pattern using `sha2` + `hex`.
+pub fn hash_field_value(v: &serde_json::Value) -> String {
+    let json_str = serde_json::to_string(v).unwrap_or_default();
+    let mut hasher = Sha256::new();
+    hasher.update(json_str.as_bytes());
     hex::encode(hasher.finalize())
 }
 
@@ -676,5 +758,137 @@ mod tests {
             .expect("custom row survived reopen");
         assert_eq!(cf.target_field_id, "customfield_10010");
         assert_eq!(cf.transformer_kind, "identity");
+    }
+
+    #[test]
+    fn mapping_audit_log_table_exists_after_open() {
+        let db = FieldMappingDb::open_in_memory().expect("open");
+        let count: i64 = db
+            .conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='mapping_audit_log'",
+                [],
+                |r| r.get(0),
+            )
+            .expect("query sqlite_master");
+        assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn insert_mapping_audit_round_trips() {
+        let db = FieldMappingDb::open_in_memory().expect("open");
+        db.insert_mapping_audit(
+            "copy-uuid-1",
+            "summary",
+            "src-hash-aaa",
+            "tgt-hash-bbb",
+            false,
+            None,
+            "2026-04-28T00:00:00Z",
+        )
+        .expect("insert");
+        let (copy_id, field_id, was_ov, gap_kind): (String, String, i64, Option<String>) = db
+            .conn
+            .query_row(
+                "SELECT copy_id, field_id, was_overridden, gap_kind FROM mapping_audit_log WHERE id = 1",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            )
+            .expect("select");
+        assert_eq!(copy_id, "copy-uuid-1");
+        assert_eq!(field_id, "summary");
+        assert_eq!(was_ov, 0);
+        assert_eq!(gap_kind, None);
+    }
+
+    #[test]
+    fn insert_mapping_audit_with_gap_kind_and_override() {
+        let db = FieldMappingDb::open_in_memory().expect("open");
+        db.insert_mapping_audit(
+            "copy-uuid-2",
+            "assignee",
+            "h1",
+            "h2",
+            true,
+            Some("person"),
+            "2026-04-28T00:01:00Z",
+        )
+        .expect("insert");
+        let (was_ov, gap_kind): (i64, Option<String>) = db
+            .conn
+            .query_row(
+                "SELECT was_overridden, gap_kind FROM mapping_audit_log WHERE copy_id = 'copy-uuid-2'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .expect("select");
+        assert_eq!(was_ov, 1);
+        assert_eq!(gap_kind.as_deref(), Some("person"));
+    }
+
+    #[test]
+    fn insert_mapping_audit_is_sql_injection_safe() {
+        // T-23-T2 mitigation regression test: pass a field_id that, if interpolated
+        // into SQL, would drop the table. params![] binding stores it as a literal.
+        let db = FieldMappingDb::open_in_memory().expect("open");
+        let nasty = "x'; DROP TABLE mapping_audit_log; --";
+        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "ts")
+            .expect("insert with nasty field_id");
+        // Table still exists.
+        let count: i64 = db
+            .conn
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='mapping_audit_log'",
+                [],
+                |r| r.get(0),
+            )
+            .expect("query");
+        assert_eq!(count, 1);
+        // Literal value stored verbatim.
+        let stored: String = db
+            .conn
+            .query_row(
+                "SELECT field_id FROM mapping_audit_log WHERE copy_id = 'c1'",
+                [],
+                |r| r.get(0),
+            )
+            .expect("select");
+        assert_eq!(stored, nasty);
+    }
+
+    #[test]
+    fn hash_field_value_is_deterministic() {
+        let v = serde_json::json!({ "a": 1, "b": "two" });
+        let h1 = super::hash_field_value(&v);
+        let h2 = super::hash_field_value(&v);
+        assert_eq!(h1, h2);
+        assert_eq!(h1.len(), 64); // SHA-256 hex
+    }
+
+    #[test]
+    fn hash_field_value_distinguishes_inputs() {
+        let a = serde_json::json!("alpha");
+        let b = serde_json::json!("beta");
+        assert_ne!(super::hash_field_value(&a), super::hash_field_value(&b));
+    }
+
+    #[test]
+    fn redact_credential_value_redacts_known_markers() {
+        assert_eq!(super::redact_credential_value("Bearer abc.def.ghi"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("Basic dXNlcjpwYXNz"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("eyJhbGciOiJIUzI1NiJ9.payload.sig"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("xoxb-1234-abcd"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("xoxp-1234-abcd"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("AKIAIOSFODNN7EXAMPLE"), "[REDACTED]");
+        assert_eq!(super::redact_credential_value("ASIAIOSFODNN7EXAMPLE"), "[REDACTED]");
+    }
+
+    #[test]
+    fn redact_credential_value_passes_safe_strings() {
+        assert_eq!(super::redact_credential_value("hello world"), "hello world");
+        assert_eq!(super::redact_credential_value(""), "");
+        assert_eq!(super::redact_credential_value("a normal description with no secrets"), "a normal description with no secrets");
+        // 'eye' ≠ 'eyJ' — should not be redacted
+        assert_eq!(super::redact_credential_value("eyes are blue"), "eyes are blue");
     }
 }
