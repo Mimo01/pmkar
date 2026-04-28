@@ -299,10 +299,11 @@ None yet.
 | 260428-525 | Fix duplicate target field mapping — enforce uniqueness at DB, UI, and pipeline | 2026-04-28 | a74d73a | | [260428-525-duplicate-target-mapping](./quick/260428-525-duplicate-target-mapping/) |
 | 260429-0hu | Normalize app container layout — full-width ticket detail and settings | 2026-04-29 | 4a36874 | | [260429-0hu-the-app-container-layout-is-inconsistent](./quick/260429-0hu-the-app-container-layout-is-inconsistent/) |
 | 260429-nhs | Fix field mappings not applied on story copy — typed schema seeds + suggestion persist | 2026-04-29 | 517a4c7 | | [260429-nhs-fix-field-mappings-not-applied-on-copy](./quick/260429-nhs-fix-field-mappings-not-applied-on-copy/) |
+| 260429-47r | PriorityRenderer — VirtualizedCombobox dropdown for priority fields in copy modal | 2026-04-29 | 9a513d4 | | [260429-47r-priority-renderer](./quick/260429-47r-priority-renderer/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-nhs: Fix field mappings not applied on story copy
+Last activity: 2026-04-29 — Completed quick task 260429-47r: PriorityRenderer for priority schema type
 Last session: 2026-04-28T21:40:22.315Z
 Stopped at: context exhaustion at 75% (2026-04-28)
 Resume file: None
