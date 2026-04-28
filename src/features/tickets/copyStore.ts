@@ -224,7 +224,10 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           sourceBaseUrl,
           targetBaseUrl: cloudBaseUrl,
           targetIssueTypeId: state.targetIssueTypeId ?? '',
-          overrideValues: state.overrideValues,
+          overrideValues: {
+            summary: state.targetSummary,
+            ...state.overrideValues,
+          },
         },
       });
 
