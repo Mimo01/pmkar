@@ -3,9 +3,6 @@
 #![allow(clippy::needless_pass_by_value)]
 
 use crate::audit::{build_audited_client, AuditDb, AuditEntry};
-use crate::copy_pipeline::{
-    add_remote_link, copy_attachments, copy_comments, copy_subtasks, copy_worklogs, CopyContext,
-};
 use crate::error::AppError;
 use crate::fixtures::SharedFixtures;
 use crate::keychain;
@@ -122,6 +119,19 @@ pub struct ProjectConfig {
 }
 
 // --- Copy ticket structs ---
+
+/// Phase 23 D-02 — single-struct args for `copy_ticket_v2` (fixes
+/// `clippy::too_many_arguments` without `#[allow]`).
+/// All field values flow via `override_values` (D-03); no named field params.
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CopyTicketV2Args {
+    pub source_key: String,
+    pub source_base_url: String,
+    pub target_base_url: String,
+    pub target_issue_type_id: String,
+    pub override_values: serde_json::Map<String, serde_json::Value>,
+}
 
 #[derive(serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -1152,8 +1162,12 @@ pub async fn search_jira_users_by_domain(
 // --- Field discovery commands (Phase 17) ---
 
 use crate::field_discovery::{self, FieldSchema, FieldSide, IssueTypeRef, ProbeResult};
-use crate::field_mapping_db::FieldMappingDb;
-use crate::field_transform::FieldMappingRow;
+use crate::field_mapping_db::{hash_field_value, redact_credential_value, FieldMappingDb};
+use crate::field_transform::component::ComponentResolver;
+use crate::field_transform::user::UserResolver;
+use crate::field_transform::version::VersionResolver;
+use crate::field_transform::{apply_mapping, FieldMappingRow, GapVariant, TransformContext};
+use uuid::Uuid;
 
 /// Source v2 global field list. Cache-first via `get_or_fetch_source_global`
 /// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
@@ -1390,90 +1404,63 @@ pub fn get_all_connection_meta(
     db.get_all_connection_meta()
 }
 
-// --- Copy ticket command ---
+// --- Copy ticket v2 command ---
 
-/// Replace old image URLs in HTML with new Cloud attachment URLs.
-/// Used in the two-pass copy pipeline (D-03) before HTML→ADF conversion.
-fn rewrite_image_urls(html: &str, url_map: &HashMap<String, String>) -> String {
-    let mut result = html.to_string();
-    for (old_url, new_url) in url_map {
-        result = result.replace(old_url.as_str(), new_url.as_str());
-    }
-    result
-}
-
-/// Extract (`src_url`, filename) pairs for all `<img` tags in HTML.
-/// Uses simple string parsing — no regex dependency needed.
-fn extract_image_urls(html: &str) -> Vec<(String, String)> {
-    let mut results = Vec::new();
-    let mut remaining = html;
-    while let Some(img_start) = remaining.find("<img") {
-        let after_img = &remaining[img_start..];
-        // Find end of tag
-        let tag_end = after_img.find('>').unwrap_or(after_img.len());
-        let tag = &after_img[..tag_end];
-        // Find src="..." within the tag
-        if let Some(src_pos) = tag.find("src=\"") {
-            let after_src = &tag[src_pos + 5..];
-            if let Some(quote_end) = after_src.find('"') {
-                let url = &after_src[..quote_end];
-                if url.starts_with("http://") || url.starts_with("https://") {
-                    // Extract filename from URL path
-                    let filename = url
-                        .split('/')
-                        .next_back()
-                        .and_then(|f| f.split('?').next())
-                        .unwrap_or("image.png")
-                        .to_string();
-                    results.push((url.to_string(), filename));
-                }
-            }
-        }
-        remaining = &remaining[img_start + 4..];
-    }
-    results
-}
-
-// copy_ticket has 11 args — all required by the Tauri frontend call site.
-// Refactoring into a struct would require frontend changes and is deferred.
-#[allow(clippy::too_many_arguments)]
+/// Phase 23 CUTV-01 — replacement for `copy_ticket`. Drives the mapping engine
+/// end-to-end (`apply_mapping` → override merge → create issue → helpers). Logs
+/// every mapping decision to `mapping_audit_log` (CUTV-03). Reads `target_project_key`
+/// from connection settings — no hardcoded project key literal (CUTV-04).
 #[allow(clippy::too_many_lines)]
 #[tauri::command]
-pub async fn copy_ticket(
-    source_key: String,
-    source_base_url: String,
-    target_base_url: String,
-    target_summary: String,
-    target_description: Option<String>,
-    target_status: String, // informational only — status transitions not supported at creation
-    target_priority_id: String,
-    target_labels: Vec<String>,
-    current_account_id: String,
-    target_project_key: String,
+pub async fn copy_ticket_v2(
+    args: CopyTicketV2Args,
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+    mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
 ) -> Result<CopyTicketResult, AppError> {
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let mut steps: Vec<CopyStepResult> = Vec::new();
 
-    let trimmed_source = source_base_url.trim_end_matches('/');
-    let trimmed_target = target_base_url.trim_end_matches('/');
+    let trimmed_source = args.source_base_url.trim_end_matches('/').to_string();
+    let trimmed_target = args.target_base_url.trim_end_matches('/').to_string();
 
-    // Get Cloud credentials for target API calls
+    // ── Phase 1 — Load credentials, mapping, and audit_verbose flag ──────────
     let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
     let cloud_auth = format!(
         "Basic {}",
         base64::engine::general_purpose::STANDARD
             .encode(format!("{cloud_email}:{cloud_api_token}"))
     );
-
-    // Get Server PAT for source API calls
     let server_pat = get_server_pat(triage_db.inner())?;
 
-    // Step 1: Fetch source issue with renderedFields
-    let source_url =
-        format!("{trimmed_source}/rest/api/2/issue/{source_key}?expand=renderedFields&fields=*all");
+    // CUTV-04: target_project_key from connection settings — never hardcoded.
+    let (audit_verbose, target_project_key) = {
+        let g = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        let v = g.get_audit_verbose().unwrap_or(false);
+        let key = g
+            .get_target_project_key()?
+            .ok_or_else(|| AppError::Internal(
+                "No target_project_key configured. Open Settings to choose a target project.".into()
+            ))?;
+        (v, key)
+    };
+
+    // D-04: Load saved mapping rows from mapping.db inside the command.
+    let mapping_rows: Vec<FieldMappingRow> = {
+        let g = mapping_db
+            .lock()
+            .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+        g.get_all_mapping_rows()?
+    };
+
+    // ── Phase 2 — Fetch source issue with renderedFields ─────────────────────
+    let source_url = format!(
+        "{trimmed_source}/rest/api/2/issue/{}?expand=renderedFields&fields=*all",
+        args.source_key
+    );
     let source_resp = client
         .get(&source_url)
         .header("Authorization", format!("Bearer {server_pat}"))
@@ -1507,52 +1494,159 @@ pub async fn copy_ticket(
         detail: None,
     });
 
-    // Step 2: Extract rendered HTML description and summary
-    let html_description = source_body["renderedFields"]["description"]
-        .as_str()
-        .unwrap_or("")
-        .to_string();
     let source_summary = source_body["fields"]["summary"]
         .as_str()
-        .unwrap_or(&source_key)
+        .unwrap_or(&args.source_key)
         .to_string();
 
-    // Step 3: Collect inline image URLs from HTML
-    let image_pairs = extract_image_urls(&html_description);
+    // ── Phase 3 — Run apply_mapping (Phase 18 two-phase pipeline) ────────────
+    let plain_client = reqwest::Client::new();
+    let user_resolver =
+        UserResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
+    let version_resolver =
+        VersionResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
+    let component_resolver =
+        ComponentResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
 
-    // Step 4: Create issue in Cloud with placeholder description (two-pass approach per D-03)
-    let create_body = serde_json::json!({
-        "fields": {
-            "project": { "key": target_project_key },
-            "issuetype": { "name": "Task" },
-            "summary": target_summary,
-            "priority": { "id": target_priority_id },
-            "labels": target_labels,
-            "assignee": { "accountId": current_account_id }
+    // Phase 1 — batch user resolution (TRAN-06 one-HTTP-per-domain).
+    let user_map = user_resolver
+        .resolve_batch(&source_body, &mapping_rows)
+        .await;
+
+    // Phase 2 — apply mapping.
+    let ctx_transform = TransformContext {
+        client: &plain_client,
+        cloud_auth: &cloud_auth,
+        cloud_base_url: &trimmed_target,
+        target_project_key: &target_project_key,
+        user_resolver: &user_resolver,
+        version_resolver: &version_resolver,
+        component_resolver: &component_resolver,
+        user_map: &user_map,
+    };
+    let mut resolved = apply_mapping(&source_body, &mapping_rows, &ctx_transform).await;
+
+    // ── Phase 4 — Audit each mapping row decision (CUTV-03) ──────────────────
+    let copy_id = Uuid::new_v4().to_string();
+    let timestamp = chrono::Utc::now().to_rfc3339();
+    {
+        let mdb = mapping_db
+            .lock()
+            .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+        for row in &mapping_rows {
+            let src_path = format!("/fields/{}", row.source_field_id);
+            let src_val = source_body
+                .pointer(&src_path)
+                .cloned()
+                .unwrap_or(serde_json::Value::Null);
+            let tgt_val = resolved
+                .fields
+                .get(&row.target_field_id)
+                .cloned()
+                .unwrap_or(serde_json::Value::Null);
+            let was_overridden = args.override_values.contains_key(&row.target_field_id);
+            // D-07: redact credential markers from string values BEFORE hashing
+            // (so the hash itself does not leak via correlation).
+            let src_for_hash = redact_string_in_value(&src_val);
+            let tgt_for_hash = redact_string_in_value(&tgt_val);
+            let (src_hash, tgt_hash) = if audit_verbose {
+                // verbose: store the redacted JSON-serialized value (truncated to 4096 chars
+                // so a runaway field doesn't bloat the audit table).
+                let s = serde_json::to_string(&src_for_hash).unwrap_or_default();
+                let t = serde_json::to_string(&tgt_for_hash).unwrap_or_default();
+                (
+                    format!("raw={}", &s[..s.len().min(4096)]),
+                    format!("raw={}", &t[..t.len().min(4096)]),
+                )
+            } else {
+                (hash_field_value(&src_for_hash), hash_field_value(&tgt_for_hash))
+            };
+            // gap_kind: scan resolved.gaps for this target_field_id.
+            let gap_kind = resolved.gaps.iter().find_map(|g| match g {
+                GapVariant::Person(p) if p.target_field_id == row.target_field_id => {
+                    Some("person")
+                }
+                GapVariant::Version(v) if v.target_field_id == row.target_field_id => {
+                    Some("version")
+                }
+                GapVariant::Component(c) if c.target_field_id == row.target_field_id => {
+                    Some("component")
+                }
+                _ => None,
+            });
+            let _ = mdb.insert_mapping_audit(
+                &copy_id,
+                &row.target_field_id,
+                &src_hash,
+                &tgt_hash,
+                was_overridden,
+                gap_kind,
+                &timestamp,
+            ); // audit failures must not block copy (mirrors AuditDb::insert silent-failure pattern)
         }
-    });
+        // Also log each override that does NOT correspond to a mapping row
+        // (a pure ad-hoc gap fill from Phase 22 GapsSection).
+        for (field_id, val) in &args.override_values {
+            let already_logged = mapping_rows.iter().any(|r| &r.target_field_id == field_id);
+            if already_logged {
+                continue;
+            }
+            let v_for_hash = redact_string_in_value(val);
+            let h = if audit_verbose {
+                let s = serde_json::to_string(&v_for_hash).unwrap_or_default();
+                format!("raw={}", &s[..s.len().min(4096)])
+            } else {
+                hash_field_value(&v_for_hash)
+            };
+            let _ = mdb.insert_mapping_audit(
+                &copy_id,
+                field_id,
+                "(none)", // no source-mapping → use sentinel
+                &h,
+                true, // pure override
+                None,
+                &timestamp,
+            );
+        }
+    }
 
-    // target_status is captured for informational purposes (used in preview UI per D-07)
-    // Status transitions are not supported at Cloud issue creation; user intent is recorded
-    let _ = &target_status;
+    // ── Phase 5 — Merge override_values on top of resolved.fields ────────────
+    for (k, v) in &args.override_values {
+        resolved.fields.insert(k.clone(), v.clone());
+    }
 
-    let create_body_str = serde_json::to_string(&create_body)
-        .map_err(|e| AppError::Serialization(format!("Failed to serialize create body: {e}")))?;
+    // ── Phase 6 — Create issue in Cloud ──────────────────────────────────────
+    // Per CUTV-04 + D-04: project key from settings, issue type from args.
+    // The summary/priority/assignee/etc come entirely from resolved.fields +
+    // overrides (D-03 — no named field params).
+    let mut create_fields = resolved.fields.clone();
+    create_fields.insert(
+        "project".to_string(),
+        serde_json::json!({ "key": target_project_key }),
+    );
+    create_fields.insert(
+        "issuetype".to_string(),
+        serde_json::json!({ "id": args.target_issue_type_id }),
+    );
+    let create_body = serde_json::json!({ "fields": create_fields });
+
     let create_resp = client
         .post(format!("{trimmed_target}/rest/api/3/issue"))
         .header("Authorization", &cloud_auth)
         .header("Content-Type", "application/json")
-        .body(create_body_str)
+        .body(serde_json::to_string(&create_body).map_err(|e| {
+            AppError::Serialization(format!("Failed to serialize create body: {e}"))
+        })?)
         .send()
         .await
         .map_err(|_| AppError::Http("Failed to create issue in Cloud Jira".into()))?;
 
+    let create_status = create_resp.status().as_u16();
     if !create_resp.status().is_success() {
-        let status = create_resp.status().as_u16();
         steps.push(CopyStepResult {
             step: "create_issue".to_string(),
             success: false,
-            detail: Some(format!("Cloud issue creation returned status {status}")),
+            detail: Some(format!("Issue creation returned status {create_status}")),
         });
         return Ok(CopyTicketResult {
             target_key: None,
@@ -1561,317 +1655,56 @@ pub async fn copy_ticket(
         });
     }
 
-    let create_resp_text = create_resp
-        .text()
-        .await
-        .map_err(|_| AppError::Http("Failed to read create issue response".into()))?;
-    let create_resp_body: serde_json::Value = serde_json::from_str(&create_resp_text)
-        .map_err(|_| AppError::Http("Failed to parse create issue response".into()))?;
-    let target_key = create_resp_body["key"]
-        .as_str()
-        .unwrap_or("UNKNOWN")
-        .to_string();
-
+    let create_text = create_resp.text().await.unwrap_or_default();
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_text).unwrap_or(serde_json::json!({}));
+    let target_key = create_json["key"].as_str().unwrap_or("").to_string();
+    if target_key.is_empty() {
+        steps.push(CopyStepResult {
+            step: "create_issue".to_string(),
+            success: false,
+            detail: Some("Issue creation response missing 'key' field".into()),
+        });
+        return Ok(CopyTicketResult {
+            target_key: None,
+            target_url: None,
+            steps,
+        });
+    }
     steps.push(CopyStepResult {
         step: "create_issue".to_string(),
         success: true,
         detail: Some(target_key.clone()),
     });
 
-    // Step 5: Upload inline images and build URL map (per D-03)
-    let mut url_map: HashMap<String, String> = HashMap::new();
-
-    for (old_url, filename) in &image_pairs {
-        // Download image bytes from source Jira using Server PAT
-        let img_resp = client
-            .get(old_url)
-            .header("Authorization", format!("Bearer {server_pat}"))
-            .send()
-            .await;
-
-        match img_resp {
-            Ok(resp) if resp.status().is_success() => {
-                let content_type = resp
-                    .headers()
-                    .get("content-type")
-                    .and_then(|v| v.to_str().ok())
-                    .unwrap_or("image/png")
-                    .to_string();
-
-                match resp.bytes().await {
-                    Ok(img_bytes) => {
-                        // Upload to target ticket using plain reqwest::Client
-                        // (reqwest_middleware doesn't support multipart)
-                        let plain_client = reqwest::Client::new();
-                        let part = reqwest::multipart::Part::bytes(img_bytes.to_vec())
-                            .file_name(filename.clone())
-                            .mime_str(&content_type)
-                            .unwrap_or_else(|_| {
-                                reqwest::multipart::Part::bytes(img_bytes.to_vec())
-                                    .file_name(filename.clone())
-                            });
-                        let form = reqwest::multipart::Form::new().part("file", part);
-
-                        let upload_resp = plain_client
-                            .post(format!(
-                                "{trimmed_target}/rest/api/3/issue/{target_key}/attachments"
-                            ))
-                            .header("Authorization", &cloud_auth)
-                            .header("X-Atlassian-Token", "no-check")
-                            .multipart(form)
-                            .send()
-                            .await;
-
-                        match upload_resp {
-                            Ok(up_resp) if up_resp.status().is_success() => {
-                                let up_body: serde_json::Value =
-                                    up_resp.json().await.unwrap_or_default();
-                                // Response is a JSON array; first element has `content` field
-                                let new_url = up_body
-                                    .as_array()
-                                    .and_then(|arr| arr.first())
-                                    .and_then(|el| el["content"].as_str())
-                                    .unwrap_or("")
-                                    .to_string();
-                                if !new_url.is_empty() {
-                                    url_map.insert(old_url.clone(), new_url.clone());
-                                }
-                                steps.push(CopyStepResult {
-                                    step: format!("upload_image:{filename}"),
-                                    success: true,
-                                    detail: Some(new_url),
-                                });
-                            }
-                            Ok(up_resp) => {
-                                let up_status = up_resp.status().as_u16();
-                                steps.push(CopyStepResult {
-                                    step: format!("upload_image:{filename}"),
-                                    success: false,
-                                    detail: Some(format!("Upload returned status {up_status}")),
-                                });
-                            }
-                            Err(_) => {
-                                steps.push(CopyStepResult {
-                                    step: format!("upload_image:{filename}"),
-                                    success: false,
-                                    detail: Some("Network error during upload".to_string()),
-                                });
-                            }
-                        }
-                    }
-                    Err(_) => {
-                        steps.push(CopyStepResult {
-                            step: format!("upload_image:{filename}"),
-                            success: false,
-                            detail: Some("Failed to read image bytes".to_string()),
-                        });
-                    }
-                }
-            }
-            _ => {
-                steps.push(CopyStepResult {
-                    step: format!("upload_image:{filename}"),
-                    success: false,
-                    detail: Some("Failed to download source image".to_string()),
-                });
-            }
-        }
-    }
-
-    // Step 6: Build ADF description
-    // If user provided edited description, wrap as plain text ADF.
-    // Otherwise, rewrite HTML image URLs and convert via htmltoadf pipeline.
-    let mut adf_value: serde_json::Value = match target_description {
-        Some(ref edited) if !edited.is_empty() => {
-            // User-edited description — wrap as plain text ADF
-            serde_json::json!({
-                "version": 1,
-                "type": "doc",
-                "content": [{
-                    "type": "paragraph",
-                    "content": [{
-                        "type": "text",
-                        "text": edited
-                    }]
-                }]
-            })
-        }
-        _ => {
-            // Use source HTML → rewrite images → convert to ADF
-            let rewritten_html = rewrite_image_urls(&html_description, &url_map);
-            let adf_str = htmltoadf::convert_html_str_to_adf_str(rewritten_html);
-            serde_json::from_str(&adf_str)
-                .map_err(|e| AppError::Serialization(format!("Failed to parse ADF JSON: {e}")))?
-        }
-    };
-
-    // Append sub-tasks footer to ADF description (per D-09, D-10)
-    let subtasks = source_body["fields"]["subtasks"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-    if !subtasks.is_empty() {
-        if let Some(content) = adf_value["content"].as_array_mut() {
-            content.push(serde_json::json!({
-                "type": "heading",
-                "attrs": { "level": 3 },
-                "content": [{ "type": "text", "text": "Sub-tasks" }]
-            }));
-            let items: Vec<serde_json::Value> = subtasks
-                .iter()
-                .map(|st| {
-                    let key = st["key"].as_str().unwrap_or("?");
-                    let summary = st["fields"]["summary"].as_str().unwrap_or("?");
-                    serde_json::json!({
-                        "type": "listItem",
-                        "content": [{
-                            "type": "paragraph",
-                            "content": [{ "type": "text", "text": format!("{}: {}", key, summary) }]
-                        }]
-                    })
-                })
-                .collect();
-            content.push(serde_json::json!({
-                "type": "bulletList",
-                "content": items
-            }));
-        }
-    }
-
-    // Append linked issues footer to ADF description (per D-11, D-12)
-    let issuelinks = source_body["fields"]["issuelinks"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-    if !issuelinks.is_empty() {
-        if let Some(content) = adf_value["content"].as_array_mut() {
-            content.push(serde_json::json!({
-                "type": "heading",
-                "attrs": { "level": 3 },
-                "content": [{ "type": "text", "text": "Linked Issues" }]
-            }));
-            let items: Vec<serde_json::Value> = issuelinks.iter().filter_map(|link| {
-                if let Some(outward) = link["outwardIssue"].as_object() {
-                    let link_type = link["type"]["outward"].as_str().unwrap_or("relates to");
-                    let key = outward.get("key").and_then(|k| k.as_str()).unwrap_or("?");
-                    let summary = outward.get("fields")
-                        .and_then(|f| f["summary"].as_str())
-                        .unwrap_or("?");
-                    Some(serde_json::json!({
-                        "type": "listItem",
-                        "content": [{
-                            "type": "paragraph",
-                            "content": [{ "type": "text", "text": format!("{}: {} \u{2014} {}", link_type, key, summary) }]
-                        }]
-                    }))
-                } else if let Some(inward) = link["inwardIssue"].as_object() {
-                    let link_type = link["type"]["inward"].as_str().unwrap_or("relates to");
-                    let key = inward.get("key").and_then(|k| k.as_str()).unwrap_or("?");
-                    let summary = inward.get("fields")
-                        .and_then(|f| f["summary"].as_str())
-                        .unwrap_or("?");
-                    Some(serde_json::json!({
-                        "type": "listItem",
-                        "content": [{
-                            "type": "paragraph",
-                            "content": [{ "type": "text", "text": format!("{}: {} \u{2014} {}", link_type, key, summary) }]
-                        }]
-                    }))
-                } else {
-                    None
-                }
-            }).collect();
-            if !items.is_empty() {
-                content.push(serde_json::json!({
-                    "type": "bulletList",
-                    "content": items
-                }));
-            }
-        }
-    }
-
-    steps.push(CopyStepResult {
-        step: "convert_description".to_string(),
-        success: true,
-        detail: None,
-    });
-
-    // Step 7: Update issue description with ADF (two-pass: PUT after image uploads)
-    let update_body = serde_json::json!({
-        "fields": {
-            "description": adf_value
-        }
-    });
-    let update_body_str = serde_json::to_string(&update_body)
-        .map_err(|e| AppError::Serialization(format!("Failed to serialize update body: {e}")))?;
-
-    let update_resp = client
-        .put(format!("{trimmed_target}/rest/api/3/issue/{target_key}"))
-        .header("Authorization", &cloud_auth)
-        .header("Content-Type", "application/json")
-        .body(update_body_str)
-        .send()
-        .await
-        .map_err(|_| AppError::Http("Failed to update issue description in Cloud Jira".into()))?;
-
-    let update_status = update_resp.status().as_u16();
-    let update_success = update_resp.status().is_success();
-    steps.push(CopyStepResult {
-        step: "update_description".to_string(),
-        success: update_success,
-        detail: if update_success {
-            None
-        } else {
-            Some(format!(
-                "Description update returned status {update_status}"
-            ))
-        },
-    });
-
-    // Phase 23 D-08/D-09 — construct CopyContext and delegate the remaining
-    // helper blocks (remote link, attachments, comments, worklogs, subtasks)
-    // to the extracted free helpers. copy_ticket_v2 (Plan 23-03) reuses the
-    // same helpers — refactoring the OLD path first proves they work before
-    // copy_ticket is deleted.
-    let ctx = CopyContext {
+    // ── Phase 7 — Construct CopyContext and delegate to shared helpers ────────
+    let ctx = crate::copy_pipeline::CopyContext {
         client: client.clone(),
         cloud_auth: cloud_auth.clone(),
         server_pat: server_pat.clone(),
-        source_base_url: trimmed_source.to_string(),
-        target_base_url: trimmed_target.to_string(),
-        source_key: source_key.clone(),
+        source_base_url: trimmed_source.clone(),
+        target_base_url: trimmed_target.clone(),
+        source_key: args.source_key.clone(),
         target_key: target_key.clone(),
         target_project_key: target_project_key.clone(),
     };
-
-    // Step 8: Add remote link back to source ticket (origin tracking, D-15)
-    steps.push(add_remote_link(&ctx, &source_summary).await);
-
-    // Attachment copy loop (per D-05, D-06)
-    steps.extend(copy_attachments(&ctx, &source_body).await);
-
-    // Comment copy loop (per D-01 through D-04)
-    steps.extend(copy_comments(&ctx, &source_body).await);
-
-    // Work log copy (per D-07, D-08)
-    steps.extend(copy_worklogs(&ctx).await);
-
-    // Sub-task child issue creation (COPY-05)
-    // Note: subtasks variable already defined above for description footer
+    steps.push(crate::copy_pipeline::add_remote_link(&ctx, &source_summary).await);
+    steps.extend(crate::copy_pipeline::copy_attachments(&ctx, &source_body).await);
+    steps.extend(crate::copy_pipeline::copy_comments(&ctx, &source_body).await);
+    steps.extend(crate::copy_pipeline::copy_worklogs(&ctx).await);
     let subtasks_arr = source_body["fields"]["subtasks"]
         .as_array()
         .cloned()
         .unwrap_or_default();
-    steps.extend(copy_subtasks(&ctx, &subtasks_arr).await);
+    steps.extend(crate::copy_pipeline::copy_subtasks(&ctx, &subtasks_arr).await);
 
-    // Step 9: Update triage state to copied
+    // ── Phase 8 — Update triage state ────────────────────────────────────────
     {
-        let db = triage_db
+        let g = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        db.set_triage_copied(&source_key, &target_key)?;
+        g.set_triage_copied(&args.source_key, &target_key)?;
     }
-
     steps.push(CopyStepResult {
         step: "update_triage".to_string(),
         success: true,
@@ -1883,6 +1716,26 @@ pub async fn copy_ticket(
         target_url: Some(format!("{trimmed_target}/browse/{target_key}")),
         steps,
     })
+}
+
+/// Phase 23 D-07 — apply credential redaction to any string values inside a
+/// JSON value tree, returning a new tree. Non-string values pass through
+/// unchanged. Used inside `copy_ticket_v2` audit logging path.
+fn redact_string_in_value(v: &serde_json::Value) -> serde_json::Value {
+    match v {
+        serde_json::Value::String(s) => serde_json::Value::String(redact_credential_value(s)),
+        serde_json::Value::Array(arr) => {
+            serde_json::Value::Array(arr.iter().map(redact_string_in_value).collect())
+        }
+        serde_json::Value::Object(obj) => {
+            let mut out = serde_json::Map::new();
+            for (k, val) in obj {
+                out.insert(k.clone(), redact_string_in_value(val));
+            }
+            serde_json::Value::Object(out)
+        }
+        _ => v.clone(),
+    }
 }
 
 /// Store a ticket snapshot and return any detected field changes.
