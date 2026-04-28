@@ -294,10 +294,11 @@ None yet.
 | 260428-abc | Improve copy unsupported field type warnings to be clear and actionable | 2026-04-28 | 4f1bf65 | | [260428-abc-improve-copy-unsupported-type-warnings](./quick/260428-abc-improve-copy-unsupported-type-warnings/) |
 | 260428-4ab | Improve field mapping settings UX: field names, transformer descriptions, column tooltip | 2026-04-28 | 6af7360 | | [260428-4ab-improve-field-mapping-settings-ux](./quick/260428-4ab-improve-field-mapping-settings-ux/) |
 | 260428-fmd | Fix field mapping dropdown overflow and sizing in settings | 2026-04-28 | abf7c99 | Verified | [260428-fmd-dropdown-overflow-fix](./quick/260428-fmd-dropdown-overflow-fix/) |
+| 260428-gni | Redesign missing field mapping display variants for UI consistency | 2026-04-28 | 11f29df | | [260428-gni-redesign-missing-field-mapping-display](./quick/260428-gni-redesign-missing-field-mapping-display/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-28 — Completed quick task 260428-fmd: Fix field mapping dropdown overflow and sizing (Verified)
+Last activity: 2026-04-28 — Completed quick task 260428-gni: Redesign missing field mapping display variants for UI consistency
 Last session: 2026-04-28T21:40:22.315Z
 Stopped at: context exhaustion at 75% (2026-04-28)
 Resume file: None
