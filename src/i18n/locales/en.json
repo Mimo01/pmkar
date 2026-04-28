@@ -323,5 +323,12 @@
   "changelog.miscellaneous": "Miscellaneous",
   "changelog.cicd": "CI/CD",
   "tickets.truncationWarning": "Result set truncated",
-  "tickets.truncationWarningHint": "Your query returned more tickets than the maximum supported. Some tickets are not shown — tighten your JQL to narrow the results."
+  "tickets.truncationWarningHint": "Your query returned more tickets than the maximum supported. Some tickets are not shown — tighten your JQL to narrow the results.",
+  "fieldRenderer.placeholder.select": "Select…",
+  "fieldRenderer.placeholder.searchUsers": "Search users…",
+  "fieldRenderer.placeholder.searching": "Searching…",
+  "fieldRenderer.noResults": "No results found.",
+  "fieldRenderer.unsupportedType": "Unsupported: {{type}}",
+  "fieldRenderer.required": " *",
+  "fieldRenderer.removeItem": "Remove {{item}}"
 }

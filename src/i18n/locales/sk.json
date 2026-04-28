@@ -323,5 +323,12 @@
   "changelog.miscellaneous": "Rôzne",
   "changelog.cicd": "CI/CD",
   "tickets.truncationWarning": "Výsledky boli skrátené",
-  "tickets.truncationWarningHint": "Váš dopyt vrátil viac tiketov, než je maximum. Niektoré tikety sa nezobrazujú — upravte JQL, aby ste výsledky zúžili."
+  "tickets.truncationWarningHint": "Váš dopyt vrátil viac tiketov, než je maximum. Niektoré tikety sa nezobrazujú — upravte JQL, aby ste výsledky zúžili.",
+  "fieldRenderer.placeholder.select": "Vybrať…",
+  "fieldRenderer.placeholder.searchUsers": "Hľadať používateľov…",
+  "fieldRenderer.placeholder.searching": "Hľadá sa…",
+  "fieldRenderer.noResults": "Žiadne výsledky.",
+  "fieldRenderer.unsupportedType": "Nepodporovaný typ: {{type}}",
+  "fieldRenderer.required": " *",
+  "fieldRenderer.removeItem": "Odstrániť {{item}}"
 }
