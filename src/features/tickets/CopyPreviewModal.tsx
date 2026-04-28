@@ -394,6 +394,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                   onChange={setOverrideValue}
                   searchCallbacks={{ onSearchUsers: searchUsersForPicker }}
                   initialQueries={initialQueriesByFieldId}
+                  onMapLink={handleMapLink}
                 />
               </div>
             </div>

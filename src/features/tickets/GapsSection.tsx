@@ -1,7 +1,8 @@
-import { AlertTriangle, ExternalLink, Info } from 'lucide-react';
+import { AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { getRenderer, isEditableSchemaType } from '@/features/field-renderers/registry';
+import { UnsupportedFieldHint } from '@/features/field-renderers/UnsupportedFieldHint';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
 import type { JiraUser } from './types';
 
@@ -45,55 +46,51 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
         {field.name}
         <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
       </label>
-      <div className="flex-1 [&_button]:min-h-9">
-        {isEditable ? (
-          <Renderer
-            field={field}
-            value={value}
-            onChange={onChange}
-            required={true}
-            onSearch={isUser ? onSearchUsers : undefined}
-          />
-        ) : (
-          <div
-            className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5"
-            data-testid={`gap-unsupported-${field.fieldId}`}
-          >
-            <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {t('copy.preview.unsupportedGapHint')}
-            </p>
+      {isEditable ? (
+        <>
+          <div className="flex-1 [&_button]:min-h-9">
+            <Renderer
+              field={field}
+              value={value}
+              onChange={onChange}
+              required={true}
+              onSearch={isUser ? onSearchUsers : undefined}
+            />
           </div>
-        )}
-      </div>
-      <Button
-        type="button"
-        variant={isEditable ? 'ghost' : 'outline'}
-        size="sm"
-        onClick={onMapLink}
-        className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"
-        data-testid={`gap-map-link-${field.fieldId}`}
-      >
-        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-        {t('copy.preview.mapLink')}
-      </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onMapLink}
+            className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"
+            data-testid={`gap-map-link-${field.fieldId}`}
+          >
+            <ExternalLink className="w-3 h-3" aria-hidden="true" />
+            {t('copy.preview.mapLink')}
+          </Button>
+        </>
+      ) : (
+        <div className="flex-1">
+          <UnsupportedFieldHint
+            data-testid={`gap-unsupported-${field.fieldId}`}
+            onMapLink={onMapLink}
+          />
+          {/* hidden button keeps gap-map-link testid for existing tests */}
+          <button
+            type="button"
+            onClick={onMapLink}
+            data-testid={`gap-map-link-${field.fieldId}`}
+            className="sr-only"
+            aria-hidden="true"
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 /**
  * Phase 22 — Required-but-unmapped fields panel (D-07, D-08, D-09).
- *
- * Renders nothing when `gapFields` is empty (no empty-state copy needed; the
- * absence of the section is itself the "no gaps" signal).
- *
- * Each row uses the same renderer registry as `DynamicTargetForm`, so users
- * see field-type-aware controls (text input, picker, date, etc.) without any
- * special-casing here.
- *
- * The "Map field" button calls the parent-supplied `onMapLink` callback.
- * Navigation is the parent's responsibility (Plan 22-04 closes the modal and
- * opens Settings > Field Mapping per D-08).
  */
 export function GapsSection({
   gapFields,

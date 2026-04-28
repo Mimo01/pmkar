@@ -1,7 +1,6 @@
-import { Info } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import type { FieldSchema } from '@/types/fieldSchema';
 import { getRenderer, isEditableSchemaType } from './registry';
+import { UnsupportedFieldHint } from './UnsupportedFieldHint';
 import type { SearchCallbacks } from './types';
 
 export interface DynamicTargetFormProps {
@@ -11,6 +10,7 @@ export interface DynamicTargetFormProps {
   searchCallbacks?: SearchCallbacks;
   /** Phase 22 — per-field initial search query (used by user pickers for email pre-fill, D-15). */
   initialQueries?: Record<string, string>;
+  onMapLink?: () => void;
 }
 
 export function DynamicTargetForm({
@@ -19,8 +19,8 @@ export function DynamicTargetForm({
   onChange,
   searchCallbacks,
   initialQueries,
+  onMapLink,
 }: DynamicTargetFormProps) {
-  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-6">
       {fields.map((field) => {
@@ -55,15 +55,10 @@ export function DynamicTargetForm({
                 initialQuery={initialQueries?.[field.fieldId]}
               />
             ) : (
-              <div
-                className="flex items-start gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5"
+              <UnsupportedFieldHint
                 data-testid={`unsupported-field-${field.fieldId}`}
-              >
-                <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" aria-hidden="true" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t('copy.preview.unsupportedFieldHint')}
-                </p>
-              </div>
+                onMapLink={onMapLink}
+              />
             )}
           </div>
         );

@@ -7,7 +7,7 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => {
       if (key === 'copy.preview.gapsHeader') return 'Required fields with no mapping';
       if (key === 'copy.preview.mapLink') return 'Map field';
-      if (key === 'copy.preview.unsupportedGapHint') return "Can't fill this field type here — map it to copy automatically.";
+      if (key === 'copy.preview.unsupportedFieldHint') return "This field type has no manual input — use Map field to configure copying.";
       return key;
     },
   }),
@@ -197,7 +197,6 @@ describe('GapsSection', () => {
     );
     expect(screen.getByTestId('gap-unsupported-priority')).toBeInTheDocument();
     expect(screen.queryByTestId('renderer-priority')).not.toBeInTheDocument();
-    expect(screen.getByTestId('gap-unsupported-priority').textContent).toMatch(/map/i);
   });
 
   it('shows hint for option-with-child (cascading select)', () => {

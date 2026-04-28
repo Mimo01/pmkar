@@ -442,6 +442,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
                 onChange={setOverrideValue}
                 searchCallbacks={{ onSearchUsers: searchUsersForPicker }}
                 initialQueries={initialQueriesByFieldId}
+                onMapLink={handleMapLink}
               />
             </div>
           </div>
