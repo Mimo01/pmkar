@@ -355,6 +355,8 @@
   "settings.fieldMapping.colSource": "Zdrojové pole",
   "settings.fieldMapping.colTarget": "Cieľové pole",
   "settings.fieldMapping.colTransformer": "Transformátor",
+  "settings.fieldMapping.sourcePlaceholder": "Vyberte zdrojové pole",
+  "settings.fieldMapping.cancelAdd": "Zrušiť nové mapovanie",
   "settings.fieldMapping.targetPlaceholder": "Vyberte cieľové pole",
   "settings.fieldMapping.transformerPlaceholder": "Vyberte transformátor",
   "settings.fieldMapping.deleteAriaLabel": "Odstrániť mapovanie pre {{field}}",

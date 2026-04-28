@@ -355,6 +355,8 @@
   "settings.fieldMapping.colSource": "Source field",
   "settings.fieldMapping.colTarget": "Target field",
   "settings.fieldMapping.colTransformer": "Transformer",
+  "settings.fieldMapping.sourcePlaceholder": "Select source field",
+  "settings.fieldMapping.cancelAdd": "Cancel new mapping",
   "settings.fieldMapping.targetPlaceholder": "Select target field",
   "settings.fieldMapping.transformerPlaceholder": "Select transformer",
   "settings.fieldMapping.deleteAriaLabel": "Remove mapping for {{field}}",
