@@ -98,6 +98,14 @@ async function searchUsersForPicker(q: string): Promise<JiraUser[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Transformer kinds that can be prefilled directly from raw source field values.
+// User / version / component require async resolution — they remain as gaps.
+// Description is wiki_to_adf and handled server-side only.
+// ---------------------------------------------------------------------------
+
+const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
+
+// ---------------------------------------------------------------------------
 // CopyPreviewPage
 // ---------------------------------------------------------------------------
 
@@ -145,6 +153,29 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       .then((rows) => setMappingRows(Array.isArray(rows) ? rows : []))
       .catch(() => setMappingRows([]));
   }, [phase]);
+
+  // ── Prefill overrideValues from mapping rows (D-PREFILL) ──────────────────
+  // Runs once when both mappingRows and sourceTicket are available.
+  // Seeds overrideValues for identity/priority transformer rows using raw source
+  // field values. Skips user/version/component kinds (require async resolution).
+  // Does not overwrite values already set by the user.
+  useEffect(() => {
+    if (!sourceTicket || mappingRows.length === 0) return;
+    const sourceFields = sourceTicket.fields as Record<string, unknown>;
+    for (const row of mappingRows) {
+      if (!row.targetFieldId) continue;
+      if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
+      // Do not overwrite values already set by the user.
+      if (overrideValues[row.targetFieldId] !== undefined) continue;
+      const rawValue = sourceFields[row.sourceFieldId];
+      if (rawValue === null || rawValue === undefined) continue;
+      setOverrideValue(row.targetFieldId, rawValue);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mappingRows, sourceTicket]);
+  // Intentionally omit overrideValues and setOverrideValue from deps:
+  // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
+  // setOverrideValue is a stable store action reference and does not need to be in deps.
 
   // ── Schema-loading visual ──────────────────────────────────────────────────
   const cache = useSchemaCacheStore((s) => s.cache);
