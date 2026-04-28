@@ -179,7 +179,24 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
   3. User opening the editor for the first time after a fresh discovery sees heuristic name-match suggestions for unmapped source fields (case-insensitive equality + a small synonym set), accepted with one click.
   4. User can click a "Refresh schema" button to re-fetch field schemas from both Jiras, with a visible "Last refreshed Xm ago" timestamp.
   5. User opening the editor when the target Jira's schema has drifted (a saved row references a now-missing target field) sees an inline warning per affected row with a one-click remove option (drift detected via stored schema hashes).
-**Plans**: TBD
+**Plans**: 3 plans
+
+**Wave 0** *(scaffolding — install sonner, mount Toaster, extend SectionCard, types/transformerOptions/heuristics + test stubs)*:
+- [ ] 21-01-PLAN.md — sonner install + SectionCard.headerAction + FieldMappingRow type + transformerOptions + heuristics module (with tests) + test stubs for downstream components
+
+**Wave 1** *(parallel-safe leaf components — disjoint files)*:
+- [ ] 21-02-PLAN.md — DriftWarning + MappingRow (auto-save invokes set/delete_field_mapping via VirtualizedCombobox) + SuggestionsPanel (Accept/Dismiss with empty-string sentinel D-07) + tests for both — depends on 21-01
+
+**Wave 2** *(integration — orchestrator + nav wiring + i18n)*:
+- [ ] 21-03-PLAN.md — FieldMappingSection orchestrator (load rows + drift detection useMemo + heuristic suggestions useMemo + refresh handler) + FieldMappingSectionHeader (Refresh button + Last refreshed timestamp) + SettingsPage Copying nav group + en/sk i18n parity — depends on 21-01, 21-02
+
+**Cross-cutting constraints** *(truths shared by 2+ plans)*:
+- Tauri commands wired in Plan 02 leaves only — orchestrator (Plan 03) does NOT call set/delete_field_mapping; it patches local Zustand state after leaves invoke
+- Empty-string targetFieldId sentinel (D-07) for dismissed suggestions — used by Plan 02 (SuggestionsPanel.handleDismiss) and recognized by Plan 03 (drift detection skips empty-string rows; suggestions skip rows already mapped including dismissed)
+- Frontend timestamp for lastRefreshed (Pitfall 2) — no backend command for MAX(cached_at); Plan 03 owns the Date.now() write on successful refresh
+- VirtualizedCombobox compactness wrapper [&_button]:min-h-9 (Pitfall 5) — Plan 02 MappingRow applies it consistently around both target and transformer comboboxes
+- i18n parity: 25+ new settings.fieldMapping.* / settings.group.copying / settings.nav.fieldMapping / settings.section.fieldMapping keys MUST exist with identical key sets in en.json + sk.json (Plan 03 owns; consumers in Plans 02 + 03 reference the keys)
+
 **UI hint**: yes
 
 ### Phase 22: Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating
@@ -232,6 +249,6 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 | 18. v2→v3 Translation Layer | v0.4.0 | 0/5 | Not started | - |
 | 19. Mapping Persistence + CRUD Commands | v0.4.0 | 0/2 | Not started | - |
 | 20. Renderer Registry + Field-Type-Aware Controls | v0.4.0 | 0/5 | Not started | - |
-| 21. Mapping Editor (Settings UI) | v0.4.0 | 0/? | Not started | - |
+| 21. Mapping Editor (Settings UI) | v0.4.0 | 0/3 | Not started | - |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 0/? | Not started | - |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 0/? | Not started | - |
