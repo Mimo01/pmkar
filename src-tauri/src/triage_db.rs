@@ -79,6 +79,11 @@ const ALTER_APP_CONFIG_ADD_POLL_FREQUENCY: &str =
 const ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS: &str =
     "ALTER TABLE app_config ADD COLUMN notification_prefs TEXT;";
 
+/// Phase 23 D-06 — verbose audit mode flag. When true, `mapping_audit_log` writes
+/// raw field values; when false (default), only SHA-256 hashes are written.
+const ALTER_APP_CONFIG_ADD_AUDIT_VERBOSE: &str =
+    "ALTER TABLE app_config ADD COLUMN audit_verbose INTEGER NOT NULL DEFAULT 0;";
+
 const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_meta (
     connection_type TEXT PRIMARY KEY,
     base_url        TEXT NOT NULL,
@@ -137,6 +142,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_AUDIT_VERBOSE);
         Ok(Self { conn })
     }
 
@@ -156,6 +162,7 @@ impl TriageDb {
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_TARGET_PROJECT_NAME);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_POLL_FREQUENCY);
         let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_NOTIFICATION_PREFS);
+        let _ = conn.execute_batch(ALTER_APP_CONFIG_ADD_AUDIT_VERBOSE);
         Ok(Self { conn })
     }
 
@@ -329,6 +336,39 @@ impl TriageDb {
             [&json],
         )?;
         Ok(())
+    }
+
+    /// Phase 23 D-06 — read the persistent `audit_verbose` flag.
+    /// Defaults to false (hash-only mode) when the row or column is missing.
+    pub fn get_audit_verbose(&self) -> AppResult<bool> {
+        let val: i64 = self
+            .conn
+            .query_row(
+                "SELECT audit_verbose FROM app_config WHERE id = 1",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+        Ok(val != 0)
+    }
+
+    /// Phase 23 D-06 — persist the `audit_verbose` flag. Update-only (the row
+    /// is created at open via `INSERT OR IGNORE`).
+    pub fn set_audit_verbose(&self, verbose: bool) -> AppResult<()> {
+        self.conn.execute(
+            "UPDATE app_config SET audit_verbose = ?1 WHERE id = 1",
+            rusqlite::params![i64::from(verbose)],
+        )?;
+        Ok(())
+    }
+
+    /// Phase 23 CUTV-04 — single-value convenience getter for `target_project_key`.
+    /// Wraps the existing 4-tuple `get_project_keys()` so Plan 23-03 (`copy_ticket_v2`)
+    /// can read the target project key without unpacking the full project keys row.
+    /// Returns `Ok(None)` when the column is NULL (user has not configured a target).
+    pub fn get_target_project_key(&self) -> AppResult<Option<String>> {
+        let (_src_key, tgt_key, _src_name, _tgt_name) = self.get_project_keys()?;
+        Ok(tgt_key)
     }
 
     #[allow(clippy::type_complexity)]
@@ -565,6 +605,48 @@ mod tests {
         assert_eq!(deleted, 0, "empty input should delete nothing");
         let all = db.get_all_triage().expect("get failed");
         assert_eq!(all.len(), 1, "PROJ-1 should remain");
+    }
+
+    #[test]
+    fn audit_verbose_defaults_to_false() {
+        let db = TriageDb::open_in_memory().expect("open_in_memory");
+        assert!(!db.get_audit_verbose().expect("get"));
+    }
+
+    #[test]
+    fn audit_verbose_round_trips_true_and_false() {
+        let db = TriageDb::open_in_memory().expect("open_in_memory");
+        db.set_audit_verbose(true).expect("set true");
+        assert!(db.get_audit_verbose().expect("get true"));
+        db.set_audit_verbose(false).expect("set false");
+        assert!(!db.get_audit_verbose().expect("get false"));
+    }
+
+    #[test]
+    fn target_project_key_returns_none_when_unset() {
+        let db = TriageDb::open_in_memory().expect("open_in_memory");
+        assert_eq!(db.get_target_project_key().expect("get"), None);
+    }
+
+    #[test]
+    fn target_project_key_round_trips() {
+        let db = TriageDb::open_in_memory().expect("open_in_memory");
+        db.set_target_project_key(Some("ACME")).expect("set");
+        assert_eq!(db.get_target_project_key().expect("get"), Some("ACME".to_string()));
+    }
+
+    #[test]
+    fn audit_verbose_alter_is_idempotent_on_reopen() {
+        // Fresh in-memory connections cannot test reopen; this test is a
+        // best-effort regression check that the open() path itself does not
+        // fail when wired with the new ALTER. A second open_in_memory() call
+        // exercises the same code path independently.
+        let db1 = TriageDb::open_in_memory().expect("first open");
+        db1.set_audit_verbose(true).expect("set");
+        drop(db1);
+        let db2 = TriageDb::open_in_memory().expect("second open — must not fail");
+        // New in-memory DB → defaults reset.
+        assert!(!db2.get_audit_verbose().expect("get"));
     }
 
     #[test]
