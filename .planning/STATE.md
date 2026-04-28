@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 22 context gathered
-last_updated: "2026-04-28T12:30:00.000Z"
-last_activity: 2026-04-28 -- Phase 22 context discussion complete
+stopped_at: Phase 22 UI-SPEC approved
+last_updated: "2026-04-28T14:00:00.000Z"
+last_activity: 2026-04-28 -- Phase 22 UI design contract approved
 progress:
   total_phases: 7
   completed_phases: 5
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 
 Phase: 22 (Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating)
 Plan: none yet
-Status: Context gathered, ready to plan
-Last activity: 2026-04-28 -- Phase 22 context discussion complete
+Status: UI-SPEC approved, ready to plan
+Last activity: 2026-04-28 -- Phase 22 UI design contract approved
 
 ## Performance Metrics
 
@@ -278,6 +278,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-27
-Last session: 2026-04-28T08:17:28.504Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-mapping-editor-settings-ui/21-CONTEXT.md
+Last session: 2026-04-28T14:00:00.000Z
+Stopped at: Phase 22 UI-SPEC approved
+Resume file: .planning/phases/22-copy-preview-override-panel/22-UI-SPEC.md
