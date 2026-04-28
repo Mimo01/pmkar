@@ -364,81 +364,109 @@ pub async fn copy_worklogs(
         .send()
         .await;
 
-    if let Ok(wl_response) = wl_resp {
-        if wl_response.status().is_success() {
-            if let Ok(wl_body) = wl_response.json::<serde_json::Value>().await {
-                let worklogs = wl_body["worklogs"].as_array().cloned().unwrap_or_default();
+    let wl_response = match wl_resp {
+        Ok(r) => r,
+        Err(e) => {
+            out.push(CopyStepResult {
+                step: "worklog:fetch".to_string(),
+                success: false,
+                detail: Some(format!("Network error fetching worklogs from source: {e}")),
+            });
+            return out;
+        }
+    };
+    if !wl_response.status().is_success() {
+        out.push(CopyStepResult {
+            step: "worklog:fetch".to_string(),
+            success: false,
+            detail: Some(format!(
+                "Worklog fetch returned status {}",
+                wl_response.status().as_u16()
+            )),
+        });
+        return out;
+    }
+    let wl_body = match wl_response.json::<serde_json::Value>().await {
+        Ok(b) => b,
+        Err(e) => {
+            out.push(CopyStepResult {
+                step: "worklog:fetch".to_string(),
+                success: false,
+                detail: Some(format!("Failed to parse worklog response: {e}")),
+            });
+            return out;
+        }
+    };
 
-                for (idx, wl) in worklogs.iter().enumerate() {
-                    let author_name = wl["author"]["displayName"].as_str().unwrap_or("Unknown");
-                    let started = wl["started"].as_str().unwrap_or("");
-                    let started_date = if started.len() >= 10 {
-                        &started[..10]
-                    } else {
-                        started
-                    };
-                    let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
-                    let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
+    let worklogs = wl_body["worklogs"].as_array().cloned().unwrap_or_default();
 
-                    let attribution =
-                        format!("{author_name} \u{2014} {started_date} ({time_spent})");
+    for (idx, wl) in worklogs.iter().enumerate() {
+        let author_name = wl["author"]["displayName"].as_str().unwrap_or("Unknown");
+        let started = wl["started"].as_str().unwrap_or("");
+        let started_date = if started.len() >= 10 {
+            &started[..10]
+        } else {
+            started
+        };
+        let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
+        let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
 
-                    let wl_comment_adf = serde_json::json!({
-                        "version": 1,
-                        "type": "doc",
-                        "content": [{
-                            "type": "paragraph",
-                            "content": [{
-                                "type": "text",
-                                "text": attribution,
-                                "marks": [{ "type": "strong" }]
-                            }]
-                        }]
-                    });
+        let attribution =
+            format!("{author_name} \u{2014} {started_date} ({time_spent})");
 
-                    let wl_post_body = serde_json::json!({
-                        "timeSpentSeconds": time_spent_seconds,
-                        "started": started,
-                        "comment": wl_comment_adf
-                    });
+        let wl_comment_adf = serde_json::json!({
+            "version": 1,
+            "type": "doc",
+            "content": [{
+                "type": "paragraph",
+                "content": [{
+                    "type": "text",
+                    "text": attribution,
+                    "marks": [{ "type": "strong" }]
+                }]
+            }]
+        });
 
-                    let wl_post_resp = ctx
-                        .client
-                        .post(format!(
-                            "{}/rest/api/3/issue/{}/worklog",
-                            ctx.target_base_url, ctx.target_key
-                        ))
-                        .header("Authorization", &ctx.cloud_auth)
-                        .header("Content-Type", "application/json")
-                        .body(wl_post_body.to_string())
-                        .send()
-                        .await;
+        let wl_post_body = serde_json::json!({
+            "timeSpentSeconds": time_spent_seconds,
+            "started": started,
+            "comment": wl_comment_adf
+        });
 
-                    match wl_post_resp {
-                        Ok(r) if r.status().is_success() => {
-                            out.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: true,
-                                detail: None,
-                            });
-                        }
-                        Ok(r) => {
-                            let status = r.status().as_u16();
-                            out.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: false,
-                                detail: Some(format!("Worklog POST returned {status}")),
-                            });
-                        }
-                        Err(_) => {
-                            out.push(CopyStepResult {
-                                step: format!("worklog:{}", idx + 1),
-                                success: false,
-                                detail: Some("Network error posting worklog".to_string()),
-                            });
-                        }
-                    }
-                }
+        let wl_post_resp = ctx
+            .client
+            .post(format!(
+                "{}/rest/api/3/issue/{}/worklog",
+                ctx.target_base_url, ctx.target_key
+            ))
+            .header("Authorization", &ctx.cloud_auth)
+            .header("Content-Type", "application/json")
+            .body(wl_post_body.to_string())
+            .send()
+            .await;
+
+        match wl_post_resp {
+            Ok(r) if r.status().is_success() => {
+                out.push(CopyStepResult {
+                    step: format!("worklog:{}", idx + 1),
+                    success: true,
+                    detail: None,
+                });
+            }
+            Ok(r) => {
+                let status = r.status().as_u16();
+                out.push(CopyStepResult {
+                    step: format!("worklog:{}", idx + 1),
+                    success: false,
+                    detail: Some(format!("Worklog POST returned {status}")),
+                });
+            }
+            Err(e) => {
+                out.push(CopyStepResult {
+                    step: format!("worklog:{}", idx + 1),
+                    success: false,
+                    detail: Some(format!("Network error posting worklog: {e}")),
+                });
             }
         }
     }
