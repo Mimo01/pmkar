@@ -292,10 +292,11 @@ None yet.
 | 260427-dss | Add 'Mark as Handled' triage action alongside Copy and Dismiss | 2026-04-27 | b86ebe6 | | [260427-dss-i-want-to-add-another-option-to-the-tick](./quick/260427-dss-i-want-to-add-another-option-to-the-tick/) |
 | 260428-499 | Widen settings view layout so content has more breathing room | 2026-04-28 | d9bcb39 | | [260428-499-widen-settings-view-layout](./quick/260428-499-widen-settings-view-layout/) |
 | 260428-abc | Improve copy unsupported field type warnings to be clear and actionable | 2026-04-28 | 4f1bf65 | | [260428-abc-improve-copy-unsupported-type-warnings](./quick/260428-abc-improve-copy-unsupported-type-warnings/) |
+| 260428-4ab | Improve field mapping settings UX: field names, transformer descriptions, column tooltip | 2026-04-28 | 6af7360 | | [260428-4ab-improve-field-mapping-settings-ux](./quick/260428-4ab-improve-field-mapping-settings-ux/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-28 — Completed quick task 260428-abc: Improve copy unsupported field type warnings
+Last activity: 2026-04-28 — Completed quick task 260428-4ab: Improve field mapping settings UX
 Last session: 2026-04-28T19:18:39Z
 Stopped at: Phase 23 COMPLETE — all 28 plans done; v0.4.0 milestone copy pipeline cutover fully locked with integration test coverage
 Resume file: None — phase 23 complete
