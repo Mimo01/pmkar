@@ -189,7 +189,7 @@ describe('CopyPreviewModal', () => {
     expect(mockReset).toHaveBeenCalledOnce();
   });
 
-  it('Confirm button invokes copy_ticket with selected values (COPY-01)', () => {
+  it('Confirm button invokes copy_ticket_v2 with selected values (COPY-01)', () => {
     render(<CopyPreviewModal />);
 
     fireEvent.click(screen.getByText(/copy to/i));

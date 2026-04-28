@@ -218,17 +218,14 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     });
 
     try {
-      const result = await invoke<CopyTicketResult>('copy_ticket', {
-        sourceKey: state.sourceKey,
-        sourceBaseUrl,
-        targetBaseUrl: cloudBaseUrl,
-        targetSummary: state.targetSummary,
-        targetDescription: state.targetDescription || null,
-        targetStatus: state.targetStatus,
-        targetPriorityId: state.targetPriorityId,
-        targetLabels: state.selectedLabels,
-        currentAccountId: state.cloudMeta?.currentAccountId,
-        targetProjectKey: state.targetProjectKey,
+      const result = await invoke<CopyTicketResult>('copy_ticket_v2', {
+        args: {
+          sourceKey: state.sourceKey,
+          sourceBaseUrl,
+          targetBaseUrl: cloudBaseUrl,
+          targetIssueTypeId: state.targetIssueTypeId ?? '',
+          overrideValues: state.overrideValues,
+        },
       });
 
       set({ phase: 'result', result, progressStep: '' });
