@@ -44,8 +44,8 @@ Declared values (multiples of 4 — matches Tailwind v4 defaults used project-wi
 
 Exceptions:
 
-- Field label bottom margin: 2px (`mb-0.5`) — matches existing `SourceFieldRow` pattern in `CopyPreviewModal.tsx`
-- Field row bottom margin: 12px (`mb-3`) — matches existing modal field rows
+- **Field label bottom margin: 2px (`mb-0.5`) — pre-existing technical debt, NOT a new design decision.** This value is inherited from `SourceFieldRow` in `CopyPreviewModal.tsx` (lines 34, 47) and is used pervasively throughout both the left column and `CopyPreviewPage.tsx`. Changing it in this phase would break visual parity with the existing source-column layout. Do not modify.
+- **Field row bottom margin: 12px (`mb-3`) — pre-existing technical debt, NOT a new design decision.** This value is used for every field row container in `CopyPreviewModal.tsx` right column (lines 33, 46, 227, 250, 270, 289, 311) and in `OverviewTab.tsx`, `ChangesTab.tsx`, `WorkLogTab.tsx`, `HistoryTab.tsx`, and `SettingsPage.tsx`. It is the established modal field-row spacing throughout the codebase. Do not modify.
 - Modal dialog padding: 0 on `DialogContent`, px-6 on header/footer — matches existing `CopyPreviewModal` container pattern
 - VirtualizedCombobox trigger min-height: 36px (`min-h-9`) — Phase 21 compactness wrapper pattern (`[&_button]:min-h-9`)
 - Touch-target minimum: 44px height for all interactive controls per WCAG 2.5.5 — applies to Copy button and gap fill inputs
@@ -61,9 +61,11 @@ Source: existing `CopyPreviewModal.tsx` class patterns + `22-CONTEXT.md`
 | Body / field values | 14px (`text-sm`) | 400 regular | 1.5 | `text-sm text-brand-text` |
 | Field labels / captions | 12px (`text-xs`) | 400 regular | 1.4 | `text-xs text-brand-muted` |
 | Column heading | 16px (`text-base`) | 600 semibold | 1.2 | `text-base font-semibold` |
-| Gap section header | 13px (`text-[13px]`) | 500 medium | 1.4 | `text-[13px] font-medium` (matches `DriftWarning` pattern) |
+| Gap section header | 13px (`text-[13px]`) | 500 medium | 1.4 | `text-[13px] font-medium` |
 
 Weights used: regular (400) and semibold (600) only.
+
+Note on gap section header size: `text-[13px]` (13px) is 1px below the body text size (14px). This is intentional inherited sizing — `DriftWarning.tsx` line 21 uses `text-[13px]` for the same amber warning header pattern. Phase 22 mirrors this exactly to preserve visual parity with the existing warning component.
 
 Source: extracted from `CopyPreviewModal.tsx` class analysis + `DriftWarning.tsx` pattern
 
@@ -95,6 +97,8 @@ Amber (`amber-500`) reserved for:
 Green (`emerald-400`) reserved for:
 - Person picker pre-fill check indicator when email match found
 
+**Primary focal point:** "Copy to [project]" button in the modal footer — brand-colored (`bg-brand`), full-width, the single destination the user's eye travels to after filling required fields.
+
 Source: `src/index.css` token definitions + `DriftWarning.tsx` + `SettingsPage.tsx` amber pattern + `TicketDetailPanel.tsx` emerald pattern + `22-CONTEXT.md`
 
 ---
@@ -111,7 +115,7 @@ Components reused from existing codebase (no new installs needed):
 | `MultiUserPickerRenderer` | `src/features/field-renderers/renderers/MultiUserPickerRenderer.tsx` | Multi-person fields |
 | `DriftWarning` | `src/features/field-mapping/DriftWarning.tsx` | Amber pattern reference for gaps section |
 | `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter` | shadcn via `@/components/ui/dialog` | Existing modal shell — no change |
-| `Button` | shadcn via `@/components/ui/button` | Copy button (with disabled + tooltip), Discard button, "Map" link as ghost button |
+| `Button` | shadcn via `@/components/ui/button` | Copy button (with disabled + tooltip), Discard button, "Map field" link as ghost button |
 | `Separator` | shadcn via `@/components/ui/separator` | Column divider, header/footer separators |
 | `Progress` | shadcn via `@/components/ui/progress` | Existing copy progress bar — no change |
 | `Tooltip`, `TooltipContent`, `TooltipTrigger` | shadcn via `@/components/ui/tooltip` | Copy button disabled tooltip listing missing fields |
@@ -137,8 +141,8 @@ Summary *                                   ← required field indicator via ast
 [pre-filled from source, always editable]
 
 ⚠ Required fields with no mapping           ← amber section, amber-500 border-l-2
-  Components *  [fill-in control ▾]  Map →
-  Environment * [fill-in control  ]  Map →
+  Components *  [fill-in control ▾]  Map field →
+  Environment * [fill-in control  ]  Map field →
 
 ─────────────────────────────────────────
 [DynamicTargetForm — mapped fields in createmeta order]
@@ -176,7 +180,7 @@ Summary *                                   ← required field indicator via ast
 - Each gap row: `flex items-center gap-2 py-1.5`
   - Field name + `*` asterisk: `text-sm text-brand-text`
   - Fill-in control: typed per `FieldSchema` using renderer registry (same as `DynamicTargetForm`)
-  - "Map →" link: `Button variant="ghost" size="sm"` with `ExternalLink` icon (w-3 h-3); clicking closes modal, navigates to Settings > Field Mapping
+  - "Map field" link: `Button variant="ghost" size="sm"` with `ExternalLink` icon (w-3 h-3); clicking closes modal, navigates to Settings > Field Mapping
 - Empty (no gaps): section is not rendered at all
 
 ### Person Picker (PERS-01 through PERS-04)
@@ -189,7 +193,7 @@ Summary *                                   ← required field indicator via ast
 
 ### Copy Button Gating (OVRD-04)
 
-- Button: `Button` component, `variant="default"` (brand-colored)
+- Button: `Button` component, `variant="default"` (brand-colored), full-width in modal footer
 - Disabled state: when any required target field (from `resolvedTargetFields` where `required === true`) has no value in `overrideValues`
 - Disabled tooltip: wraps button in `Tooltip`; `TooltipContent` text: `"Fill in required fields: {field1}, {field2}"` (comma-separated field names)
 - Tooltip is only rendered when button is disabled (do not render tooltip on enabled state)
@@ -221,7 +225,7 @@ Summary *                                   ← required field indicator via ast
 | Defaulted notice | "Defaulted — no match for '{{sourceTypeName}}'" | `copy.preview.issueTypeDefaulted` (new) |
 | Summary label | "Summary" | existing label (not i18n-wrapped in current code; keep consistent) |
 | Gaps section header | "Required fields with no mapping" | `copy.preview.gapsHeader` (new) |
-| "Map" link label | "Map" | `copy.preview.mapLink` (new) |
+| "Map field" link label | "Map field" | `copy.preview.mapLink` (new) |
 | Copy button disabled tooltip | "Fill in required fields: {{fields}}" | `copy.preview.missingFields` (new) |
 | Schema loading (inline) | no text — spinner only | n/a |
 | Empty gaps state | section not rendered — no empty-state message needed | n/a |
