@@ -295,7 +295,7 @@ None yet.
 | 260428-4ab | Improve field mapping settings UX: field names, transformer descriptions, column tooltip | 2026-04-28 | 6af7360 | | [260428-4ab-improve-field-mapping-settings-ux](./quick/260428-4ab-improve-field-mapping-settings-ux/) |
 | 260428-fmd | Fix field mapping dropdown overflow and sizing in settings | 2026-04-28 | abf7c99 | Verified | [260428-fmd-dropdown-overflow-fix](./quick/260428-fmd-dropdown-overflow-fix/) |
 | 260428-gni | Redesign missing field mapping display variants for UI consistency | 2026-04-28 | 11f29df | | [260428-gni-redesign-missing-field-mapping-display](./quick/260428-gni-redesign-missing-field-mapping-display/) |
-| 260428-e3p | Replace native selects with VirtualizedCombobox in copy preview flow | 2026-04-28 | c7b18e2 | | [260428-e3p-redesign-standard-select-style](./quick/260428-e3p-redesign-standard-select-style/) |
+| 260428-e3p | Replace native selects with VirtualizedCombobox in copy preview flow | 2026-04-28 | 760620e | | [260428-e3p-redesign-standard-select-style](./quick/260428-e3p-redesign-standard-select-style/) |
 
 ## Session Continuity
 

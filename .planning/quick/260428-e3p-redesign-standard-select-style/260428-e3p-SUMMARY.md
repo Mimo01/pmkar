@@ -3,7 +3,7 @@ quick_id: 260428-e3p
 slug: redesign-standard-select-style
 status: complete
 date: 2026-04-28
-commit: c7b18e2
+commit: 760620e
 ---
 
 # Quick Task 260428-e3p: Redesign Standard Select Style
