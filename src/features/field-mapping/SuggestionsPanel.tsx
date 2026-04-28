@@ -35,7 +35,7 @@ export function SuggestionsPanel({ suggestions, onAccept, onDismiss }: Suggestio
     const row: FieldMappingRow = {
       sourceFieldId: s.sourceFieldId,
       targetFieldId: s.target.fieldId,
-      transformerKind: getTransformerOptions(s.target.schema)[0]?.value ?? 'identity',
+      transformerKind: getTransformerOptions(s.target.schema, t)[0]?.value ?? 'identity',
       sourceSchema: s.sourceSchema,
       targetSchema: s.target.schema,
     };

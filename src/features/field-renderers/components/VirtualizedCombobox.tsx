@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Command } from 'cmdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronDown, Loader2, Search } from 'lucide-react';
@@ -45,6 +45,7 @@ export function VirtualizedCombobox<T>({
 }: VirtualizedComboboxProps<T>) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
   const [query, setQuery] = useState('');
   const [asyncItems, setAsyncItems] = useState<T[] | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -72,6 +73,15 @@ export function VirtualizedCombobox<T>({
     overscan: 5,
     useFlushSync: false,
   });
+
+  // Flip popup upward if insufficient space below the trigger
+  useLayoutEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const popupHeight = Math.min(filtered.length * itemHeight, 280) + 52; // 52 = search bar + borders
+      setOpenUpward(rect.bottom + popupHeight + 8 > window.innerHeight);
+    }
+  }, [open, filtered.length, itemHeight]);
 
   // Outside-click close (TicketFilterBar pattern)
   useEffect(() => {
@@ -146,9 +156,10 @@ export function VirtualizedCombobox<T>({
         <div
           ref={popoverRef}
           className={cn(
-            'absolute z-50 top-full mt-1 bg-popover border border-border rounded-md shadow-md',
+            'absolute z-50 bg-popover border border-border rounded-md shadow-md',
             'min-w-full w-max max-w-[360px]',
             align === 'end' ? 'right-0' : 'left-0',
+            openUpward ? 'bottom-full mb-1' : 'top-full mt-1',
           )}
         >
           <Command shouldFilter={false} className="w-full">

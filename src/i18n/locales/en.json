@@ -371,5 +371,17 @@
   "settings.fieldMapping.emptyHeading": "No field mappings yet",
   "settings.fieldMapping.emptyBody": "Defaults are seeded on first discovery. Run a schema refresh to load them.",
   "settings.fieldMapping.allMapped": "All source fields are mapped",
-  "settings.fieldMapping.noIssueTypes": "No issue types prewarmed — open a ticket detail to populate the field list."
+  "settings.fieldMapping.noIssueTypes": "No issue types prewarmed — open a ticket detail to populate the field list.",
+  "settings.transformer.identity.label": "Identity",
+  "settings.transformer.identity.description": "Copy the value as-is",
+  "settings.transformer.wikiToAdf.label": "Wiki → ADF",
+  "settings.transformer.wikiToAdf.description": "Convert Wiki markup to Atlassian Document Format",
+  "settings.transformer.user.label": "User",
+  "settings.transformer.user.description": "Match users by display name or email",
+  "settings.transformer.version.label": "Version",
+  "settings.transformer.version.description": "Match fix versions by name",
+  "settings.transformer.component.label": "Component",
+  "settings.transformer.component.description": "Match components by name",
+  "settings.transformer.priority.label": "Priority",
+  "settings.transformer.priority.description": "Map priority levels (e.g. High → High)"
 }

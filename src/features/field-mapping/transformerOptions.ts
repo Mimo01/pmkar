@@ -6,12 +6,17 @@ export interface TransformerOption {
   description: string;
 }
 
-const IDENTITY: TransformerOption = { value: 'identity', label: 'Identity', description: 'Copy the value as-is' };
-const WIKI_TO_ADF: TransformerOption = { value: 'wiki_to_adf', label: 'Wiki → ADF', description: 'Convert Wiki markup to Atlassian Document Format' };
-const USER: TransformerOption = { value: 'user', label: 'User', description: 'Match users by display name or email' };
-const VERSION: TransformerOption = { value: 'version', label: 'Version', description: 'Match fix versions by name' };
-const COMPONENT: TransformerOption = { value: 'component', label: 'Component', description: 'Match components by name' };
-const PRIORITY: TransformerOption = { value: 'priority', label: 'Priority', description: 'Map priority levels (e.g. High → High)' };
+type TFn = (key: string) => string;
+
+function makeOptions(t: TFn) {
+  const IDENTITY: TransformerOption = { value: 'identity', label: t('settings.transformer.identity.label'), description: t('settings.transformer.identity.description') };
+  const WIKI_TO_ADF: TransformerOption = { value: 'wiki_to_adf', label: t('settings.transformer.wikiToAdf.label'), description: t('settings.transformer.wikiToAdf.description') };
+  const USER: TransformerOption = { value: 'user', label: t('settings.transformer.user.label'), description: t('settings.transformer.user.description') };
+  const VERSION: TransformerOption = { value: 'version', label: t('settings.transformer.version.label'), description: t('settings.transformer.version.description') };
+  const COMPONENT: TransformerOption = { value: 'component', label: t('settings.transformer.component.label'), description: t('settings.transformer.component.description') };
+  const PRIORITY: TransformerOption = { value: 'priority', label: t('settings.transformer.priority.label'), description: t('settings.transformer.priority.description') };
+  return { IDENTITY, WIKI_TO_ADF, USER, VERSION, COMPONENT, PRIORITY };
+}
 
 /**
  * Returns valid transformer options for a target FieldSchemaType (CONTEXT.md D-03).
@@ -19,7 +24,8 @@ const PRIORITY: TransformerOption = { value: 'priority', label: 'Priority', desc
  * For `{type: 'any'}` returns ALL options — Pitfall 3 mitigation: seed mapping rows
  * have NULL source/target schema JSON, which deserializes to `{type: 'any'}`.
  */
-export function getTransformerOptions(schema: FieldSchemaType): TransformerOption[] {
+export function getTransformerOptions(schema: FieldSchemaType, t: TFn): TransformerOption[] {
+  const { IDENTITY, WIKI_TO_ADF, USER, VERSION, COMPONENT, PRIORITY } = makeOptions(t);
   switch (schema.type) {
     case 'string':
       return [IDENTITY, WIKI_TO_ADF];

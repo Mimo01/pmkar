@@ -28,7 +28,7 @@ export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpda
     row.targetFieldId === '' ? null : targetFields.find((f) => f.fieldId === row.targetFieldId) ?? null;
 
   // Transformer combobox items derived from current target schema (Pitfall 3 — Any returns all)
-  const transformerItems = getTransformerOptions(row.targetSchema);
+  const transformerItems = getTransformerOptions(row.targetSchema, t);
   const currentTransformer: TransformerOption | null =
     transformerItems.find((o) => o.value === row.transformerKind) ?? null;
 
@@ -36,7 +36,7 @@ export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpda
     const updated: FieldMappingRow = {
       sourceFieldId: row.sourceFieldId,
       targetFieldId: newTarget.fieldId,
-      transformerKind: getTransformerOptions(newTarget.schema)[0]?.value ?? 'identity',
+      transformerKind: getTransformerOptions(newTarget.schema, t)[0]?.value ?? 'identity',
       sourceSchema: row.sourceSchema,
       targetSchema: newTarget.schema,
     };
