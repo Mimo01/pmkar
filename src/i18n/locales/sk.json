@@ -371,5 +371,17 @@
   "settings.fieldMapping.emptyHeading": "Zatiaľ žiadne mapovania polí",
   "settings.fieldMapping.emptyBody": "Predvolené hodnoty sa naplnia pri prvom načítaní schémy. Kliknite na Obnoviť schému.",
   "settings.fieldMapping.allMapped": "Všetky zdrojové polia sú namapované",
-  "settings.fieldMapping.noIssueTypes": "Žiadne typy úloh nie sú predzaťažené — otvorte detail tikety pre načítanie zoznamu polí."
+  "settings.fieldMapping.noIssueTypes": "Žiadne typy úloh nie sú predzaťažené — otvorte detail tikety pre načítanie zoznamu polí.",
+  "settings.transformer.identity.label": "Identita",
+  "settings.transformer.identity.description": "Skopíruje hodnotu bez zmeny",
+  "settings.transformer.wikiToAdf.label": "Wiki → ADF",
+  "settings.transformer.wikiToAdf.description": "Prevedie Wiki markup do formátu Atlassian Document Format",
+  "settings.transformer.user.label": "Používateľ",
+  "settings.transformer.user.description": "Priradí používateľa podľa mena alebo e-mailu",
+  "settings.transformer.version.label": "Verzia",
+  "settings.transformer.version.description": "Priradí verziu opravy podľa názvu",
+  "settings.transformer.component.label": "Komponent",
+  "settings.transformer.component.description": "Priradí komponent podľa názvu",
+  "settings.transformer.priority.label": "Priorita",
+  "settings.transformer.priority.description": "Mapuje úrovne priority (napr. Vysoká → Vysoká)"
 }
