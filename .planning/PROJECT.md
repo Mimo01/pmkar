@@ -41,36 +41,27 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ v2→v3 translation layer: typed gap variants, batch user resolution (TRAN-01/06), ADF post-processor (TRAN-02/05), version/component name→id resolvers (TRAN-03/04), two-phase pipeline — v0.4.0 Phase 18
 - ✓ Mapping persistence: `field_mapping` + `mapping_meta` SQLite tables in `mapping.db`, 5 seeded defaults (description/labels/priority/assignee/reporter), CRUD methods + 3 Tauri commands (get/set/delete_field_mapping) — v0.4.0 Phase 19 (MAP-01, MAP-02)
 - ✓ Mapping Editor Settings UI: Settings → Copying → Field Mapping section with MappingRow auto-save, DriftWarning, SuggestionsPanel heuristics (3-tier: exact-id / normalized-name / synonym set), FieldMappingSection orchestrator, Refresh schema + Last refreshed timestamp, 29 i18n keys (EN+SK), 70 tests — v0.4.0 Phase 21 (DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03)
+- ✓ copy_ticket_v2: mapping-aware copy command replacing copy_ticket — CopyContext seam, 5 extracted helpers, mapping load + UserResolver + apply_mapping + per-field audit with credential redaction, parameterized target project key (zero MYPROJ literals), full-pipeline integration test with ACME project key — v0.4.0 Phase 23 (CUTV-01, CUTV-02, CUTV-03, CUTV-04)
 
 ### Active
 
-- [ ] Configurable field mapping engine (v0.4.0 — current milestone)
+- [ ] Excel export capability (scope TBD)
 - [ ] Excel export capability (scope TBD)
 - [ ] CopyResultModal step label i18n coverage (raw strings for some steps)
 - [ ] Taskbar/dock badge count showing unread change count
 - [ ] In-app notification history panel
 
-## Current Milestone: v0.4.0 Configurable Field Mapping
+## Completed Milestone: v0.4.0 Configurable Field Mapping (2026-04-28)
 
 **Goal:** Replace hardcoded field copy logic with a fully user-configurable, field-type-aware mapping engine that bridges Jira Server v2 → Cloud v3 cleanly and supports custom fields.
 
-**Target features:**
-- Dynamic field discovery (source v2 + target v3) with type detection covering all common Jira field types
-- Saved global source→target field mapping with sensible defaults and user-extensible custom-field rows
-- Per-copy override panel in copy preview (saved mapping + inline tweaks)
-- Field-type-aware target controls (text, ADF, person picker, multi-select, version picker, date, etc.)
-- Person selector with exact-email pre-fill, always available; reuses Phase 16 user search
-- Issue-type chooser at copy time (defaults to source-name match)
-- Required-field gating: Copy button disabled until target-required fields have values
-- v2 → v3 schema translation layer (wiki→ADF, version/component lookup, user identity)
-- Audit logging of mapping selections, overrides, and required-gap fills
-
-**Out of scope for v0.4.0:** comments, attachments, worklogs, sub-tasks, summary, origin remote link — these remain hardcoded in the existing copy pipeline.
+**Delivered:** Field discovery (Phases 17), v2→v3 translation layer (Phase 18), mapping persistence (Phase 19), renderer registry (Phase 20), mapping editor UI (Phase 21), copy preview override panel + required-field gating (Phase 22), copy_ticket_v2 pipeline cutover + integration test (Phase 23). All 7 phases, 28 plans complete. 221 Rust tests, 682 frontend tests passing.
 
 ## Shipped Milestones
 
 - **v0.1.0 MVP** — shipped 2026-03-25
 - **v0.3.0 Notifications & Change Tracking** — shipped 2026-03-29
+- **v0.4.0 Configurable Field Mapping** — complete 2026-04-28
 
 ### Out of Scope
 
