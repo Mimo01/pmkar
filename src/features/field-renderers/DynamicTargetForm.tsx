@@ -7,6 +7,8 @@ export interface DynamicTargetFormProps {
   values: Record<string, unknown>;
   onChange: (fieldId: string, v: unknown) => void;
   searchCallbacks?: SearchCallbacks;
+  /** Phase 22 — per-field initial search query (used by user pickers for email pre-fill, D-15). */
+  initialQueries?: Record<string, string>;
 }
 
 export function DynamicTargetForm({
@@ -14,6 +16,7 @@ export function DynamicTargetForm({
   values,
   onChange,
   searchCallbacks,
+  initialQueries,
 }: DynamicTargetFormProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -44,6 +47,7 @@ export function DynamicTargetForm({
               onChange={(v) => onChange(field.fieldId, v)}
               required={field.required}
               onSearch={isUserPicker ? searchCallbacks?.onSearchUsers : undefined}
+              initialQuery={initialQueries?.[field.fieldId]}
             />
           </div>
         );
