@@ -122,8 +122,10 @@ export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpda
           filterFn={(o, q) => o.label.toLowerCase().includes(q.toLowerCase())}
           placeholder={t('settings.fieldMapping.transformerPlaceholder')}
           ariaLabel={`${row.sourceFieldId} transformer`}
+          align="end"
+          itemHeight={52}
           renderItem={(o) => (
-            <div>
+            <div className="py-0.5">
               <span className="text-sm">{o.label}</span>
               <span className="block text-xs text-muted-foreground">{o.description}</span>
             </div>

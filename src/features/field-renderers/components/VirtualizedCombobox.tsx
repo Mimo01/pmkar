@@ -20,6 +20,10 @@ export interface VirtualizedComboboxProps<T> {
   renderItem?: (item: T) => React.ReactNode;
   loading?: boolean;
   ariaLabel?: string;
+  /** Which edge of the trigger to anchor the popup to. Default "start" (left). */
+  align?: 'start' | 'end';
+  /** Height per item in px for virtualizer. Default 36. Use a larger value for multi-line renderItem. */
+  itemHeight?: number;
 }
 
 export function VirtualizedCombobox<T>({
@@ -36,6 +40,8 @@ export function VirtualizedCombobox<T>({
   renderItem,
   loading,
   ariaLabel,
+  align = 'start',
+  itemHeight = 36,
 }: VirtualizedComboboxProps<T>) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -57,12 +63,12 @@ export function VirtualizedCombobox<T>({
     return items.filter((item) => filterFn(item, query));
   }, [items, query, filterFn, onSearch, asyncItems]);
 
-  // Pitfall 2 + 3 + 4 mitigation: useFlushSync: false (React 19) + fixed 36px estimateSize
+  // Pitfall 2 + 3 + 4 mitigation: useFlushSync: false (React 19) + fixed estimateSize
   // + scroll element with explicit height
   const virtualizer = useVirtualizer({
     count: filtered.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: () => 36,
+    estimateSize: () => itemHeight,
     overscan: 5,
     useFlushSync: false,
   });
@@ -139,7 +145,11 @@ export function VirtualizedCombobox<T>({
       {open && (
         <div
           ref={popoverRef}
-          className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-md"
+          className={cn(
+            'absolute z-50 top-full mt-1 bg-popover border border-border rounded-md shadow-md',
+            'min-w-full w-max max-w-[360px]',
+            align === 'end' ? 'right-0' : 'left-0',
+          )}
         >
           <Command shouldFilter={false} className="w-full">
             <div className="flex items-center border-b border-border px-3">
@@ -161,7 +171,7 @@ export function VirtualizedCombobox<T>({
                 <div
                   ref={scrollRef}
                   // Pitfall 4 mitigation: explicit height on scroll element
-                  style={{ height: `${Math.min(filtered.length * 36, 280)}px`, overflow: 'auto' }}
+                  style={{ height: `${Math.min(filtered.length * itemHeight, 280)}px`, overflow: 'auto' }}
                 >
                   <div
                     style={{
@@ -181,8 +191,8 @@ export function VirtualizedCombobox<T>({
                             onChange(item);
                             setOpen(false);
                           }}
-                          // Pitfall 3 mitigation: explicit h-9 + overflow:hidden + position:absolute
-                          className="flex h-9 cursor-pointer select-none items-center px-3 text-sm aria-selected:bg-muted hover:bg-muted overflow-hidden"
+                          // Pitfall 3 mitigation: overflow:hidden + position:absolute (height set by inline style)
+                          className="flex cursor-pointer select-none items-center px-3 text-sm aria-selected:bg-muted hover:bg-muted overflow-hidden"
                           style={{
                             position: 'absolute',
                             top: 0,
