@@ -1173,7 +1173,6 @@ use uuid::Uuid;
 /// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
 #[tauri::command]
 pub async fn discover_source_fields(
-    db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
     mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
 ) -> Result<Vec<FieldSchema>, AppError> {
@@ -1189,8 +1188,6 @@ pub async fn discover_source_fields(
             .map(|m| m.base_url.trim_end_matches('/').to_string())
             .ok_or_else(|| AppError::Keychain("No server connection configured".into()))?
     };
-    // Arm audit middleware side-effects (request-id seeding) for downstream calls.
-    let _audit = build_audited_client(Arc::clone(db.inner()));
     let client = reqwest::Client::new();
     field_discovery::get_or_fetch_source_global(mapping_db.inner(), &client, &base_url, &pat).await
 }
@@ -1201,7 +1198,6 @@ pub async fn discover_source_fields(
 pub async fn get_target_field_schema_for_issuetype(
     project_key: String,
     issuetype_id: String,
-    db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
     mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
 ) -> Result<Vec<FieldSchema>, AppError> {
@@ -1211,7 +1207,6 @@ pub async fn get_target_field_schema_for_issuetype(
         base64::engine::general_purpose::STANDARD
             .encode(format!("{cloud_email}:{api_token}"))
     );
-    let _audit = build_audited_client(Arc::clone(db.inner()));
     let client = reqwest::Client::new();
     field_discovery::get_or_fetch_target_schema(
         mapping_db.inner(),
@@ -1233,7 +1228,6 @@ pub async fn get_target_field_schema_for_issuetype(
 /// configured (first-run users must not see a failure banner).
 #[tauri::command]
 pub async fn probe_createmeta(
-    db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<ProbeResult, AppError> {
     // Pitfall C: skip probe when target project key is absent
@@ -1268,7 +1262,6 @@ pub async fn probe_createmeta(
         base64::engine::general_purpose::STANDARD
             .encode(format!("{cloud_email}:{api_token}"))
     );
-    let _audit = build_audited_client(Arc::clone(db.inner()));
     let client = reqwest::Client::new();
     field_discovery::probe_paginated_createmeta(&client, &base_url, &cloud_auth, &project_key)
         .await
@@ -1283,7 +1276,6 @@ pub async fn probe_createmeta(
 #[tauri::command]
 pub async fn pre_warm_target_issue_types(
     project_key: String,
-    db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<Vec<IssueTypeRef>, AppError> {
     let Ok((base_url, cloud_email, api_token)) = get_cloud_credentials(triage_db.inner()) else {
@@ -1294,7 +1286,6 @@ pub async fn pre_warm_target_issue_types(
         base64::engine::general_purpose::STANDARD
             .encode(format!("{cloud_email}:{api_token}"))
     );
-    let _audit = build_audited_client(Arc::clone(db.inner()));
     let client = reqwest::Client::new();
     match field_discovery::fetch_target_issue_types(
         &client,
