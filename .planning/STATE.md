@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 23 Plan 01 complete
-last_updated: "2026-04-28T21:00:00.000Z"
-last_activity: "2026-04-28 -- Phase 23 Plan 01 complete: copy_pipeline.rs created, copy_ticket refactored to use CopyContext helpers (D-08/D-09/CUTV-04)"
+stopped_at: Phase 23 Plan 02 complete
+last_updated: "2026-04-28T21:32:00.000Z"
+last_activity: "2026-04-28 -- Phase 23 Plan 02 complete: audit_verbose flag in TriageDb + mapping_audit_log table in FieldMappingDb + SHA-256 hasher + credential sanitizer (D-05/D-06/D-07/CUTV-03)"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 28
-  completed_plans: 25
-  percent: 89
+  completed_plans: 26
+  percent: 93
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 23 (copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks)
-Plan: 4 plans, 1 complete (Plan 01 done — copy_pipeline.rs + D-08 refactor)
-Status: Executing — Plan 02 next
-Last activity: 2026-04-28 -- Phase 23 Plan 01 complete: copy_pipeline.rs created, copy_ticket refactored to use CopyContext helpers (D-08/D-09/CUTV-04)
+Plan: 4 plans, 2 complete (Plan 01 done — copy_pipeline.rs + D-08 refactor; Plan 02 done — audit infrastructure)
+Status: Executing — Plan 03 next
+Last activity: 2026-04-28 -- Phase 23 Plan 02 complete: audit_verbose flag in TriageDb + mapping_audit_log table in FieldMappingDb + SHA-256 hasher + credential sanitizer (D-05/D-06/D-07/CUTV-03)
 
 ## Performance Metrics
 
@@ -95,6 +95,7 @@ Last activity: 2026-04-28 -- Phase 23 Plan 01 complete: copy_pipeline.rs created
 | Phase 17-field-discovery-mock-schema-fidelity P04 | 55 | 3 tasks | 5 files |
 | Phase 17-field-discovery-mock-schema-fidelity P05 | 8 | 3 tasks | 7 files |
 | Phase 23-copy-ticket-v2-wiring P01 | 25 | 2 tasks | 3 files |
+| Phase 23-copy-ticket-v2-wiring P02 | 22 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,10 @@ Recent decisions affecting current work (v0.4.0 Configurable Field Mapping):
 - [Phase 23-01] CopyContext.client uses reqwest_middleware::ClientWithMiddleware (not plain reqwest::Client) — matches build_audited_client return type; all helper HTTP calls flow through audit middleware
 - [Phase 23-01] copy_attachments annotated #[allow(clippy::too_many_lines)] — 107-line verbatim extraction has no logical split point; annotation preferred over artificial split
 - [Phase 23-01] MYPROJ in copy_pipeline.rs doc comments only (2x) — no production code uses literal; ctx.target_project_key used in all JSON payloads (CUTV-04)
+- [Phase 23-02] mapping_audit_log in mapping.db (FieldMappingDb), not audit.db — mapping decisions differ structurally from HTTP audit records; colocation with mapping data is more coherent
+- [Phase 23-02] redact_credential_value uses plain str::contains (no regex dep) — consistent with commands.rs:1403 and field_transform/user.rs:202 project convention
+- [Phase 23-02] insert_mapping_audit annotated #[allow(clippy::too_many_arguments)] — 7 domain params required by schema column set, no logical grouping improves the API
+- [Phase 23-02] bool → i64 uses i64::from(bool) (not as i64) — clippy::cast_lossless compliance
 
 Recent v0.3.0 / v0.1.0 decisions retained for reference:
 
@@ -282,6 +287,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-28
-Last session: 2026-04-28T21:00:00.000Z
-Stopped at: Completed Phase 23 Plan 01 (copy_pipeline.rs extraction + copy_ticket refactor)
-Resume file: .planning/phases/23-copy-ticket-v2-wiring/23-02-PLAN.md
+Last session: 2026-04-28T21:32:00.000Z
+Stopped at: Completed Phase 23 Plan 02 (audit infrastructure — audit_verbose + mapping_audit_log + hasher + sanitizer)
+Resume file: .planning/phases/23-copy-ticket-v2-wiring/23-03-PLAN.md

@@ -69,7 +69,7 @@ Requirements for Configurable Field Mapping milestone. Each maps to roadmap phas
 
 - [ ] **CUTV-01**: A new `copy_ticket_v2` Tauri command consumes the mapping engine end-to-end and replaces the existing `copy_ticket` call site
 - [ ] **CUTV-02**: Existing copy paths for comments, attachments, worklogs, sub-tasks, and origin remote link continue to work after cutover (full-pipeline integration test passes)
-- [ ] **CUTV-03**: System logs each mapping decision, override, and required-gap fill to the audit log with PII/credential redaction (hash-based default, opt-in verbose mode)
+- [x] **CUTV-03**: System logs each mapping decision, override, and required-gap fill to the audit log with PII/credential redaction (hash-based default, opt-in verbose mode)
 - [ ] **CUTV-04**: System parameterizes the previously-hardcoded `MYPROJ` cloud project key (carries v0.1.0 INT-02 debt forward)
 
 ## v0.5.0+ Requirements
@@ -156,7 +156,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OVRD-06 | Phase 22 | Pending |
 | CUTV-01 | Phase 23 | Pending |
 | CUTV-02 | Phase 23 | Pending |
-| CUTV-03 | Phase 23 | Pending |
+| CUTV-03 | Phase 23 | Complete (23-02) |
 | CUTV-04 | Phase 23 | Pending |
 
 **Coverage:**
