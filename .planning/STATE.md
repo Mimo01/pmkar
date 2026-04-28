@@ -296,10 +296,11 @@ None yet.
 | 260428-fmd | Fix field mapping dropdown overflow and sizing in settings | 2026-04-28 | abf7c99 | Verified | [260428-fmd-dropdown-overflow-fix](./quick/260428-fmd-dropdown-overflow-fix/) |
 | 260428-gni | Redesign missing field mapping display variants for UI consistency | 2026-04-28 | f25b566 | Approved | [260428-gni-redesign-missing-field-mapping-display](./quick/260428-gni-redesign-missing-field-mapping-display/) |
 | 260428-e3p | Replace native selects with VirtualizedCombobox in copy preview flow | 2026-04-28 | 760620e | | [260428-e3p-redesign-standard-select-style](./quick/260428-e3p-redesign-standard-select-style/) |
+| 260428-525 | Fix duplicate target field mapping — enforce uniqueness at DB, UI, and pipeline | 2026-04-28 | a74d73a | | [260428-525-duplicate-target-mapping](./quick/260428-525-duplicate-target-mapping/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-28 — Completed quick task 260428-e3p: Replace native selects with VirtualizedCombobox in copy preview flow
+Last activity: 2026-04-28 — Completed quick task 260428-525: Fix duplicate target field mapping — enforce uniqueness at DB, UI, and pipeline
 Last session: 2026-04-28T21:40:22.315Z
 Stopped at: context exhaustion at 75% (2026-04-28)
 Resume file: None
