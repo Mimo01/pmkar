@@ -2,6 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { getRenderer, isEditableSchemaType } from '@/features/field-renderers/registry';
+import { UnsupportedFieldHint } from '@/features/field-renderers/UnsupportedFieldHint';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
 import type { JiraUser } from './types';
 
@@ -35,7 +36,7 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
 
   return (
     <div
-      className="rounded border border-amber-500/40 bg-amber-500/5 px-3 py-2 flex flex-col gap-1.5"
+      className="flex flex-col gap-1.5"
       data-testid={`gap-row-${field.fieldId}`}
     >
       <label
@@ -57,14 +58,10 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
             />
           </div>
         ) : (
-          <div
-            className="flex-1 flex items-center rounded border border-amber-500/30 bg-amber-500/10 px-3 h-9"
-            data-testid={`gap-unsupported-${field.fieldId}`}
-            aria-disabled="true"
-          >
-            <span className="text-xs text-amber-700 dark:text-amber-400">
-              {t('copy.preview.fieldNoManualInput')}
-            </span>
+          <div className="flex-1">
+            <UnsupportedFieldHint
+              data-testid={`gap-unsupported-${field.fieldId}`}
+            />
           </div>
         )}
         <Button
@@ -72,7 +69,7 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
           variant="ghost"
           size="sm"
           onClick={onMapLink}
-          className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-500/10"
+          className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"
           data-testid={`gap-map-link-${field.fieldId}`}
         >
           <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -101,7 +98,7 @@ export function GapsSection({
     <div
       role="region"
       aria-label={t('copy.preview.gapsHeader')}
-      className="mb-4 flex flex-col gap-2"
+      className="mb-6 flex flex-col gap-6"
       data-testid="gaps-section"
     >
       {gapFields.map((field) => (
