@@ -293,10 +293,11 @@ None yet.
 | 260428-499 | Widen settings view layout so content has more breathing room | 2026-04-28 | d9bcb39 | | [260428-499-widen-settings-view-layout](./quick/260428-499-widen-settings-view-layout/) |
 | 260428-abc | Improve copy unsupported field type warnings to be clear and actionable | 2026-04-28 | 4f1bf65 | | [260428-abc-improve-copy-unsupported-type-warnings](./quick/260428-abc-improve-copy-unsupported-type-warnings/) |
 | 260428-4ab | Improve field mapping settings UX: field names, transformer descriptions, column tooltip | 2026-04-28 | 6af7360 | | [260428-4ab-improve-field-mapping-settings-ux](./quick/260428-4ab-improve-field-mapping-settings-ux/) |
+| 260428-fmd | Fix field mapping dropdown overflow and sizing in settings | 2026-04-28 | 7b120ba | | [260428-fmd-dropdown-overflow-fix](./quick/260428-fmd-dropdown-overflow-fix/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-28 — Completed quick task 260428-4ab: Improve field mapping settings UX
+Last activity: 2026-04-28 — Completed quick task 260428-fmd: Fix field mapping dropdown overflow and sizing in settings
 Last session: 2026-04-28T19:18:39Z
 Stopped at: Phase 23 COMPLETE — all 28 plans done; v0.4.0 milestone copy pipeline cutover fully locked with integration test coverage
 Resume file: None — phase 23 complete
