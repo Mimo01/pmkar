@@ -52,6 +52,16 @@ const CREATE_MAPPING_META: &str = "
     );
 ";
 
+/// Migration pre-step: remove duplicate target_field_id rows from any existing
+/// database, keeping the highest-id row for each target so the unique index
+/// below can always be created cleanly.
+const DEDUP_TARGETS: &str = "
+    DELETE FROM field_mapping
+    WHERE id NOT IN (
+        SELECT MAX(id) FROM field_mapping GROUP BY target_field_id
+    );
+";
+
 /// Migration: add a unique index on `target_field_id` so no two rows can map
 /// different source fields to the same target. Uses `CREATE UNIQUE INDEX IF NOT
 /// EXISTS` (not ALTER TABLE) so it is safe to run against an existing DB that
@@ -120,6 +130,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(DEDUP_TARGETS)?;
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
@@ -132,6 +143,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
+        conn.execute_batch(DEDUP_TARGETS)?;
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
