@@ -94,6 +94,12 @@ function buildStoreState(overrides: Record<string, unknown> = {}) {
     startPreview: vi.fn(),
     targetProjectKey: '',
     setTargetProjectKey: vi.fn(),
+    targetIssueTypeId: null,
+    overrideValues: {},
+    resolvedTargetFields: [],
+    setTargetIssueTypeId: vi.fn(),
+    setOverrideValue: vi.fn(),
+    clearOverrides: vi.fn(),
     ...overrides,
   };
 }
