@@ -1,4 +1,4 @@
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { getRenderer, isEditableSchemaType } from '@/features/field-renderers/registry';
@@ -102,12 +102,6 @@ export function GapsSection({
       className="mb-4 flex flex-col gap-2"
       data-testid="gaps-section"
     >
-      <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-        <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-        <span className="text-[13px] font-medium">
-          {t('copy.preview.gapsHeader')}
-        </span>
-      </div>
       {gapFields.map((field) => (
         <GapRow
           key={field.fieldId}

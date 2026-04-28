@@ -59,7 +59,7 @@ describe('GapsSection', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('renders amber header with title text when gaps exist', () => {
+  it('renders gaps-section container when gaps exist', () => {
     render(
       <GapsSection
         gapFields={[fSchema('environment', 'Environment', 'string')]}
@@ -68,7 +68,6 @@ describe('GapsSection', () => {
         onMapLink={vi.fn()}
       />,
     );
-    expect(screen.getByText('Required fields with no mapping')).toBeInTheDocument();
     expect(screen.getByTestId('gaps-section')).toBeInTheDocument();
   });
 
