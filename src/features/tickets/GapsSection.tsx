@@ -40,10 +40,10 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
     >
       <label
         htmlFor={isEditable ? `gap-input-${field.fieldId}` : undefined}
-        className="text-sm text-amber-700 dark:text-amber-400 min-w-[110px] shrink-0 pt-1.5"
+        className="text-xs font-medium text-foreground min-w-[110px] shrink-0 pt-1.5"
       >
         {field.name}
-        <span className="ml-0.5" aria-hidden="true">*</span>
+        <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
       </label>
       {isEditable ? (
         <div className="flex-1 [&_button]:min-h-9">
