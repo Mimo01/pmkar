@@ -14,18 +14,25 @@ export interface MappingRowProps {
   row: FieldMappingRow;
   sourceName?: string;
   targetFields: FieldSchema[];
+  usedTargetFieldIds: Set<string>;
   isDrifted: boolean;
   onRowUpdate: (row: FieldMappingRow) => void;
   onRowDelete: (sourceFieldId: string) => void;
 }
 
-export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpdate, onRowDelete }: MappingRowProps) {
+export function MappingRow({ row, sourceName, targetFields, usedTargetFieldIds, isDrifted, onRowUpdate, onRowDelete }: MappingRowProps) {
   const { t } = useTranslation();
   const [feedback, setFeedback] = useState<'saved' | null>(null);
 
   // Resolve current target FieldSchema from cache (null if drifted or empty sentinel)
   const targetField =
     row.targetFieldId === '' ? null : targetFields.find((f) => f.fieldId === row.targetFieldId) ?? null;
+
+  // Filter out targets already used by other rows. Allow the row's OWN current
+  // target through so the combobox always shows the current selection.
+  const availableTargetFields = targetFields.filter(
+    (f) => !usedTargetFieldIds.has(f.fieldId) || f.fieldId === row.targetFieldId,
+  );
 
   // Transformer combobox items derived from current target schema (Pitfall 3 — Any returns all)
   const transformerItems = getTransformerOptions(row.targetSchema, t);
@@ -95,7 +102,7 @@ export function MappingRow({ row, sourceName, targetFields, isDrifted, onRowUpda
       ) : (
         <div className="[&_button]:min-h-9">
           <VirtualizedCombobox<FieldSchema>
-            items={targetFields}
+            items={availableTargetFields}
             value={targetField}
             onChange={handleTargetChange}
             displayLabel={(f) => f.name}

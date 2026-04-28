@@ -97,6 +97,8 @@ pub enum TransformError {
     Internal(String),
     #[error("Serialization error: {0}")]
     Serialization(String),
+    #[error("Duplicate target field id in mapping: {0}")]
+    DuplicateTargetField(String),
 }
 
 impl From<crate::error::AppError> for TransformError {

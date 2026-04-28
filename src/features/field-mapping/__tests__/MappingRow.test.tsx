@@ -71,7 +71,7 @@ beforeEach(() => {
 describe('MappingRow', () => {
   it('[MAP-04] renders source field id in the first column', () => {
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     expect(screen.getByText('labels')).toBeInTheDocument();
   });
@@ -79,7 +79,7 @@ describe('MappingRow', () => {
   it('[MAP-04] clicking delete calls invoke delete_field_mapping with sourceFieldId', async () => {
     const onRowDelete = vi.fn();
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
     );
     // aria-label: t('settings.fieldMapping.deleteAriaLabel', { field: 'labels' }) → "Remove mapping for labels"
     const deleteBtn = screen.getByRole('button', { name: /Remove mapping for labels/i });
@@ -93,7 +93,7 @@ describe('MappingRow', () => {
   it('[MAP-04] on delete invoke error, toast.error fires with deleteError key', async () => {
     mockInvoke.mockRejectedValueOnce(new Error('boom'));
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     const deleteBtn = screen.getByRole('button', { name: /Remove mapping for labels/i });
     fireEvent.click(deleteBtn);
@@ -102,7 +102,7 @@ describe('MappingRow', () => {
 
   it('[MAP-05] when isDrifted=true, DriftWarning replaces target combobox', () => {
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={true} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={true} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     expect(screen.getByTestId('drift-warning-labels')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -111,7 +111,7 @@ describe('MappingRow', () => {
   it('[MAP-05] when isDrifted=true, clicking Remove inside DriftWarning calls delete_field_mapping', async () => {
     const onRowDelete = vi.fn();
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={true} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={true} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
     );
     // DriftWarning remove button text: t('settings.fieldMapping.driftRemove') → "Remove"
     const removeBtn = screen.getByRole('button', { name: /^Remove$/i });
@@ -123,7 +123,7 @@ describe('MappingRow', () => {
 
   it('[MAP-04] delete button has aria-label with translated deleteAriaLabel', () => {
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     // t('settings.fieldMapping.deleteAriaLabel', { field: 'labels' }) → "Remove mapping for labels"
     expect(screen.getByRole('button', { name: /Remove mapping for labels/i })).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe('MappingRow', () => {
       targetSchema: { type: 'any' },
     };
     renderWithI18n(
-      <MappingRow row={newRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={newRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     expect(screen.getByText('customfield_999')).toBeInTheDocument();
   });
@@ -146,7 +146,7 @@ describe('MappingRow', () => {
   it('[MAP-04] target combobox onChange fires invoke set_field_mapping with new targetFieldId', async () => {
     const onRowUpdate = vi.fn();
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={onRowUpdate} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={onRowUpdate} onRowDelete={vi.fn()} />,
     );
     // Target combobox mocked as <select> with aria-label "<sourceFieldId> target"
     const targetSelect = screen.getByRole('combobox', { name: /labels target/i });
@@ -167,7 +167,7 @@ describe('MappingRow', () => {
 
   it('[MAP-04] transformer combobox items reflect getTransformerOptions(targetSchema)', () => {
     renderWithI18n(
-      <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
+      <MappingRow row={baseRow} targetFields={targetFields} usedTargetFieldIds={new Set()} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
     // Transformer combobox mocked as <select> with aria-label "<sourceFieldId> transformer"
     const transformerSelect = screen.getByRole('combobox', { name: /labels transformer/i });
