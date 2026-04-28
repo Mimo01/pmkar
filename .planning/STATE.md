@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 22 UI-SPEC approved
-last_updated: "2026-04-28T11:35:19.913Z"
-last_activity: 2026-04-28 -- Phase 22 planning complete
+stopped_at: Phase 22 complete
+last_updated: "2026-04-28T00:00:00.000Z"
+last_activity: 2026-04-28 -- Phase 22 executed and merged
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 24
-  completed_plans: 20
-  percent: 83
+  completed_plans: 24
+  percent: 100
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 22 (Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating)
-Plan: none yet
-Status: Ready to execute
-Last activity: 2026-04-28 -- Phase 22 planning complete
+Plan: all 4 plans complete
+Status: Complete — pending milestone-end review
+Last activity: 2026-04-28 -- Phase 22 all plans merged, mock fixtures expanded
 
 ## Performance Metrics
 
@@ -279,5 +279,5 @@ None yet.
 
 Last activity: 2026-04-27
 Last session: 2026-04-28T14:00:00.000Z
-Stopped at: Phase 22 UI-SPEC approved
-Resume file: .planning/phases/22-copy-preview-override-panel/22-UI-SPEC.md
+Stopped at: Phase 22 complete, awaiting next phase
+Resume file: .planning/ROADMAP.md
