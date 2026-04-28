@@ -35,48 +35,50 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
 
   return (
     <div
-      className="flex items-start gap-2 rounded border border-amber-500/40 bg-amber-500/5 px-3 py-2"
+      className="rounded border border-amber-500/40 bg-amber-500/5 px-3 py-2 flex flex-col gap-1.5"
       data-testid={`gap-row-${field.fieldId}`}
     >
       <label
         htmlFor={isEditable ? `gap-input-${field.fieldId}` : undefined}
-        className="text-xs font-medium text-foreground min-w-[110px] shrink-0 pt-1.5"
+        className="text-xs font-medium text-foreground"
       >
         {field.name}
         <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
       </label>
-      {isEditable ? (
-        <div className="flex-1 [&_button]:min-h-9">
-          <Renderer
-            field={field}
-            value={value}
-            onChange={onChange}
-            required={true}
-            onSearch={isUser ? onSearchUsers : undefined}
-          />
-        </div>
-      ) : (
-        <div
-          className="flex-1 flex items-center rounded border border-amber-500/30 bg-amber-500/10 px-3 h-9"
-          data-testid={`gap-unsupported-${field.fieldId}`}
-          aria-disabled="true"
+      <div className="flex items-start gap-2">
+        {isEditable ? (
+          <div className="flex-1 [&_button]:min-h-9">
+            <Renderer
+              field={field}
+              value={value}
+              onChange={onChange}
+              required={true}
+              onSearch={isUser ? onSearchUsers : undefined}
+            />
+          </div>
+        ) : (
+          <div
+            className="flex-1 flex items-center rounded border border-amber-500/30 bg-amber-500/10 px-3 h-9"
+            data-testid={`gap-unsupported-${field.fieldId}`}
+            aria-disabled="true"
+          >
+            <span className="text-xs text-amber-700 dark:text-amber-400">
+              {t('copy.preview.fieldNoManualInput')}
+            </span>
+          </div>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onMapLink}
+          className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-500/10"
+          data-testid={`gap-map-link-${field.fieldId}`}
         >
-          <span className="text-xs text-amber-700 dark:text-amber-400">
-            {t('copy.preview.fieldNoManualInput')}
-          </span>
-        </div>
-      )}
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={onMapLink}
-        className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-500/10"
-        data-testid={`gap-map-link-${field.fieldId}`}
-      >
-        <ExternalLink className="w-3 h-3" aria-hidden="true" />
-        {t('copy.preview.mapLink')}
-      </Button>
+          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+          {t('copy.preview.mapLink')}
+        </Button>
+      </div>
     </div>
   );
 }
