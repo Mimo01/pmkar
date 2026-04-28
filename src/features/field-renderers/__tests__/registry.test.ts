@@ -14,6 +14,7 @@ import { RadioRenderer } from '../renderers/RadioRenderer';
 import { SingleSelectRenderer } from '../renderers/SingleSelectRenderer';
 import { StringRenderer } from '../renderers/StringRenderer';
 import { TextAreaRenderer } from '../renderers/TextAreaRenderer';
+import { PriorityRenderer } from '../renderers/PriorityRenderer';
 import { UnsupportedTypeRenderer } from '../renderers/UnsupportedTypeRenderer';
 import { UrlRenderer } from '../renderers/UrlRenderer';
 import { UserPickerRenderer } from '../renderers/UserPickerRenderer';
@@ -87,8 +88,8 @@ describe('getRenderer registry', () => {
     expect(getRenderer({ type: 'issuetype' })).toBe(UnsupportedTypeRenderer);
   });
 
-  it('CTRL-07 returns UnsupportedTypeRenderer for type=priority', () => {
-    expect(getRenderer({ type: 'priority' })).toBe(UnsupportedTypeRenderer);
+  it('CTRL-07 returns PriorityRenderer for type=priority', () => {
+    expect(getRenderer({ type: 'priority' })).toBe(PriorityRenderer);
   });
 
   it('CTRL-07 returns UnsupportedTypeRenderer for type=option-with-child', () => {
