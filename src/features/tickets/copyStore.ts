@@ -211,6 +211,18 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   confirmCopy: async (sourceBaseUrl, cloudBaseUrl) => {
     const state = get();
     if (!state.sourceKey || !state.cloudMeta) return;
+    if (!state.targetIssueTypeId) {
+      set({
+        phase: 'result',
+        result: {
+          targetKey: null,
+          targetUrl: null,
+          steps: [{ step: 'create_issue', success: false, detail: 'No target issue type selected.' }],
+        },
+        progressStep: '',
+      });
+      return;
+    }
 
     set({
       phase: 'copying',
