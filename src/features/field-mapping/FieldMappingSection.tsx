@@ -264,7 +264,7 @@ export function FieldMappingSection() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  function handleAcceptSuggestion(sourceFieldId: string, target: import('@/types/fieldSchema').FieldSchema) {
+  async function handleAcceptSuggestion(sourceFieldId: string, target: import('@/types/fieldSchema').FieldSchema) {
     const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
     const newRow: FieldMappingRow = {
       sourceFieldId,
@@ -273,10 +273,15 @@ export function FieldMappingSection() {
       sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
       targetSchema: target.schema,
     };
-    updateRow(newRow);
+    try {
+      await invoke('set_field_mapping', { row: newRow });
+      updateRow(newRow);
+    } catch {
+      toast.error(t('settings.fieldMapping.saveError'));
+    }
   }
 
-  function handleDismissSuggestion(sourceFieldId: string) {
+  async function handleDismissSuggestion(sourceFieldId: string) {
     const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
     const dismissedRow: FieldMappingRow = {
       sourceFieldId,
@@ -285,7 +290,12 @@ export function FieldMappingSection() {
       sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
       targetSchema: { type: 'any' } as FieldSchemaType,
     };
-    updateRow(dismissedRow);
+    try {
+      await invoke('set_field_mapping', { row: dismissedRow });
+      updateRow(dismissedRow);
+    } catch {
+      toast.error(t('settings.fieldMapping.saveError'));
+    }
   }
 
   function handleAddRow() {

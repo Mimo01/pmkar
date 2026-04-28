@@ -91,6 +91,36 @@ const CREATE_MAPPING_AUDIT_LOG: &str = "
     );
 ";
 
+/// Migration: repair any existing rows whose `source_schema_json` or `target_schema_json`
+/// is NULL for the 5 system default field IDs. Runs before `seed_defaults_if_empty` so
+/// pre-fix production databases are repaired on next open. Safe to run on a fresh DB
+/// (WHERE clause finds no rows, UPDATE is a no-op).
+pub(crate) fn update_null_schema_defaults(conn: &Connection) -> AppResult<()> {
+    conn.execute_batch(
+        "UPDATE field_mapping
+         SET
+           source_schema_json = CASE source_field_id
+             WHEN 'description' THEN '{\"type\":\"string\",\"system\":\"description\"}'
+             WHEN 'labels'       THEN '{\"type\":\"array\",\"items\":\"string\"}'
+             WHEN 'priority'     THEN '{\"type\":\"priority\"}'
+             WHEN 'assignee'     THEN '{\"type\":\"user\",\"system\":\"assignee\"}'
+             WHEN 'reporter'     THEN '{\"type\":\"user\",\"system\":\"reporter\"}'
+             ELSE source_schema_json
+           END,
+           target_schema_json = CASE source_field_id
+             WHEN 'description' THEN '{\"type\":\"string\",\"system\":\"description\"}'
+             WHEN 'labels'       THEN '{\"type\":\"array\",\"items\":\"string\"}'
+             WHEN 'priority'     THEN '{\"type\":\"priority\"}'
+             WHEN 'assignee'     THEN '{\"type\":\"user\",\"system\":\"assignee\"}'
+             WHEN 'reporter'     THEN '{\"type\":\"user\",\"system\":\"reporter\"}'
+             ELSE target_schema_json
+           END
+         WHERE (source_schema_json IS NULL OR target_schema_json IS NULL)
+           AND source_field_id IN ('description','labels','priority','assignee','reporter');",
+    )?;
+    Ok(())
+}
+
 fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
     let count: i64 = conn.query_row(
         "SELECT COUNT(*) FROM field_mapping",
@@ -101,20 +131,31 @@ fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
         return Ok(());
     }
     let now = Utc::now().to_rfc3339();
-    let defaults: [(&str, &str, &str); 5] = [
-        ("description", "description", "wiki_to_adf"),
-        ("labels",      "labels",      "identity"),
-        ("priority",    "priority",    "priority"),
-        ("assignee",    "assignee",    "user"),
-        ("reporter",    "reporter",    "user"),
+    // (src_id, tgt_id, transformer_kind, src_schema_json, tgt_schema_json)
+    let defaults: [(&str, &str, &str, &str, &str); 5] = [
+        ("description", "description", "wiki_to_adf",
+         r#"{"type":"string","system":"description"}"#,
+         r#"{"type":"string","system":"description"}"#),
+        ("labels", "labels", "identity",
+         r#"{"type":"array","items":"string"}"#,
+         r#"{"type":"array","items":"string"}"#),
+        ("priority", "priority", "priority",
+         r#"{"type":"priority"}"#,
+         r#"{"type":"priority"}"#),
+        ("assignee", "assignee", "user",
+         r#"{"type":"user","system":"assignee"}"#,
+         r#"{"type":"user","system":"assignee"}"#),
+        ("reporter", "reporter", "user",
+         r#"{"type":"user","system":"reporter"}"#,
+         r#"{"type":"user","system":"reporter"}"#),
     ];
-    for (src, tgt, kind) in defaults {
+    for (src, tgt, kind, src_schema, tgt_schema) in defaults {
         conn.execute(
             "INSERT OR IGNORE INTO field_mapping
                  (source_field_id, target_field_id, transformer_kind,
                   source_schema_json, target_schema_json, created_at, updated_at)
-             VALUES (?1, ?2, ?3, NULL, NULL, ?4, ?4)",
-            params![src, tgt, kind, now],
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)",
+            params![src, tgt, kind, src_schema, tgt_schema, now],
         )?;
     }
     Ok(())
@@ -134,6 +175,7 @@ impl FieldMappingDb {
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
+        update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
@@ -147,6 +189,7 @@ impl FieldMappingDb {
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
+        update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
     }
@@ -322,8 +365,9 @@ impl FieldMappingDb {
     }
 
     /// Return all mapping rows in insertion order (`id ASC`) per D-06.
-    /// Seed rows store NULL schema JSON; row-mapper falls back to
-    /// `FieldSchemaType::Any` (Pitfall 3 — `schema_json` columns are nullable).
+    /// Row-mapper falls back to `FieldSchemaType::Any` for any `source_schema_json`
+    /// or `target_schema_json` that is NULL (Pitfall 3 — columns are nullable for
+    /// user-added custom rows before a target is selected).
     pub fn get_all_mapping_rows(&self) -> AppResult<Vec<FieldMappingRow>> {
         let mut stmt = self.conn.prepare(
             "SELECT source_field_id, target_field_id, transformer_kind,
@@ -915,6 +959,85 @@ mod tests {
         assert_eq!(super::redact_credential_value("a normal description with no secrets"), "a normal description with no secrets");
         // 'eye' ≠ 'eyJ' — should not be redacted
         assert_eq!(super::redact_credential_value("eyes are blue"), "eyes are blue");
+    }
+
+    #[test]
+    fn seed_defaults_have_correct_source_schemas() {
+        use crate::field_discovery::FieldSchemaType;
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let rows = db.get_all_mapping_rows().expect("get_all_mapping_rows");
+        assert_eq!(rows.len(), 5);
+
+        // description → String { system: Some("description") }
+        let desc = rows.iter().find(|r| r.source_field_id == "description").expect("description row");
+        assert!(
+            matches!(&desc.source_schema, FieldSchemaType::String { system, .. } if system.as_deref() == Some("description")),
+            "description source_schema must be String{{system:description}}, got {:?}", desc.source_schema
+        );
+
+        // labels → Array { items: "string" }
+        let labels = rows.iter().find(|r| r.source_field_id == "labels").expect("labels row");
+        assert!(
+            matches!(&labels.source_schema, FieldSchemaType::Array { items, .. } if items == "string"),
+            "labels source_schema must be Array{{items:string}}, got {:?}", labels.source_schema
+        );
+
+        // priority → Priority
+        let priority = rows.iter().find(|r| r.source_field_id == "priority").expect("priority row");
+        assert!(
+            matches!(&priority.source_schema, FieldSchemaType::Priority),
+            "priority source_schema must be Priority, got {:?}", priority.source_schema
+        );
+
+        // assignee → User { system: Some("assignee") }
+        let assignee = rows.iter().find(|r| r.source_field_id == "assignee").expect("assignee row");
+        assert!(
+            matches!(&assignee.source_schema, FieldSchemaType::User { system, .. } if system.as_deref() == Some("assignee")),
+            "assignee source_schema must be User{{system:assignee}}, got {:?}", assignee.source_schema
+        );
+
+        // reporter → User { system: Some("reporter") }
+        let reporter = rows.iter().find(|r| r.source_field_id == "reporter").expect("reporter row");
+        assert!(
+            matches!(&reporter.source_schema, FieldSchemaType::User { system, .. } if system.as_deref() == Some("reporter")),
+            "reporter source_schema must be User{{system:reporter}}, got {:?}", reporter.source_schema
+        );
+    }
+
+    #[test]
+    fn null_schema_migration_updates_existing_rows() {
+        use crate::field_discovery::FieldSchemaType;
+        // Open a fresh in-memory DB (seed hasn't run yet here — we control the table directly)
+        let conn = Connection::open_in_memory().expect("open");
+        conn.execute_batch(CREATE_FIELD_MAPPING).unwrap();
+        conn.execute_batch(DEDUP_TARGETS).unwrap();
+        conn.execute_batch(ADD_UNIQUE_TARGET).unwrap();
+
+        // Manually insert a NULL-schema row for 'priority' (simulates pre-fix production DB)
+        let now = chrono::Utc::now().to_rfc3339();
+        conn.execute(
+            "INSERT INTO field_mapping
+                 (source_field_id, target_field_id, transformer_kind,
+                  source_schema_json, target_schema_json, created_at, updated_at)
+             VALUES ('priority', 'priority', 'priority', NULL, NULL, ?1, ?1)",
+            params![now],
+        ).expect("insert null-schema row");
+
+        // Run the migration
+        update_null_schema_defaults(&conn).expect("migration");
+
+        // Wrap in FieldMappingDb for get_all_mapping_rows
+        let db = FieldMappingDb { conn };
+        let rows = db.get_all_mapping_rows().expect("get");
+        let priority = rows.iter().find(|r| r.source_field_id == "priority").expect("priority row");
+        assert!(
+            matches!(&priority.source_schema, FieldSchemaType::Priority),
+            "after migration, priority source_schema must be Priority, got {:?}", priority.source_schema
+        );
+        assert!(
+            matches!(&priority.target_schema, FieldSchemaType::Priority),
+            "after migration, priority target_schema must be Priority, got {:?}", priority.target_schema
+        );
     }
 
     #[test]
