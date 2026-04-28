@@ -249,7 +249,7 @@ Full details: [milestones/v0.3.0-ROADMAP.md](milestones/v0.3.0-ROADMAP.md)
 - [x] 23-02-PLAN.md — TriageDb audit_verbose flag + FieldMappingDb mapping_audit_log table + sanitizer/hasher utilities
 
 **Wave 2** *(blocked on Wave 1 completion)*:
-- [ ] 23-03-PLAN.md — copy_ticket_v2 command (apply_mapping + audit logging) + main.rs invoke_handler swap + frontend confirmCopy IPC swap — depends on 23-01, 23-02
+- [x] 23-03-PLAN.md — copy_ticket_v2 command (apply_mapping + audit logging) + main.rs invoke_handler swap + frontend confirmCopy IPC swap — depends on 23-01, 23-02
 
 **Wave 3** *(blocked on Wave 2 completion)*:
 - [ ] 23-04-PLAN.md — Full-pipeline integration test (CUTV-02 + CUTV-04) using target_project_key="ACME" — depends on 23-01, 23-02, 23-03

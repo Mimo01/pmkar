@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: Configurable Field Mapping
 status: executing
-stopped_at: Phase 23 Plan 02 complete
-last_updated: "2026-04-28T21:32:00.000Z"
-last_activity: "2026-04-28 -- Phase 23 Plan 02 complete: audit_verbose flag in TriageDb + mapping_audit_log table in FieldMappingDb + SHA-256 hasher + credential sanitizer (D-05/D-06/D-07/CUTV-03)"
+stopped_at: Phase 23 Plan 03 complete
+last_updated: "2026-04-28T19:10:37Z"
+last_activity: "2026-04-28 -- Phase 23 Plan 03 complete: copy_ticket_v2 command (apply_mapping + audit logging + override merge), copy_ticket removed (D-01), main.rs swap, frontend confirmCopy IPC swap (CUTV-01/03/04)"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 28
-  completed_plans: 26
-  percent: 93
+  completed_plans: 27
+  percent: 96
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-27)
 ## Current Position
 
 Phase: 23 (copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks)
-Plan: 4 plans, 2 complete (Plan 01 done — copy_pipeline.rs + D-08 refactor; Plan 02 done — audit infrastructure)
-Status: Executing — Plan 03 next
-Last activity: 2026-04-28 -- Phase 23 Plan 02 complete: audit_verbose flag in TriageDb + mapping_audit_log table in FieldMappingDb + SHA-256 hasher + credential sanitizer (D-05/D-06/D-07/CUTV-03)
+Plan: 4 plans, 3 complete (Plan 01 — copy_pipeline.rs; Plan 02 — audit infrastructure; Plan 03 — copy_ticket_v2 cutover)
+Status: Executing — Plan 04 next
+Last activity: 2026-04-28 -- Phase 23 Plan 03 complete: copy_ticket_v2 command (apply_mapping + audit logging + override merge), copy_ticket removed (D-01), main.rs swap, frontend confirmCopy IPC swap (CUTV-01/03/04)
 
 ## Performance Metrics
 
@@ -96,6 +96,7 @@ Last activity: 2026-04-28 -- Phase 23 Plan 02 complete: audit_verbose flag in Tr
 | Phase 17-field-discovery-mock-schema-fidelity P05 | 8 | 3 tasks | 7 files |
 | Phase 23-copy-ticket-v2-wiring P01 | 25 | 2 tasks | 3 files |
 | Phase 23-copy-ticket-v2-wiring P02 | 22 | 2 tasks | 2 files |
+| Phase 23-copy-ticket-v2-wiring P03 | 28 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Recent decisions affecting current work (v0.4.0 Configurable Field Mapping):
 - [Phase 23-02] redact_credential_value uses plain str::contains (no regex dep) — consistent with commands.rs:1403 and field_transform/user.rs:202 project convention
 - [Phase 23-02] insert_mapping_audit annotated #[allow(clippy::too_many_arguments)] — 7 domain params required by schema column set, no logical grouping improves the API
 - [Phase 23-02] bool → i64 uses i64::from(bool) (not as i64) — clippy::cast_lossless compliance
+- [Phase 23-03] copy_ticket_v2 uses crate::copy_pipeline:: fully-qualified paths — avoids import collision; plan 23-01 use imports already at file top
+- [Phase 23-03] rewrite_image_urls and extract_image_urls removed — only used by old copy_ticket; v2 path delegates to copy_pipeline helpers which handle attachments (two-pass image rewriting not needed)
+- [Phase 23-03] Pre-existing clippy errors in test files are out of scope — lib target passes cleanly; test target has 22 pre-existing doc_markdown + assertion errors unchanged by this plan
 
 Recent v0.3.0 / v0.1.0 decisions retained for reference:
 
@@ -287,6 +291,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-04-28
-Last session: 2026-04-28T21:32:00.000Z
-Stopped at: Completed Phase 23 Plan 02 (audit infrastructure — audit_verbose + mapping_audit_log + hasher + sanitizer)
-Resume file: .planning/phases/23-copy-ticket-v2-wiring/23-03-PLAN.md
+Last session: 2026-04-28T19:10:37Z
+Stopped at: Completed Phase 23 Plan 03 (copy_ticket_v2 cutover — command + audit + IPC swap)
+Resume file: .planning/phases/23-copy-ticket-v2-wiring/23-04-PLAN.md
