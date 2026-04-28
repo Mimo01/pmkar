@@ -44,8 +44,6 @@ Declared values (multiples of 4 — matches Tailwind v4 defaults used project-wi
 
 Exceptions:
 
-- **Field label bottom margin: 2px (`mb-0.5`) — pre-existing technical debt, NOT a new design decision.** This value is inherited from `SourceFieldRow` in `CopyPreviewModal.tsx` (lines 34, 47) and is used pervasively throughout both the left column and `CopyPreviewPage.tsx`. Changing it in this phase would break visual parity with the existing source-column layout. Do not modify.
-- **Field row bottom margin: 12px (`mb-3`) — pre-existing technical debt, NOT a new design decision.** This value is used for every field row container in `CopyPreviewModal.tsx` right column (lines 33, 46, 227, 250, 270, 289, 311) and in `OverviewTab.tsx`, `ChangesTab.tsx`, `WorkLogTab.tsx`, `HistoryTab.tsx`, and `SettingsPage.tsx`. It is the established modal field-row spacing throughout the codebase. Do not modify.
 - Modal dialog padding: 0 on `DialogContent`, px-6 on header/footer — matches existing `CopyPreviewModal` container pattern
 - VirtualizedCombobox trigger min-height: 36px (`min-h-9`) — Phase 21 compactness wrapper pattern (`[&_button]:min-h-9`)
 - Touch-target minimum: 44px height for all interactive controls per WCAG 2.5.5 — applies to Copy button and gap fill inputs
@@ -152,6 +150,8 @@ Summary *                                   ← required field indicator via ast
   [Labels ▾]
   ...
 ```
+
+> Implementation note: existing `mb-0.5` / `mb-3` class patterns are inherited from current `CopyPreviewModal.tsx` code and must not be changed in this phase to preserve visual parity — do not treat these as available spacing tokens. `mb-0.5` (2px) is used for field label bottom margin in `SourceFieldRow` (lines 34, 47) and throughout `CopyPreviewPage.tsx`. `mb-3` (12px) is used for field row container bottom margin throughout `CopyPreviewModal.tsx` right column (lines 33, 46, 227, 250, 270, 289, 311) and in `OverviewTab.tsx`, `ChangesTab.tsx`, `WorkLogTab.tsx`, `HistoryTab.tsx`, and `SettingsPage.tsx`.
 
 ### Issue-Type Chooser
 
