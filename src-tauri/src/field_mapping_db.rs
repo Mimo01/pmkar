@@ -52,25 +52,42 @@ const CREATE_MAPPING_META: &str = "
     );
 ";
 
-/// Migration pre-step: remove duplicate target_field_id rows from any existing
-/// database, keeping the highest-id row for each target so the unique index
-/// below can always be created cleanly.
+/// Migration pre-step: remove duplicate non-empty target_field_id rows from any
+/// existing database, keeping the highest-id row for each real target so the
+/// partial unique index below can always be created cleanly.
+/// The empty-string dismissed sentinel ('') is excluded — multiple dismissed
+/// rows must be allowed to coexist.
 const DEDUP_TARGETS: &str = "
     DELETE FROM field_mapping
-    WHERE id NOT IN (
-        SELECT MAX(id) FROM field_mapping GROUP BY target_field_id
-    );
+    WHERE target_field_id != ''
+      AND id NOT IN (
+        SELECT MAX(id) FROM field_mapping
+        WHERE target_field_id != ''
+        GROUP BY target_field_id
+      );
 ";
 
-/// Migration: add a unique index on `target_field_id` so no two rows can map
-/// different source fields to the same target. Uses `CREATE UNIQUE INDEX IF NOT
-/// EXISTS` (not ALTER TABLE) so it is safe to run against an existing DB that
-/// already has the table. SQLite will return `UNIQUE constraint failed:
-/// field_mapping.target_field_id` (or `idx_fm_target_unique`) if a caller
-/// attempts to insert a second row with the same `target_field_id`.
+/// Migration step A: drop the old unconditional unique index if it exists.
+/// Required because `CREATE UNIQUE INDEX IF NOT EXISTS` is a no-op when the
+/// index already exists — it will NOT modify a non-partial index into a partial
+/// one. We must drop it first so step B can (re)create it with the WHERE clause.
+const DROP_OLD_TARGET_INDEX: &str = "
+    DROP INDEX IF EXISTS idx_fm_target_unique;
+";
+
+/// Migration step B: add a *partial* unique index on non-empty target_field_id
+/// values only, so no two rows can map different source fields to the same real
+/// target. The empty-string dismissed-suggestion sentinel ('') is explicitly
+/// excluded from the index — multiple dismissed rows with targetFieldId='' must
+/// be allowed to coexist.
+///
+/// SQLite will return `UNIQUE constraint failed: field_mapping.target_field_id`
+/// (or `idx_fm_target_unique`) if a caller attempts to insert a second non-empty
+/// row with the same `target_field_id`.
 const ADD_UNIQUE_TARGET: &str = "
     CREATE UNIQUE INDEX IF NOT EXISTS idx_fm_target_unique
-        ON field_mapping(target_field_id);
+        ON field_mapping(target_field_id)
+        WHERE target_field_id != '';
 ";
 
 /// Phase 23 CUTV-03 — per-mapping-decision audit table. Lives in mapping.db
@@ -172,6 +189,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
         conn.execute_batch(DEDUP_TARGETS)?;
+        conn.execute_batch(DROP_OLD_TARGET_INDEX)?;
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
@@ -186,6 +204,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
         conn.execute_batch(DEDUP_TARGETS)?;
+        conn.execute_batch(DROP_OLD_TARGET_INDEX)?;
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
@@ -1062,11 +1081,89 @@ mod tests {
         db.upsert_mapping_row(&row_a).expect("first insert ok");
         let err = db
             .upsert_mapping_row(&row_b)
-            .expect_err("second insert must fail — duplicate target");
+            .expect_err("second insert must fail — duplicate non-empty target");
         let msg = err.to_string();
         assert!(
             msg.contains("UNIQUE") || msg.contains("constraint") || msg.contains("idx_fm_target_unique"),
             "error should mention unique constraint, got: {msg}"
         );
+    }
+
+    /// Regression test for the copy-mandatory-field-warning bug.
+    ///
+    /// The partial unique index on `target_field_id` must exclude the empty-string
+    /// dismissed-suggestion sentinel so that multiple source fields can be dismissed
+    /// (targetFieldId='') without conflicting with each other.
+    ///
+    /// Before the fix, `idx_fm_target_unique` was unconditional: the second
+    /// dismiss would fail with a UNIQUE constraint error, leaving the user unable
+    /// to add new mapping rows and the mandatory field stuck in the gap list.
+    #[test]
+    fn multiple_empty_sentinel_rows_are_allowed() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        // Clear seed defaults to control the table state.
+        db.conn.execute("DELETE FROM field_mapping", []).unwrap();
+        let make_dismissed = |src: &str| FieldMappingRow {
+            source_field_id: src.into(),
+            target_field_id: "".into(), // dismissed sentinel
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        // Three dismissed rows with targetFieldId='' — all must succeed.
+        db.upsert_mapping_row(&make_dismissed("src_a"))
+            .expect("first dismiss must succeed");
+        db.upsert_mapping_row(&make_dismissed("src_b"))
+            .expect("second dismiss must succeed (partial index excludes empty string)");
+        db.upsert_mapping_row(&make_dismissed("src_c"))
+            .expect("third dismiss must succeed");
+        let rows = db.get_all_mapping_rows().expect("get rows");
+        assert_eq!(rows.len(), 3, "all three dismissed rows must be stored");
+        assert!(
+            rows.iter().all(|r| r.target_field_id.is_empty()),
+            "all rows must have empty targetFieldId sentinel"
+        );
+    }
+
+    /// After fixing multiple dismissals, a real mapping can still be added for a
+    /// mandatory target field that was previously blocked.
+    #[test]
+    fn real_mapping_can_be_added_after_multiple_dismissals() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.conn.execute("DELETE FROM field_mapping", []).unwrap();
+        // Dismiss two suggestions.
+        let row_dismissed_a = FieldMappingRow {
+            source_field_id: "custom_a".into(),
+            target_field_id: "".into(),
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        let row_dismissed_b = FieldMappingRow {
+            source_field_id: "custom_b".into(),
+            target_field_id: "".into(),
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        db.upsert_mapping_row(&row_dismissed_a).expect("dismiss a");
+        db.upsert_mapping_row(&row_dismissed_b).expect("dismiss b");
+        // Now add a REAL mapping for a mandatory target field.
+        let row_real = FieldMappingRow {
+            source_field_id: "story_points".into(),
+            target_field_id: "customfield_10028".into(), // mandatory target
+            transformer_kind: "identity".into(),
+            source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+        };
+        db.upsert_mapping_row(&row_real)
+            .expect("real mapping for mandatory field must succeed");
+        let rows = db.get_all_mapping_rows().expect("get rows");
+        assert_eq!(rows.len(), 3);
+        let real = rows
+            .iter()
+            .find(|r| r.source_field_id == "story_points")
+            .expect("story_points row must exist");
+        assert_eq!(real.target_field_id, "customfield_10028");
     }
 }

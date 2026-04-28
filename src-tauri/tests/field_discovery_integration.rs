@@ -2,7 +2,7 @@
 //!
 //! These tests exercise:
 //!   - `discover_v2_fields` / `discover_v3_fields` against the mock v2/v3 servers
-//!   - `fetch_all_createmeta_fields` — multi-page drain (Bug has 7 fields, 2 pages)
+//!   - `fetch_all_createmeta_fields` — multi-page drain (Bug has 8 fields, 2 pages)
 //!   - `fetch_target_issue_types` — list of 3 types for MYPROJ
 //!   - `get_or_fetch_target_schema` — cache-first; cache hit does not invoke HTTP
 //!
@@ -110,7 +110,7 @@ async fn discover_v2_fields_returns_global_list() {
     );
 }
 
-// Test 3: fetch_all_createmeta_fields drains two pages for Bug (total=7)
+// Test 3: fetch_all_createmeta_fields drains two pages for Bug (total=8)
 #[tokio::test(flavor = "multi_thread")]
 async fn fetch_all_createmeta_drains_two_pages() {
     start_servers_once();
@@ -123,11 +123,11 @@ async fn fetch_all_createmeta_drains_two_pages() {
 
     assert_eq!(
         resp.fields.len(),
-        7,
-        "Bug createmeta must return 7 fields across 2 pages, got {}",
+        8,
+        "Bug createmeta must return 8 fields across 2 pages, got {}",
         resp.fields.len()
     );
-    assert_eq!(resp.total, 7, "total must be 7");
+    assert_eq!(resp.total, 8, "total must be 8");
 
     // Hash must be a 64-char lowercase hex string
     assert_eq!(hash.len(), 64, "schema_hash must be 64 hex chars");

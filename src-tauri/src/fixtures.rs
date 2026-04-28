@@ -1642,9 +1642,10 @@ pub fn build_fixtures() -> SharedFixtures {
         { "id": "5", "name": "Lowest" }
     ]);
 
-    // Bug — 7 fields total (Pitfall F pagination boundary). Required: summary + priority + Severity
+    // Bug — 8 fields total (Pitfall F pagination boundary). Required: summary + priority + Severity
     let bug_fields = vec![
         createmeta_field("summary",           "Summary",         true,  summary_schema.clone(),  None),
+        createmeta_field("description",       "Description",     false, desc_schema_v2.clone(),  None),
         createmeta_field("priority",          "Priority",        true,  priority_schema.clone(), Some(priority_allowed.clone())),
         createmeta_field("customfield_10006", "Severity",        true,  sev_schema.clone(),      Some(severity_allowed)),
         createmeta_field("assignee",          "Assignee",        false, assignee_schema.clone(), None),
@@ -1655,15 +1656,17 @@ pub fn build_fixtures() -> SharedFixtures {
 
     // Task — only summary required
     let task_fields = vec![
-        createmeta_field("summary",           "Summary",  true,  summary_schema.clone(),  None),
-        createmeta_field("priority",          "Priority", false, priority_schema.clone(), Some(priority_allowed.clone())),
-        createmeta_field("assignee",          "Assignee", false, assignee_schema.clone(), None),
+        createmeta_field("summary",           "Summary",     true,  summary_schema.clone(),  None),
+        createmeta_field("description",       "Description", false, desc_schema_v2.clone(),  None),
+        createmeta_field("priority",          "Priority",     false, priority_schema.clone(), Some(priority_allowed.clone())),
+        createmeta_field("assignee",          "Assignee",     false, assignee_schema.clone(), None),
         createmeta_field("customfield_10002", "Sprint",   false, sprint_schema.clone(),   None),
     ];
 
     // Story — Story Points required
     let story_fields = vec![
         createmeta_field("summary",           "Summary",      false, summary_schema.clone(),  None),
+        createmeta_field("description",       "Description",  false, desc_schema_v2.clone(),  None),
         createmeta_field("customfield_10001", "Story Points", true,  sp_schema.clone(),       None),
         createmeta_field("priority",          "Priority",     false, priority_schema.clone(), Some(priority_allowed)),
         createmeta_field("customfield_10004", "Team",         false, team_schema.clone(),     Some(team_allowed)),

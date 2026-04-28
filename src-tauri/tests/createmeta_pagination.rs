@@ -32,9 +32,9 @@ fn auth_header() -> &'static str {
     "Bearer test-token-any-value"
 }
 
-/// Test Bug createmeta paginates across 2 pages: total=7, page1=5 fields, page2=2 fields.
-/// Together they yield 7 unique fieldIds.
-/// Uses: startAt=0&maxResults=5 → 5 fields, startAt=5&maxResults=5 → 2 fields.
+/// Test Bug createmeta paginates across 2 pages: total=8, page1=5 fields, page2=3 fields.
+/// Together they yield 8 unique fieldIds.
+/// Uses: startAt=0&maxResults=5 → 5 fields, startAt=5&maxResults=5 → 3 fields.
 #[tokio::test(flavor = "multi_thread")]
 async fn test_bug_createmeta_paginates_two_pages() {
     start_servers_once();
@@ -52,8 +52,8 @@ async fn test_bug_createmeta_paginates_two_pages() {
 
     assert_eq!(
         body1["total"],
-        7,
-        "Bug createmeta total should be 7 (Pitfall F pagination boundary)"
+        8,
+        "Bug createmeta total should be 8 (Pitfall F pagination boundary)"
     );
     let page1_fields = body1["fields"]
         .as_array()
@@ -76,19 +76,19 @@ async fn test_bug_createmeta_paginates_two_pages() {
 
     assert_eq!(
         body2["total"],
-        7,
-        "Bug createmeta total on page 2 should still be 7"
+        8,
+        "Bug createmeta total on page 2 should still be 8"
     );
     let page2_fields = body2["fields"]
         .as_array()
         .expect("page2 fields should be an array");
     assert_eq!(
         page2_fields.len(),
-        2,
-        "Page 2 should return exactly 2 fields (remaining)"
+        3,
+        "Page 2 should return exactly 3 fields (remaining)"
     );
 
-    // Combine and verify 7 unique fieldIds
+    // Combine and verify 8 unique fieldIds
     let mut all_field_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
     for f in page1_fields.iter().chain(page2_fields.iter()) {
         let field_id = f["fieldId"]
@@ -99,7 +99,7 @@ async fn test_bug_createmeta_paginates_two_pages() {
     }
     assert_eq!(
         all_field_ids.len(),
-        7,
-        "Combining both pages should yield 7 unique fieldIds"
+        8,
+        "Combining both pages should yield 8 unique fieldIds"
     );
 }
