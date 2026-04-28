@@ -163,7 +163,13 @@ pub type SharedFixtures = Arc<Mutex<FixtureState>>;
 
 // Helper to create v2 user
 fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
-    json!({
+    let email: Option<&str> = match name {
+        "jdoe"    => Some("jdoe@example.com"),
+        "csmith"  => Some("csmith@example.com"),
+        "bwilson" => Some("bwilson@example.com"),
+        _ => None,
+    };
+    let mut obj = json!({
         "name": name,
         "displayName": display_name,
         "avatarUrls": {
@@ -172,12 +178,23 @@ fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
             "24x24": format!("https://avatar.example.com/{}/24x24.png", name),
             "16x16": format!("https://avatar.example.com/{}/16x16.png", name)
         }
-    })
+    });
+    if let Some(e) = email {
+        obj["emailAddress"] = json!(e);
+    }
+    obj
 }
 
-// Helper to create v3 user
+// Helper to create v3 user.
+// Known test accounts include emailAddress; unknown/privacy accounts omit it (PERS-04).
 fn v3_user(account_id: &str, display_name: &str) -> serde_json::Value {
-    json!({
+    let email: Option<&str> = match account_id {
+        "acc-jdoe"    => Some("jane.doe@example.com"),
+        "acc-csmith"  => Some("chris.smith@example.com"),
+        "acc-bwilson" => Some("bob.wilson@example.com"),
+        _ => None,
+    };
+    let mut obj = json!({
         "accountId": account_id,
         "displayName": display_name,
         "avatarUrls": {
@@ -186,7 +203,11 @@ fn v3_user(account_id: &str, display_name: &str) -> serde_json::Value {
             "24x24": format!("https://avatar.example.com/{}/24x24.png", account_id),
             "16x16": format!("https://avatar.example.com/{}/16x16.png", account_id)
         }
-    })
+    });
+    if let Some(e) = email {
+        obj["emailAddress"] = json!(e);
+    }
+    obj
 }
 
 // Helper to create v2 status
@@ -202,6 +223,11 @@ fn v3_status(name: &str, category_key: &str) -> serde_json::Value {
 // Helper to create v2 priority
 fn priority(name: &str, id: &str) -> serde_json::Value {
     json!({ "name": name, "id": id })
+}
+
+// Helper to create issuetype field (same shape for v2 and v3)
+fn issuetype(id: &str, name: &str) -> serde_json::Value {
+    json!({ "id": id, "name": name, "subtask": false })
 }
 
 // Helper to create ADF paragraph as serde_json::Value
@@ -361,6 +387,7 @@ pub fn build_fixtures() -> SharedFixtures {
             key: key.to_string(),
             fields: json!({
                 "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
                 "status": v2_status("In Progress", "3"),
                 "priority": priority("High", "2"),
                 "assignee": v2_user("jdoe", "Jane Doe"),
@@ -384,6 +411,7 @@ pub fn build_fixtures() -> SharedFixtures {
             key: key.to_string(),
             fields: json!({
                 "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
                 "status": v3_status("In Progress", "indeterminate"),
                 "priority": priority("High", "2"),
                 "assignee": v3_user("acc-jdoe", "Jane Doe"),
@@ -486,6 +514,7 @@ pub fn build_fixtures() -> SharedFixtures {
             key: key.to_string(),
             fields: json!({
                 "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
                 "status": v2_status("Open", "1"),
                 "priority": priority("Critical", "1"),
                 "assignee": v2_user("bwilson", "Bob Wilson"),
@@ -509,6 +538,7 @@ pub fn build_fixtures() -> SharedFixtures {
             key: key.to_string(),
             fields: json!({
                 "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
                 "status": v3_status("Open", "new"),
                 "priority": priority("Critical", "1"),
                 "assignee": v3_user("acc-bwilson", "Bob Wilson"),
@@ -566,6 +596,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10001", "Bug"),
                     "status": v2_status("Open", "1"),
                     "priority": priority("High", "2"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -589,6 +620,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10001", "Bug"),
                     "status": v3_status("Open", "new"),
                     "priority": priority("High", "2"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
@@ -651,6 +683,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("Resolved", "5"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("jdoe", "Jane Doe"),
@@ -674,6 +707,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("Resolved", "done"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-jdoe", "Jane Doe"),
@@ -721,6 +755,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("Closed", "6"),
                     "priority": priority("Low", "4"),
                     "assignee": v2_user("bwilson", "Bob Wilson"),
@@ -744,6 +779,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("Closed", "done"),
                     "priority": priority("Low", "4"),
                     "assignee": v3_user("acc-bwilson", "Bob Wilson"),
@@ -824,6 +860,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10001", "Bug"),
                     "status": v2_status("Reopened", "4"),
                     "priority": priority("High", "2"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -847,6 +884,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10001", "Bug"),
                     "status": v3_status("Reopened", "new"),
                     "priority": priority("High", "2"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
@@ -894,6 +932,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("In Progress", "3"),
                     "priority": priority("High", "2"),
                     "assignee": v2_user("jdoe", "Jane Doe"),
@@ -917,6 +956,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("In Progress", "indeterminate"),
                     "priority": priority("High", "2"),
                     "assignee": v3_user("acc-jdoe", "Jane Doe"),
@@ -949,6 +989,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("Open", "1"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -972,6 +1013,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("Open", "new"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
@@ -1028,6 +1070,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10003", "Story"),
                     "status": v2_status("In Progress", "3"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("bwilson", "Bob Wilson"),
@@ -1051,6 +1094,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10003", "Story"),
                     "status": v3_status("In Progress", "indeterminate"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-bwilson", "Bob Wilson"),
@@ -1116,6 +1160,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("In Progress", "3"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("bwilson", "Bob Wilson"),
@@ -1139,6 +1184,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("In Progress", "indeterminate"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-bwilson", "Bob Wilson"),
@@ -1171,6 +1217,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("Open", "1"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -1194,6 +1241,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("Open", "new"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
@@ -1259,6 +1307,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v2_status("Closed", "6"),
                     "priority": priority("Low", "4"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -1282,6 +1331,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 key: key.to_string(),
                 fields: json!({
                     "summary": summary,
+                    "issuetype": issuetype("10002", "Task"),
                     "status": v3_status("Closed", "done"),
                     "priority": priority("Low", "4"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
@@ -1298,6 +1348,212 @@ pub fn build_fixtures() -> SharedFixtures {
                 }),
             },
         );
+    }
+
+    // PROJ-13: Open, Task — no-gaps path (Task has no required custom fields beyond summary)
+    {
+        let key = "PROJ-13";
+        let id = "10013";
+        let summary = "Upgrade Node.js runtime to v22 LTS";
+        let desc_text = "Node.js v20 LTS reaches end-of-life in April 2026. Upgrade all services to v22 LTS before EOL.";
+
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"),
+                "priority": priority("High", "2"),
+                "assignee": v2_user("jdoe", "Jane Doe"),
+                "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"),
+                "priority": priority("High", "2"),
+                "assignee": v3_user("acc-jdoe", "Jane Doe"),
+                "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["maintenance"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-14: Open, Story — Story Points gap (required but unmapped) + privacy assignee (PERS-04)
+    {
+        let key = "PROJ-14";
+        let id = "10014";
+        let summary = "Add dark mode support to dashboard";
+        let desc_text = "Implement a dark mode theme for the main dashboard. Should respect system preference (prefers-color-scheme) and allow manual override via user settings.";
+
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10003", "Story"),
+                "status": v2_status("Open", "1"),
+                "priority": priority("Medium", "3"),
+                "assignee": v2_user("jdoe", "Jane Doe"),
+                "reporter": v2_user("bwilson", "Bob Wilson"),
+                "description": desc_text,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000"
+            }),
+        });
+        // v3: privacy-mode assignee — no emailAddress returned by cloud (PERS-04)
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10003", "Story"),
+                "status": v3_status("Open", "new"),
+                "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-privacy-1", "A. User"),
+                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}],
+                "fixVersions": [],
+                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-15: In Progress, Epic — triggers "Defaulted" notice (Epic not in target type list)
+    {
+        let key = "PROJ-15";
+        let id = "10015";
+        let summary = "Q2 2026 Performance Initiative";
+        let desc_text = "Track all performance-related work planned for Q2 2026. Target: reduce P95 API latency from 800ms to under 200ms.";
+
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10004", "Epic"),
+                "status": v2_status("In Progress", "3"),
+                "priority": priority("High", "2"),
+                "assignee": v2_user("jdoe", "Jane Doe"),
+                "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": [],
+                "components": [],
+                "fixVersions": [],
+                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10004", "Epic"),
+                "status": v3_status("In Progress", "indeterminate"),
+                "priority": priority("High", "2"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"),
+                "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": [],
+                "components": [],
+                "fixVersions": [],
+                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-16: Open, Bug — privacy-mode assignee (no emailAddress, PERS-04) + Severity gap
+    {
+        let key = "PROJ-16";
+        let id = "10016";
+        let summary = "Notification emails not delivered when recipient domain uses strict DMARC";
+        let desc_text = "Outbound notification emails are silently dropped for recipients whose domains enforce DMARC p=reject. The mailer is sending without proper DKIM signing.";
+
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"),
+                "priority": priority("Critical", "1"),
+                "assignee": v2_user("jdoe", "Jane Doe"),
+                "reporter": v2_user("bwilson", "Bob Wilson"),
+                "description": desc_text,
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000"
+            }),
+        });
+        // v3: privacy-mode assignee — cloud returns no emailAddress (PERS-04)
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(),
+            key: key.to_string(),
+            fields: json!({
+                "summary": summary,
+                "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"),
+                "priority": priority("Critical", "1"),
+                "assignee": v3_user("acc-privacy-2", "B. User"),
+                "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] },
+                "attachment": [],
+                "subtasks": [],
+                "issuelinks": [],
+                "labels": ["bug"],
+                "components": [{"name": "Backend"}],
+                "fixVersions": [],
+                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000"
+            }),
+        });
     }
 
     // === Phase 17: field discovery fixtures ===
@@ -1432,7 +1688,7 @@ pub fn build_fixtures() -> SharedFixtures {
     Arc::new(Mutex::new(FixtureState {
         server_v2_issues: v2,
         cloud_v3_issues: v3,
-        next_issue_id: 10013,
+        next_issue_id: 10017,
         v2_fields,
         v3_fields,
         v3_createmeta_issuetypes,
