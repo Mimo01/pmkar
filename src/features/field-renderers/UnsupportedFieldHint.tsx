@@ -1,5 +1,6 @@
 import { ExternalLink, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
 
 interface UnsupportedFieldHintProps {
   'data-testid'?: string;
@@ -23,14 +24,16 @@ export function UnsupportedFieldHint({
         </p>
       </div>
       {onMapLink && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={onMapLink}
-          className="flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline shrink-0 whitespace-nowrap"
+          className="text-xs h-9 gap-1 shrink-0 whitespace-nowrap"
         >
           <ExternalLink className="w-3 h-3" aria-hidden="true" />
           {t('copy.preview.mapLink')}
-        </button>
+        </Button>
       )}
     </div>
   );
