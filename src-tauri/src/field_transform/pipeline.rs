@@ -1,21 +1,24 @@
 //! Phase 18 — pipeline.rs: `apply_mapping` two-phase entry point.
 //! Phase 1: pre-scan + batch user resolution (TRAN-06).
 //! Phase 2: per-row dispatch by `FieldSchemaType`, write-shape correct (Pitfall 4).
-//! Output: `ResolvedFields { fields, gaps }` — never `Err` for business gaps (D-01).
+//! Output: `Ok(ResolvedFields { fields, gaps })` — never `Err` for business gaps (D-01).
+//! Returns `Err(TransformError::DuplicateTargetField)` when the mapping slice
+//! contains two rows targeting the same `target_field_id` (T-525-02 guard).
 
 use crate::field_discovery::FieldSchemaType;
 use crate::field_transform::{
     user::extract_usernames_from_field, user::is_user_field, GapVariant, ResolvedFields,
-    TransformContext, UnresolvedComponent, UnresolvedPerson, UnresolvedVersion,
+    TransformContext, TransformError, UnresolvedComponent, UnresolvedPerson, UnresolvedVersion,
 };
 use crate::field_transform::{identity, wiki_to_adf, FieldMappingRow};
 use serde_json::{json, Map, Value};
+use std::collections::HashSet;
 
 pub async fn apply_mapping(
     source_issue: &Value,
     mapping: &[FieldMappingRow],
     ctx: &TransformContext<'_>,
-) -> ResolvedFields {
+) -> Result<ResolvedFields, TransformError> {
     // PHASE 1 already complete — `ctx.user_map` is the pre-built map populated
     // by the caller via `ctx.user_resolver.resolve_batch(source_issue, mapping)`.
     // (We accept the map as part of the context so callers can reuse a single
@@ -24,6 +27,19 @@ pub async fn apply_mapping(
     // PHASE 2: per-row dispatch.
     let mut fields: Map<String, Value> = Map::new();
     let mut gaps: Vec<GapVariant> = Vec::new();
+
+    // Guard: reject mappings with duplicate target_field_ids before any insert.
+    // Empty-sentinel rows (target_field_id="") are excluded — they represent
+    // "no target selected yet" and do not write to the fields map.
+    let mut seen_targets: HashSet<&str> = HashSet::new();
+    for row in mapping {
+        if row.target_field_id.is_empty() {
+            continue;
+        }
+        if !seen_targets.insert(row.target_field_id.as_str()) {
+            return Err(TransformError::DuplicateTargetField(row.target_field_id.clone()));
+        }
+    }
 
     for row in mapping {
         let path = format!("/fields/{}", row.source_field_id);
@@ -70,7 +86,7 @@ pub async fn apply_mapping(
         // Null result means "not applicable / unsupported" — silently skip.
     }
 
-    ResolvedFields { fields, gaps }
+    Ok(ResolvedFields { fields, gaps })
 }
 
 fn is_description_row(s: &FieldSchemaType) -> bool {
@@ -295,7 +311,7 @@ mod tests {
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(out.fields.get("summary"), Some(&json!("Hello")));
         assert!(out.gaps.is_empty());
     }
@@ -309,7 +325,7 @@ mod tests {
         map.insert("alice".into(), Some("AID-A".into()));
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(out.fields.get("assignee"), Some(&json!({"accountId":"AID-A"})));
         assert!(out.gaps.is_empty());
     }
@@ -323,7 +339,7 @@ mod tests {
         map.insert("alice".into(), None);
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert!(!out.fields.contains_key("assignee"));
         assert_eq!(out.gaps.len(), 1);
         match &out.gaps[0] {
@@ -352,7 +368,7 @@ mod tests {
         map.insert("ghost".into(), None);
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(
             out.fields.get("customfield_10010"),
             Some(&json!([{"accountId":"AID-A"},{"accountId":"AID-B"}]))
@@ -377,7 +393,7 @@ mod tests {
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(out.fields.get("priority"), Some(&json!({"id":"3"})));
     }
 
@@ -458,7 +474,7 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(out.fields.get("fixVersions"), Some(&json!([{"id":"20010"}])));
         h.abort();
     }
@@ -475,7 +491,7 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "MYPROJ");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert!(!out.fields.contains_key("fixVersions"));
         assert_eq!(out.gaps.len(), 1);
         if let GapVariant::Version(g) = &out.gaps[0] {
@@ -499,7 +515,7 @@ mod tests {
         let mapping = vec![row("components", "components", s_array("component"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(out.fields.get("components"), Some(&json!([{"id":"30001"}])));
         h.abort();
     }
@@ -520,7 +536,7 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         assert_eq!(
             out.fields.get("fixVersions"),
             Some(&json!([{"id":"20010"},{"id":"20011"}]))
@@ -546,7 +562,7 @@ mod tests {
         map.insert("jdoe".into(), Some("AID-J".into()));
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
         let adf = out.fields.get("description").expect("description present");
         assert_eq!(adf["type"], "doc");
         let s = serde_json::to_string(adf).unwrap();
@@ -605,7 +621,7 @@ mod tests {
 
         // Phase 2: apply mapping.
         let ctx = ctx_with_map(&client, &u, &v, &comp, &user_map, "MYPROJ", &base);
-        let out = apply_mapping(&issue, &mapping, &ctx).await;
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
 
         // ── Assertions: each field type emits the right write shape ──────────
         // 1. Number — passthrough.
@@ -690,10 +706,28 @@ mod tests {
         let user_map = u.resolve_batch(&issue, &mapping).await;
         // Phase 2.
         let ctx = ctx_with_map(&client, &u, &v, &comp, &user_map, "MYPROJ", &base);
-        let _ = apply_mapping(&issue, &mapping, &ctx).await;
+        let _ = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
 
         // TRAN-06: exactly one HTTP call on @acme.com.
         assert_eq!(user_search_counter.load(Ordering::SeqCst), 1);
         h.abort();
+    }
+
+    #[tokio::test]
+    async fn apply_mapping_rejects_duplicate_target_field_ids() {
+        let issue = json!({"fields":{"src_a":"v1","src_b":"v2"}});
+        let mapping = vec![
+            row("src_a", "tgt_shared", s_str_summary()),
+            row("src_b", "tgt_shared", s_str_summary()),
+        ];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let result = apply_mapping(&issue, &mapping, &ctx).await;
+        assert!(
+            matches!(result, Err(TransformError::DuplicateTargetField(ref id)) if id == "tgt_shared"),
+            "expected DuplicateTargetField(\"tgt_shared\"), got {result:?}",
+        );
     }
 }

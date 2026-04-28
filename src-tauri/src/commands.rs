@@ -1515,7 +1515,9 @@ pub async fn copy_ticket_v2(
         component_resolver: &component_resolver,
         user_map: &user_map,
     };
-    let mut resolved = apply_mapping(&source_body, &mapping_rows, &ctx_transform).await;
+    let mut resolved = apply_mapping(&source_body, &mapping_rows, &ctx_transform)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
 
     // ── Phase 4 — Audit each mapping row decision (CUTV-03) ──────────────────
     let copy_id = Uuid::new_v4().to_string();
