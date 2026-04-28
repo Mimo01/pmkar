@@ -35,10 +35,10 @@ describe('SuggestionsPanel', () => {
     expect(screen.getByText('Labels')).toBeInTheDocument();
   });
 
-  it('[EDIT-02] header text shows count via i18n key (key fallback — Plan 03 adds EN values)', () => {
+  it('[EDIT-02] header text shows suggestion count', () => {
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={vi.fn()} onDismiss={vi.fn()} />);
-    // i18n keys not in en.json yet; t('settings.fieldMapping.suggestions', {count:2}) → key string
-    expect(screen.getByText(/settings.fieldMapping.suggestions/i)).toBeInTheDocument();
+    // t('settings.fieldMapping.suggestions', { count: 2 }) → "Suggestions (2)"
+    expect(screen.getByText(/Suggestions \(2\)/i)).toBeInTheDocument();
   });
 
   it('[EDIT-02] returns null when suggestions array is empty (panel hidden)', () => {
@@ -49,8 +49,8 @@ describe('SuggestionsPanel', () => {
   it('[EDIT-03] clicking Accept calls invoke set_field_mapping with target fieldId', async () => {
     const onAccept = vi.fn();
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={onAccept} onDismiss={vi.fn()} />);
-    // aria-label: t('settings.fieldMapping.accept') + ' severity' → 'settings.fieldMapping.accept severity'
-    const acceptBtn = screen.getByRole('button', { name: /settings.fieldMapping.accept severity/i });
+    // aria-label: t('settings.fieldMapping.accept') + ' severity' → 'Accept severity'
+    const acceptBtn = screen.getByRole('button', { name: /Accept severity/i });
     fireEvent.click(acceptBtn);
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith(
@@ -69,8 +69,8 @@ describe('SuggestionsPanel', () => {
   it('[EDIT-03] clicking Dismiss calls invoke set_field_mapping with empty-string targetFieldId sentinel (D-07)', async () => {
     const onDismiss = vi.fn();
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={vi.fn()} onDismiss={onDismiss} />);
-    // aria-label: t('settings.fieldMapping.dismiss') + ' severity' → 'settings.fieldMapping.dismiss severity'
-    const dismissBtn = screen.getByRole('button', { name: /settings.fieldMapping.dismiss severity/i });
+    // aria-label: t('settings.fieldMapping.dismiss') + ' severity' → 'Dismiss severity'
+    const dismissBtn = screen.getByRole('button', { name: /Dismiss severity/i });
     fireEvent.click(dismissBtn);
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith(
@@ -89,29 +89,29 @@ describe('SuggestionsPanel', () => {
   it('[EDIT-03] on invoke error during accept, toast.error fires with saveError key', async () => {
     mockInvoke.mockRejectedValueOnce(new Error('boom'));
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={vi.fn()} onDismiss={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /settings.fieldMapping.accept severity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Accept severity/i }));
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());
   });
 
   it('[EDIT-03] on invoke error during dismiss, toast.error fires', async () => {
     mockInvoke.mockRejectedValueOnce(new Error('boom'));
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={vi.fn()} onDismiss={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /settings.fieldMapping.dismiss severity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Dismiss severity/i }));
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());
   });
 
   it('[EDIT-02] each suggestion has accessible Accept and Dismiss buttons', () => {
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={vi.fn()} onDismiss={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /settings.fieldMapping.accept severity/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /settings.fieldMapping.dismiss severity/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /settings.fieldMapping.accept tags/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /settings.fieldMapping.dismiss tags/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Accept severity/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dismiss severity/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Accept tags/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Dismiss tags/i })).toBeInTheDocument();
   });
 
   it('[EDIT-03] clicking Accept fires onAccept callback with sourceFieldId and target', async () => {
     const onAccept = vi.fn();
     renderWithI18n(<SuggestionsPanel suggestions={sampleSuggestions} onAccept={onAccept} onDismiss={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /settings.fieldMapping.accept tags/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Accept tags/i }));
     await waitFor(() => {
       expect(onAccept).toHaveBeenCalledWith('tags', targetB);
     });

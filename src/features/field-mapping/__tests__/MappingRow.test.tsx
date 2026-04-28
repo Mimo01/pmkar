@@ -81,9 +81,8 @@ describe('MappingRow', () => {
     renderWithI18n(
       <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
     );
-    // aria-label falls back to i18n key (keys not in en.json yet — Plan 03 adds them)
-    // t('settings.fieldMapping.deleteAriaLabel', { field: 'labels' }) → key fallback
-    const deleteBtn = screen.getByRole('button', { name: /settings.fieldMapping.deleteAriaLabel/i });
+    // aria-label: t('settings.fieldMapping.deleteAriaLabel', { field: 'labels' }) → "Remove mapping for labels"
+    const deleteBtn = screen.getByRole('button', { name: /Remove mapping for labels/i });
     fireEvent.click(deleteBtn);
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('delete_field_mapping', { sourceFieldId: 'labels' });
@@ -96,7 +95,7 @@ describe('MappingRow', () => {
     renderWithI18n(
       <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
-    const deleteBtn = screen.getByRole('button', { name: /settings.fieldMapping.deleteAriaLabel/i });
+    const deleteBtn = screen.getByRole('button', { name: /Remove mapping for labels/i });
     fireEvent.click(deleteBtn);
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());
   });
@@ -114,19 +113,20 @@ describe('MappingRow', () => {
     renderWithI18n(
       <MappingRow row={baseRow} targetFields={targetFields} isDrifted={true} onRowUpdate={vi.fn()} onRowDelete={onRowDelete} />,
     );
-    // DriftWarning remove button text: t('settings.fieldMapping.driftRemove') → key fallback
-    const removeBtn = screen.getByRole('button', { name: /settings.fieldMapping.driftRemove/i });
+    // DriftWarning remove button text: t('settings.fieldMapping.driftRemove') → "Remove"
+    const removeBtn = screen.getByRole('button', { name: /^Remove$/i });
     fireEvent.click(removeBtn);
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('delete_field_mapping', { sourceFieldId: 'labels' });
     });
   });
 
-  it('[MAP-04] delete button has aria-label with the i18n deleteAriaLabel key', () => {
+  it('[MAP-04] delete button has aria-label with translated deleteAriaLabel', () => {
     renderWithI18n(
       <MappingRow row={baseRow} targetFields={targetFields} isDrifted={false} onRowUpdate={vi.fn()} onRowDelete={vi.fn()} />,
     );
-    expect(screen.getByRole('button', { name: /settings.fieldMapping.deleteAriaLabel/i })).toBeInTheDocument();
+    // t('settings.fieldMapping.deleteAriaLabel', { field: 'labels' }) → "Remove mapping for labels"
+    expect(screen.getByRole('button', { name: /Remove mapping for labels/i })).toBeInTheDocument();
   });
 
   it('[MAP-03] new row with empty targetFieldId renders combobox without crash', () => {
