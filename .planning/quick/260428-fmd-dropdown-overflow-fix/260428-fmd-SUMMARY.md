@@ -3,7 +3,7 @@ quick_id: 260428-fmd
 slug: dropdown-overflow-fix
 date: 2026-04-28
 status: complete
-commit: 7b120ba
+commit: abf7c99
 ---
 
 # Quick Task 260428-fmd: Fix field mapping dropdown overflow and sizing in settings
