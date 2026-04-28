@@ -103,7 +103,7 @@ async function searchUsersForPicker(q: string): Promise<JiraUser[]> {
 // Description is wiki_to_adf and handled server-side only.
 // ---------------------------------------------------------------------------
 
-const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
+const PREFILLABLE_KINDS = new Set(['identity', 'priority', 'user', 'wiki_to_adf']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewPage
@@ -169,6 +169,9 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       if (overrideValues[row.targetFieldId] !== undefined) continue;
       const rawValue = sourceFields[row.sourceFieldId];
       if (rawValue === null || rawValue === undefined) continue;
+      // wiki_to_adf: only prefill when source description is a plain string (Jira Server v2).
+      // Cloud v3 ADF objects are skipped — TextAreaRenderer would render them as empty string.
+      if (row.transformerKind === 'wiki_to_adf' && typeof rawValue !== 'string') continue;
       setOverrideValue(row.targetFieldId, rawValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
