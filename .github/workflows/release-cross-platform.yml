@@ -219,23 +219,42 @@ jobs:
       - name: List artifacts
         run: find all-artifacts -type f | sort
 
-      - name: Get release ID from pmkar-releases
+      - name: Create or get release in pmkar-releases
         id: release
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
         shell: bash
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          API_BASE="https://api.github.com/repos/Mimo01/pmkar-releases"
+
           RELEASE=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
-            "https://api.github.com/repos/Mimo01/pmkar-releases/releases/tags/$TAG")
+            "$API_BASE/releases/tags/$TAG")
           RELEASE_ID=$(python3 -c "
           import sys, json
           data = json.loads(sys.argv[1], strict=False)
+          print(data.get('id', ''))
+          " "$RELEASE")
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Creating release $TAG in pmkar-releases..."
+            CREATE=$(curl -s -X POST \
+              -H "Authorization: token $RELEASES_TOKEN" \
+              -H "Content-Type: application/json" \
+              "$API_BASE/releases" \
+              -d "{\"tag_name\":\"$TAG\",\"name\":\"pmkar $TAG\",\"body\":\"Release $TAG\",\"draft\":false,\"prerelease\":false}")
+            RELEASE_ID=$(python3 -c "
+          import sys, json
+          data = json.loads(sys.argv[1], strict=False)
           if 'id' not in data:
-              print('Release not found', file=sys.stderr)
+              print('Failed to create release:', json.dumps(data), file=sys.stderr)
               sys.exit(1)
           print(data['id'])
-          " "$RELEASE")
+          " "$CREATE")
+          else
+            echo "Found existing release $TAG (ID: $RELEASE_ID)"
+          fi
+
           echo "id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
           echo "Release ID: $RELEASE_ID"
 
@@ -283,7 +302,7 @@ jobs:
           " "$RESPONSE"
           done
 
-      - name: Update latest.json with Linux + Windows platforms
+      - name: Build and upload latest.json
         env:
           RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
         shell: bash
@@ -353,3 +372,54 @@ jobs:
           data = json.loads(sys.stdin.read(), strict=False)
           print('OK:', data.get('browser_download_url', '(no url)'))
           "
+
+      - name: Update README in pmkar-releases
+        env:
+          RELEASES_TOKEN: ${{ secrets.RELEASES_REPO_PAT }}
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.bare }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          API_BASE="https://api.github.com/repos/Mimo01/pmkar-releases"
+
+          README_INFO=$(curl -s -H "Authorization: token $RELEASES_TOKEN" \
+            "$API_BASE/contents/README.md")
+          echo "$README_INFO" > /tmp/readme-info.json
+
+          cat > /tmp/update-readme.py << 'PYEOF'
+          import sys, json, base64, urllib.request, os
+          with open("/tmp/readme-info.json") as f:
+              readme_info = json.load(f)
+          version = sys.argv[1]
+          tag = sys.argv[2]
+          sha = readme_info["sha"]
+          new_content = (
+              "# pmkar\n\n"
+              "## Download\n\n"
+              "### macOS\n"
+              f"- [pmkar_{version}_universal.dmg](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_{version}_universal.dmg)\n"
+              "- [pmkar.app.tar.gz](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar.app.tar.gz) (for updater)\n\n"
+              "### Linux\n"
+              f"- [pmkar_{version}_amd64.deb](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_{version}_amd64.deb) (Debian/Ubuntu)\n\n"
+              "### Windows\n"
+              f"- [pmkar_{version}_x64-setup.exe](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_{version}_x64-setup.exe) (NSIS installer)\n"
+              f"- [pmkar_{version}_x64_en-US.msi](https://github.com/Mimo01/pmkar-releases/releases/latest/download/pmkar_{version}_x64_en-US.msi) (MSI installer)\n\n"
+              "---\n"
+              f"_Latest release: {tag}_\n"
+          )
+          token = os.environ["RELEASES_TOKEN"]
+          payload = json.dumps({
+              "message": f"chore: update README for {tag}",
+              "content": base64.b64encode(new_content.encode()).decode(),
+              "sha": sha
+          }).encode()
+          req = urllib.request.Request(
+              "https://api.github.com/repos/Mimo01/pmkar-releases/contents/README.md",
+              data=payload, method="PUT",
+              headers={"Authorization": f"token {token}", "Content-Type": "application/json"}
+          )
+          with urllib.request.urlopen(req) as resp:
+              data = json.load(resp)
+              print("README updated:", data["content"]["html_url"])
+          PYEOF
+          python3 /tmp/update-readme.py "$VERSION" "$TAG"
