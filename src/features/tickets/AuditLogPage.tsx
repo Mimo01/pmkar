@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, ChevronDown, Copy, Loader2, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronRight, Copy, Loader2, Search, X } from 'lucide-react';
 import type { JSX } from 'react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -222,6 +222,106 @@ function safeFormatTimestamp(ts: string | null | undefined): string {
   }
 }
 
+// ─── Quick task 260430-26i: Field Transformations grouping helpers ─────────
+
+/**
+ * One group of rows that share the same `copyId`. `latestTimestamp` reflects
+ * the newest row in the group (rows arrive newest-first from the Rust query
+ * `ORDER BY id DESC`, so it's just `rows[0].timestamp`).
+ *
+ * Counts pre-computed at grouping time so the header render can omit zero
+ * values cheaply (no per-render scan of `rows`).
+ */
+export interface FieldTransformationGroup {
+  copyId: string;
+  rows: MappingAuditEntry[];
+  latestTimestamp: string;
+  total: number;
+  failed: number;
+  skipped: number;
+}
+
+/**
+ * Group `mapping_audit_log` rows by `copyId` while preserving input order.
+ *
+ * Input contract: rows arrive newest-first (Rust `ORDER BY id DESC`). The
+ * insertion-ordered Map means the first occurrence of a `copyId` determines
+ * group order, so the resulting groups are also newest-first.
+ *
+ * Quick task 260430-26i.
+ */
+export function groupByCopyId(rows: MappingAuditEntry[]): FieldTransformationGroup[] {
+  const map = new Map<string, MappingAuditEntry[]>();
+  for (const row of rows) {
+    const arr = map.get(row.copyId);
+    if (arr) {
+      arr.push(row);
+    } else {
+      map.set(row.copyId, [row]);
+    }
+  }
+  const out: FieldTransformationGroup[] = [];
+  for (const [copyId, groupRows] of map) {
+    let failed = 0;
+    let skipped = 0;
+    for (const r of groupRows) {
+      if (r.outcome === 'failed') failed += 1;
+      else if (r.outcome === 'skipped') skipped += 1;
+    }
+    out.push({
+      copyId,
+      rows: groupRows,
+      latestTimestamp: groupRows[0]?.timestamp ?? '',
+      total: groupRows.length,
+      failed,
+      skipped,
+    });
+  }
+  return out;
+}
+
+/**
+ * Render the source/target value cell for one row. Returns the JSON value if
+ * present, otherwise the abbreviated hash with a "(legacy)" marker. Quick task
+ * 260430-26i.
+ */
+function valueOrHash(json: string | null | undefined, hash: string): string {
+  if (typeof json === 'string' && json.length > 0) {
+    return json;
+  }
+  // Hash-only fallback for pre-26i rows. Truncate to ~12 chars for readability.
+  const short = hash.length > 12 ? `${hash.slice(0, 12)}…` : hash;
+  return short;
+}
+
+/**
+ * Build the plain-text representation copied to the clipboard for one group.
+ * No JSON wrapper — pastes cleanly into bug reports / chat. Values are
+ * already-redacted server-side (T-26i-02 mitigation).
+ *
+ * Quick task 260430-26i.
+ */
+export function buildGroupCopyText(group: FieldTransformationGroup): string {
+  const ts = safeFormatTimestamp(group.latestTimestamp);
+  const lines: string[] = [];
+  const countParts: string[] = [`${group.total} ${group.total === 1 ? 'field' : 'fields'}`];
+  if (group.failed > 0) countParts.push(`${group.failed} failed`);
+  if (group.skipped > 0) countParts.push(`${group.skipped} skipped`);
+  lines.push(`[${ts}] Copy ${group.copyId}`);
+  lines.push(countParts.join(' · '));
+  lines.push('');
+  for (const row of group.rows) {
+    lines.push(`${row.fieldId}  [${row.transformerKind}]  ${row.outcome}`);
+    lines.push(`  source: ${valueOrHash(row.sourceValueJson, row.sourceValueHash)}`);
+    lines.push(`  target: ${valueOrHash(row.targetValueJson, row.targetValueHash)}`);
+    if (row.failureReason) {
+      lines.push(`  reason: ${row.failureReason}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
+
 type Tab = 'api' | 'fields';
 
 export function AuditLogPage({ onClose }: AuditLogPageProps) {
@@ -246,6 +346,11 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
   const [mappingLoading, setMappingLoading] = useState(false);
   const [mappingError, setMappingError] = useState<string | null>(null);
   const [mappingFetched, setMappingFetched] = useState(false);
+  // Quick task 260430-26i: per-copy expand/collapse state. Default = all collapsed.
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
+  // Quick task 260430-26i: memoized grouping over mappingEntries.
+  const fieldGroups = useMemo(() => groupByCopyId(mappingEntries), [mappingEntries]);
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -365,6 +470,30 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
     setCopiedKey(rowKey);
     if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
     copiedTimerRef.current = setTimeout(() => setCopiedKey(null), 1500);
+  }
+
+  // Quick task 260430-26i: per-group Copy button — reuses copiedKey state with
+  // a `group-` prefix so it doesn't collide with API-tab `id-N` row keys.
+  async function handleCopyGroup(group: FieldTransformationGroup) {
+    const text = buildGroupCopyText(group);
+    const ok = await copyToClipboard(text);
+    if (!ok) return;
+    const key = `group-${group.copyId}`;
+    setCopiedKey(key);
+    if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopiedKey(null), 1500);
+  }
+
+  function toggleGroup(copyId: string) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(copyId)) {
+        next.delete(copyId);
+      } else {
+        next.add(copyId);
+      }
+      return next;
+    });
   }
 
   function renderExpandedRow(entry: AuditEntry, rowKey: string): JSX.Element {
@@ -530,78 +659,142 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             </div>
           )}
           {mappingEntries.length > 0 && (
+            // Quick task 260430-26i: grouped, collapsible rendering — one card
+            // per copyId, ordered newest-first by virtue of the input order.
             <ScrollArea className="flex-1">
-              <table className="w-full table-fixed" aria-label="Field transformations log">
-                <thead className="sticky top-0 bg-brand-surface border-b border-brand-border">
-                  <tr>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-44">
-                      {t('audit.fields.col.time')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-24">
-                      {t('audit.fields.col.copyId')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
-                      {t('audit.fields.col.field')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-32">
-                      {t('audit.fields.col.transformer')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-24">
-                      {t('audit.fields.col.outcome')}
-                    </th>
-                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
-                      {t('audit.fields.col.reason')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappingEntries.map((e) => (
-                    <tr
-                      key={e.id}
-                      className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover"
-                    >
-                      <td className="px-3 py-1.5 text-xs font-mono text-brand-text-secondary">
-                        {safeFormatTimestamp(e.timestamp)}
-                      </td>
-                      <td
-                        className="px-3 py-1.5 text-xs font-mono text-brand-text-secondary"
-                        title={e.copyId}
-                      >
-                        {e.copyId.slice(0, 8)}…
-                      </td>
-                      <td className="px-3 py-1.5 text-xs font-mono text-brand-text break-all">
-                        {e.fieldId}
-                      </td>
-                      <td className="px-3 py-1.5 text-xs">
-                        <Badge variant="outline" className="text-[10px] font-mono">
-                          {e.transformerKind || '—'}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-1.5 text-xs">
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            'text-[10px] font-mono',
-                            e.outcome === 'ok' &&
-                              'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
-                            e.outcome === 'failed' &&
-                              'bg-red-500/15 text-red-400 border-red-500/20',
-                            e.outcome === 'skipped' &&
-                              'bg-amber-500/15 text-amber-400 border-amber-500/20',
-                          )}
+              <ul className="divide-y divide-brand-border-subtle/50" aria-label="Field transformations log">
+                {fieldGroups.map((group) => {
+                  const isExpanded = expandedGroups.has(group.copyId);
+                  const copyKey = `group-${group.copyId}`;
+                  const isCopied = copiedKey === copyKey;
+                  const shortId = group.copyId.slice(0, 8);
+                  // Build the "3 fields · 1 failed · 1 skipped" summary; omit zeros.
+                  const summaryParts: string[] = [
+                    t('audit.fields.group.count.total', { count: group.total }),
+                  ];
+                  if (group.failed > 0) {
+                    summaryParts.push(t('audit.fields.group.count.failed', { count: group.failed }));
+                  }
+                  if (group.skipped > 0) {
+                    summaryParts.push(t('audit.fields.group.count.skipped', { count: group.skipped }));
+                  }
+                  return (
+                    <li key={group.copyId} className="bg-brand-surface">
+                      <div className="flex items-stretch">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(group.copyId)}
+                          aria-expanded={isExpanded}
+                          aria-label={`Copy ${shortId} — ${isExpanded ? t('audit.fields.collapse.aria') : t('audit.fields.expand.aria')}`}
+                          className="flex-1 flex items-center gap-3 px-3 py-2 text-left hover:bg-brand-surface-hover focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px] transition-colors duration-150"
                         >
-                          {t(`audit.fields.outcome.${e.outcome}`)}
-                        </Badge>
-                      </td>
-                      <td className="px-3 py-1.5 text-xs text-brand-text-secondary break-words">
-                        {e.failureReason ?? ''}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          {isExpanded ? (
+                            <ChevronDown className="w-3.5 h-3.5 text-brand-muted shrink-0" aria-hidden="true" />
+                          ) : (
+                            <ChevronRight className="w-3.5 h-3.5 text-brand-muted shrink-0" aria-hidden="true" />
+                          )}
+                          <span className="text-xs font-mono text-brand-text-secondary shrink-0 w-44">
+                            {safeFormatTimestamp(group.latestTimestamp)}
+                          </span>
+                          <span
+                            className="text-xs font-mono text-brand-text shrink-0"
+                            title={group.copyId}
+                          >
+                            {shortId}…
+                          </span>
+                          <span className="text-xs text-brand-muted truncate">
+                            {summaryParts.join(' · ')}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            void handleCopyGroup(group);
+                          }}
+                          aria-label={t('audit.fields.copyGroup.aria')}
+                          className="flex items-center gap-1.5 px-3 text-xs font-medium text-brand-text bg-brand-surface hover:bg-brand-surface-hover border-l border-brand-border transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface"
+                        >
+                          <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                          {isCopied ? t('audit.fields.copied') : t('audit.fields.copyGroup')}
+                        </button>
+                      </div>
+                      {isExpanded && (
+                        <ul className="border-t border-brand-border-subtle/50 bg-brand-surface-raised">
+                          {group.rows.map((row) => {
+                            const sourceText = valueOrHash(row.sourceValueJson, row.sourceValueHash);
+                            const targetText = valueOrHash(row.targetValueJson, row.targetValueHash);
+                            const sourceLegacy = !row.sourceValueJson;
+                            const targetLegacy = !row.targetValueJson;
+                            return (
+                              <li
+                                key={row.id}
+                                className="px-3 py-2 border-b border-brand-border-subtle/30 last:border-b-0"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-mono text-xs text-brand-text break-all">{row.fieldId}</span>
+                                  <Badge variant="outline" className="text-[10px] font-mono">
+                                    {row.transformerKind || '—'}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'text-[10px] font-mono',
+                                      row.outcome === 'ok' &&
+                                        'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+                                      row.outcome === 'failed' &&
+                                        'bg-red-500/15 text-red-400 border-red-500/20',
+                                      row.outcome === 'skipped' &&
+                                        'bg-amber-500/15 text-amber-400 border-amber-500/20',
+                                    )}
+                                  >
+                                    {t(`audit.fields.outcome.${row.outcome}`)}
+                                  </Badge>
+                                </div>
+                                {row.failureReason && (
+                                  <div className="mt-1 text-xs text-brand-text-secondary">
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                                      {t('audit.fields.row.reason')}:
+                                    </span>{' '}
+                                    {row.failureReason}
+                                  </div>
+                                )}
+                                <div className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                                    {t('audit.fields.row.source')}
+                                    {sourceLegacy && row.sourceValueHash !== '' && (
+                                      <span className="block text-[9px] font-normal normal-case tracking-normal text-brand-muted">
+                                        {t('audit.fields.row.hashOnly')}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <pre className="font-mono text-xs text-brand-text break-all whitespace-pre-wrap">
+                                    {sourceText}
+                                  </pre>
+                                  <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                                    {t('audit.fields.row.target')}
+                                    {targetLegacy && row.targetValueHash !== '' && (
+                                      <span className="block text-[9px] font-normal normal-case tracking-normal text-brand-muted">
+                                        {t('audit.fields.row.hashOnly')}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <pre className="font-mono text-xs text-brand-text break-all whitespace-pre-wrap">
+                                    {targetText}
+                                  </pre>
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
               {mappingHasMore && (
-                <div className="flex justify-center py-3">
+                <div className="flex flex-col items-center gap-1 py-3">
+                  <p className="text-[11px] text-brand-muted">{t('audit.fields.partialGroupHint')}</p>
                   <button
                     type="button"
                     onClick={loadMoreMapping}

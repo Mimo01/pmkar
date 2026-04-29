@@ -513,6 +513,15 @@ describe('AuditLogPage', () => {
       const tab = screen.getByRole('tab', { name: /field transformations/i });
       fireEvent.click(tab);
 
+      // Quick task 260430-26i: rows are now grouped by copyId and collapsed by
+      // default. Each row has its own copyId here so we get two groups; expand
+      // both before asserting field-id contents.
+      await waitFor(() => {
+        expect(screen.getAllByRole('button', { name: /Expand transformation group/i })).toHaveLength(2);
+      });
+      const groupButtons = screen.getAllByRole('button', { name: /Expand transformation group/i });
+      groupButtons.forEach((btn) => fireEvent.click(btn));
+
       // Both field ids should appear
       await waitFor(() => {
         expect(screen.getByText('summary')).toBeTruthy();
