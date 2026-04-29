@@ -10,7 +10,7 @@ on:
         description: "Version tag (e.g. v0.3.0)"
         required: true
       platform:
-        description: "Platform to build (all, linux, windows)"
+        description: "Platform to build (all, linux, windows, macos)"
         required: false
         default: "all"
         type: choice
@@ -18,6 +18,7 @@ on:
           - all
           - linux
           - windows
+          - macos
 
 permissions:
   contents: read
@@ -37,6 +38,9 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             os_name: windows
+          - platform: macos-latest
+            target: universal-apple-darwin
+            os_name: macos
 
     runs-on: ${{ matrix.platform }}
 
@@ -89,6 +93,10 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+
+      - name: Add macOS universal target
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'macos'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Setup Rust
         if: steps.should_run.outputs.run == 'true'
@@ -153,6 +161,18 @@ jobs:
           cp "$BUNDLE/nsis/pmkar_${VERSION}_x64-setup.exe.sig" artifacts/ 2>/dev/null || true
           cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi" artifacts/ 2>/dev/null || true
           cp "$BUNDLE/msi/pmkar_${VERSION}_x64_en-US.msi.sig" artifacts/ 2>/dev/null || true
+          ls -la artifacts/
+
+      - name: Collect macOS artifacts
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'macos'
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.bare }}"
+          BUNDLE="target/${{ matrix.target }}/release/bundle"
+          mkdir -p artifacts
+          cp "$BUNDLE/dmg/pmkar_${VERSION}_universal.dmg" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/macos/pmkar.app.tar.gz" artifacts/ 2>/dev/null || true
+          cp "$BUNDLE/macos/pmkar.app.tar.gz.sig" artifacts/ 2>/dev/null || true
           ls -la artifacts/
 
       - name: Upload artifacts
@@ -294,6 +314,13 @@ jobs:
           if os.path.exists(win_sig):
               with open(win_sig) as f:
                   platforms["windows-x86_64"] = {"signature": f.read().strip(), "url": f"{base_url}/pmkar_{version}_x64-setup.exe"}
+          mac_sig = f"all-artifacts/macos-artifacts/pmkar.app.tar.gz.sig"
+          if os.path.exists(mac_sig):
+              with open(mac_sig) as f:
+                  mac_entry = {"signature": f.read().strip(), "url": f"{base_url}/pmkar.app.tar.gz"}
+              platforms["darwin-universal"] = mac_entry
+              platforms["darwin-x86_64"] = mac_entry
+              platforms["darwin-aarch64"] = mac_entry
           from datetime import datetime, timezone
           pub_date = existing.get("pub_date") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
           result = {"version": existing.get("version", version), "notes": existing.get("notes", f"Release v{version}"), "pub_date": pub_date, "platforms": platforms}
