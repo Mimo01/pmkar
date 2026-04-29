@@ -259,21 +259,24 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
 
   const [activeSection, setActiveSection] = useState<ActiveSection>(initialSection ?? 'source');
 
-  const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
+  const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string; detail: string }[] = [
     {
       value: 'mine',
       label: t('settings.preset.mine'),
       jql: t('settings.preset.mine.desc'),
+      detail: t('settings.preset.mine.detail'),
     },
     {
       value: 'all_watched',
       label: t('settings.preset.allWatched'),
       jql: t('settings.preset.allWatched.desc'),
+      detail: t('settings.preset.allWatched.detail'),
     },
     {
       value: 'custom',
       label: t('settings.preset.custom'),
       jql: t('settings.preset.custom.desc'),
+      detail: t('settings.preset.custom.detail'),
     },
   ];
 
@@ -752,6 +755,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
                     </span>
                     <span className="text-[11px] text-brand-muted block mt-0.5 leading-snug">
                       {opt.jql}
+                    </span>
+                    <span className="text-[10px] text-brand-muted/60 block mt-1 leading-snug">
+                      {opt.detail}
                     </span>
                   </div>
                 </button>
