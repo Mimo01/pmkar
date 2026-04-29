@@ -284,7 +284,8 @@ mod v2 {
                 .filter(|u| {
                     let name = u["name"].as_str().unwrap_or("").to_lowercase();
                     let display = u["displayName"].as_str().unwrap_or("").to_lowercase();
-                    name.contains(&query) || display.contains(&query)
+                    let email = u["emailAddress"].as_str().unwrap_or("").to_lowercase();
+                    name.contains(&query) || display.contains(&query) || email.contains(&query)
                 })
                 .collect()
         };

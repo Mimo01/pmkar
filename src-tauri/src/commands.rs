@@ -1103,40 +1103,37 @@ pub async fn search_jira_users(
     Ok(users)
 }
 
-// --- Cloud user search command ---
+// --- Source user domain search command ---
 
 #[tauri::command]
 pub async fn search_jira_users_by_domain(
+    base_url: String,
     domain: String,
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<Vec<serde_json::Value>, AppError> {
     const PAGE_SIZE: usize = 50;
 
-    let (base_url, cloud_email, api_token) = get_cloud_credentials(triage_db.inner())?;
+    let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
+    let trimmed_url = base_url.trim_end_matches('/');
 
     let clean_domain = domain.trim_start_matches('@');
     let query = format!("@{clean_domain}");
     let encoded_query = urlencoding::encode(&query);
-
-    let cloud_auth = format!(
-        "Basic {}",
-        base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
-    );
 
     let mut all_users: Vec<serde_json::Value> = Vec::new();
     let mut start_at: usize = 0;
 
     loop {
         let url = format!(
-            "{base_url}/rest/api/3/user/search?query={encoded_query}&maxResults={PAGE_SIZE}&startAt={start_at}"
+            "{trimmed_url}/rest/api/2/user/search?username={encoded_query}&maxResults={PAGE_SIZE}&startAt={start_at}"
         );
 
         let resp = client
             .get(&url)
-            .header("Authorization", cloud_auth.clone())
+            .header("Authorization", format!("Bearer {pat}"))
             .send()
             .await
             .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;
@@ -1150,7 +1147,6 @@ pub async fn search_jira_users_by_domain(
         all_users.extend(page);
 
         if page_len < PAGE_SIZE {
-            // Last page — no more results
             break;
         }
         start_at += PAGE_SIZE;
