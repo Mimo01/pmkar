@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, ChevronDown, ChevronUp, Copy, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Copy, Search, X } from 'lucide-react';
 import type { JSX } from 'react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -318,7 +318,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
     copiedTimerRef.current = setTimeout(() => setCopiedKey(null), 1500);
   }
 
-  function renderExpandedRow(entry: AuditEntry, rowKey: string): JSX.Element {
+  function renderExpandedRow(entry: AuditEntry): JSX.Element {
     // Defensive: catch any per-row render failure so one malformed entry can
     // never blank the whole page (debug session: copy-400-and-logs-crash).
     try {
@@ -349,25 +349,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
         </pre>
       );
 
-      const isCopied = copiedKey === rowKey;
-
       return (
         <div className="space-y-3">
-          {/* Top row: collapse hint + copy action */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-xs text-brand-muted">
-              <ChevronUp className="w-3 h-3" aria-hidden="true" />
-            </div>
-            <button
-              type="button"
-              onClick={() => handleCopy(entry, rowKey)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface-raised"
-            >
-              <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-              {isCopied ? t('audit.copied') : t('audit.copy')}
-            </button>
-          </div>
-
           {/* Full URL */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
@@ -386,13 +369,13 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             {headersBlock}
           </div>
 
-          {/* Response body — pretty-printed JSON in a scrollable code block */}
+          {/* Response body — pretty-printed JSON in a height-capped scroll panel */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
               {t('audit.response')}
             </span>
             {entry.responseBody ? (
-              <div className="mt-1 rounded border border-brand-border bg-black/20 px-3 py-2 overflow-x-auto">
+              <div className="mt-1 rounded border border-brand-border bg-black/20 px-3 py-2 max-h-80 overflow-auto">
                 <pre className="font-mono text-xs text-brand-text whitespace-pre">
                   {formatResponseBody(entry.responseBody)}
                 </pre>
@@ -455,35 +438,51 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
           </div>
 
           {/* Method filter */}
-          <select
-            value={methodFilter}
-            onChange={(e) => setMethodFilter(e.target.value as MethodFilter)}
-            aria-label={t('audit.filter.method')}
-            className="px-2 py-1.5 text-sm bg-brand-surface border border-brand-border rounded-md text-brand-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-colors duration-150"
-          >
-            <option value="all">{`${t('audit.filter.method')} — ${t('audit.filter.all')}`}</option>
-            {COMMON_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
+          <div className="relative">
+            <select
+              value={methodFilter}
+              onChange={(e) => setMethodFilter(e.target.value as MethodFilter)}
+              aria-label={t('audit.filter.method')}
+              className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-brand-surface border border-brand-border rounded-md text-brand-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-colors duration-150 cursor-pointer"
+            >
+              <option value="all">
+                {`${t('audit.filter.method')} — ${t('audit.filter.all')}`}
               </option>
-            ))}
-            <option value="other">Other</option>
-          </select>
+              {COMMON_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+              <option value="other">Other</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-muted"
+              aria-hidden="true"
+            />
+          </div>
 
           {/* Status filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as StatusClass)}
-            aria-label={t('audit.filter.status')}
-            className="px-2 py-1.5 text-sm bg-brand-surface border border-brand-border rounded-md text-brand-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-colors duration-150"
-          >
-            <option value="all">{`${t('audit.filter.status')} — ${t('audit.filter.all')}`}</option>
-            <option value="2xx">2xx</option>
-            <option value="3xx">3xx</option>
-            <option value="4xx">4xx</option>
-            <option value="5xx">5xx</option>
-            <option value="error">{t('audit.filter.error')}</option>
-          </select>
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusClass)}
+              aria-label={t('audit.filter.status')}
+              className="appearance-none pl-3 pr-8 py-1.5 text-sm bg-brand-surface border border-brand-border rounded-md text-brand-text focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand transition-colors duration-150 cursor-pointer"
+            >
+              <option value="all">
+                {`${t('audit.filter.status')} — ${t('audit.filter.all')}`}
+              </option>
+              <option value="2xx">2xx</option>
+              <option value="3xx">3xx</option>
+              <option value="4xx">4xx</option>
+              <option value="5xx">5xx</option>
+              <option value="error">{t('audit.filter.error')}</option>
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-brand-muted"
+              aria-hidden="true"
+            />
+          </div>
 
           {/* Result count + clear filters */}
           <div className="ml-auto flex items-center gap-3 text-xs text-brand-muted">
@@ -571,14 +570,26 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
           <p className="text-xs text-brand-muted text-center max-w-sm mb-4">
             {t('audit.filter.empty.body')}
           </p>
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
-          >
-            <X className="w-3 h-3" aria-hidden="true" />
-            {t('audit.filter.clear')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+            >
+              <X className="w-3 h-3" aria-hidden="true" />
+              {t('audit.filter.clear')}
+            </button>
+            {hasMore && (
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-3 py-1.5 text-xs font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              >
+                {loadingMore ? t('audit.loadingMore') : t('audit.loadMore')}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -688,7 +699,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     {isExpanded && (
                       <tr>
                         <td colSpan={4} className="bg-brand-surface-raised px-4 py-3">
-                          {renderExpandedRow(entry, rowKey)}
+                          {renderExpandedRow(entry)}
                         </td>
                       </tr>
                     )}
@@ -697,7 +708,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               })}
             </tbody>
           </table>
-          {hasMore && entries.length > 0 && !filtersActive && (
+          {hasMore && entries.length > 0 && (
             <div className="flex justify-center py-4">
               <button
                 type="button"

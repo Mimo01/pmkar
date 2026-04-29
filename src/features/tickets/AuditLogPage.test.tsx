@@ -234,6 +234,52 @@ describe('AuditLogPage', () => {
       expect(screen.getByText('1 of 2')).toBeTruthy();
     });
 
+    it('Load more remains available while filters are active', async () => {
+      // 50 entries (PAGE_SIZE) with id=1..50; first response is full → hasMore stays true
+      const fullPage: AuditEntry[] = Array.from({ length: 50 }, (_, i) => ({
+        id: i + 1,
+        timestamp: '2026-04-29T12:00:00Z',
+        method: i % 2 === 0 ? 'GET' : 'POST',
+        url: `https://jira.example.com/rest/api/2/issue/${i + 1}`,
+        headers: '{}',
+        statusCode: 200,
+        responseBody: null,
+      }));
+      mockInvoke.mockResolvedValue(fullPage);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getAllByText('GET').length).toBeGreaterThan(0);
+      });
+      // Activate filter
+      const methodSelect = screen.getByLabelText('Method') as HTMLSelectElement;
+      fireEvent.change(methodSelect, { target: { value: 'GET' } });
+      // Load more button should remain available (hasMore + filtered list non-empty)
+      expect(screen.getByText('Load more')).toBeTruthy();
+    });
+
+    it('Load more button is shown in the filtered-empty state when more pages may exist', async () => {
+      const fullPage: AuditEntry[] = Array.from({ length: 50 }, (_, i) => ({
+        id: i + 1,
+        timestamp: '2026-04-29T12:00:00Z',
+        method: 'GET',
+        url: `https://jira.example.com/rest/api/2/issue/${i + 1}`,
+        headers: '{}',
+        statusCode: 200,
+        responseBody: null,
+      }));
+      mockInvoke.mockResolvedValue(fullPage);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getAllByText('GET').length).toBeGreaterThan(0);
+      });
+      // Filter with no matches in the loaded page
+      const searchInput = screen.getByLabelText('Search URL or method');
+      fireEvent.change(searchInput, { target: { value: 'no-match-zzz' } });
+      expect(screen.getByText('No matching log entries')).toBeTruthy();
+      // Load more should be offered alongside Clear filters
+      expect(screen.getByText('Load more')).toBeTruthy();
+    });
+
     it('shows filtered-empty state with clear-filters button when no rows match', async () => {
       mockInvoke.mockResolvedValue(mockEntries);
       render(<AuditLogPage onClose={() => {}} />);
@@ -254,7 +300,7 @@ describe('AuditLogPage', () => {
 
   // Copy-log button tests (260429-v9y)
   describe('copy log entry', () => {
-    it('exposes a Copy button in the expanded row that writes formatted text to clipboard', async () => {
+    it('summary-row copy icon writes formatted text to clipboard', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', {
         value: { writeText },
@@ -265,14 +311,10 @@ describe('AuditLogPage', () => {
       await waitFor(() => {
         expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
       });
-      const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
-      fireEvent.click(postRow!);
-      // The expanded-panel copy button has visible text "Copy" so its
-      // accessible name differs from the icon-only summary-row buttons (whose
-      // accessible name comes from aria-label = "Copy log entry").
-      const expandedCopy = screen.getByRole('button', { name: 'Copy' });
+      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
+      // First copy button corresponds to the first row (POST /search)
       await act(async () => {
-        fireEvent.click(expandedCopy);
+        fireEvent.click(copyButtons[0]);
       });
       expect(writeText).toHaveBeenCalledTimes(1);
       const text = writeText.mock.calls[0][0] as string;
@@ -304,6 +346,24 @@ describe('AuditLogPage', () => {
       // Request Headers section only renders inside an expanded row; if the
       // row was wrongly expanded, it would appear.
       expect(screen.queryByText('Request Headers')).toBeNull();
+    });
+
+    it('expanded panel does not contain its own Copy button (single source of truth: row icon)', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
+      });
+      const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
+      fireEvent.click(postRow!);
+      // Expanded panel renders Request Headers / Response Body — confirm we
+      // are expanded
+      expect(screen.getByText('Request Headers')).toBeTruthy();
+      // The only Copy buttons should be the inline summary-row icons (one per
+      // row); none should appear inside the expanded panel.
+      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
+      // Two summary rows in mockEntries → two copy buttons total
+      expect(copyButtons.length).toBe(mockEntries.length);
     });
 
     it('buildCopyText formats the entry as readable plain text', () => {
