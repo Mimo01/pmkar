@@ -40,6 +40,7 @@ jobs:
             os_name: windows
           - platform: macos-latest
             target: universal-apple-darwin
+            rust_targets: aarch64-apple-darwin x86_64-apple-darwin
             os_name: macos
 
     runs-on: ${{ matrix.platform }}
@@ -94,15 +95,15 @@ jobs:
           node-version: lts/*
           cache: npm
 
-      - name: Add macOS universal target
-        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'macos'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
-
       - name: Setup Rust
         if: steps.should_run.outputs.run == 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rust_targets || matrix.target }}
+
+      - name: Add macOS universal target
+        if: steps.should_run.outputs.run == 'true' && matrix.os_name == 'macos'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Rust cache
         if: steps.should_run.outputs.run == 'true'
