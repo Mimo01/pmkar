@@ -263,14 +263,18 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
     {
       value: 'mine',
       label: t('settings.preset.mine'),
-      jql: 'assignee = me OR mentioned me OR watching',
+      jql: t('settings.preset.mine.desc'),
     },
     {
       value: 'all_watched',
       label: t('settings.preset.allWatched'),
-      jql: 'Me + watched users (assignee, mentions)',
+      jql: t('settings.preset.allWatched.desc'),
     },
-    { value: 'custom', label: t('settings.preset.custom'), jql: 'You write the JQL' },
+    {
+      value: 'custom',
+      label: t('settings.preset.custom'),
+      jql: t('settings.preset.custom.desc'),
+    },
   ];
 
   const serverConn = useConnectionStore((s) => s.serverConnection);
@@ -746,7 +750,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
                     >
                       {opt.label}
                     </span>
-                    <span className="text-[11px] text-brand-muted block truncate font-mono mt-0.5">
+                    <span className="text-[11px] text-brand-muted block mt-0.5 leading-snug">
                       {opt.jql}
                     </span>
                   </div>
