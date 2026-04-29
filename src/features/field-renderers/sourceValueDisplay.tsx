@@ -70,14 +70,30 @@ function extractOption(v: unknown): string {
   return String(v);
 }
 
+function isObjectWithName(v: unknown): v is { name: string } & Record<string, unknown> {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  return typeof (v as Record<string, unknown>).name === 'string';
+}
+
 function isStatusShape(v: unknown): v is { name: string; statusCategory: { key: string } } {
-  if (typeof v !== 'object' || v === null) return false;
-  const obj = v as Record<string, unknown>;
+  if (!isObjectWithName(v)) return false;
+  return typeof v.statusCategory === 'object' && v.statusCategory !== null;
+}
+
+function renderIssuetypeValue(value: unknown): ReactNode | null {
+  if (!isObjectWithName(value)) return null;
+  const iconUrl = typeof value.iconUrl === 'string' ? value.iconUrl : null;
   return (
-    typeof obj.name === 'string' &&
-    typeof obj.statusCategory === 'object' &&
-    obj.statusCategory !== null
+    <span className="flex items-center gap-1.5">
+      {iconUrl && <img src={iconUrl} alt="" aria-hidden="true" className="w-4 h-4" />}
+      {value.name}
+    </span>
   );
+}
+
+function renderPriorityValue(value: unknown): ReactNode | null {
+  if (!isObjectWithName(value)) return null;
+  return <PriorityIcon priority={value.name} size="sm" />;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,26 +229,12 @@ export function renderSourceFieldValue(
     }
 
     // ── priority ─────────────────────────────────────────────────────────────
-    case 'priority': {
-      if (typeof value !== 'object' || value === null) return null;
-      const p = value as Record<string, unknown>;
-      const name = typeof p.name === 'string' ? p.name : String(p);
-      return <PriorityIcon priority={name} size="sm" />;
-    }
+    case 'priority':
+      return renderPriorityValue(value);
 
     // ── issuetype ────────────────────────────────────────────────────────────
-    case 'issuetype': {
-      if (typeof value !== 'object' || value === null) return null;
-      const it = value as Record<string, unknown>;
-      const name = typeof it.name === 'string' ? it.name : String(it);
-      const iconUrl = typeof it.iconUrl === 'string' ? it.iconUrl : null;
-      return (
-        <span className="flex items-center gap-1.5">
-          {iconUrl && <img src={iconUrl} alt="" aria-hidden="true" className="w-4 h-4" />}
-          {name}
-        </span>
-      );
-    }
+    case 'issuetype':
+      return renderIssuetypeValue(value);
 
     // ── array ────────────────────────────────────────────────────────────────
     case 'array': {
@@ -315,7 +317,22 @@ export function renderSourceFieldValue(
 
     // ── any (and default) ────────────────────────────────────────────────────
     default: {
-      // Special-case: status-shaped object → StatusBadge
+      // Field-id dispatch: Jira's /field endpoint returns schema.type values
+      // (e.g. "status") that aren't in our enum and deserialize to 'any'.
+      // Match by system field id so status/issuetype/priority still render properly.
+      if (fieldId === 'status' && isObjectWithName(value)) {
+        return <StatusBadge status={value.name} />;
+      }
+      if (fieldId === 'issuetype') {
+        return renderIssuetypeValue(value);
+      }
+      if (fieldId === 'priority') {
+        return renderPriorityValue(value);
+      }
+      if (fieldId === 'resolution' && isObjectWithName(value)) {
+        return <span>{value.name}</span>;
+      }
+      // Shape-based: status object enriched with statusCategory (no fieldId match needed)
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
       }
@@ -327,7 +344,24 @@ export function renderSourceFieldValue(
       if (typeof value === 'number') {
         return <span>{String(value)}</span>;
       }
-      // JSON fallback for objects / booleans / arrays
+      if (typeof value === 'boolean') {
+        return <span>{value ? 'Yes' : 'No'}</span>;
+      }
+      // Arrays of objects with name (custom multi-select cf, components, etc.)
+      if (Array.isArray(value)) {
+        const labels = value
+          .map((v) => (isObjectWithName(v) ? v.name : typeof v === 'string' ? v : null))
+          .filter((s): s is string => typeof s === 'string' && s.length > 0);
+        if (labels.length > 0) {
+          return <span>{labels.join(', ')}</span>;
+        }
+      }
+      // Generic object with `name` (project, parent, security level, custom user-pickers,
+      // and any unmapped object whose primary identity is its name)
+      if (isObjectWithName(value)) {
+        return <span>{value.name}</span>;
+      }
+      // JSON fallback for shapes we genuinely can't read
       const json = JSON.stringify(value);
       const truncated = json.length > 200 ? `${json.slice(0, 200)}...` : json;
       return (

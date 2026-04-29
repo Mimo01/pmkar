@@ -303,4 +303,77 @@ describe('renderSourceFieldValue', () => {
     // Should NOT render as raw JSON code block
     expect(container.querySelector('code')).toBeNull();
   });
+
+  // -------------------------------------------------------------------------
+  // Test 20: fieldId-based dispatch when schema.type is 'any'
+  // (Jira's /field endpoint returns schema.type="status" which deserializes
+  // to FieldSchemaType::Any since our enum has no Status variant.)
+  // -------------------------------------------------------------------------
+
+  it('Test 20a — any + fieldId="status" with bare {name,id}: StatusBadge', () => {
+    const container = renderNode({ type: 'any' }, { name: 'Open', id: '1' }, { fieldId: 'status' })!;
+    expect(container.textContent).toContain('Open');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 20b — any + fieldId="issuetype" with bare {id,name,subtask}: icon-less name', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { id: '10001', name: 'Bug', subtask: false },
+      { fieldId: 'issuetype' },
+    )!;
+    expect(container.textContent).toContain('Bug');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 20c — any + fieldId="priority" with bare {name}: PriorityIcon', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { name: 'High' },
+      { fieldId: 'priority' },
+    )!;
+    expect(container.textContent).toContain('High');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 20d — any + fieldId="resolution" with {name}: plain text', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { name: 'Won\'t Do' },
+      { fieldId: 'resolution' },
+    )!;
+    expect(container.textContent).toContain("Won't Do");
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 21: generic object-with-name fallback
+  // -------------------------------------------------------------------------
+
+  it('Test 21a — any: generic object with `name` renders the name as text', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { id: '10000', name: 'Platform Team', self: 'http://x' },
+    )!;
+    expect(container.textContent).toBe('Platform Team');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 21b — any: array of {name} objects renders comma-joined names', () => {
+    const container = renderNode({ type: 'any' }, [{ name: 'frontend' }, { name: 'backend' }])!;
+    expect(container.textContent).toBe('frontend, backend');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 21c — any: boolean renders as Yes/No', () => {
+    const trueNode = renderNode({ type: 'any' }, true)!;
+    expect(trueNode.textContent).toBe('Yes');
+    const falseNode = renderNode({ type: 'any' }, false)!;
+    expect(falseNode.textContent).toBe('No');
+  });
+
+  it('Test 21d — any: nameless object still falls back to JSON', () => {
+    const container = renderNode({ type: 'any' }, { foo: 'bar', baz: 1 })!;
+    expect(container.querySelector('code')).not.toBeNull();
+  });
 });
