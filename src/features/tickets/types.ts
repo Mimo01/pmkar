@@ -219,4 +219,9 @@ export interface MappingAuditEntry {
   outcome: 'ok' | 'failed' | 'skipped';
   failureReason: string | null;
   timestamp: string;
+  // Quick task 260430-26i — redacted JSON values, optional + nullable so legacy
+  // rows from before this column existed still type-check. NULL ⇒ fall back to
+  // the hash columns above.
+  sourceValueJson?: string | null;
+  targetValueJson?: string | null;
 }

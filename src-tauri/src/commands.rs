@@ -1704,9 +1704,9 @@ pub fn get_mapping_audit_log_page(
 /// Quick task 260430-0tj — one preview-time audit entry. The frontend builds a
 /// batch of these in `CopyPreviewPage` after running its pre-fill pass, then
 /// invokes `log_preview_transformations` once. Source/target values are raw
-/// JSON the frontend already holds; the backend redacts and (unless
-/// `audit_verbose` is set) hashes them before persisting — same shape the
-/// previous commit-time audit produced so the existing UI keeps working.
+/// JSON the frontend already holds; the backend always redacts and hashes them
+/// before persisting, and (quick task 260430-26i) ALSO persists the redacted
+/// JSON value alongside the hash so the audit UI can render real values.
 #[derive(serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PreviewTransformationLog {
@@ -1721,17 +1721,38 @@ pub struct PreviewTransformationLog {
     pub target_value: serde_json::Value,
 }
 
+/// Maximum bytes of redacted JSON value we persist per audit row. The previous
+/// `audit_verbose` path used the same cap; quick task 260430-26i applies it
+/// uniformly to mitigate T-26i-04 (unbounded JSON values blowing up `SQLite`).
+const MAX_AUDIT_JSON_BYTES: usize = 4096;
+
+/// Truncate a JSON-encoded string at `MAX_AUDIT_JSON_BYTES` on a UTF-8 char
+/// boundary so we never split a multi-byte glyph mid-sequence.
+fn cap_audit_json(s: String) -> String {
+    if s.len() <= MAX_AUDIT_JSON_BYTES {
+        return s;
+    }
+    let mut end = MAX_AUDIT_JSON_BYTES;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    s[..end].to_string()
+}
+
 /// Quick task 260430-0tj — write a batch of preview-time transformation audit
 /// entries. Called by the copy preview page once after pre-fill so the user can
 /// later inspect "what got pre-filled and why" in the Audit Log page.
 ///
 /// Best-effort: per-row insert errors are swallowed so a transient SQLite hiccup
 /// cannot block the user's preview/copy flow (mirrors `AuditDb::insert`).
+///
+/// Quick task 260430-26i: always persist redacted JSON values alongside hashes;
+/// the previous `audit_verbose` branch is removed and the function no longer
+/// needs `triage_db` state.
 #[tauri::command]
 pub fn log_preview_transformations(
     copy_id: String,
     entries: Vec<PreviewTransformationLog>,
-    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
     mapping_db: tauri::State<'_, Arc<Mutex<FieldMappingDb>>>,
 ) -> Result<(), AppError> {
     if entries.is_empty() {
@@ -1740,34 +1761,20 @@ pub fn log_preview_transformations(
     // Cap batch size — defensive against an FE bug looping on every keystroke.
     let entries: Vec<_> = entries.into_iter().take(500).collect();
 
-    let audit_verbose = {
-        let g = triage_db
-            .lock()
-            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        g.get_audit_verbose().unwrap_or(false)
-    };
-
     let timestamp = chrono::Utc::now().to_rfc3339();
     let mdb = mapping_db
         .lock()
         .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
 
     for e in &entries {
-        let src_for_hash = redact_string_in_value(&e.source_value);
-        let tgt_for_hash = redact_string_in_value(&e.target_value);
-        let (src_hash, tgt_hash) = if audit_verbose {
-            let s = serde_json::to_string(&src_for_hash).unwrap_or_default();
-            let t = serde_json::to_string(&tgt_for_hash).unwrap_or_default();
-            (
-                format!("raw={}", &s[..s.len().min(4096)]),
-                format!("raw={}", &t[..t.len().min(4096)]),
-            )
-        } else {
-            (
-                hash_field_value(&src_for_hash),
-                hash_field_value(&tgt_for_hash),
-            )
-        };
+        // Quick task 260430-26i: always persist redacted JSON values alongside
+        // hashes; previous audit_verbose branch removed.
+        let src_red = redact_string_in_value(&e.source_value);
+        let tgt_red = redact_string_in_value(&e.target_value);
+        let src_hash = hash_field_value(&src_red);
+        let tgt_hash = hash_field_value(&tgt_red);
+        let src_json = serde_json::to_string(&src_red).ok().map(cap_audit_json);
+        let tgt_json = serde_json::to_string(&tgt_red).ok().map(cap_audit_json);
         let _ = mdb.insert_mapping_audit(
             &copy_id,
             &e.target_field_id,
@@ -1779,6 +1786,8 @@ pub fn log_preview_transformations(
             &e.outcome,
             e.failure_reason.as_deref(),
             &timestamp,
+            src_json.as_deref(),
+            tgt_json.as_deref(),
         );
     }
     Ok(())

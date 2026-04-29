@@ -96,6 +96,9 @@ const ADD_UNIQUE_TARGET: &str = "
 /// Hash columns store SHA-256 hex (64 chars). `gap_kind` is one of NULL,
 /// "person", "version", "component" (matches `GapVariant` tag in `field_transform/mod.rs`).
 /// Quick task 260430-0tj extends with transformer_kind, outcome, failure_reason.
+/// Quick task 260430-26i extends with source_value_json, target_value_json
+/// (redacted, capped at 4096 bytes server-side — T-26i-04 `DoS` mitigation).
+/// Hash columns are retained for backward compatibility with rows written before 26i.
 const CREATE_MAPPING_AUDIT_LOG: &str = "
     CREATE TABLE IF NOT EXISTS mapping_audit_log (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -109,6 +112,8 @@ const CREATE_MAPPING_AUDIT_LOG: &str = "
         outcome             TEXT NOT NULL DEFAULT 'ok',
         failure_reason      TEXT,
         timestamp           TEXT NOT NULL,
+        source_value_json   TEXT,
+        target_value_json   TEXT,
         created_at          INTEGER DEFAULT (strftime('%s','now'))
     );
 ";
@@ -138,11 +143,26 @@ fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
             "ALTER TABLE mapping_audit_log ADD COLUMN failure_reason TEXT;",
         )?;
     }
+    // Quick task 260430-26i: persist redacted JSON values alongside hashes so
+    // operators can see what actually got transformed without rebuilding from
+    // the original source. Both columns are nullable — legacy rows from before
+    // 26i keep NULL here and the UI falls back to the hash columns.
+    if !has("source_value_json") {
+        conn.execute_batch(
+            "ALTER TABLE mapping_audit_log ADD COLUMN source_value_json TEXT;",
+        )?;
+    }
+    if !has("target_value_json") {
+        conn.execute_batch(
+            "ALTER TABLE mapping_audit_log ADD COLUMN target_value_json TEXT;",
+        )?;
+    }
     Ok(())
 }
 
 /// DTO for a row from `mapping_audit_log`. Serializes to camelCase for the
-/// frontend. Quick task 260430-0tj.
+/// frontend. Quick task 260430-0tj. Quick task 260430-26i adds the optional
+/// `source_value_json` / `target_value_json` fields — legacy rows return None.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MappingAuditEntry {
@@ -157,6 +177,8 @@ pub struct MappingAuditEntry {
     pub outcome: String,
     pub failure_reason: Option<String>,
     pub timestamp: String,
+    pub source_value_json: Option<String>,
+    pub target_value_json: Option<String>,
 }
 
 /// Migration: repair any existing rows whose `source_schema_json` or `target_schema_json`
@@ -502,6 +524,9 @@ impl FieldMappingDb {
     }
 
     /// Phase 23 CUTV-03 / quick task 260430-0tj — insert one row into `mapping_audit_log`.
+    /// Quick task 260430-26i appends `source_value_json` and `target_value_json`
+    /// (already-redacted, capped server-side) so the UI can render real values
+    /// for new rows while legacy hash-only rows keep working.
     ///
     /// All non-static values are bound via `rusqlite::params![]` — NEVER
     /// interpolated into the SQL string (T-23-T2 SQL-injection mitigation,
@@ -519,12 +544,15 @@ impl FieldMappingDb {
         outcome: &str,
         failure_reason: Option<&str>,
         timestamp: &str,
+        source_value_json: Option<&str>,
+        target_value_json: Option<&str>,
     ) -> AppResult<()> {
         self.conn.execute(
             "INSERT INTO mapping_audit_log
                  (copy_id, field_id, source_value_hash, target_value_hash,
-                  was_overridden, gap_kind, transformer_kind, outcome, failure_reason, timestamp)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                  was_overridden, gap_kind, transformer_kind, outcome, failure_reason, timestamp,
+                  source_value_json, target_value_json)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             rusqlite::params![
                 copy_id,
                 field_id,
@@ -536,6 +564,8 @@ impl FieldMappingDb {
                 outcome,
                 failure_reason,
                 timestamp,
+                source_value_json,
+                target_value_json,
             ],
         )?;
         Ok(())
@@ -543,7 +573,8 @@ impl FieldMappingDb {
 
     /// Returns mapping_audit_log entries newest first (ORDER BY id DESC).
     /// Bounded by limit; offset is for pagination by the UI.
-    /// Quick task 260430-0tj.
+    /// Quick task 260430-0tj. Quick task 260430-26i adds the JSON columns —
+    /// legacy rows return None for them so the UI can fall back to hashes.
     pub fn get_mapping_audit_log_page(
         &self,
         offset: i64,
@@ -552,7 +583,7 @@ impl FieldMappingDb {
         let mut stmt = self.conn.prepare(
             "SELECT id, copy_id, field_id, source_value_hash, target_value_hash,
                     was_overridden, gap_kind, transformer_kind, outcome,
-                    failure_reason, timestamp
+                    failure_reason, timestamp, source_value_json, target_value_json
              FROM mapping_audit_log
              ORDER BY id DESC
              LIMIT ?1 OFFSET ?2",
@@ -571,6 +602,8 @@ impl FieldMappingDb {
                     outcome: r.get(8)?,
                     failure_reason: r.get(9)?,
                     timestamp: r.get(10)?,
+                    source_value_json: r.get(11)?,
+                    target_value_json: r.get(12)?,
                 })
             })?
             .collect::<Result<Vec<_>, _>>()?;
@@ -971,6 +1004,8 @@ mod tests {
             "ok",
             None,
             "2026-04-28T00:00:00Z",
+            None,
+            None,
         )
         .expect("insert");
         let (copy_id, field_id, was_ov, gap_kind): (String, String, i64, Option<String>) = db
@@ -1001,6 +1036,8 @@ mod tests {
             "ok",
             None,
             "2026-04-28T00:01:00Z",
+            None,
+            None,
         )
         .expect("insert");
         let (was_ov, gap_kind): (i64, Option<String>) = db
@@ -1021,7 +1058,7 @@ mod tests {
         // into SQL, would drop the table. params![] binding stores it as a literal.
         let db = FieldMappingDb::open_in_memory().expect("open");
         let nasty = "x'; DROP TABLE mapping_audit_log; --";
-        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "identity", "ok", None, "ts")
+        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "identity", "ok", None, "ts", None, None)
             .expect("insert with nasty field_id");
         // Table still exists.
         let count: i64 = db
@@ -1234,6 +1271,7 @@ mod tests {
         db.insert_mapping_audit(
             "copy-1", "summary", "h1", "h2", false, None,
             "identity", "ok", None, "2026-04-30T00:00:00Z",
+            None, None,
         ).unwrap();
         let row: (String, String, Option<String>) = db.conn
             .query_row(
@@ -1254,6 +1292,7 @@ mod tests {
         db.insert_mapping_audit(
             "copy-2", "assignee", "h1", "h2", false, Some("person"),
             "user", "failed", Some("unresolved person"), "2026-04-30T00:00:00Z",
+            None, None,
         ).unwrap();
         let row: (String, Option<String>) = db.conn
             .query_row(
@@ -1274,6 +1313,7 @@ mod tests {
             "copy-3", "labels", "h1", "h2", false, None,
             "identity", "skipped", Some("source value missing"),
             "2026-04-30T00:00:00Z",
+            None, None,
         ).unwrap();
         let outcome: String = db.conn
             .query_row(
@@ -1292,6 +1332,7 @@ mod tests {
             db.insert_mapping_audit(
                 &format!("copy-{i}"), "f", "h1", "h2", false, None,
                 "identity", "ok", None, "2026-04-30T00:00:00Z",
+                None, None,
             ).unwrap();
         }
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
@@ -1328,11 +1369,84 @@ mod tests {
         db.insert_mapping_audit(
             "copy-legacy", "f", "h1", "h2", false, None,
             "identity", "ok", None, "2026-04-30T00:00:00Z",
+            None, None,
         ).unwrap();
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 1);
         assert_eq!(page[0].transformer_kind, "identity");
         assert_eq!(page[0].outcome, "ok");
+    }
+
+    // ── Quick task 260430-26i: JSON value persistence tests ──────────────────
+
+    #[test]
+    fn insert_mapping_audit_persists_json_values() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.insert_mapping_audit(
+            "copy-26i-1", "summary", "h1", "h2", false, None,
+            "identity", "ok", None, "2026-04-30T00:00:00Z",
+            Some("\"hello\""), Some("\"world\""),
+        ).unwrap();
+        let page = db.get_mapping_audit_log_page(0, 10).unwrap();
+        assert_eq!(page.len(), 1);
+        assert_eq!(page[0].source_value_json.as_deref(), Some("\"hello\""));
+        assert_eq!(page[0].target_value_json.as_deref(), Some("\"world\""));
+    }
+
+    #[test]
+    fn legacy_rows_have_null_json_columns() {
+        // Existing rows from before quick task 260430-26i must still load and
+        // surface NULL on the new JSON columns so the UI can hash-fallback.
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.insert_mapping_audit(
+            "copy-26i-2", "summary", "h-old", "h-old", false, None,
+            "identity", "ok", None, "2026-04-30T00:00:00Z",
+            None, None,
+        ).unwrap();
+        let page = db.get_mapping_audit_log_page(0, 10).unwrap();
+        assert_eq!(page.len(), 1);
+        assert!(page[0].source_value_json.is_none());
+        assert!(page[0].target_value_json.is_none());
+        // Hash columns still populated.
+        assert_eq!(page[0].source_value_hash, "h-old");
+        assert_eq!(page[0].target_value_hash, "h-old");
+    }
+
+    #[test]
+    fn legacy_db_migration_adds_json_columns() {
+        // Simulate a pre-26i DB (post-0tj schema) and verify the JSON columns
+        // are added by the migration so new inserts can populate them.
+        let tmpdir = tempfile::tempdir().unwrap();
+        let path = tmpdir.path().join("legacy26i.db");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(
+                "CREATE TABLE mapping_audit_log (
+                    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                    copy_id           TEXT NOT NULL,
+                    field_id          TEXT NOT NULL,
+                    source_value_hash TEXT NOT NULL,
+                    target_value_hash TEXT NOT NULL,
+                    was_overridden    INTEGER NOT NULL DEFAULT 0,
+                    gap_kind          TEXT,
+                    transformer_kind  TEXT NOT NULL DEFAULT '',
+                    outcome           TEXT NOT NULL DEFAULT 'ok',
+                    failure_reason    TEXT,
+                    timestamp         TEXT NOT NULL,
+                    created_at        INTEGER DEFAULT (strftime('%s','now'))
+                );",
+            ).unwrap();
+        }
+        let db = FieldMappingDb::open(&path).unwrap();
+        db.insert_mapping_audit(
+            "copy-26i-3", "f", "h1", "h2", false, None,
+            "identity", "ok", None, "2026-04-30T00:00:00Z",
+            Some("\"src\""), Some("\"tgt\""),
+        ).unwrap();
+        let page = db.get_mapping_audit_log_page(0, 10).unwrap();
+        assert_eq!(page.len(), 1);
+        assert_eq!(page[0].source_value_json.as_deref(), Some("\"src\""));
+        assert_eq!(page[0].target_value_json.as_deref(), Some("\"tgt\""));
     }
 
     /// After fixing multiple dismissals, a real mapping can still be added for a
