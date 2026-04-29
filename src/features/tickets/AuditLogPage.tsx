@@ -353,23 +353,21 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
 
       return (
         <div className="space-y-3">
-          {/* Copy action — top-right of the expanded panel */}
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={() => handleCopy(entry, rowKey)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface-raised"
-            >
-              <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-              {isCopied ? t('audit.copied') : t('audit.copy')}
-            </button>
-          </div>
-
-          {/* Full URL */}
+          {/* Full URL — Copy action shares this row to avoid pushing content down */}
           <div>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
-              {t('audit.url')}
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                {t('audit.url')}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleCopy(entry, rowKey)}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface-raised"
+              >
+                <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+                {isCopied ? t('audit.copied') : t('audit.copy')}
+              </button>
+            </div>
             <p className="break-all font-mono text-xs text-brand-text mt-1">
               {toDisplayString(entry.url)}
             </p>
