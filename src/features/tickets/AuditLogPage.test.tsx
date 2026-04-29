@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuditLogPage } from './AuditLogPage';
+import { AuditLogPage, buildCopyText } from './AuditLogPage';
 import type { AuditEntry } from './types';
 
 vi.mock('@tauri-apps/api/core', () => ({
@@ -46,29 +46,39 @@ describe('AuditLogPage', () => {
   it('Test 1: renders audit entries in a table with Timestamp, Method, URL, Status columns', async () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
+    // Column headers — scope to the table so toolbar select labels don't collide
     await waitFor(() => {
-      expect(screen.getByText('Timestamp')).toBeTruthy();
-      expect(screen.getByText('Method')).toBeTruthy();
-      expect(screen.getByText('URL')).toBeTruthy();
-      expect(screen.getByText('Status')).toBeTruthy();
+      const table = screen.getByRole('table');
+      expect(within(table).getByText('Timestamp')).toBeTruthy();
+      expect(within(table).getByText('Method')).toBeTruthy();
+      expect(within(table).getByText('URL')).toBeTruthy();
+      expect(within(table).getByText('Status')).toBeTruthy();
     });
+    // Data cells — scope to tbody (toolbar select <option>POST</option> would otherwise collide)
     await waitFor(() => {
-      expect(screen.getByText('POST')).toBeTruthy();
-      expect(screen.getByText('GET')).toBeTruthy();
-      expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
-      expect(screen.getByText('200')).toBeTruthy();
-      expect(screen.getByText('401')).toBeTruthy();
+      const table = screen.getByRole('table');
+      const tbody = table.querySelector('tbody') as HTMLElement;
+      expect(within(tbody).getByText('POST')).toBeTruthy();
+      expect(within(tbody).getByText('GET')).toBeTruthy();
+      expect(within(tbody).getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
+      expect(within(tbody).getByText('200')).toBeTruthy();
+      expect(within(tbody).getByText('401')).toBeTruthy();
     });
   });
+
+  // Helper: get only the table-row buttons (filters out toolbar copy buttons,
+  // which also have role="button"). Rows are <tr role="button">.
+  function getRowButtons(): HTMLElement[] {
+    return screen.getAllByRole('button').filter((el) => el.tagName === 'TR');
+  }
 
   it('Test 2: clicking a row expands it showing headers content', async () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('POST')).toBeTruthy();
+      expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
     });
-    const rows = screen.getAllByRole('button');
-    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
     expect(postRow).toBeTruthy();
     fireEvent.click(postRow!);
     expect(screen.getByText('Request Headers')).toBeTruthy();
@@ -79,10 +89,9 @@ describe('AuditLogPage', () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('POST')).toBeTruthy();
+      expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
     });
-    const rows = screen.getAllByRole('button');
-    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
     expect(postRow).toBeTruthy();
     fireEvent.click(postRow!);
     expect(screen.getByText('Request Headers')).toBeTruthy();
@@ -94,11 +103,10 @@ describe('AuditLogPage', () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('POST')).toBeTruthy();
+      expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
     });
-    const rows = screen.getAllByRole('button');
-    const postRow = rows.find((r) => r.textContent?.includes('POST'));
-    const getRow = rows.find((r) => r.textContent?.includes('GET'));
+    const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
+    const getRow = getRowButtons().find((r) => r.textContent?.includes('GET'));
     expect(postRow).toBeTruthy();
     expect(getRow).toBeTruthy();
     fireEvent.click(postRow!);
@@ -123,10 +131,9 @@ describe('AuditLogPage', () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('POST')).toBeTruthy();
+      expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
     });
-    const rows = screen.getAllByRole('button');
-    const postRow = rows.find((r) => r.textContent?.includes('POST'));
+    const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
     expect(postRow).toBeTruthy();
     fireEvent.click(postRow!);
     // Pretty-printed JSON has newlines and indentation
@@ -144,10 +151,9 @@ describe('AuditLogPage', () => {
     mockInvoke.mockResolvedValue(mockEntries);
     render(<AuditLogPage onClose={() => {}} />);
     await waitFor(() => {
-      expect(screen.getByText('GET')).toBeTruthy();
+      expect(screen.getByText('https://jira.example.com/rest/api/2/myself')).toBeTruthy();
     });
-    const rows = screen.getAllByRole('button');
-    const getRow = rows.find((r) => r.textContent?.includes('GET'));
+    const getRow = getRowButtons().find((r) => r.textContent?.includes('GET'));
     expect(getRow).toBeTruthy();
     fireEvent.click(getRow!);
     expect(screen.getByText('Response body not recorded')).toBeTruthy();
@@ -172,5 +178,259 @@ describe('AuditLogPage', () => {
     const closeButton = screen.getByLabelText('Close audit log');
     fireEvent.click(closeButton);
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  // Filter toolbar tests (260429-v9y)
+  describe('filter toolbar', () => {
+    function tbody(): HTMLElement {
+      return screen.getByRole('table').querySelector('tbody') as HTMLElement;
+    }
+
+    it('search filters by URL substring (case-insensitive)', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getByText('POST')).toBeTruthy();
+      });
+      const searchInput = screen.getByLabelText('Search URL or method') as HTMLInputElement;
+      fireEvent.change(searchInput, { target: { value: 'MYSELF' } });
+      // GET /myself remains, POST /search is filtered out
+      expect(within(tbody()).getByText('GET')).toBeTruthy();
+      expect(within(tbody()).queryByText('POST')).toBeNull();
+    });
+
+    it('method filter narrows entries to selected method', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getByText('POST')).toBeTruthy();
+      });
+      const methodSelect = screen.getByLabelText('Method') as HTMLSelectElement;
+      fireEvent.change(methodSelect, { target: { value: 'GET' } });
+      expect(within(tbody()).queryByText('POST')).toBeNull();
+      expect(within(tbody()).getByText('GET')).toBeTruthy();
+    });
+
+    it('status filter narrows entries by status class', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getByText('200')).toBeTruthy();
+      });
+      const statusSelect = screen.getByLabelText('Status') as HTMLSelectElement;
+      fireEvent.change(statusSelect, { target: { value: '4xx' } });
+      expect(within(tbody()).queryByText('200')).toBeNull();
+      expect(within(tbody()).getByText('401')).toBeTruthy();
+    });
+
+    it('result count reflects filtered entries', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('2 of 2')).toBeTruthy();
+      });
+      const searchInput = screen.getByLabelText('Search URL or method');
+      fireEvent.change(searchInput, { target: { value: 'myself' } });
+      expect(screen.getByText('1 of 2')).toBeTruthy();
+    });
+
+    it('shows filtered-empty state with clear-filters button when no rows match', async () => {
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(within(tbody()).getByText('POST')).toBeTruthy();
+      });
+      const searchInput = screen.getByLabelText('Search URL or method');
+      fireEvent.change(searchInput, { target: { value: 'no-match-anywhere-zzz' } });
+      expect(screen.getByText('No matching log entries')).toBeTruthy();
+      // The Clear filters button in the empty state restores the list
+      const clearButtons = screen.getAllByText('Clear filters');
+      fireEvent.click(clearButtons[0]);
+      // Table re-appears with both rows
+      expect(within(tbody()).getByText('POST')).toBeTruthy();
+      expect(within(tbody()).getByText('GET')).toBeTruthy();
+    });
+  });
+
+  // Copy-log button tests (260429-v9y)
+  describe('copy log entry', () => {
+    it('exposes a Copy button in the expanded row that writes formatted text to clipboard', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      });
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
+      });
+      const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
+      fireEvent.click(postRow!);
+      // The expanded-panel copy button has visible text "Copy" so its
+      // accessible name differs from the icon-only summary-row buttons (whose
+      // accessible name comes from aria-label = "Copy log entry").
+      const expandedCopy = screen.getByRole('button', { name: 'Copy' });
+      await act(async () => {
+        fireEvent.click(expandedCopy);
+      });
+      expect(writeText).toHaveBeenCalledTimes(1);
+      const text = writeText.mock.calls[0][0] as string;
+      expect(text).toContain('POST');
+      expect(text).toContain('https://jira.example.com/rest/api/2/search');
+      expect(text).toContain('Status: 200');
+      expect(text).toContain('Request Headers');
+      expect(text).toContain('Response Body');
+    });
+
+    it('summary-row copy icon does not toggle row expansion', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { writeText },
+        configurable: true,
+      });
+      mockInvoke.mockResolvedValue(mockEntries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
+      });
+      // Inline copy buttons live inside summary rows — first one is for the
+      // first (POST) row. Clicking should NOT expand the row.
+      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
+      await act(async () => {
+        fireEvent.click(copyButtons[0]);
+      });
+      expect(writeText).toHaveBeenCalled();
+      // Request Headers section only renders inside an expanded row; if the
+      // row was wrongly expanded, it would appear.
+      expect(screen.queryByText('Request Headers')).toBeNull();
+    });
+
+    it('buildCopyText formats the entry as readable plain text', () => {
+      const text = buildCopyText(mockEntries[0]);
+      expect(text).toContain('[2026-03-23T10:00:00Z]');
+      expect(text).toContain('POST https://jira.example.com/rest/api/2/search');
+      expect(text).toContain('Status: 200');
+      expect(text).toContain('  authorization: [REDACTED]');
+      expect(text).toContain('"total": 5');
+    });
+
+    it('buildCopyText reports "Error" for entries with null status', () => {
+      const entry: AuditEntry = {
+        id: 99,
+        timestamp: '2026-04-29T12:00:00Z',
+        method: 'POST',
+        url: 'https://jira.example.com/rest/api/2/search',
+        headers: '{}',
+        statusCode: null,
+        responseBody: null,
+      };
+      const text = buildCopyText(entry);
+      expect(text).toContain('Status: Error');
+      expect(text).toContain('(empty)');
+    });
+  });
+
+  // Defensive tests — debug session: copy-400-and-logs-crash
+  describe('defensive rendering (copy-400-and-logs-crash)', () => {
+    it('does not crash when a header value is a non-string (object)', async () => {
+      // Backend type says Record<string,string> but JSON.parse of a malformed
+      // entry could yield an object value. Direct {value} render would throw
+      // "Objects are not valid as a React child". The fix coerces with
+      // toDisplayString which JSON-stringifies the object.
+      const badEntry: AuditEntry = {
+        id: 99,
+        timestamp: '2026-04-29T12:00:00Z',
+        method: 'POST',
+        url: 'https://jira.example.com/rest/api/3/issue',
+        // Object value (not string) — this would have crashed previously.
+        headers: '{"authorization": "[REDACTED]", "x-meta": {"nested": true}}',
+        statusCode: 400,
+        responseBody: '{"errorMessages":[],"errors":{"project":"valid project is required"}}',
+      };
+      mockInvoke.mockResolvedValue([badEntry]);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('https://jira.example.com/rest/api/3/issue')).toBeTruthy();
+      });
+      const row = getRowButtons().find((r) => r.textContent?.includes('POST'));
+      expect(row).toBeTruthy();
+      fireEvent.click(row!);
+      // The expanded panel should render — and the nested object should appear
+      // as a serialized string, not crash the page.
+      expect(screen.getByText('Request Headers')).toBeTruthy();
+      expect(screen.getByText('"valid project is required"', { exact: false })).toBeTruthy();
+      // Nested object value rendered as JSON string
+      const allText = document.body.textContent ?? '';
+      expect(allText.includes('"nested":true') || allText.includes('"nested": true')).toBe(true);
+    });
+
+    it('does not crash when entry.id is null (defensive — uses index fallback for key)', async () => {
+      const entries: AuditEntry[] = [
+        {
+          id: null,
+          timestamp: '2026-04-29T12:00:00Z',
+          method: 'GET',
+          url: 'https://jira.example.com/rest/api/2/myself',
+          headers: '{"authorization": "[REDACTED]"}',
+          statusCode: null,
+          responseBody: null,
+        },
+        {
+          id: null,
+          timestamp: '2026-04-29T12:00:01Z',
+          method: 'GET',
+          url: 'https://jira.example.com/rest/api/2/myself',
+          headers: '{"authorization": "[REDACTED]"}',
+          statusCode: null,
+          responseBody: null,
+        },
+      ];
+      mockInvoke.mockResolvedValue(entries);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        // Two GET badges in tbody (toolbar select option also says "GET" but
+        // is excluded by tbody scoping)
+        const tbody = screen.getByRole('table').querySelector('tbody') as HTMLElement;
+        expect(within(tbody).getAllByText('GET').length).toBe(2);
+      });
+      // Should render both rows without React duplicate-key warning crash
+      expect(getRowButtons().filter((r) => r.textContent?.includes('GET')).length).toBe(2);
+    });
+
+    it('does not crash when invoke resolves with non-array (defensive)', async () => {
+      // Should not happen normally but harden against backend regression.
+      mockInvoke.mockResolvedValue(null as unknown as AuditEntry[]);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('No API calls recorded yet')).toBeTruthy();
+      });
+    });
+
+    it('renders 4xx response body so user can read Jira error without opening individual rows', async () => {
+      // The actual user-visible diagnostic for Issue A (copy 400). Verifies that
+      // when a row is expanded, the response body shows the Jira error JSON.
+      const entry: AuditEntry = {
+        id: 7,
+        timestamp: '2026-04-29T12:00:00Z',
+        method: 'POST',
+        url: 'https://jira.example.com/rest/api/3/issue',
+        headers: '{"authorization": "[REDACTED]"}',
+        statusCode: 400,
+        responseBody:
+          '{"errorMessages":[],"errors":{"customfield_10001":"Field does not exist or you do not have permission"}}',
+      };
+      mockInvoke.mockResolvedValue([entry]);
+      render(<AuditLogPage onClose={() => {}} />);
+      await waitFor(() => {
+        expect(screen.getByText('400')).toBeTruthy();
+      });
+      const row = getRowButtons().find((r) => r.textContent?.includes('POST'));
+      fireEvent.click(row!);
+      // The pretty-printed body should contain the user-actionable Jira message.
+      const allText = document.body.textContent ?? '';
+      expect(allText).toContain('customfield_10001');
+      expect(allText).toContain('Field does not exist');
+    });
   });
 });

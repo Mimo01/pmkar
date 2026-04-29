@@ -4,8 +4,8 @@ milestone: v0.4.0
 milestone_name: milestone
 status: completed
 stopped_at: context exhaustion at 75% (2026-04-29)
-last_updated: "2026-04-29T00:27:34.246Z"
-last_activity: "2026-04-29 — Completed quick task 260429-ev2: show all source Jira fields dynamically on issue detail and copy modals"
+last_updated: "2026-04-29T09:25:10.821Z"
+last_activity: "2026-04-29 — Completed quick task 260429-mjq: JQL presets Mine/All watched/Custom with all_watched default"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -314,10 +314,11 @@ None yet.
 | 260429-s4t | Ticket list sort by ID, Created, Priority, Status, Assignee | 2026-04-29 | 2b6c87b | | [260429-s4t-add-ticket-list-sort-by-ticket-id](./quick/260429-s4t-add-ticket-list-sort-by-ticket-id/) |
 | 260429-ev2 | Show all source Jira fields dynamically on issue detail and copy modals | 2026-04-29 | 54c64cf | | [260429-ev2-show-all-source-jira-fields-dynamically-](./quick/260429-ev2-show-all-source-jira-fields-dynamically-/) |
 | 260429-mjq | Modify JQL presets: Mine / All watched / Custom with all_watched as default | 2026-04-29 | TBD | | [260429-mjq-jql-preset-mine-all-watched](./quick/260429-mjq-jql-preset-mine-all-watched/) |
+| 260429-v9y | Redesign audit log table — filter toolbar (search/method/status) + copy-log buttons + visual polish | 2026-04-29 | TBD | | [260429-v9y-redesign-audit-log-table](./quick/260429-v9y-redesign-audit-log-table/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-mjq: JQL presets Mine/All watched/Custom with all_watched default
-Last session: 2026-04-29T00:27:34.243Z
+Last activity: 2026-04-29 — Completed quick task 260429-v9y: Redesign audit log table with filter toolbar and copy-log buttons
+Last session: 2026-04-29T09:25:10.818Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
