@@ -19,7 +19,7 @@
   "settings.whatToFetch": "Čo načítať",
   "settings.watchedUsers": "Sledovaní používatelia",
   "settings.watchedUsers.count": "({{count}})",
-  "settings.watchedUsers.hint": "Tikety priradené týmto používateľom sa objavia vo výsledkoch \"Všetci sledovaní používatelia\".",
+  "settings.watchedUsers.hint": "Tikety priradené týmto používateľom sa objavia vo výsledkoch \"Všetci sledovaní používatelia\". Vy ste automaticky zahrnutí — nemusíte sa pridávať.",
   "settings.watchedUsers.searchPlaceholder": "Hľadať používateľov Jira...",
   "settings.watchedUsers.noResults": "Nenašli sa žiadni používatelia zodpovedajúci \"{{query}}\"",
   "settings.watchedUsers.empty": "Zatiaľ žiadni sledovaní používatelia",
