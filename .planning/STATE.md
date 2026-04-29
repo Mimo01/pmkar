@@ -315,10 +315,11 @@ None yet.
 | 260429-ev2 | Show all source Jira fields dynamically on issue detail and copy modals | 2026-04-29 | 54c64cf | | [260429-ev2-show-all-source-jira-fields-dynamically-](./quick/260429-ev2-show-all-source-jira-fields-dynamically-/) |
 | 260429-mjq | Modify JQL presets: Mine / All watched / Custom with all_watched as default | 2026-04-29 | TBD | | [260429-mjq-jql-preset-mine-all-watched](./quick/260429-mjq-jql-preset-mine-all-watched/) |
 | 260429-v9y | Redesign audit log table — filter toolbar (search/method/status) + copy-log buttons + visual polish | 2026-04-29 | f363341 | | [260429-v9y-redesign-audit-log-table](./quick/260429-v9y-redesign-audit-log-table/) |
+| 260430-0l2 | Clarify Watched Users settings hint — note current user is auto-included in "All watched users" | 2026-04-29 | ba71eec | | [260430-0l2-add-info-to-the-settings-watched-users-t](./quick/260430-0l2-add-info-to-the-settings-watched-users-t/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-v9y: Redesign audit log table with filter toolbar and copy-log buttons
+Last activity: 2026-04-29 — Completed quick task 260430-0l2: Clarify Watched Users hint about auto-inclusion of current user
 Last session: 2026-04-29T09:25:10.818Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
