@@ -191,7 +191,7 @@ describe('SettingsPage — JQL Presets section', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });
@@ -204,28 +204,30 @@ describe('SettingsPage — JQL Presets section', () => {
     expect(screen.getByRole('radiogroup', { name: /jql presets/i })).toBeInTheDocument();
   });
 
-  it('shows all four preset options', () => {
+  it('shows all three preset options', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
-    expect(screen.getByRole('radio', { name: /assigned/i })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /mentioned/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /mine/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /all watched/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /custom/i })).toBeInTheDocument();
   });
 
-  it('"Assigned to me" is selected by default', () => {
+  it('"Mine" is selected when store has mine preset', () => {
+    useTicketStore.setState({ jqlPreset: 'mine' } as Parameters<
+      typeof useTicketStore.setState
+    >[0]);
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
-    const assignedRadio = screen.getByRole('radio', { name: /assigned/i });
-    expect(assignedRadio).toHaveAttribute('aria-checked', 'true');
+    const mineRadio = screen.getByRole('radio', { name: /mine/i });
+    expect(mineRadio).toHaveAttribute('aria-checked', 'true');
   });
 
   it('clicking a different preset updates the store', async () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
-    fireEvent.click(screen.getByRole('radio', { name: /mentioned/i }));
+    fireEvent.click(screen.getByRole('radio', { name: /all watched/i }));
     await waitFor(() => {
-      expect(useTicketStore.getState().jqlPreset).toBe('mentioned');
+      expect(useTicketStore.getState().jqlPreset).toBe('all_watched');
     });
   });
 
@@ -325,7 +327,7 @@ describe('SettingsPage — Watched Users section', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });
@@ -390,7 +392,7 @@ describe('SettingsPage — Domain Search sub-section', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });

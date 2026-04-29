@@ -41,7 +41,7 @@ function setupBothConnections() {
     if (cmd === 'get_triage_state') return Promise.resolve({});
     if (cmd === 'get_fetch_config') {
       return Promise.resolve({
-        jqlPreset: 'assigned',
+        jqlPreset: 'mine',
         jqlCustom: null,
         watchedUsers: [],
         lastFetchedAt: null,
@@ -64,7 +64,7 @@ describe('App', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });
@@ -106,7 +106,7 @@ describe('App', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config') {
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -180,7 +180,7 @@ describe('App', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config') {
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -271,7 +271,7 @@ describe('App', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,

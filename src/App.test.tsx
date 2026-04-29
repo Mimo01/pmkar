@@ -16,7 +16,7 @@ vi.mock('@tauri-apps/api/core', () => ({
     if (cmd === 'get_triage_state') return Promise.resolve({});
     if (cmd === 'get_fetch_config')
       return Promise.resolve({
-        jqlPreset: 'assigned',
+        jqlPreset: 'mine',
         jqlCustom: null,
         watchedUsers: [],
         lastFetchedAt: null,

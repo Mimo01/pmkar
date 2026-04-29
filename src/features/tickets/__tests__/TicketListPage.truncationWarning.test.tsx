@@ -80,7 +80,7 @@ describe('TicketListPage — pagination truncation warning', () => {
       totalCount: 0,
       newCount: 0,
       truncated: false,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
       unseenChanges: {},
@@ -91,7 +91,7 @@ describe('TicketListPage — pagination truncation warning', () => {
     mockInvoke.mockImplementation(async (cmd: string) => {
       if (cmd === 'get_triage_state') return {};
       if (cmd === 'get_fetch_config')
-        return { jqlPreset: 'assigned', jqlCustom: null, watchedUsers: [], lastFetchedAt: null };
+        return { jqlPreset: 'mine', jqlCustom: null, watchedUsers: [], lastFetchedAt: null };
       if (cmd === 'get_unseen_change_keys') return [];
       if (cmd === 'fetch_tickets') return fetchResult;
       if (cmd === 'fetch_ticket_detail') return { id: '1', key: 'PROJ-1', fields: {} };

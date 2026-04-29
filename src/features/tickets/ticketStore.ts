@@ -81,7 +81,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   pollFrequency: 'off',
   lastCheckedAt: null,
 
-  jqlPreset: 'assigned',
+  jqlPreset: 'all_watched',
   jqlCustom: null,
   watchedUsers: [],
 
@@ -133,7 +133,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   hydrateFetchConfig: (config) =>
     set({
-      jqlPreset: config.jqlPreset ?? 'assigned',
+      jqlPreset: config.jqlPreset ?? 'all_watched',
       jqlCustom: config.jqlCustom ?? null,
       watchedUsers: Array.isArray(config.watchedUsers) ? config.watchedUsers : [],
       lastFetchedAt: config.lastFetchedAt ?? null,

@@ -87,7 +87,7 @@ describe('TicketListPage', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });
@@ -96,7 +96,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -120,7 +120,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -152,7 +152,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -182,7 +182,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -213,7 +213,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -238,7 +238,7 @@ describe('TicketListPage', () => {
 
   it('auto-refetches when lastFetchedAt is set in fetch config', async () => {
     const fetchConfig = {
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
       lastFetchedAt: '2024-06-01T12:00:00.000Z', // triggers auto-refetch
@@ -271,7 +271,7 @@ describe('TicketListPage', () => {
         });
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,
@@ -308,7 +308,7 @@ describe('TicketListPage', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          jqlPreset: 'assigned',
+          jqlPreset: 'mine',
           jqlCustom: null,
           watchedUsers: [],
           lastFetchedAt: null,

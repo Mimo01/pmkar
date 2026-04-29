@@ -2,7 +2,7 @@
 export type TriageState = 'new' | 'seen' | 'ignored' | 'copied' | 'handled';
 
 // JQL preset options — matches fetch_config.jql_preset column
-export type JqlPreset = 'assigned' | 'mentioned' | 'all_watched' | 'custom';
+export type JqlPreset = 'mine' | 'all_watched' | 'custom';
 
 // Fetch status for loading states
 export type FetchStatus = 'idle' | 'loading' | 'error';

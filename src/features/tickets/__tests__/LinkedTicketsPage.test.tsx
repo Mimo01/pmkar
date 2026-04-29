@@ -28,7 +28,7 @@ describe('LinkedTicketsPage', () => {
       lastFetchedAt: null,
       totalCount: 0,
       newCount: 0,
-      jqlPreset: 'assigned',
+      jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
     });

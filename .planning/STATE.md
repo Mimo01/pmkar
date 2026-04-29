@@ -313,10 +313,11 @@ None yet.
 | 260429-un1 | user_name transformer — extract display name as plain text for user→string mappings | 2026-04-29 | 31de106 | | [260429-un1-user-name-transformer](./quick/260429-un1-user-name-transformer/) |
 | 260429-s4t | Ticket list sort by ID, Created, Priority, Status, Assignee | 2026-04-29 | 2b6c87b | | [260429-s4t-add-ticket-list-sort-by-ticket-id](./quick/260429-s4t-add-ticket-list-sort-by-ticket-id/) |
 | 260429-ev2 | Show all source Jira fields dynamically on issue detail and copy modals | 2026-04-29 | 54c64cf | | [260429-ev2-show-all-source-jira-fields-dynamically-](./quick/260429-ev2-show-all-source-jira-fields-dynamically-/) |
+| 260429-mjq | Modify JQL presets: Mine / All watched / Custom with all_watched as default | 2026-04-29 | TBD | | [260429-mjq-jql-preset-mine-all-watched](./quick/260429-mjq-jql-preset-mine-all-watched/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-s4t: ticket list sort by ID, Created, Priority, Status, Assignee
+Last activity: 2026-04-29 — Completed quick task 260429-mjq: JQL presets Mine/All watched/Custom with all_watched default
 Last session: 2026-04-29T00:27:34.243Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None

@@ -45,7 +45,7 @@ const defaultStoreState = {
   lastFetchedAt: null,
   totalCount: 0,
   newCount: 0,
-  jqlPreset: 'assigned' as const,
+  jqlPreset: 'mine' as const,
   jqlCustom: null,
   watchedUsers: [],
 };
@@ -589,7 +589,7 @@ describe('TicketListPage filter integration', () => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
       if (cmd === 'get_fetch_config')
         return Promise.resolve({
-          preset: 'assigned',
+          preset: 'mine',
           custom: null,
           watchedUsers: [],
           lastFetchedAt: null,

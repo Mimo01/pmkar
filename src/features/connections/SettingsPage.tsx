@@ -261,19 +261,14 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
 
   const PRESET_OPTIONS: { value: JqlPreset; label: string; jql: string }[] = [
     {
-      value: 'assigned',
-      label: t('settings.preset.assigned'),
-      jql: 'assignee = currentUser() ORDER BY updated DESC',
-    },
-    {
-      value: 'mentioned',
-      label: t('settings.preset.mentioned'),
-      jql: 'text ~ currentUser() ORDER BY updated DESC',
+      value: 'mine',
+      label: t('settings.preset.mine'),
+      jql: 'assignee = me OR mentioned me OR watching',
     },
     {
       value: 'all_watched',
       label: t('settings.preset.allWatched'),
-      jql: 'assignee in (currentUser(), ...watched) ORDER BY updated DESC',
+      jql: 'Me + watched users (assignee, mentions)',
     },
     { value: 'custom', label: t('settings.preset.custom'), jql: 'You write the JQL' },
   ];
@@ -368,7 +363,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
 
   function handleResetJql() {
     useTicketStore.getState().setJqlCustom(null);
-    useTicketStore.getState().setJqlPreset('assigned');
+    useTicketStore.getState().setJqlPreset('all_watched');
     persistFetchConfig();
   }
 
@@ -442,17 +437,21 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
       setDomainError(t('settings.watchedUsers.domainSearch.invalidFormat'));
       return;
     }
+    if (!serverConn) {
+      setDomainError(t('settings.watchedUsers.domainSearch.error'));
+      return;
+    }
     setDomainError('');
     setDomainSearchState('loading');
     setShowPrivacyWarning(false);
     try {
-      const users = await invoke<JiraUser[]>('search_jira_users_by_domain', { domain: clean });
+      const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
+        baseUrl: serverConn.baseUrl,
+        domain: clean,
+      });
       if (users.length === 0) {
         setDomainSearchState('empty');
-        if (cloudConn) setShowPrivacyWarning(true);
       } else {
-        const allMasked = users.every((u) => !u.emailAddress);
-        if (cloudConn && allMasked) setShowPrivacyWarning(true);
         setDomainResults(users);
         const newSelected = new Set<string>();
         users.forEach((u) => {

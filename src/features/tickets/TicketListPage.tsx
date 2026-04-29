@@ -22,13 +22,26 @@ function buildJql(
   currentUser: string,
 ): string {
   if (preset === 'custom' && custom) return custom;
-  if (preset === 'assigned') return `assignee = "${currentUser}" ORDER BY updated DESC`;
-  if (preset === 'mentioned') return `text ~ "${currentUser}" ORDER BY updated DESC`;
-  // 'all_watched': combine current user + watched users
-  const allUsers = [currentUser, ...watchedUsers.map((u) => u.identifier)]
-    .map((u) => `"${u}"`)
-    .join(', ');
-  return `assignee in (${allUsers}) ORDER BY updated DESC`;
+
+  const mineClauses = [
+    `assignee = "${currentUser}"`,
+    `comment ~ "${currentUser}"`,
+    `description ~ "${currentUser}"`,
+    `issueKey in watchedIssues()`,
+  ];
+
+  // 'all_watched': mine criteria + watched users (assignee, mentioned in comments/description)
+  if (preset === 'all_watched' && watchedUsers.length > 0) {
+    const watchedClauses = watchedUsers.flatMap((u) => [
+      `assignee = "${u.identifier}"`,
+      `comment ~ "${u.identifier}"`,
+      `description ~ "${u.identifier}"`,
+    ]);
+    return `(${mineClauses.join(' OR ')} OR ${watchedClauses.join(' OR ')}) ORDER BY updated DESC`;
+  }
+
+  // 'mine' and everything else (including legacy 'assigned'/'mentioned' DB values)
+  return `(${mineClauses.join(' OR ')}) ORDER BY updated DESC`;
 }
 
 function getErrorDetail(error: string, t: (key: string) => string): string {

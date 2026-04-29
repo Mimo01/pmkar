@@ -24,7 +24,7 @@ const initialState = {
   lastFetchedAt: null,
   totalCount: 0,
   newCount: 0,
-  jqlPreset: 'assigned' as const,
+  jqlPreset: 'mine' as const,
   jqlCustom: null,
   watchedUsers: [],
 };
@@ -56,8 +56,8 @@ describe('ticketStore', () => {
       expect(useTicketStore.getState().newCount).toBe(0);
     });
 
-    it('has default jqlPreset assigned', () => {
-      expect(useTicketStore.getState().jqlPreset).toBe('assigned');
+    it('has default jqlPreset mine', () => {
+      expect(useTicketStore.getState().jqlPreset).toBe('mine');
     });
   });
 
@@ -210,8 +210,8 @@ describe('ticketStore', () => {
 
   describe('fetch config actions', () => {
     it('setJqlPreset updates jqlPreset', () => {
-      useTicketStore.getState().setJqlPreset('mentioned');
-      expect(useTicketStore.getState().jqlPreset).toBe('mentioned');
+      useTicketStore.getState().setJqlPreset('all_watched');
+      expect(useTicketStore.getState().jqlPreset).toBe('all_watched');
     });
 
     it('setJqlCustom updates jqlCustom', () => {
@@ -264,7 +264,7 @@ describe('ticketStore', () => {
       useTicketStore.getState().hydrateFetchConfig(config);
 
       const state = useTicketStore.getState();
-      expect(state.jqlPreset).toBe('assigned');
+      expect(state.jqlPreset).toBe('all_watched');
       expect(state.jqlCustom).toBeNull();
       expect(state.watchedUsers).toEqual([]);
       expect(state.lastFetchedAt).toBeNull();
@@ -272,7 +272,7 @@ describe('ticketStore', () => {
 
     it('handles non-array watchedUsers gracefully', () => {
       const config = {
-        jqlPreset: 'assigned',
+        jqlPreset: 'mine',
         jqlCustom: null,
         watchedUsers: 'alice' as unknown as WatchedUser[],
         lastFetchedAt: null,

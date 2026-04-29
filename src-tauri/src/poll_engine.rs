@@ -272,6 +272,15 @@ async fn process_tickets(
     results
 }
 
+fn build_mine_clauses(username: &str) -> Vec<String> {
+    vec![
+        format!("assignee = \"{username}\""),
+        format!("comment ~ \"{username}\""),
+        format!("description ~ \"{username}\""),
+        "issueKey in watchedIssues()".to_string(),
+    ]
+}
+
 fn build_poll_jql(
     preset: &str,
     custom: Option<&str>,
@@ -283,19 +292,29 @@ fn build_poll_jql(
             || format!("assignee = \"{username}\" ORDER BY updated DESC"),
             str::to_string,
         ),
-        "mentioned" => format!("text ~ \"{username}\" ORDER BY updated DESC"),
         "all_watched" => {
-            let all: Vec<String> = std::iter::once(format!("\"{username}\""))
-                .chain(
-                    watched_users
-                        .iter()
-                        .map(|u| format!("\"{}\"", u.identifier)),
-                )
+            let mine = build_mine_clauses(username);
+            if watched_users.is_empty() {
+                return format!("({}) ORDER BY updated DESC", mine.join(" OR "));
+            }
+            let watched: Vec<String> = watched_users
+                .iter()
+                .flat_map(|u| {
+                    vec![
+                        format!("assignee = \"{}\"", u.identifier),
+                        format!("comment ~ \"{}\"", u.identifier),
+                        format!("description ~ \"{}\"", u.identifier),
+                    ]
+                })
                 .collect();
-            format!("assignee in ({}) ORDER BY updated DESC", all.join(", "))
+            let all: Vec<String> = mine.into_iter().chain(watched).collect();
+            format!("({}) ORDER BY updated DESC", all.join(" OR "))
         }
-        // "assigned" and unknown presets both use assignee filter
-        _ => format!("assignee = \"{username}\" ORDER BY updated DESC"),
+        // "mine", "assigned", "mentioned" and unknown presets: current user criteria
+        _ => {
+            let mine = build_mine_clauses(username);
+            format!("({}) ORDER BY updated DESC", mine.join(" OR "))
+        }
     }
 }
 

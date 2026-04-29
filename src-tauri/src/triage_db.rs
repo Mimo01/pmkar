@@ -95,7 +95,7 @@ const CREATE_CONNECTION_META_SQL: &str = "CREATE TABLE IF NOT EXISTS connection_
 
 const CREATE_FETCH_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS fetch_config (
     id              INTEGER PRIMARY KEY CHECK(id = 1),
-    jql_preset      TEXT NOT NULL DEFAULT 'assigned',
+    jql_preset      TEXT NOT NULL DEFAULT 'all_watched',
     jql_custom      TEXT,
     watched_users   TEXT NOT NULL DEFAULT '[]',
     last_fetched_at TEXT
