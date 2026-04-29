@@ -54,6 +54,7 @@ export function TicketListPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [sortField, setSortField] = useState<'updated' | 'key'>('updated');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
@@ -226,10 +227,21 @@ export function TicketListPage() {
       );
     }
     return [...filtered].sort((a, b) => {
-      const diff = new Date(b.fields.updated).getTime() - new Date(a.fields.updated).getTime();
-      return sortDirection === 'desc' ? diff : -diff;
+      let diff: number;
+      if (sortField === 'key') {
+        const parse = (k: string) => {
+          const m = k.match(/^(.*)-(\d+)$/);
+          return m ? { proj: m[1], num: parseInt(m[2], 10) } : { proj: k, num: 0 };
+        };
+        const ka = parse(a.key);
+        const kb = parse(b.key);
+        diff = ka.proj !== kb.proj ? ka.proj.localeCompare(kb.proj) : ka.num - kb.num;
+      } else {
+        diff = new Date(a.fields.updated).getTime() - new Date(b.fields.updated).getTime();
+      }
+      return sortDirection === 'asc' ? diff : -diff;
     });
-  }, [candidateTickets, searchText, assigneeFilter, sortDirection]);
+  }, [candidateTickets, searchText, assigneeFilter, sortField, sortDirection]);
 
   const hasFetched = lastFetchedAt !== null;
   const hasTickets = sortedCandidates.length > 0;
@@ -277,6 +289,8 @@ export function TicketListPage() {
         onSearchChange={setSearchText}
         assigneeFilter={assigneeFilter}
         onAssigneeChange={setAssigneeFilter}
+        sortField={sortField}
+        onSortFieldChange={setSortField}
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sortedCandidates.length}

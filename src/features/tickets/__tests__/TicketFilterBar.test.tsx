@@ -55,6 +55,13 @@ const defaultStoreState = {
 // ---------------------------------------------------------------------------
 
 describe('TicketFilterBar', () => {
+  const defaultSortProps = {
+    sortField: 'updated' as const,
+    onSortFieldChange: vi.fn(),
+    sortDirection: 'desc' as const,
+    onToggleSort: vi.fn(),
+  };
+
   it('renders key search input with placeholder text', () => {
     render(
       <TicketFilterBar
@@ -62,8 +69,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={5}
       />,
     );
@@ -77,8 +83,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={5}
       />,
     );
@@ -93,8 +98,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={onSearchChange}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={5}
       />,
     );
@@ -110,8 +114,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={5}
       />,
     );
@@ -125,8 +128,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={2}
       />,
     );
@@ -141,8 +143,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={onSearchChange}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={2}
       />,
     );
@@ -150,7 +151,7 @@ describe('TicketFilterBar', () => {
     expect(onSearchChange).toHaveBeenCalledWith('');
   });
 
-  it('calls onToggleSort when sort button is clicked', () => {
+  it('calls onToggleSort when sort direction button is clicked', () => {
     const onToggleSort = vi.fn();
     render(
       <TicketFilterBar
@@ -158,13 +159,34 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={onToggleSort}
         resultCount={5}
       />,
     );
-    fireEvent.click(screen.getByText('Updated'));
+    fireEvent.click(screen.getByLabelText('Sort ascending'));
     expect(onToggleSort).toHaveBeenCalled();
+  });
+
+  it('calls onSortFieldChange when sort field select changes', () => {
+    const onSortFieldChange = vi.fn();
+    render(
+      <TicketFilterBar
+        searchText=""
+        onSearchChange={vi.fn()}
+        assigneeFilter=""
+        onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={onSortFieldChange}
+        sortDirection="desc"
+        onToggleSort={vi.fn()}
+        resultCount={5}
+      />,
+    );
+    fireEvent.change(screen.getByDisplayValue('Updated'), { target: { value: 'key' } });
+    expect(onSortFieldChange).toHaveBeenCalledWith('key');
   });
 
   it('displays resultCount in the shown text', () => {
@@ -174,8 +196,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={7}
       />,
     );
@@ -189,8 +210,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter="Alice"
         onAssigneeChange={vi.fn()}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={2}
       />,
     );
@@ -206,8 +226,7 @@ describe('TicketFilterBar', () => {
         onSearchChange={vi.fn()}
         assigneeFilter="Alice"
         onAssigneeChange={onAssigneeChange}
-        sortDirection="desc"
-        onToggleSort={vi.fn()}
+        {...defaultSortProps}
         resultCount={2}
       />,
     );
@@ -253,6 +272,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -286,6 +307,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -313,6 +336,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -340,6 +365,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={onAssigneeChange}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -369,6 +396,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -400,6 +429,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -430,6 +461,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={onAssigneeChange}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -461,6 +494,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -493,6 +528,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -519,6 +556,8 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
         onSearchChange={vi.fn()}
         assigneeFilter=""
         onAssigneeChange={vi.fn()}
+        sortField="updated"
+        onSortFieldChange={vi.fn()}
         sortDirection="desc"
         onToggleSort={vi.fn()}
         resultCount={5}
@@ -612,8 +651,8 @@ describe('TicketListPage filter integration', () => {
     const summariesBefore = screen.getAllByText(/Summary for (PROJ|OTHER)/);
     expect(summariesBefore[0].textContent).toBe('Summary for PROJ-1');
 
-    // Click sort toggle to switch to asc
-    fireEvent.click(screen.getByText('Updated'));
+    // Click sort direction button to switch to asc
+    fireEvent.click(screen.getByLabelText('Sort ascending'));
     const summariesAfter = screen.getAllByText(/Summary for (PROJ|OTHER)/);
     // Asc: oldest first — OTHER-1 (April) should be first
     expect(summariesAfter[0].textContent).toBe('Summary for OTHER-1');

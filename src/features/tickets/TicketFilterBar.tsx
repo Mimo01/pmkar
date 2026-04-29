@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '../connections/connectionStore';
@@ -11,6 +11,8 @@ interface TicketFilterBarProps {
   onSearchChange: (v: string) => void;
   assigneeFilter: string;
   onAssigneeChange: (v: string) => void;
+  sortField: 'updated' | 'key';
+  onSortFieldChange: (f: 'updated' | 'key') => void;
   sortDirection: 'asc' | 'desc';
   onToggleSort: () => void;
   resultCount: number;
@@ -21,6 +23,8 @@ export function TicketFilterBar({
   onSearchChange,
   assigneeFilter,
   onAssigneeChange,
+  sortField,
+  onSortFieldChange,
   sortDirection,
   onToggleSort,
   resultCount,
@@ -216,21 +220,30 @@ export function TicketFilterBar({
         )}
       </div>
 
-      {/* Sort toggle */}
-      <button
-        type="button"
-        onClick={onToggleSort}
-        className="flex items-center gap-1.5 text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 shrink-0"
-      >
-        {sortDirection === 'desc' ? (
-          <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
-        ) : sortDirection === 'asc' ? (
-          <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
-        ) : (
-          <ArrowUpDown className="w-3.5 h-3.5" aria-hidden="true" />
-        )}
-        {t('tickets.filter.sortUpdated')}
-      </button>
+      {/* Sort controls */}
+      <div className="flex items-center gap-0.5 shrink-0">
+        <select
+          value={sortField}
+          onChange={(e) => onSortFieldChange(e.target.value as 'updated' | 'key')}
+          aria-label={t('tickets.filter.sortBy')}
+          className="bg-transparent text-sm text-brand-muted hover:text-brand-text border-none outline-none cursor-pointer appearance-none transition-colors duration-150"
+        >
+          <option value="updated">{t('tickets.filter.sortUpdated')}</option>
+          <option value="key">{t('tickets.filter.sortKey')}</option>
+        </select>
+        <button
+          type="button"
+          onClick={onToggleSort}
+          aria-label={sortDirection === 'desc' ? t('tickets.filter.sortAsc') : t('tickets.filter.sortDesc')}
+          className="text-brand-muted hover:text-brand-text transition-colors duration-150"
+        >
+          {sortDirection === 'desc' ? (
+            <ArrowDown className="w-3.5 h-3.5" aria-hidden="true" />
+          ) : (
+            <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
+          )}
+        </button>
+      </div>
 
       {/* Result count */}
       <span className="text-xs text-brand-muted shrink-0 ml-auto">
