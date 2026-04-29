@@ -386,5 +386,8 @@
   "settings.transformer.priority.label": "Priority",
   "settings.transformer.priority.description": "Map priority levels (e.g. High → High)",
   "settings.transformer.userName.label": "User Name",
-  "settings.transformer.userName.description": "Copy the person's display name as plain text"
+  "settings.transformer.userName.description": "Copy the person's display name as plain text",
+  "fieldDisplay.raw": "raw",
+  "fieldDisplay.empty": "—",
+  "fieldDisplay.unknownFieldType": "Unknown field type"
 }
