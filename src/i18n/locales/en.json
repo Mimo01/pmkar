@@ -19,7 +19,7 @@
   "settings.whatToFetch": "What to fetch",
   "settings.watchedUsers": "Watched users",
   "settings.watchedUsers.count": "({{count}})",
-  "settings.watchedUsers.hint": "Tickets assigned to these users appear in \"All watched users\" results.",
+  "settings.watchedUsers.hint": "Tickets assigned to these users appear in \"All watched users\" results. You are automatically included — there's no need to add yourself.",
   "settings.watchedUsers.searchPlaceholder": "Search Jira users...",
   "settings.watchedUsers.noResults": "No users found matching \"{{query}}\"",
   "settings.watchedUsers.empty": "No watched users yet",
