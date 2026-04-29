@@ -1,4 +1,281 @@
 
+## [0.4.0]
+
+### Bug Fixes
+
+- partial UNIQUE INDEX to allow multiple dismissed rows
+- expand prefill to user and wiki_to_adf transformer kinds
+- prefill override dropdowns from field mapping rows
+- persist accepted/dismissed suggestions to DB via invoke
+- seed typed schema JSON + NULL migration for field mapping defaults
+- remove max-w-[760px] cap from SettingsPage content column
+- remove max-w-3xl centering from TicketDetailPage
+- deduplicate target_field_id rows before creating unique index
+- unify Map field button to ghost Button in UnsupportedFieldHint
+- gap rows match DynamicTargetForm field layout exactly
+- label above amber content, matching normal field layout
+- standard label styling on gap rows, amber on content only
+- remove group header from gap fields section
+- constrain target project combobox to min-h-9 to match issue type chooser
+- per-field amber cards, remove group container
+- unify missing-field display variants for consistent UI
+- add Slovak translations for transformer options
+- translate transformer options and flip dropdown upward near screen bottom
+- align UnsupportedFieldHint amber tokens to app-wide pattern
+- unified UnsupportedFieldHint component — same amber box and Map link everywhere
+- fix field mapping dropdown overflow and sizing
+- unify unsupported field hint visual in both GapsSection and DynamicTargetForm
+- extend unsupported field hint to DynamicTargetForm
+- improve unsupported field type warnings in copy gaps section
+- widen settings view from 560px to 760px
+- add field mapping button now works in settings
+- WR-04 propagate migrate_triage_check_constraint errors via AppResult
+- WR-03 remove dead _audit bindings and db params from 4 field-discovery commands
+- WR-02 capture error details in all Err(_) network arms in copy_pipeline
+- CR-02 push failure CopyStepResult on all worklog error paths
+- WR-01 add early guard for null targetIssueTypeId in confirmCopy
+- CR-01 merge targetSummary into overrideValues in confirmCopy
+- resolve typography BLOCK — collapse to 4 sizes, 2 weights
+- collapse typography weights from 3 to 2 in UI-SPEC
+- WR-02 restrict resolver struct fields to pub(crate) visibility
+- WR-01 document no-domain per-call behavior in user.rs docstring
+- CR-01 fix isolated mention node silently dropped in splice_mentions
+- paginate /rest/api/2/search to fetch all matching tickets
+- use issueKey (not ticketKey) when invoking fetch_ticket_detail in manual fetch
+- hoist PAGE_SIZE const above statements in search_jira_users_by_domain
+
+### Documentation
+
+- pre-dispatch plan for app container layout consistency
+- pre-dispatch plan for fix duplicate target field mapping
+- add code review fix report
+- complete phase execution — verification passed, PROJECT.md evolved .planning/phases/23-copy-ticket-v2-wiring/23-VERIFICATION.md .planning/ROADMAP.md .planning/STATE.md .planning/PROJECT.md
+- verification passed — all tests confirmed .planning/phases/23-copy-ticket-v2-wiring/23-VERIFICATION.md
+- add code review report .planning/phases/23-copy-ticket-v2-wiring/23-REVIEW.md
+- complete Phase 23 Plan 04 — integration test + phase complete
+- complete copy_ticket_v2 cutover plan — SUMMARY, STATE, ROADMAP, REQUIREMENTS
+- complete audit infrastructure plan — SUMMARY, STATE, ROADMAP, REQUIREMENTS
+- complete copy_pipeline extraction plan — SUMMARY, STATE, ROADMAP
+- create phase plan — 4 plans, 3 waves
+- UI design contract — backend-only phase, IPC call-site swap only
+- capture phase context — copy_ticket_v2 cutover decisions
+- complete integration plan summary — CopyPreviewPage Phase 22 wiring
+- complete computeGapFields + GapsSection plan summary
+- complete IssueTypeChooser plan — VirtualizedCombobox chooser with D-06 defaulted notice and 8 unit tests
+- complete copyStore override state plan summary
+- create phase plan .planning/phases/22-copy-preview-override-panel/22-01-PLAN.md .planning/phases/22-copy-preview-override-panel/22-02-PLAN.md .planning/phases/22-copy-preview-override-panel/22-03-PLAN.md .planning/phases/22-copy-preview-override-panel/22-04-PLAN.md .planning/STATE.md .planning/ROADMAP.md
+- create phase plan — copy preview override panel + issue-type chooser + required-field gating
+- record phase 22 UI-SPEC session
+- fix spacing scale — remove non-multiples-of-4 from exceptions
+- fix UI-SPEC checker issues — spacing declarations and copywriting
+- UI design contract for copy preview override panel
+- record phase 22 context session
+- capture phase context
+- evolve PROJECT.md after phase completion
+- complete phase execution
+- add code review report
+- complete wave 2 integration plan summary
+- complete leaf components plan summary (recovered after stream timeout)
+- update summary with self-check results (PASSED)
+- complete wave 0 scaffolding plan summary
+- record phase 21 planning complete — 3 plans ready
+- create phase plan for Mapping Editor Settings UI .planning/phases/21-mapping-editor-settings-ui/21-01-PLAN.md .planning/phases/21-mapping-editor-settings-ui/21-02-PLAN.md .planning/phases/21-mapping-editor-settings-ui/21-03-PLAN.md .planning/ROADMAP.md
+- map existing patterns for mapping editor
+- add validation strategy for mapping editor phase
+- research mapping editor phase domain
+- record phase 21 UI-SPEC approval
+- fix Dimension 5 spacing — remove non-multiple-of-4 tokens
+- add UI design contract for Mapping Editor settings section
+- record phase 21 context session .planning/STATE.md
+- capture phase context .planning/phases/21-mapping-editor-settings-ui/21-CONTEXT.md .planning/phases/21-mapping-editor-settings-ui/21-DISCUSSION-LOG.md
+- complete phase execution
+- add code review report
+- complete registry + DynamicTargetForm plan
+- complete picker renderers plan — 8 renderers, 18 tests, CTRL-02/03/04 covered
+- complete simple renderers plan — 9 renderers, 28 tests passing
+- complete VirtualizedCombobox plan — 2 tasks, 10 tests passing
+- add self-check result to SUMMARY.md
+- complete Wave 0 scaffold plan — types.ts + 13 test stubs
+- create phase plan
+- create phase plan — renderer registry + field-type-aware controls
+- research phase domain
+- UI design contract .planning/phases/20-renderer-registry-field-type-aware-controls/20-UI-SPEC.md
+- UI design contract for renderer registry phase
+- record phase 20 context session .planning/STATE.md
+- capture phase context .planning/phases/20-renderer-registry-field-type-aware-controls/20-CONTEXT.md .planning/phases/20-renderer-registry-field-type-aware-controls/20-DISCUSSION-LOG.md
+- evolve PROJECT.md after phase completion .planning/PROJECT.md .planning/ROADMAP.md .planning/STATE.md
+- complete phase execution .planning/ROADMAP.md .planning/STATE.md .planning/REQUIREMENTS.md .planning/phases/19-mapping-persistence-crud-commands/19-VERIFICATION.md
+- add code review report .planning/phases/19-mapping-persistence-crud-commands/19-REVIEW.md
+- complete CRUD commands plan — FieldMappingDb methods + Tauri commands registered
+- update tracking after wave 1 .planning/ROADMAP.md .planning/STATE.md
+- complete field_mapping + mapping_meta DDL and seed plan
+- create phase 19 plan — mapping persistence + CRUD commands
+- research phase domain — mapping persistence + CRUD commands
+- record phase 19 context session .planning/STATE.md
+- capture phase context .planning/phases/19-mapping-persistence-crud-commands/19-CONTEXT.md .planning/phases/19-mapping-persistence-crud-commands/19-DISCUSSION-LOG.md
+- evolve PROJECT.md after phase completion .planning/PROJECT.md
+- complete phase execution — all 5 plans verified, 157 tests passing .planning/ROADMAP.md .planning/STATE.md .planning/phases/18-v2-v3-translation-layer/18-VERIFICATION.md
+- add code review fix report .planning/phases/18-v2-v3-translation-layer/18-REVIEW-FIX.md
+- add code review report .planning/phases/18-v2-v3-translation-layer/18-REVIEW.md
+- update tracking after wave 3 — plan 18-05 complete .planning/ROADMAP.md .planning/STATE.md
+- complete plan 05 summary — apply_mapping pipeline
+- update tracking after wave 2 — plans 18-02, 18-03, 18-04 complete .planning/ROADMAP.md .planning/STATE.md
+- complete wiki_to_adf + identity transformers plan — 23 tests pass, clippy clean
+- complete UserResolver batch resolution plan — 20 tests pass, clippy clean
+- complete VersionResolver + ComponentResolver plan — 12/12 tests pass
+- update tracking after wave 1 — plan 18-01 complete .planning/ROADMAP.md .planning/STATE.md
+- complete field_transform scaffolding plan — 10 tests pass, clippy clean
+- record phase 18 planning complete — 5 plans, 3 waves
+- plan v2→v3 translation layer — 5 plans across 3 waves
+- research phase — v2→v3 translation layer
+- record phase 18 context session
+- capture phase context — v2→v3 translation layer
+- mark Phase 17 complete — all 5 plans shipped
+- add phase verification report — 8/8 must-haves pass, 3 UAT items pending
+- complete field discovery Rust module and commands plan
+- complete probe-banner-status-pill-wiring plan
+- add Wave 1 plan summaries for 17-01 and 17-02
+- complete TypeScript FieldSchema types and schemaCacheStore plan
+- apply plan-checker revisions and finalize phase plan .planning/ROADMAP.md .planning/STATE.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-01-mock-fixtures-and-routes-PLAN.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-04-field-discovery-rust-module-and-commands-PLAN.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-05-probe-banner-status-pill-wiring-PLAN.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-RESEARCH.md
+- create phase plan — 5 plans across 2 waves
+- add validation strategy and research .planning/phases/17-field-discovery-mock-schema-fidelity/17-RESEARCH.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-VALIDATION.md
+- research phase field discovery, mock schema fidelity, mapping.db design
+- record phase 17 context session .planning/STATE.md
+- capture phase context .planning/phases/17-field-discovery-mock-schema-fidelity/17-CONTEXT.md .planning/phases/17-field-discovery-mock-schema-fidelity/17-DISCUSSION-LOG.md
+- create milestone v0.4.0 roadmap (7 phases, 17-23) .planning/ROADMAP.md .planning/STATE.md .planning/REQUIREMENTS.md
+- define milestone v0.4.0 requirements (41 reqs, 8 categories) .planning/REQUIREMENTS.md
+- v0.4.0 field mapping research (stack, features, architecture, pitfalls, summary) .planning/research/
+- archive v0.1.0-era research before v0.4.0 refresh .planning/milestones/v0.3.0-research/ .planning/research/
+- start milestone v0.4.0 Configurable Field Mapping .planning/PROJECT.md .planning/STATE.md
+- pre-dispatch plan for ignore-option quick task
+
+### Features
+
+- register PriorityRenderer in field-renderer registry
+- create PriorityRenderer for priority schema type
+- add duplicate target_field_id guard to apply_mapping pipeline
+- filter used target fields from MappingRow combobox
+- add UNIQUE(target_field_id) index to field_mapping DB
+- replace native selects with VirtualizedCombobox in copy preview
+- improve field mapping settings UX
+- swap frontend confirmCopy to invoke copy_ticket_v2 (CUTV-01 D-03)
+- add copy_ticket_v2 command + remove old copy_ticket (CUTV-01/03/04)
+- add mapping_audit_log table + insert API + sanitizer + hasher to FieldMappingDb
+- add audit_verbose flag to TriageDb + get_target_project_key getter
+- create copy_pipeline.rs with CopyContext and 5 extracted helpers
+- wire Phase 22 components into CopyPreviewPage + Modal; extend DynamicTargetForm with initialQueries
+- add 8 copy.preview.* i18n keys (en+sk), extend SettingsPage with initialSection prop, thread onOpenSettingsSection through App.tsx
+- expand mock fixtures — 4 new tickets + issuetype on all issues
+- implement GapsSection component with amber section, renderer dispatch, and Map link
+- implement computeGapFields pure function and unit tests
+- create IssueTypeChooser component with VirtualizedCombobox + defaulted notice + loading spinner
+- extend copyStore with override + issue-type state (D-11)
+- wire FieldMappingSection into SettingsPage + add 29 i18n keys
+- implement FieldMappingSection orchestrator + tests
+- implement SuggestionsPanel with Accept/Dismiss auto-save and tests
+- implement DriftWarning + MappingRow with auto-save, delete, and tests
+- add FieldMappingRow type, transformerOptions, heuristics modules with tests
+- install sonner, scaffold Toaster, mount in App.tsx, extend SectionCard with headerAction
+- create registry.ts + DynamicTargetForm.tsx + fieldRenderer.* i18n keys
+- implement 5 static picker renderers (SingleSelect/MultiSelect/Labels/Component/Version)
+- implement UserPickerRenderer + MultiUserPickerRenderer + GroupPickerRenderer
+- create CheckboxRenderer, RadioRenderer, UnsupportedTypeRenderer + 3 test files (CTRL-06, CTRL-07)
+- create 6 native-input renderers + 3 test files (CTRL-01, CTRL-05)
+- implement VirtualizedCombobox<T> with cmdk + useVirtualizer
+- install cmdk@1.1.1 + @tanstack/react-virtual@3.13.24; add types.ts contract
+- add get_field_mapping, set_field_mapping, delete_field_mapping Tauri commands
+- add upsert_mapping_row, get_all_mapping_rows, delete_mapping_row to FieldMappingDb
+- add field_mapping + mapping_meta DDL and seed_defaults_if_empty
+- implement apply_mapping two-phase pipeline with 12 tests
+- implement identity transform_identity with per-type write-shape correction
+- implement wiki_to_adf convert_and_postprocess + ADF post-processor
+- implement UserResolver::resolve_batch with one-HTTP-per-domain batching
+- implement helper layer — scan_mention_patterns, scan_html_profile_links, is_user_field, extract_usernames_from_field, collect_description_mentions
+- implement ComponentResolver — twin of VersionResolver for /components endpoint
+- implement VersionResolver with cached fetch + case-insensitive name lookup
+- add 6 transformer stub files and register field_transform in lib.rs
+- add field_transform/mod.rs with shared types and re-exports
+- wire 5 Tauri commands and register in main.rs invoke_handler
+- implement HTTP discovery functions and probe in field_discovery.rs
+- wire runProbe into App.tsx launch flow and render ProbeStatusBanner in main shell
+- create ProbeStatusBanner component and add probe status pill to ConnectionCard
+- extend connectionStore with probe state and actions (GREEN phase)
+- add field routes to mock server — v2/v3 /field, paginated createmeta, versions, components
+- create FieldMappingDb with field_schema_cache table and open mapping.db in main
+- create schemaCacheStore Zustand store with cache map and field schema actions
+- create TypeScript FieldSchemaType discriminated union and narrowing helpers
+- define FieldSchemaType enum and FieldSchema types in field_discovery.rs
+- extend FixtureState with field discovery fixtures (D-09/D-10/D-11/D-12)
+- add 'Mark as Handled' button to detail views and update tab filters
+- extend triage state to 'handled' across DB, command, and types
+
+### Miscellaneous
+
+- remove REQUIREMENTS.md for v0.4.0 milestone
+- archive v0.4.0 milestone files
+- merge quick task worktree (worktree-agent-a7ac089a0cc60509c)
+- merge quick task worktree (worktree-agent-a103f78b52d0df18e)
+- merge quick task worktree (worktree-agent-a3d26a17b78b7ae5f)
+- merge quick task worktree (worktree-agent-af1678d7be3ccc76b)
+- update package-lock.json devOptional → dev for @types/react, @types/react-dom, csstype
+- mark phase 22 complete in STATE.md
+- merge executor worktree (worktree-agent-a60d68556477967f3)
+- merge executor worktree (worktree-agent-a9ea52f8d35dbe513)
+- merge executor worktree (worktree-agent-a003a1ff85ee9cb9b)
+- merge executor worktree (worktree-agent-a6c5c1609b55aa3e6)
+- merge executor worktree (worktree-agent-a8ae66abb1a5450ac)
+- merge executor worktree (worktree-agent-a8bc4722e39e19e4d)
+- merge executor worktree (worktree-agent-a17c091f64893097d)
+- update lockfiles (package-lock devOptional and Cargo tempfile dep)
+- merge executor worktree (worktree-agent-ae74807a730b86ad9)
+- merge executor worktree (worktree-agent-a9b9009dc7da90a75)
+- merge executor worktree (worktree-agent-a0249d6beeb192b30)
+- merge executor worktree (worktree-agent-a6ec4e3aff2a16591)
+- merge executor worktree (worktree-agent-a95dc6a5208497110)
+- merge executor worktree (worktree-agent-a84a223c51c959f5a)
+- merge executor worktree (worktree-agent-aadf73de97347d762) — plan 18-05
+- merge executor worktree (worktree-agent-ac9075c93b47e9309) — plan 18-04
+- merge executor worktree (worktree-agent-a2f517f4f26622a41) — plan 18-03
+- merge executor worktree (worktree-agent-a302c513a8aafaefa) — plan 18-02
+- merge executor worktree (worktree-agent-a3bb2c95cd74fb95a) — plan 18-01
+- merge executor worktree (worktree-agent-a3d7e3817cc9b34ac)
+- merge executor worktree (worktree-agent-a0fb749064776c354)
+- set nyquist_compliant: true in 17-VALIDATION.md
+- merge executor worktree (worktree-agent-ae835c8f19f892a36)
+- merge executor worktree (worktree-agent-a4b01345c507e88c7)
+- merge executor worktree (worktree-agent-a08b6dfd0f3149505)
+- merge quick task worktree (worktree-agent-a3487b144ea7c43a7)
+- expand workflow config with new toggles and intel/graph sections
+- sync lockfiles to v0.3.2
+- archive resolved debug sessions
+
+### Refactoring
+
+- refactor copy_ticket to call extracted free helpers (D-08 proof)
+
+### Testing
+
+- resolve F-02 (partial) — add Phase 22 store fields to buildStoreState
+- resolve F-03 — update CTRL-07 priority assertion to PriorityRenderer
+- resolve F-01 — add targetIssueTypeId to confirmCopy success test
+- complete UAT - 0 passed, 0 issues (2 skipped/approved)
+- complete UAT - 0 passed, 0 issues (1 skipped/approved)
+- add copy_ticket_v2 full-pipeline integration test (CUTV-02 + CUTV-04)
+- add IssueTypeChooser unit tests covering selection, defaulted notice, loading state, empty state
+- add Phase 22 override state tests for copyStore
+- add it.todo stub test files for MappingRow, SuggestionsPanel, FieldMappingSection
+- persist human verification items as UAT
+- replace registry + DynamicTargetForm it.todo stubs with real assertions
+- replace VirtualizedCombobox it.todo stubs with real assertions
+- add 13 it.todo stub files tagged by CTRL-01..08 requirement IDs
+- add failing tests for upsert/get/delete mapping row methods
+- add failing tests for field_mapping + mapping_meta DDL and seed
+- persist human verification items as UAT .planning/phases/18-v2-v3-translation-layer/18-HUMAN-UAT.md
+- add failing integration tests for discovery + probe (RED)
+- add failing ProbeStatusBanner tests (RED phase)
+- add failing probe store tests (RED phase)
+- add failing vitest tests for fieldSchema types and schemaCacheStore
+- add failing integration tests for mock field routes and pagination
 ## [0.3.2]
 
 ### Bug Fixes
