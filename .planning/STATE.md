@@ -311,12 +311,12 @@ None yet.
 | 260429-nhs | Fix field mappings not applied on story copy — typed schema seeds + suggestion persist | 2026-04-29 | 517a4c7 | | [260429-nhs-fix-field-mappings-not-applied-on-copy](./quick/260429-nhs-fix-field-mappings-not-applied-on-copy/) |
 | 260429-47r | PriorityRenderer — VirtualizedCombobox dropdown for priority fields in copy modal | 2026-04-29 | 9a513d4 | | [260429-47r-priority-renderer](./quick/260429-47r-priority-renderer/) |
 | 260429-un1 | user_name transformer — extract display name as plain text for user→string mappings | 2026-04-29 | 31de106 | | [260429-un1-user-name-transformer](./quick/260429-un1-user-name-transformer/) |
-| 260429-s4t | Add ticket list sort by ticket ID | 2026-04-29 | d6dadcd | | [260429-s4t-add-ticket-list-sort-by-ticket-id](./quick/260429-s4t-add-ticket-list-sort-by-ticket-id/) |
+| 260429-s4t | Ticket list sort by ID, Created, Priority, Status, Assignee | 2026-04-29 | 2b6c87b | | [260429-s4t-add-ticket-list-sort-by-ticket-id](./quick/260429-s4t-add-ticket-list-sort-by-ticket-id/) |
 | 260429-ev2 | Show all source Jira fields dynamically on issue detail and copy modals | 2026-04-29 | 54c64cf | | [260429-ev2-show-all-source-jira-fields-dynamically-](./quick/260429-ev2-show-all-source-jira-fields-dynamically-/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-ev2: show all source Jira fields dynamically on issue detail and copy modals
+Last activity: 2026-04-29 — Completed quick task 260429-s4t: ticket list sort by ID, Created, Priority, Status, Assignee
 Last session: 2026-04-29T00:27:34.243Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
