@@ -300,7 +300,7 @@ describe('AuditLogPage', () => {
 
   // Copy-log button tests (260429-v9y)
   describe('copy log entry', () => {
-    it('summary-row copy icon writes formatted text to clipboard', async () => {
+    it('expanded-panel Copy button writes formatted text to clipboard', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, 'clipboard', {
         value: { writeText },
@@ -311,10 +311,13 @@ describe('AuditLogPage', () => {
       await waitFor(() => {
         expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
       });
-      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
-      // First copy button corresponds to the first row (POST /search)
+      const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
+      fireEvent.click(postRow!);
+      // The expanded-panel button's accessible name is "Copy" (visible text);
+      // it's the only Copy button on the page.
+      const copyButton = screen.getByRole('button', { name: 'Copy' });
       await act(async () => {
-        fireEvent.click(copyButtons[0]);
+        fireEvent.click(copyButton);
       });
       expect(writeText).toHaveBeenCalledTimes(1);
       const text = writeText.mock.calls[0][0] as string;
@@ -325,45 +328,18 @@ describe('AuditLogPage', () => {
       expect(text).toContain('Response Body');
     });
 
-    it('summary-row copy icon does not toggle row expansion', async () => {
-      const writeText = vi.fn().mockResolvedValue(undefined);
-      Object.defineProperty(navigator, 'clipboard', {
-        value: { writeText },
-        configurable: true,
-      });
+    it('Copy button is only present when a row is expanded', async () => {
       mockInvoke.mockResolvedValue(mockEntries);
       render(<AuditLogPage onClose={() => {}} />);
       await waitFor(() => {
         expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
       });
-      // Inline copy buttons live inside summary rows — first one is for the
-      // first (POST) row. Clicking should NOT expand the row.
-      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
-      await act(async () => {
-        fireEvent.click(copyButtons[0]);
-      });
-      expect(writeText).toHaveBeenCalled();
-      // Request Headers section only renders inside an expanded row; if the
-      // row was wrongly expanded, it would appear.
-      expect(screen.queryByText('Request Headers')).toBeNull();
-    });
-
-    it('expanded panel does not contain its own Copy button (single source of truth: row icon)', async () => {
-      mockInvoke.mockResolvedValue(mockEntries);
-      render(<AuditLogPage onClose={() => {}} />);
-      await waitFor(() => {
-        expect(screen.getByText('https://jira.example.com/rest/api/2/search')).toBeTruthy();
-      });
+      // No row expanded → no Copy button
+      expect(screen.queryByRole('button', { name: 'Copy' })).toBeNull();
+      // Expand a row → Copy button appears
       const postRow = getRowButtons().find((r) => r.textContent?.includes('POST'));
       fireEvent.click(postRow!);
-      // Expanded panel renders Request Headers / Response Body — confirm we
-      // are expanded
-      expect(screen.getByText('Request Headers')).toBeTruthy();
-      // The only Copy buttons should be the inline summary-row icons (one per
-      // row); none should appear inside the expanded panel.
-      const copyButtons = screen.getAllByRole('button', { name: 'Copy log entry' });
-      // Two summary rows in mockEntries → two copy buttons total
-      expect(copyButtons.length).toBe(mockEntries.length);
+      expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy();
     });
 
     it('buildCopyText formats the entry as readable plain text', () => {

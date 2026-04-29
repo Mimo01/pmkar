@@ -318,7 +318,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
     copiedTimerRef.current = setTimeout(() => setCopiedKey(null), 1500);
   }
 
-  function renderExpandedRow(entry: AuditEntry): JSX.Element {
+  function renderExpandedRow(entry: AuditEntry, rowKey: string): JSX.Element {
     // Defensive: catch any per-row render failure so one malformed entry can
     // never blank the whole page (debug session: copy-400-and-logs-crash).
     try {
@@ -349,8 +349,22 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
         </pre>
       );
 
+      const isCopied = copiedKey === rowKey;
+
       return (
         <div className="space-y-3">
+          {/* Copy action — top-right of the expanded panel */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => handleCopy(entry, rowKey)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-brand-surface-raised"
+            >
+              <Copy className="w-3.5 h-3.5" aria-hidden="true" />
+              {isCopied ? t('audit.copied') : t('audit.copy')}
+            </button>
+          </div>
+
           {/* Full URL */}
           <div>
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
@@ -518,7 +532,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.url')}
                 </th>
-                <th className="w-28 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
+                <th className="w-24 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
                   {t('audit.col.status')}
                 </th>
               </tr>
@@ -536,7 +550,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                   <td className="px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-full" />
                   </td>
-                  <td className="w-28 px-4 py-2">
+                  <td className="w-24 px-4 py-2">
                     <div className="h-3 bg-brand-surface-hover rounded w-8 ml-auto" />
                   </td>
                 </tr>
@@ -608,7 +622,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                 <th className="text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-left">
                   {t('audit.col.url')}
                 </th>
-                <th className="w-28 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
+                <th className="w-24 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted px-4 py-2.5 text-right">
                   {t('audit.col.status')}
                 </th>
               </tr>
@@ -619,7 +633,6 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                 // Some(id), but TypeScript type allows null).
                 const rowKey = entry.id !== null ? `id-${entry.id}` : `row-${idx}`;
                 const isExpanded = entry.id !== null && expandedId === entry.id;
-                const isCopiedSummary = copiedKey === rowKey;
                 return (
                   <Fragment key={rowKey}>
                     {/* Summary row */}
@@ -663,28 +676,9 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                       >
                         {toDisplayString(entry.url)}
                       </td>
-                      <td className="w-28 px-4 py-2">
+                      <td className="w-24 px-4 py-2">
                         <div className="flex items-center justify-end gap-1.5">
                           {renderStatusBadge(entry.statusCode, t)}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopy(entry, rowKey);
-                            }}
-                            onKeyDown={(e) => {
-                              // Don't let Enter/Space bubble up to the row's
-                              // expand handler.
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.stopPropagation();
-                              }
-                            }}
-                            className="p-1 rounded text-brand-muted hover:text-brand-text hover:bg-brand-border opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-brand transition-opacity duration-150"
-                            aria-label={t('audit.copy.aria')}
-                            title={isCopiedSummary ? t('audit.copied') : t('audit.copy')}
-                          >
-                            <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-                          </button>
                           {!isExpanded && (
                             <ChevronDown
                               className="w-3 h-3 text-brand-muted opacity-0 group-hover:opacity-100 transition-opacity duration-150"
@@ -699,7 +693,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     {isExpanded && (
                       <tr>
                         <td colSpan={4} className="bg-brand-surface-raised px-4 py-3">
-                          {renderExpandedRow(entry)}
+                          {renderExpandedRow(entry, rowKey)}
                         </td>
                       </tr>
                     )}
