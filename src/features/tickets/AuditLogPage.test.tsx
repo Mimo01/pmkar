@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuditLogPage, buildCopyText } from './AuditLogPage';
-import type { AuditEntry } from './types';
+import type { AuditEntry, MappingAuditEntry } from './types';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -467,6 +467,78 @@ describe('AuditLogPage', () => {
       const allText = document.body.textContent ?? '';
       expect(allText).toContain('customfield_10001');
       expect(allText).toContain('Field does not exist');
+    });
+  });
+
+  // Field Transformations tab tests (quick task 260430-0tj)
+  describe('Field Transformations tab', () => {
+    const mockMappingEntries: MappingAuditEntry[] = [
+      {
+        id: 2,
+        copyId: 'aaaabbbb-cccc-dddd-eeee-ffffffffffff',
+        fieldId: 'summary',
+        sourceValueHash: 'h1',
+        targetValueHash: 'h2',
+        wasOverridden: false,
+        gapKind: null,
+        transformerKind: 'identity',
+        outcome: 'ok',
+        failureReason: null,
+        timestamp: '2026-04-30T10:00:00Z',
+      },
+      {
+        id: 1,
+        copyId: '11112222-3333-4444-5555-666677778888',
+        fieldId: 'assignee',
+        sourceValueHash: 'h3',
+        targetValueHash: 'h4',
+        wasOverridden: false,
+        gapKind: 'person',
+        transformerKind: 'user',
+        outcome: 'failed',
+        failureReason: 'unresolved person',
+        timestamp: '2026-04-30T09:00:00Z',
+      },
+    ];
+
+    it('mapping_audit_tab_renders_rows: mock returns 2 rows, click tab, assert rows render', async () => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'get_audit_logs_page') return Promise.resolve(mockEntries);
+        if (cmd === 'get_mapping_audit_log_page') return Promise.resolve(mockMappingEntries);
+        return Promise.resolve([]);
+      });
+      render(<AuditLogPage onClose={() => {}} />);
+
+      // Click the Field Transformations tab
+      const tab = screen.getByRole('tab', { name: /field transformations/i });
+      fireEvent.click(tab);
+
+      // Both field ids should appear
+      await waitFor(() => {
+        expect(screen.getByText('summary')).toBeTruthy();
+        expect(screen.getByText('assignee')).toBeTruthy();
+      });
+
+      // Outcome badges
+      const allText = document.body.textContent ?? '';
+      expect(allText).toContain('ok');
+      expect(allText).toContain('failed');
+    });
+
+    it('mapping_audit_empty_state: mock returns [], click tab, assert empty-state message', async () => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'get_audit_logs_page') return Promise.resolve(mockEntries);
+        if (cmd === 'get_mapping_audit_log_page') return Promise.resolve([]);
+        return Promise.resolve([]);
+      });
+      render(<AuditLogPage onClose={() => {}} />);
+
+      const tab = screen.getByRole('tab', { name: /field transformations/i });
+      fireEvent.click(tab);
+
+      await waitFor(() => {
+        expect(screen.getByText('No field transformations recorded yet.')).toBeTruthy();
+      });
     });
   });
 });
