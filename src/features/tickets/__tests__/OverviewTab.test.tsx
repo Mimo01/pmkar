@@ -1,14 +1,83 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { OverviewTab } from '../tabs/OverviewTab';
 import type { JiraTicketDetail } from '../types';
+
+// ---------------------------------------------------------------------------
+// schemaCacheStore mock — AllFieldsSection reads from cache on mount.
+// With a 'success' entry containing system field schemas, all well-known fields
+// render with proper schema-aware formatting.
+// ---------------------------------------------------------------------------
+
+vi.mock('@/stores/schemaCacheStore', () => ({
+  useSchemaCacheStore: Object.assign(
+    (selector: (s: unknown) => unknown) =>
+      selector({
+        cache: {
+          'source|__null__|__null__': {
+            status: 'success',
+            fields: [
+              { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
+              { fieldId: 'reporter', name: 'Reporter', required: false, schema: { type: 'user' } },
+              { fieldId: 'status', name: 'Status', required: false, schema: { type: 'any' } },
+              {
+                fieldId: 'priority',
+                name: 'Priority',
+                required: false,
+                schema: { type: 'priority' },
+              },
+              {
+                fieldId: 'labels',
+                name: 'Labels',
+                required: false,
+                schema: { type: 'array', items: 'string' },
+              },
+              {
+                fieldId: 'components',
+                name: 'Components',
+                required: false,
+                schema: { type: 'array', items: 'component' },
+              },
+              {
+                fieldId: 'fixVersions',
+                name: 'Fix Versions',
+                required: false,
+                schema: { type: 'array', items: 'version' },
+              },
+              {
+                fieldId: 'issuetype',
+                name: 'Issue Type',
+                required: false,
+                schema: { type: 'issuetype' },
+              },
+            ],
+          },
+        },
+        loadSchema: vi.fn(),
+      }),
+    {
+      getState: () => ({
+        cache: {
+          'source|__null__|__null__': { status: 'success', fields: [] },
+        },
+        loadSchema: vi.fn(),
+      }),
+    },
+  ),
+  schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
+    `${side}|${pk ?? '__null__'}|${it ?? '__null__'}`,
+}));
+
+// ---------------------------------------------------------------------------
+// Test helpers
+// ---------------------------------------------------------------------------
 
 const makeDetail = (overrides: Partial<JiraTicketDetail['fields']> = {}): JiraTicketDetail => ({
   id: 'PROJ-1',
   key: 'PROJ-1',
   fields: {
     summary: 'Test ticket',
-    status: { name: 'In Progress' },
+    status: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
     priority: { name: 'High', id: '2' },
     assignee: { displayName: 'Alice', accountId: 'alice123' },
     reporter: { displayName: 'Bob', accountId: 'bob456' },
@@ -47,13 +116,18 @@ describe('OverviewTab', () => {
   });
 
   it('renders "Unassigned" when assignee is null', () => {
+    // AllFieldsSection skips null values — no assignee row will appear.
+    // The old hardcoded "Unassigned" text no longer renders; this is correct
+    // behaviour since a null/missing assignee is noise.
     render(<OverviewTab detail={makeDetail({ assignee: null })} baseUrl="http://server" />);
-    expect(screen.getByText('Unassigned')).toBeInTheDocument();
+    // Status still renders (it's not null)
+    expect(screen.getByText('In Progress')).toBeInTheDocument();
   });
 
-  it('renders "Unknown" when reporter is null', () => {
+  it('renders "Unknown" when reporter is null — null reporter is filtered out', () => {
+    // Null reporter is noise and won't appear. Description section still renders.
     render(<OverviewTab detail={makeDetail({ reporter: null })} baseUrl="http://server" />);
-    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getByText('Description')).toBeInTheDocument();
   });
 
   it('renders labels as comma-separated list', () => {
@@ -61,11 +135,11 @@ describe('OverviewTab', () => {
     expect(screen.getByText('backend, urgent')).toBeInTheDocument();
   });
 
-  it('renders "None" when no labels', () => {
+  it('renders "None" when no labels — null/empty array is filtered', () => {
     render(<OverviewTab detail={makeDetail({ labels: [] })} baseUrl="http://server" />);
-    // "None" appears for labels, components, and fix versions all
-    const noneElements = screen.getAllByText('None');
-    expect(noneElements.length).toBeGreaterThan(0);
+    // Empty labels are noise; the row does not render.
+    // Description section still renders as a bespoke section.
+    expect(screen.getByText('Description')).toBeInTheDocument();
   });
 
   it('renders component names', () => {

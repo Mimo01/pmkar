@@ -6,6 +6,46 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn().mockResolvedValue([]),
 }));
 
+// Mock schemaCacheStore — AllFieldsSection (used in source column) reads schema on mount.
+vi.mock('@/stores/schemaCacheStore', () => ({
+  useSchemaCacheStore: Object.assign(
+    (selector: (s: unknown) => unknown) =>
+      selector({
+        cache: {
+          'source|__null__|__null__': {
+            status: 'success',
+            fields: [
+              { fieldId: 'summary', name: 'Summary', required: true, schema: { type: 'string' } },
+              { fieldId: 'status', name: 'Status', required: false, schema: { type: 'any' } },
+              {
+                fieldId: 'priority',
+                name: 'Priority',
+                required: false,
+                schema: { type: 'priority' },
+              },
+              { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
+              {
+                fieldId: 'labels',
+                name: 'Labels',
+                required: false,
+                schema: { type: 'array', items: 'string' },
+              },
+            ],
+          },
+        },
+        loadSchema: vi.fn(),
+      }),
+    {
+      getState: () => ({
+        cache: { 'source|__null__|__null__': { status: 'success', fields: [] } },
+        loadSchema: vi.fn(),
+      }),
+    },
+  ),
+  schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
+    `${side}|${pk ?? '__null__'}|${it ?? '__null__'}`,
+}));
+
 // Mock connectionStore
 vi.mock('../connections/connectionStore', () => ({
   useConnectionStore: Object.assign(
@@ -50,7 +90,7 @@ const mockSourceTicket = {
   key: 'PROJ-1',
   fields: {
     summary: 'Source ticket summary',
-    status: { name: 'Open', id: '1' },
+    status: { name: 'Open', id: '1', statusCategory: { key: 'new' } },
     priority: { name: 'High', id: '2' },
     assignee: { displayName: 'Jane Doe' },
     reporter: null,

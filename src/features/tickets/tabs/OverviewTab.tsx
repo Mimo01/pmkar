@@ -1,72 +1,39 @@
 import { ArrowDownLeft, ArrowUpRight, Link2 } from 'lucide-react';
+import { AllFieldsSection } from '../AllFieldsSection';
 import { DescriptionRenderer } from '../DescriptionRenderer';
-import { PriorityIcon } from '../PriorityIcon';
 import { StatusBadge } from '../StatusBadge';
 import type { JiraTicketDetail } from '../types';
-import { UserAvatar } from '../UserAvatar';
 
 interface OverviewTabProps {
   detail: JiraTicketDetail;
   baseUrl: string;
 }
 
-function FieldItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-xs font-semibold text-brand-muted mb-1">{label}</div>
-      <div className="text-sm text-brand-text-secondary">{value}</div>
-    </div>
-  );
-}
+// Fields that have bespoke layout sections below AllFieldsSection, or that are
+// shown in the page header (summary, created, updated).
+const OVERVIEW_BESPOKE_FIELDS = [
+  'description', // rendered by DescriptionRenderer below
+  'subtasks', // rendered by Sub-tasks block below
+  'issuelinks', // rendered by Linked Issues block below
+  'comment', // shown in Comments tab; counts shown in tab label
+  'attachment', // shown in Attachments tab; counts shown in tab label
+  'worklog', // shown in Work Log tab
+  'updated', // shown in page header
+  'created', // shown in page header
+  'summary', // shown in page header
+];
 
 export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
   const { fields } = detail;
 
   return (
     <div>
-      {/* Field grid */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-3 px-5 py-4">
-        <div>
-          <div className="text-xs font-semibold text-brand-muted mb-1">Assignee</div>
-          <div className="flex items-center gap-1.5 text-sm text-brand-text-secondary">
-            <UserAvatar user={fields.assignee} size="md" />
-            {fields.assignee?.displayName ?? 'Unassigned'}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-brand-muted mb-1">Reporter</div>
-          <div className="flex items-center gap-1.5 text-sm text-brand-text-secondary">
-            <UserAvatar user={fields.reporter} size="md" />
-            {fields.reporter?.displayName ?? 'Unknown'}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-brand-muted mb-1">Status</div>
-          <StatusBadge status={fields.status.name} />
-        </div>
-        <div>
-          <div className="text-xs font-semibold text-brand-muted mb-1">Priority</div>
-          <PriorityIcon priority={fields.priority.name} size="sm" />
-        </div>
-        <FieldItem
-          label="Labels"
-          value={fields.labels.length > 0 ? fields.labels.join(', ') : 'None'}
-        />
-        <FieldItem
-          label="Components"
-          value={
-            fields.components.length > 0 ? fields.components.map((c) => c.name).join(', ') : 'None'
-          }
-        />
-        <FieldItem
-          label="Fix Versions"
-          value={
-            fields.fixVersions.length > 0
-              ? fields.fixVersions.map((v) => v.name).join(', ')
-              : 'None'
-          }
-        />
-      </div>
+      {/* Dynamic field grid — all non-bespoke source fields */}
+      <AllFieldsSection
+        fields={detail.fields as unknown as Record<string, unknown>}
+        skip={OVERVIEW_BESPOKE_FIELDS}
+        baseUrl={baseUrl}
+      />
 
       {/* Description */}
       <div className="px-5 py-4 border-t border-brand-border-subtle">
