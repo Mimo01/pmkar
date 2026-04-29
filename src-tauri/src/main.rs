@@ -219,6 +219,7 @@ fn main() {
             commands::fetch_cloud_meta,
             commands::copy_ticket_v2,
             commands::get_mapping_audit_log_page,
+            commands::log_preview_transformations,
             commands::get_os_locale,
             commands::get_app_language,
             commands::set_app_language,

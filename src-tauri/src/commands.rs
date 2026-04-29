@@ -1162,8 +1162,7 @@ use crate::field_mapping_db::{hash_field_value, redact_credential_value, FieldMa
 use crate::field_transform::component::ComponentResolver;
 use crate::field_transform::user::UserResolver;
 use crate::field_transform::version::VersionResolver;
-use crate::field_transform::{apply_mapping, FieldMappingRow, GapVariant, TransformContext};
-use uuid::Uuid;
+use crate::field_transform::{apply_mapping, FieldMappingRow, TransformContext};
 
 /// Source v2 global field list. Cache-first via `get_or_fetch_source_global`
 /// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
@@ -1394,9 +1393,10 @@ pub fn get_all_connection_meta(
 // --- Copy ticket v2 command ---
 
 /// Phase 23 CUTV-01 — replacement for `copy_ticket`. Drives the mapping engine
-/// end-to-end (`apply_mapping` → override merge → create issue → helpers). Logs
-/// every mapping decision to `mapping_audit_log` (CUTV-03). Reads `target_project_key`
-/// from connection settings — no hardcoded project key literal (CUTV-04).
+/// end-to-end (`apply_mapping` → override merge → create issue → helpers).
+/// Reads `target_project_key` from connection settings — no hardcoded project
+/// key literal (CUTV-04). Per-row audit logging happens at preview-open via
+/// `log_preview_transformations` (quick task 260430-0tj), not here.
 #[allow(clippy::too_many_lines)]
 #[tauri::command]
 pub async fn copy_ticket_v2(
@@ -1412,7 +1412,7 @@ pub async fn copy_ticket_v2(
     let trimmed_source = args.source_base_url.trim_end_matches('/').to_string();
     let trimmed_target = args.target_base_url.trim_end_matches('/').to_string();
 
-    // ── Phase 1 — Load credentials, mapping, and audit_verbose flag ──────────
+    // ── Phase 1 — Load credentials and target project key ────────────────────
     let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
     let cloud_auth = format!(
         "Basic {}",
@@ -1422,17 +1422,14 @@ pub async fn copy_ticket_v2(
     let server_pat = get_server_pat(triage_db.inner())?;
 
     // CUTV-04: target_project_key from connection settings — never hardcoded.
-    let (audit_verbose, target_project_key) = {
+    let target_project_key = {
         let g = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        let v = g.get_audit_verbose().unwrap_or(false);
-        let key = g
-            .get_target_project_key()?
+        g.get_target_project_key()?
             .ok_or_else(|| AppError::Internal(
                 "No target_project_key configured. Open Settings to choose a target project.".into()
-            ))?;
-        (v, key)
+            ))?
     };
 
     // D-04: Load saved mapping rows from mapping.db inside the command.
@@ -1515,108 +1512,10 @@ pub async fn copy_ticket_v2(
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    // ── Phase 4 — Audit each mapping row decision (CUTV-03) ──────────────────
-    let copy_id = Uuid::new_v4().to_string();
-    let timestamp = chrono::Utc::now().to_rfc3339();
-    {
-        let mdb = mapping_db
-            .lock()
-            .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
-        for row in &mapping_rows {
-            let src_path = format!("/fields/{}", row.source_field_id);
-            let src_val = source_body
-                .pointer(&src_path)
-                .cloned()
-                .unwrap_or(serde_json::Value::Null);
-            let tgt_val = resolved
-                .fields
-                .get(&row.target_field_id)
-                .cloned()
-                .unwrap_or(serde_json::Value::Null);
-            let was_overridden = args.override_values.contains_key(&row.target_field_id);
-            // D-07: redact credential markers from string values BEFORE hashing
-            // (so the hash itself does not leak via correlation).
-            let src_for_hash = redact_string_in_value(&src_val);
-            let tgt_for_hash = redact_string_in_value(&tgt_val);
-            let (src_hash, tgt_hash) = if audit_verbose {
-                // verbose: store the redacted JSON-serialized value (truncated to 4096 chars
-                // so a runaway field doesn't bloat the audit table).
-                let s = serde_json::to_string(&src_for_hash).unwrap_or_default();
-                let t = serde_json::to_string(&tgt_for_hash).unwrap_or_default();
-                (
-                    format!("raw={}", &s[..s.len().min(4096)]),
-                    format!("raw={}", &t[..t.len().min(4096)]),
-                )
-            } else {
-                (hash_field_value(&src_for_hash), hash_field_value(&tgt_for_hash))
-            };
-            // gap_kind: scan resolved.gaps for this target_field_id.
-            let gap_kind = resolved.gaps.iter().find_map(|g| match g {
-                GapVariant::Person(p) if p.target_field_id == row.target_field_id => {
-                    Some("person")
-                }
-                GapVariant::Version(v) if v.target_field_id == row.target_field_id => {
-                    Some("version")
-                }
-                GapVariant::Component(c) if c.target_field_id == row.target_field_id => {
-                    Some("component")
-                }
-                _ => None,
-            });
-
-            // Quick task 260430-0tj: derive outcome + failure_reason per row.
-            let transformer_kind = row.transformer_kind.clone();
-            let (outcome, failure_reason): (&str, Option<String>) = if let Some(gk) = gap_kind {
-                ("failed", Some(format!("unresolved {gk}")))
-            } else if resolved.fields.contains_key(&row.target_field_id) {
-                ("ok", None)
-            } else if src_val.is_null() {
-                ("skipped", Some("source value missing".to_string()))
-            } else {
-                ("skipped", Some("no value produced".to_string()))
-            };
-
-            let _ = mdb.insert_mapping_audit(
-                &copy_id,
-                &row.target_field_id,
-                &src_hash,
-                &tgt_hash,
-                was_overridden,
-                gap_kind,
-                &transformer_kind,
-                outcome,
-                failure_reason.as_deref(),
-                &timestamp,
-            ); // audit failures must not block copy (mirrors AuditDb::insert silent-failure pattern)
-        }
-        // Also log each override that does NOT correspond to a mapping row
-        // (a pure ad-hoc gap fill from Phase 22 GapsSection).
-        for (field_id, val) in &args.override_values {
-            let already_logged = mapping_rows.iter().any(|r| &r.target_field_id == field_id);
-            if already_logged {
-                continue;
-            }
-            let v_for_hash = redact_string_in_value(val);
-            let h = if audit_verbose {
-                let s = serde_json::to_string(&v_for_hash).unwrap_or_default();
-                format!("raw={}", &s[..s.len().min(4096)])
-            } else {
-                hash_field_value(&v_for_hash)
-            };
-            let _ = mdb.insert_mapping_audit(
-                &copy_id,
-                field_id,
-                "(none)", // no source-mapping → use sentinel
-                &h,
-                true, // pure override
-                None,
-                "override",        // transformer_kind sentinel for ad-hoc overrides
-                "ok",              // override always provides a value
-                None,
-                &timestamp,
-            );
-        }
-    }
+    // Quick task 260430-0tj — preview-time audit logging is now performed by the
+    // frontend via `log_preview_transformations` when the copy preview opens, so
+    // users see "what got pre-filled and why" before they commit. The previous
+    // commit-time audit loop here was redundant by the time the user clicked Copy.
 
     // ── Phase 5 — Merge override_values on top of resolved.fields ────────────
     for (k, v) in &args.override_values {
@@ -1800,6 +1699,89 @@ pub fn get_mapping_audit_log_page(
         .lock()
         .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
     g.get_mapping_audit_log_page(offset, limit)
+}
+
+/// Quick task 260430-0tj — one preview-time audit entry. The frontend builds a
+/// batch of these in `CopyPreviewPage` after running its pre-fill pass, then
+/// invokes `log_preview_transformations` once. Source/target values are raw
+/// JSON the frontend already holds; the backend redacts and (unless
+/// `audit_verbose` is set) hashes them before persisting — same shape the
+/// previous commit-time audit produced so the existing UI keeps working.
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewTransformationLog {
+    pub target_field_id: String,
+    pub source_field_id: String,
+    pub transformer_kind: String,
+    pub outcome: String,
+    pub failure_reason: Option<String>,
+    pub was_overridden: bool,
+    pub gap_kind: Option<String>,
+    pub source_value: serde_json::Value,
+    pub target_value: serde_json::Value,
+}
+
+/// Quick task 260430-0tj — write a batch of preview-time transformation audit
+/// entries. Called by the copy preview page once after pre-fill so the user can
+/// later inspect "what got pre-filled and why" in the Audit Log page.
+///
+/// Best-effort: per-row insert errors are swallowed so a transient SQLite hiccup
+/// cannot block the user's preview/copy flow (mirrors `AuditDb::insert`).
+#[tauri::command]
+pub fn log_preview_transformations(
+    copy_id: String,
+    entries: Vec<PreviewTransformationLog>,
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    mapping_db: tauri::State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<(), AppError> {
+    if entries.is_empty() {
+        return Ok(());
+    }
+    // Cap batch size — defensive against an FE bug looping on every keystroke.
+    let entries: Vec<_> = entries.into_iter().take(500).collect();
+
+    let audit_verbose = {
+        let g = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        g.get_audit_verbose().unwrap_or(false)
+    };
+
+    let timestamp = chrono::Utc::now().to_rfc3339();
+    let mdb = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+
+    for e in &entries {
+        let src_for_hash = redact_string_in_value(&e.source_value);
+        let tgt_for_hash = redact_string_in_value(&e.target_value);
+        let (src_hash, tgt_hash) = if audit_verbose {
+            let s = serde_json::to_string(&src_for_hash).unwrap_or_default();
+            let t = serde_json::to_string(&tgt_for_hash).unwrap_or_default();
+            (
+                format!("raw={}", &s[..s.len().min(4096)]),
+                format!("raw={}", &t[..t.len().min(4096)]),
+            )
+        } else {
+            (
+                hash_field_value(&src_for_hash),
+                hash_field_value(&tgt_for_hash),
+            )
+        };
+        let _ = mdb.insert_mapping_audit(
+            &copy_id,
+            &e.target_field_id,
+            &src_hash,
+            &tgt_hash,
+            e.was_overridden,
+            e.gap_kind.as_deref(),
+            &e.transformer_kind,
+            &e.outcome,
+            e.failure_reason.as_deref(),
+            &timestamp,
+        );
+    }
+    Ok(())
 }
 
 /// Store a ticket snapshot and return any detected field changes.

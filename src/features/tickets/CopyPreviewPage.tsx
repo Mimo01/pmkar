@@ -15,6 +15,7 @@ import { useCopyStore } from './copyStore';
 import { computeGapFields } from './computeGapFields';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { GapsSection } from './GapsSection';
+import { isOverrideValueFilled } from './isOverrideValueFilled';
 import { IssueTypeChooser } from './IssueTypeChooser';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
@@ -154,28 +155,103 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       .catch(() => setMappingRows([]));
   }, [phase]);
 
+  // ── Preview audit copy id (quick task 260430-0tj) ──────────────────────────
+  // One uuid per preview-open. Reset each time phase enters 'previewing' so a
+  // re-open produces a fresh batch of audit rows distinguishable from the prior.
+  const [previewCopyId, setPreviewCopyId] = useState<string | null>(null);
+  useEffect(() => {
+    if (phase !== 'previewing') {
+      setPreviewCopyId(null);
+      return;
+    }
+    setPreviewCopyId(
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+  }, [phase]);
+
   // ── Prefill overrideValues from mapping rows (D-PREFILL) ──────────────────
   // Runs once when both mappingRows and sourceTicket are available.
   // Seeds overrideValues for identity/priority transformer rows using raw source
   // field values. Skips user/version/component kinds (require async resolution).
   // Does not overwrite values already set by the user.
+  // Quick task 260430-0tj — also batches a per-row audit entry describing what
+  // the pre-fill did (or didn't) and emits log_preview_transformations once at
+  // the end so the user can inspect outcomes from the Audit Log page.
   useEffect(() => {
-    if (!sourceTicket || mappingRows.length === 0) return;
+    if (!sourceTicket || mappingRows.length === 0 || !previewCopyId) return;
     const sourceFields = sourceTicket.fields as Record<string, unknown>;
+
+    type LogEntry = {
+      targetFieldId: string;
+      sourceFieldId: string;
+      transformerKind: string;
+      outcome: 'ok' | 'failed' | 'skipped';
+      failureReason: string | null;
+      wasOverridden: boolean;
+      gapKind: string | null;
+      sourceValue: unknown;
+      targetValue: unknown;
+    };
+    const logEntries: LogEntry[] = [];
+
     for (const row of mappingRows) {
       if (!row.targetFieldId) continue;
-      if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
-      // Do not overwrite values already set by the user.
-      if (overrideValues[row.targetFieldId] !== undefined) continue;
-      const rawValue = sourceFields[row.sourceFieldId];
-      if (rawValue === null || rawValue === undefined) continue;
-      // wiki_to_adf: only prefill when source description is a plain string (Jira Server v2).
-      // Cloud v3 ADF objects are skipped — TextAreaRenderer would render them as empty string.
-      if (row.transformerKind === 'wiki_to_adf' && typeof rawValue !== 'string') continue;
-      setOverrideValue(row.targetFieldId, rawValue);
+      const rawValue = sourceFields[row.sourceFieldId] ?? null;
+      const userAlreadyHasValue = overrideValues[row.targetFieldId] !== undefined;
+      const prefillable = PREFILLABLE_KINDS.has(row.transformerKind);
+
+      let outcome: 'ok' | 'failed' | 'skipped' = 'skipped';
+      let failureReason: string | null = null;
+      let targetValue: unknown = null;
+
+      if (rawValue === null || rawValue === undefined) {
+        outcome = 'skipped';
+        failureReason = 'source value missing';
+      } else if (!prefillable) {
+        // user / version / component — handled at copy commit by apply_mapping.
+        outcome = 'skipped';
+        failureReason = `${row.transformerKind} requires async resolution — runs at copy time`;
+      } else if (row.transformerKind === 'wiki_to_adf' && typeof rawValue !== 'string') {
+        // Cloud v3 ADF object source: pre-fill deferred to copy commit.
+        outcome = 'skipped';
+        failureReason = 'ADF source — pre-fill deferred to copy time';
+      } else if (userAlreadyHasValue) {
+        // User had already set this override (e.g. prior preview state) — preserve it.
+        outcome = 'ok';
+        targetValue = overrideValues[row.targetFieldId];
+      } else {
+        // Pre-fill the override and record an "ok" outcome.
+        setOverrideValue(row.targetFieldId, rawValue);
+        outcome = 'ok';
+        targetValue = rawValue;
+      }
+
+      logEntries.push({
+        targetFieldId: row.targetFieldId,
+        sourceFieldId: row.sourceFieldId,
+        transformerKind: row.transformerKind,
+        outcome,
+        failureReason,
+        wasOverridden: userAlreadyHasValue,
+        gapKind: null,
+        sourceValue: rawValue,
+        targetValue,
+      });
+    }
+
+    if (logEntries.length > 0) {
+      invoke('log_preview_transformations', {
+        copyId: previewCopyId,
+        entries: logEntries,
+      }).catch((err) => {
+        // Audit logging must never break the preview UI.
+        console.error('[CopyPreviewPage] log_preview_transformations failed:', err);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mappingRows, sourceTicket]);
+  }, [mappingRows, sourceTicket, previewCopyId]);
   // Intentionally omit overrideValues and setOverrideValue from deps:
   // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
   // setOverrideValue is a stable store action reference and does not need to be in deps.
@@ -192,6 +268,17 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const gapFields = useMemo(
     () => computeGapFields(resolvedTargetFields, mappingRows),
     [resolvedTargetFields, mappingRows],
+  );
+
+  // Gaps that the user has NOT yet filled in via the GapsSection inputs.
+  // A gap with a non-empty override value is satisfied and must NOT block the
+  // Copy button — the user has provided a value to send to the backend.
+  const unfilledGapFields = useMemo(
+    () =>
+      gapFields.filter(
+        (g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema),
+      ),
+    [gapFields, overrideValues],
   );
 
   // ── DynamicTargetForm field list (resolved minus summary minus gaps) ───────
@@ -234,10 +321,13 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   }, [reset, onOpenSettingsSection]);
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────
+  // A gap field gates the copy only while its override value is empty.
+  // Once the user fills in the gap input (writing to overrideValues), the
+  // gate opens — the entered value flows to the backend via copyStore.confirmCopy.
   const isCopying = phase === 'copying';
   const isLoading = phase === 'loading_preview';
   const isProjectMissing = !targetProjectKey;
-  const isGated = gapFields.length > 0;
+  const isGated = unfilledGapFields.length > 0;
   const isCopyDisabled = isCopying || isLoading || isProjectMissing || isGated;
 
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
@@ -298,7 +388,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
             {isGated && (
               <TooltipContent>
                 {t('copy.preview.missingFields', {
-                  fields: gapFields.map((g) => g.name).join(', '),
+                  fields: unfilledGapFields.map((g) => g.name).join(', '),
                 })}
               </TooltipContent>
             )}

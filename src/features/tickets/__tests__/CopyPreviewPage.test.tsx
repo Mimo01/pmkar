@@ -237,11 +237,41 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     });
   });
 
-  it('Copy button is disabled when gaps exist', async () => {
+  it('Copy button is disabled when a gap exists with no override value', async () => {
     currentStoreState = buildState({
       resolvedTargetFields: [
         { fieldId: 'environment', name: 'Environment', required: true, schema: { type: 'string' } },
       ],
+    });
+    render(<CopyPreviewPage />);
+    await waitFor(() => {
+      const copyBtn = screen.getByRole('button', { name: /Copy to PROJ/i });
+      expect(copyBtn).toBeDisabled();
+    });
+  });
+
+  it('Copy button is enabled once a gap field has been filled in via override', async () => {
+    // Required-without-mapping field whose override has been entered by the user.
+    // Bug fix: the gate must consult overrideValues, not just gapFields.length.
+    currentStoreState = buildState({
+      resolvedTargetFields: [
+        { fieldId: 'environment', name: 'Environment', required: true, schema: { type: 'string' } },
+      ],
+      overrideValues: { environment: 'prod' },
+    });
+    render(<CopyPreviewPage />);
+    await waitFor(() => {
+      const copyBtn = screen.getByRole('button', { name: /Copy to PROJ/i });
+      expect(copyBtn).not.toBeDisabled();
+    });
+  });
+
+  it('Copy button stays disabled when override value is whitespace-only', async () => {
+    currentStoreState = buildState({
+      resolvedTargetFields: [
+        { fieldId: 'environment', name: 'Environment', required: true, schema: { type: 'string' } },
+      ],
+      overrideValues: { environment: '   ' },
     });
     render(<CopyPreviewPage />);
     await waitFor(() => {
@@ -331,6 +361,55 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('get_field_mapping');
     });
+  });
+
+  // ── Preview audit logging (quick task 260430-0tj) ─────────────────────────
+
+  it('logs preview transformations via log_preview_transformations on pre-fill', async () => {
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
+      if (cmd === 'get_field_mapping') {
+        return [
+          { sourceFieldId: 'summary',     targetFieldId: 'summary',     transformerKind: 'identity'  },
+          { sourceFieldId: 'priority',    targetFieldId: 'priority',    transformerKind: 'priority'  },
+          { sourceFieldId: 'assignee',    targetFieldId: 'assignee',    transformerKind: 'user'      },
+          { sourceFieldId: 'fixVersions', targetFieldId: 'fixVersions', transformerKind: 'version'   },
+          { sourceFieldId: 'missing_src', targetFieldId: 'orphan',      transformerKind: 'identity'  },
+        ];
+      }
+      if (cmd === 'search_jira_users_by_domain') return [];
+      return null;
+    });
+
+    render(<CopyPreviewPage />);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith(
+        'log_preview_transformations',
+        expect.objectContaining({
+          copyId: expect.any(String),
+          entries: expect.any(Array),
+        }),
+      );
+    });
+
+    const logCall = mockInvoke.mock.calls.find(([c]) => c === 'log_preview_transformations');
+    expect(logCall).toBeDefined();
+    const entries = (logCall![1] as { entries: Array<{ targetFieldId: string; outcome: string; failureReason: string | null; transformerKind: string }> }).entries;
+    const byField = Object.fromEntries(entries.map((e) => [e.targetFieldId, e]));
+
+    // identity with present source → ok (pre-filled)
+    expect(byField.summary?.outcome).toBe('ok');
+    // priority transformer is prefillable; source priority object present → ok
+    expect(byField.priority?.outcome).toBe('ok');
+    // user transformer is prefillable; assignee object present → ok
+    expect(byField.assignee?.outcome).toBe('ok');
+    // version transformer is NOT prefillable → skipped, "runs at copy time"
+    expect(byField.fixVersions?.outcome).toBe('skipped');
+    expect(byField.fixVersions?.failureReason).toMatch(/runs at copy time/);
+    // identity with absent source → skipped (source value missing)
+    expect(byField.orphan?.outcome).toBe('skipped');
+    expect(byField.orphan?.failureReason).toMatch(/source value missing/);
   });
 
   // ── Schema-loading visual ──────────────────────────────────────────────────
