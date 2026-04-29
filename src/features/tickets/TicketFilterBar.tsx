@@ -11,8 +11,8 @@ interface TicketFilterBarProps {
   onSearchChange: (v: string) => void;
   assigneeFilter: string;
   onAssigneeChange: (v: string) => void;
-  sortField: 'updated' | 'key';
-  onSortFieldChange: (f: 'updated' | 'key') => void;
+  sortField: 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee';
+  onSortFieldChange: (f: 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee') => void;
   sortDirection: 'asc' | 'desc';
   onToggleSort: () => void;
   resultCount: number;
@@ -224,12 +224,16 @@ export function TicketFilterBar({
       <div className="flex items-center gap-0.5 shrink-0">
         <select
           value={sortField}
-          onChange={(e) => onSortFieldChange(e.target.value as 'updated' | 'key')}
+          onChange={(e) => onSortFieldChange(e.target.value as 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee')}
           aria-label={t('tickets.filter.sortBy')}
           className="bg-transparent text-sm text-brand-muted hover:text-brand-text border-none outline-none cursor-pointer appearance-none transition-colors duration-150"
         >
           <option value="updated">{t('tickets.filter.sortUpdated')}</option>
+          <option value="created">{t('tickets.filter.sortCreated')}</option>
           <option value="key">{t('tickets.filter.sortKey')}</option>
+          <option value="priority">{t('tickets.filter.sortPriority')}</option>
+          <option value="status">{t('tickets.filter.sortStatus')}</option>
+          <option value="assignee">{t('tickets.filter.sortAssignee')}</option>
         </select>
         <button
           type="button"
