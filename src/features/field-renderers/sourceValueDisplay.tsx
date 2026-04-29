@@ -319,7 +319,15 @@ export function renderSourceFieldValue(
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
       }
-      // JSON fallback
+      // Plain string or number → render directly (avoids confusing JSON quoting)
+      if (typeof value === 'string') {
+        const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
+        return <span>{truncated}</span>;
+      }
+      if (typeof value === 'number') {
+        return <span>{String(value)}</span>;
+      }
+      // JSON fallback for objects / booleans / arrays
       const json = JSON.stringify(value);
       const truncated = json.length > 200 ? `${json.slice(0, 200)}...` : json;
       return (

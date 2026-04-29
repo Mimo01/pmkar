@@ -3,6 +3,36 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 
+// AllFieldsSection (via OverviewTab) reads source schema on mount.
+vi.mock('@/stores/schemaCacheStore', () => ({
+  useSchemaCacheStore: Object.assign(
+    (selector: (s: unknown) => unknown) =>
+      selector({
+        cache: {
+          'source|__null__|__null__': {
+            status: 'success',
+            fields: [
+              { fieldId: 'status', name: 'Status', required: false, schema: { type: 'any' } },
+              { fieldId: 'priority', name: 'Priority', required: false, schema: { type: 'priority' } },
+              { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
+              { fieldId: 'reporter', name: 'Reporter', required: false, schema: { type: 'user' } },
+              { fieldId: 'labels', name: 'Labels', required: false, schema: { type: 'array', items: 'string' } },
+            ],
+          },
+        },
+        loadSchema: vi.fn(),
+      }),
+    {
+      getState: () => ({
+        cache: { 'source|__null__|__null__': { status: 'success', fields: [] } },
+        loadSchema: vi.fn(),
+      }),
+    },
+  ),
+  schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
+    `${side}|${pk ?? '__null__'}|${it ?? '__null__'}`,
+}));
+
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { useCopyStore } from '../copyStore';
@@ -17,7 +47,7 @@ const makeDetail = (): JiraTicketDetail => ({
   key: 'PROJ-1',
   fields: {
     summary: 'Fix the login bug',
-    status: { name: 'In Progress', id: '3' },
+    status: { name: 'In Progress', id: '3', statusCategory: { key: 'indeterminate' } },
     priority: { name: 'High', id: '2' },
     assignee: { displayName: 'Alice', accountId: 'alice123' },
     reporter: { displayName: 'Bob', accountId: 'bob456' },

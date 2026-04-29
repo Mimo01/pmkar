@@ -1,6 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -14,20 +13,18 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useConnectionStore } from '../connections/connectionStore';
-import { DynamicTargetForm } from '@/features/field-renderers/DynamicTargetForm';
-import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import type { FieldMappingRow } from '@/features/field-mapping/types';
-import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
-import { useCopyStore } from './copyStore';
+import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
+import { DynamicTargetForm } from '@/features/field-renderers/DynamicTargetForm';
+import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
+import { useConnectionStore } from '../connections/connectionStore';
+import { AllFieldsSection } from './AllFieldsSection';
 import { computeGapFields } from './computeGapFields';
+import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { GapsSection } from './GapsSection';
 import { IssueTypeChooser } from './IssueTypeChooser';
-import { PriorityIcon } from './PriorityIcon';
-import { StatusBadge } from './StatusBadge';
 import type { JiraUser } from './types';
-import { UserAvatar } from './UserAvatar';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -38,29 +35,18 @@ export interface CopyPreviewModalProps {
 }
 
 // ---------------------------------------------------------------------------
-// Source-side read-only row helper
+// Source-column bespoke field list
+// Fields excluded from AllFieldsSection because they have their own bespoke
+// display in the source column (copy side-effect banners, description block).
 // ---------------------------------------------------------------------------
 
-function SourceFieldRow({
-  label,
-  value,
-  children,
-}: {
-  label: string;
-  value?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <div className="mb-3">
-      <span className="text-xs text-brand-muted block mb-0.5">{label}</span>
-      {children ? (
-        <div className="text-sm text-brand-text">{children}</div>
-      ) : (
-        <span className="text-sm text-brand-text">{value}</span>
-      )}
-    </div>
-  );
-}
+const COPY_SOURCE_BESPOKE_FIELDS = [
+  'description', // DescriptionRenderer below
+  'subtasks', // banner below summarizes will-be-copied count
+  'issuelinks', // banner below summarizes link list
+  'attachment', // banner below summarizes will-be-copied count
+  'comment', // banner below summarizes will-be-copied count
+];
 
 // ---------------------------------------------------------------------------
 // Progress percent helper
@@ -199,10 +185,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
 
   const gapIds = useMemo(() => new Set(gapFields.map((g) => g.fieldId)), [gapFields]);
   const dynamicFormFields = useMemo(
-    () =>
-      resolvedTargetFields.filter(
-        (f) => f.fieldId !== 'summary' && !gapIds.has(f.fieldId),
-      ),
+    () => resolvedTargetFields.filter((f) => f.fieldId !== 'summary' && !gapIds.has(f.fieldId)),
     [resolvedTargetFields, gapIds],
   );
 
@@ -210,8 +193,10 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   const initialQueriesByFieldId = useMemo<Record<string, string>>(() => {
     const out: Record<string, string> = {};
     if (!sourceTicket) return out;
-    const assigneeEmail = (sourceTicket.fields.assignee as { emailAddress?: string } | null)?.emailAddress;
-    const reporterEmail = (sourceTicket.fields.reporter as { emailAddress?: string } | null)?.emailAddress;
+    const assigneeEmail = (sourceTicket.fields.assignee as { emailAddress?: string } | null)
+      ?.emailAddress;
+    const reporterEmail = (sourceTicket.fields.reporter as { emailAddress?: string } | null)
+      ?.emailAddress;
     for (const f of resolvedTargetFields) {
       const isUser =
         f.schema.type === 'user' ||
@@ -282,63 +267,64 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
             <div className="w-1/2 overflow-y-auto p-4 bg-brand-surface">
               <h3 className="text-base font-semibold mb-4">{t('copy.preview.source')}</h3>
 
-              <SourceFieldRow label="Summary" value={sourceTicket.fields.summary} />
-              <SourceFieldRow label="Status">
-                <StatusBadge status={sourceTicket.fields.status.name} />
-              </SourceFieldRow>
-              <SourceFieldRow label="Priority">
-                <PriorityIcon priority={sourceTicket.fields.priority.name} size="sm" />
-              </SourceFieldRow>
-              <SourceFieldRow label="Assignee">
-                <span className="flex items-center gap-1.5">
-                  <UserAvatar user={sourceTicket.fields.assignee} size="sm" />
-                  {sourceTicket.fields.assignee?.displayName ?? 'Unassigned'}
-                </span>
-              </SourceFieldRow>
-              <SourceFieldRow
-                label="Labels"
-                value={
-                  sourceTicket.fields.labels.length > 0
-                    ? sourceTicket.fields.labels.join(', ')
-                    : 'None'
-                }
+              {/* Dynamic source field list — all non-bespoke fields */}
+              <AllFieldsSection
+                fields={sourceTicket.fields as unknown as Record<string, unknown>}
+                compact
+                skip={COPY_SOURCE_BESPOKE_FIELDS}
+                baseUrl={sourceBaseUrl}
               />
+
+              {/* Side-effect banners: describe what the copy pipeline will do */}
               {sourceTicket.fields.attachment.length > 0 && (
-                <SourceFieldRow
-                  label="Attachments"
-                  value={`${sourceTicket.fields.attachment.length} file(s) will be copied`}
-                />
+                <div className="mb-3">
+                  <span className="text-xs text-brand-muted block mb-0.5">Attachments</span>
+                  <span className="text-sm text-brand-text">
+                    {sourceTicket.fields.attachment.length} file(s) will be copied
+                  </span>
+                </div>
               )}
               {sourceTicket.fields.comment.comments.length > 0 && (
-                <SourceFieldRow
-                  label="Comments"
-                  value={`${sourceTicket.fields.comment.comments.length} comment(s) will be copied`}
-                />
+                <div className="mb-3">
+                  <span className="text-xs text-brand-muted block mb-0.5">Comments</span>
+                  <span className="text-sm text-brand-text">
+                    {sourceTicket.fields.comment.comments.length} comment(s) will be copied
+                  </span>
+                </div>
               )}
               {sourceTicket.fields.subtasks.length > 0 && (
-                <SourceFieldRow
-                  label="Sub-tasks"
-                  value={`${sourceTicket.fields.subtasks.length} sub-task(s) will be created as child issues: ${sourceTicket.fields.subtasks.map((s) => `${s.key}: ${s.fields.summary}`).join(', ')}`}
-                />
+                <div className="mb-3">
+                  <span className="text-xs text-brand-muted block mb-0.5">Sub-tasks</span>
+                  <span className="text-sm text-brand-text">
+                    {sourceTicket.fields.subtasks.length} sub-task(s) will be created as child
+                    issues:{' '}
+                    {sourceTicket.fields.subtasks
+                      .map((s) => `${s.key}: ${s.fields.summary}`)
+                      .join(', ')}
+                  </span>
+                </div>
               )}
               {sourceTicket.fields.issuelinks.length > 0 && (
-                <SourceFieldRow
-                  label="Linked Issues"
-                  value={sourceTicket.fields.issuelinks
-                    .map((link) => {
-                      if (link.outwardIssue) {
-                        return `${link.type.outward}: ${link.outwardIssue.key} — ${link.outwardIssue.fields.summary}`;
-                      }
-                      if (link.inwardIssue) {
-                        return `${link.type.inward}: ${link.inwardIssue.key} — ${link.inwardIssue.fields.summary}`;
-                      }
-                      return '';
-                    })
-                    .filter(Boolean)
-                    .join(', ')}
-                />
+                <div className="mb-3">
+                  <span className="text-xs text-brand-muted block mb-0.5">Linked Issues</span>
+                  <span className="text-sm text-brand-text">
+                    {sourceTicket.fields.issuelinks
+                      .map((link) => {
+                        if (link.outwardIssue) {
+                          return `${link.type.outward}: ${link.outwardIssue.key} — ${link.outwardIssue.fields.summary}`;
+                        }
+                        if (link.inwardIssue) {
+                          return `${link.type.inward}: ${link.inwardIssue.key} — ${link.inwardIssue.fields.summary}`;
+                        }
+                        return '';
+                      })
+                      .filter(Boolean)
+                      .join(', ')}
+                  </span>
+                </div>
               )}
 
+              {/* Description (bespoke DescriptionRenderer handles ADF + wiki-rendered HTML) */}
               <div className="mt-4">
                 <span className="text-xs text-brand-muted">Description</span>
                 <div className="mt-2">
@@ -388,7 +374,9 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                   projectKey={targetProjectKey}
                   sourceIssueTypeName={sourceTicket.fields.issuetype?.name ?? ''}
                   value={targetIssueTypeId}
-                  onChange={(id) => { void setTargetIssueTypeId(id); }}
+                  onChange={(id) => {
+                    void setTargetIssueTypeId(id);
+                  }}
                   loading={isSchemaLoading}
                 />
               )}
@@ -399,7 +387,10 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                   htmlFor="copy-target-summary-modal"
                   className="text-xs text-brand-muted block mb-1"
                 >
-                  Summary <span className="text-destructive" aria-hidden="true">*</span>
+                  Summary{' '}
+                  <span className="text-destructive" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="copy-target-summary-modal"
