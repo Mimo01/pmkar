@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowLeft, ChevronDown, Copy, Search, X } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Copy, Loader2, Search, X } from 'lucide-react';
 import type { JSX } from 'react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { formatTimestamp } from '../../lib/format';
-import type { AuditEntry } from './types';
+import type { AuditEntry, MappingAuditEntry } from './types';
 
 interface AuditLogPageProps {
   onClose: () => void;
@@ -222,8 +222,15 @@ function safeFormatTimestamp(ts: string | null | undefined): string {
   }
 }
 
+type Tab = 'api' | 'fields';
+
 export function AuditLogPage({ onClose }: AuditLogPageProps) {
   const { t } = useTranslation();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<Tab>('api');
+
+  // API Audit tab state
   const [entries, setEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +238,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Field Transformations tab state (quick task 260430-0tj)
+  const [mappingEntries, setMappingEntries] = useState<MappingAuditEntry[]>([]);
+  const [mappingOffset, setMappingOffset] = useState(0);
+  const [mappingHasMore, setMappingHasMore] = useState(true);
+  const [mappingLoading, setMappingLoading] = useState(false);
+  const [mappingError, setMappingError] = useState<string | null>(null);
+  const [mappingFetched, setMappingFetched] = useState(false);
 
   // Filter state
   const [search, setSearch] = useState('');
@@ -240,6 +255,40 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
   // Copy feedback — keyed by row identifier (id or index fallback)
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lazy-load mapping audit log the first time the Field Transformations tab is opened.
+  useEffect(() => {
+    if (activeTab !== 'fields' || mappingFetched) return;
+    setMappingLoading(true);
+    invoke<MappingAuditEntry[]>('get_mapping_audit_log_page', { offset: 0, limit: PAGE_SIZE })
+      .then((data) => {
+        const rows = Array.isArray(data) ? data : [];
+        setMappingEntries(rows);
+        setMappingOffset(rows.length);
+        setMappingHasMore(rows.length >= PAGE_SIZE);
+        setMappingFetched(true);
+      })
+      .catch((err) => setMappingError(String(err)))
+      .finally(() => setMappingLoading(false));
+  }, [activeTab, mappingFetched]);
+
+  async function loadMoreMapping() {
+    setMappingLoading(true);
+    try {
+      const data = await invoke<MappingAuditEntry[]>('get_mapping_audit_log_page', {
+        offset: mappingOffset,
+        limit: PAGE_SIZE,
+      });
+      const rows = Array.isArray(data) ? data : [];
+      setMappingEntries((prev) => [...prev, ...rows]);
+      setMappingOffset((prev) => prev + rows.length);
+      if (rows.length < PAGE_SIZE) {
+        setMappingHasMore(false);
+      }
+    } finally {
+      setMappingLoading(false);
+    }
+  }
 
   useEffect(() => {
     invoke<AuditEntry[]>('get_audit_logs_page', { offset: 0, limit: PAGE_SIZE })
@@ -430,8 +479,147 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
         <h1 className="text-base font-semibold text-brand-text">{t('audit.heading')}</h1>
       </div>
 
+      {/* Tab bar (quick task 260430-0tj) */}
+      <div className="flex border-b border-brand-border bg-brand-surface" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'api'}
+          onClick={() => setActiveTab('api')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium transition-colors duration-150 border-b-2',
+            activeTab === 'api'
+              ? 'border-brand text-brand-text'
+              : 'border-transparent text-brand-muted hover:text-brand-text',
+          )}
+        >
+          {t('audit.tab.api')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'fields'}
+          onClick={() => setActiveTab('fields')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium transition-colors duration-150 border-b-2',
+            activeTab === 'fields'
+              ? 'border-brand text-brand-text'
+              : 'border-transparent text-brand-muted hover:text-brand-text',
+          )}
+        >
+          {t('audit.tab.fields')}
+        </button>
+      </div>
+
+      {/* Field Transformations panel (quick task 260430-0tj) */}
+      {activeTab === 'fields' && (
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {mappingLoading && mappingEntries.length === 0 && (
+            <div className="flex items-center justify-center py-8 text-sm text-brand-muted">
+              <Loader2 className="w-5 h-5 animate-spin mr-2" aria-hidden="true" />
+              {t('audit.loadingMore')}
+            </div>
+          )}
+          {mappingError && (
+            <p className="px-4 py-3 text-sm text-red-400">{t('audit.fields.loadError')}</p>
+          )}
+          {!mappingLoading && !mappingError && mappingEntries.length === 0 && (
+            <div className="px-4 py-8 text-center text-sm text-brand-muted">
+              <p>{t('audit.fields.empty')}</p>
+              <p className="text-xs mt-1">{t('audit.fields.empty.hint')}</p>
+            </div>
+          )}
+          {mappingEntries.length > 0 && (
+            <ScrollArea className="flex-1">
+              <table className="w-full table-fixed" aria-label="Field transformations log">
+                <thead className="sticky top-0 bg-brand-surface border-b border-brand-border">
+                  <tr>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-44">
+                      {t('audit.fields.col.time')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-24">
+                      {t('audit.fields.col.copyId')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                      {t('audit.fields.col.field')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-32">
+                      {t('audit.fields.col.transformer')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted w-24">
+                      {t('audit.fields.col.outcome')}
+                    </th>
+                    <th className="text-left px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-brand-muted">
+                      {t('audit.fields.col.reason')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mappingEntries.map((e) => (
+                    <tr
+                      key={e.id}
+                      className="border-b border-brand-border-subtle/50 hover:bg-brand-surface-hover"
+                    >
+                      <td className="px-3 py-1.5 text-xs font-mono text-brand-text-secondary">
+                        {safeFormatTimestamp(e.timestamp)}
+                      </td>
+                      <td
+                        className="px-3 py-1.5 text-xs font-mono text-brand-text-secondary"
+                        title={e.copyId}
+                      >
+                        {e.copyId.slice(0, 8)}…
+                      </td>
+                      <td className="px-3 py-1.5 text-xs font-mono text-brand-text break-all">
+                        {e.fieldId}
+                      </td>
+                      <td className="px-3 py-1.5 text-xs">
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                          {e.transformerKind || '—'}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-1.5 text-xs">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'text-[10px] font-mono',
+                            e.outcome === 'ok' &&
+                              'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+                            e.outcome === 'failed' &&
+                              'bg-red-500/15 text-red-400 border-red-500/20',
+                            e.outcome === 'skipped' &&
+                              'bg-amber-500/15 text-amber-400 border-amber-500/20',
+                          )}
+                        >
+                          {t(`audit.fields.outcome.${e.outcome}`)}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-1.5 text-xs text-brand-text-secondary break-words">
+                        {e.failureReason ?? ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {mappingHasMore && (
+                <div className="flex justify-center py-3">
+                  <button
+                    type="button"
+                    onClick={loadMoreMapping}
+                    disabled={mappingLoading}
+                    className="px-3 py-1.5 text-xs text-brand-text bg-brand-surface-hover hover:bg-brand-border rounded transition-colors duration-150 disabled:opacity-50"
+                  >
+                    {t('audit.fields.loadMore')}
+                  </button>
+                </div>
+              )}
+            </ScrollArea>
+          )}
+        </div>
+      )}
+
+      {/* API Audit tab content */}
       {/* Filter toolbar */}
-      {showToolbar && (
+      {activeTab === 'api' && showToolbar && (
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-brand-border bg-brand-surface/60">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-md">
@@ -516,7 +704,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       )}
 
       {/* Loading state */}
-      {loading && (
+      {activeTab === 'api' && loading && (
         <ScrollArea className="flex-1">
           <table className="w-full table-fixed" aria-label="API audit log">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">
@@ -559,14 +747,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       )}
 
       {/* Error state */}
-      {error && (
+      {activeTab === 'api' && error && (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-red-400">{t('audit.loadError')}</p>
         </div>
       )}
 
       {/* Empty state — no entries at all */}
-      {showEmpty && (
+      {activeTab === 'api' && showEmpty && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
           <p className="text-sm font-semibold text-brand-text mb-1">{t('audit.empty.heading')}</p>
           <p className="text-xs text-brand-muted text-center max-w-sm">{t('audit.empty.body')}</p>
@@ -574,7 +762,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       )}
 
       {/* Empty state — entries exist but filtered out */}
-      {showFilteredEmpty && (
+      {activeTab === 'api' && showFilteredEmpty && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
           <p className="text-sm font-semibold text-brand-text mb-1">
             {t('audit.filter.empty.heading')}
@@ -606,7 +794,7 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       )}
 
       {/* Populated table */}
-      {showTable && (
+      {activeTab === 'api' && showTable && (
         <ScrollArea className="flex-1">
           <table className="w-full table-fixed" aria-label="API audit log">
             <thead className="bg-brand-surface border-b-2 border-brand-border sticky top-0 z-10">

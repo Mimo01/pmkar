@@ -1563,6 +1563,19 @@ pub async fn copy_ticket_v2(
                 }
                 _ => None,
             });
+
+            // Quick task 260430-0tj: derive outcome + failure_reason per row.
+            let transformer_kind = row.transformer_kind.clone();
+            let (outcome, failure_reason): (&str, Option<String>) = if let Some(gk) = gap_kind {
+                ("failed", Some(format!("unresolved {gk}")))
+            } else if resolved.fields.contains_key(&row.target_field_id) {
+                ("ok", None)
+            } else if src_val.is_null() {
+                ("skipped", Some("source value missing".to_string()))
+            } else {
+                ("skipped", Some("no value produced".to_string()))
+            };
+
             let _ = mdb.insert_mapping_audit(
                 &copy_id,
                 &row.target_field_id,
@@ -1570,6 +1583,9 @@ pub async fn copy_ticket_v2(
                 &tgt_hash,
                 was_overridden,
                 gap_kind,
+                &transformer_kind,
+                outcome,
+                failure_reason.as_deref(),
                 &timestamp,
             ); // audit failures must not block copy (mirrors AuditDb::insert silent-failure pattern)
         }
@@ -1593,6 +1609,9 @@ pub async fn copy_ticket_v2(
                 "(none)", // no source-mapping → use sentinel
                 &h,
                 true, // pure override
+                None,
+                "override",        // transformer_kind sentinel for ad-hoc overrides
+                "ok",              // override always provides a value
                 None,
                 &timestamp,
             );
@@ -1764,6 +1783,23 @@ fn redact_string_in_value(v: &serde_json::Value) -> serde_json::Value {
         }
         _ => v.clone(),
     }
+}
+
+/// Returns a page of mapping_audit_log entries (newest first). Frontend uses
+/// this on the Audit Log page's "Field Transformations" tab.
+/// Quick task 260430-0tj. Limit is clamped server-side (T-0tj-03 DoS mitigation).
+#[tauri::command]
+pub fn get_mapping_audit_log_page(
+    offset: i64,
+    limit: i64,
+    mapping_db: tauri::State<'_, Arc<Mutex<FieldMappingDb>>>,
+) -> Result<Vec<crate::field_mapping_db::MappingAuditEntry>, AppError> {
+    let limit = limit.clamp(1, 500);
+    let offset = offset.max(0);
+    let g = mapping_db
+        .lock()
+        .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+    g.get_mapping_audit_log_page(offset, limit)
 }
 
 /// Store a ticket snapshot and return any detected field changes.

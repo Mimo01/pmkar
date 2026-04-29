@@ -9,6 +9,7 @@ use crate::field_discovery::{FieldSchema, FieldSchemaType, FieldSide};
 use crate::field_transform::FieldMappingRow;
 use chrono::Utc;
 use rusqlite::{params, Connection, OptionalExtension};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 const CREATE_FIELD_SCHEMA_CACHE: &str = "
@@ -94,6 +95,7 @@ const ADD_UNIQUE_TARGET: &str = "
 /// (not audit.db) because its structure mirrors mapping data, NOT HTTP calls.
 /// Hash columns store SHA-256 hex (64 chars). `gap_kind` is one of NULL,
 /// "person", "version", "component" (matches `GapVariant` tag in `field_transform/mod.rs`).
+/// Quick task 260430-0tj extends with transformer_kind, outcome, failure_reason.
 const CREATE_MAPPING_AUDIT_LOG: &str = "
     CREATE TABLE IF NOT EXISTS mapping_audit_log (
         id                  INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,10 +105,59 @@ const CREATE_MAPPING_AUDIT_LOG: &str = "
         target_value_hash   TEXT NOT NULL,
         was_overridden      INTEGER NOT NULL DEFAULT 0,
         gap_kind            TEXT,
+        transformer_kind    TEXT NOT NULL DEFAULT '',
+        outcome             TEXT NOT NULL DEFAULT 'ok',
+        failure_reason      TEXT,
         timestamp           TEXT NOT NULL,
         created_at          INTEGER DEFAULT (strftime('%s','now'))
     );
 ";
+
+/// Migration: add transformer_kind/outcome/failure_reason columns to existing
+/// mapping_audit_log tables. SQLite ADD COLUMN is idempotent only via guard;
+/// we use pragma_table_info + a per-column conditional. Failure here would
+/// brick the app — surface the error rather than silently ignoring it.
+fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
+    let existing: Vec<String> = conn
+        .prepare("PRAGMA table_info(mapping_audit_log)")?
+        .query_map([], |r| r.get::<_, String>(1))?
+        .collect::<Result<Vec<_>, _>>()?;
+    let has = |name: &str| existing.iter().any(|c| c == name);
+    if !has("transformer_kind") {
+        conn.execute_batch(
+            "ALTER TABLE mapping_audit_log ADD COLUMN transformer_kind TEXT NOT NULL DEFAULT '';",
+        )?;
+    }
+    if !has("outcome") {
+        conn.execute_batch(
+            "ALTER TABLE mapping_audit_log ADD COLUMN outcome TEXT NOT NULL DEFAULT 'ok';",
+        )?;
+    }
+    if !has("failure_reason") {
+        conn.execute_batch(
+            "ALTER TABLE mapping_audit_log ADD COLUMN failure_reason TEXT;",
+        )?;
+    }
+    Ok(())
+}
+
+/// DTO for a row from `mapping_audit_log`. Serializes to camelCase for the
+/// frontend. Quick task 260430-0tj.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MappingAuditEntry {
+    pub id: i64,
+    pub copy_id: String,
+    pub field_id: String,
+    pub source_value_hash: String,
+    pub target_value_hash: String,
+    pub was_overridden: bool,
+    pub gap_kind: Option<String>,
+    pub transformer_kind: String,
+    pub outcome: String,
+    pub failure_reason: Option<String>,
+    pub timestamp: String,
+}
 
 /// Migration: repair any existing rows whose `source_schema_json` or `target_schema_json`
 /// is NULL for the 5 system default field IDs. Runs before `seed_defaults_if_empty` so
@@ -193,6 +244,7 @@ impl FieldMappingDb {
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
+        migrate_mapping_audit_log_columns(&conn)?;
         update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
@@ -208,6 +260,7 @@ impl FieldMappingDb {
         conn.execute_batch(ADD_UNIQUE_TARGET)?;
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
+        migrate_mapping_audit_log_columns(&conn)?;
         update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
@@ -448,7 +501,7 @@ impl FieldMappingDb {
         Ok(())
     }
 
-    /// Phase 23 CUTV-03 — insert one row into `mapping_audit_log`.
+    /// Phase 23 CUTV-03 / quick task 260430-0tj — insert one row into `mapping_audit_log`.
     ///
     /// All non-static values are bound via `rusqlite::params![]` — NEVER
     /// interpolated into the SQL string (T-23-T2 SQL-injection mitigation,
@@ -462,13 +515,16 @@ impl FieldMappingDb {
         target_value_hash: &str,
         was_overridden: bool,
         gap_kind: Option<&str>,
+        transformer_kind: &str,
+        outcome: &str,
+        failure_reason: Option<&str>,
         timestamp: &str,
     ) -> AppResult<()> {
         self.conn.execute(
             "INSERT INTO mapping_audit_log
                  (copy_id, field_id, source_value_hash, target_value_hash,
-                  was_overridden, gap_kind, timestamp)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                  was_overridden, gap_kind, transformer_kind, outcome, failure_reason, timestamp)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             rusqlite::params![
                 copy_id,
                 field_id,
@@ -476,10 +532,49 @@ impl FieldMappingDb {
                 target_value_hash,
                 i64::from(was_overridden),
                 gap_kind,
+                transformer_kind,
+                outcome,
+                failure_reason,
                 timestamp,
             ],
         )?;
         Ok(())
+    }
+
+    /// Returns mapping_audit_log entries newest first (ORDER BY id DESC).
+    /// Bounded by limit; offset is for pagination by the UI.
+    /// Quick task 260430-0tj.
+    pub fn get_mapping_audit_log_page(
+        &self,
+        offset: i64,
+        limit: i64,
+    ) -> AppResult<Vec<MappingAuditEntry>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, copy_id, field_id, source_value_hash, target_value_hash,
+                    was_overridden, gap_kind, transformer_kind, outcome,
+                    failure_reason, timestamp
+             FROM mapping_audit_log
+             ORDER BY id DESC
+             LIMIT ?1 OFFSET ?2",
+        )?;
+        let rows = stmt
+            .query_map(params![limit, offset], |r| {
+                Ok(MappingAuditEntry {
+                    id: r.get(0)?,
+                    copy_id: r.get(1)?,
+                    field_id: r.get(2)?,
+                    source_value_hash: r.get(3)?,
+                    target_value_hash: r.get(4)?,
+                    was_overridden: r.get::<_, i64>(5)? != 0,
+                    gap_kind: r.get(6)?,
+                    transformer_kind: r.get(7)?,
+                    outcome: r.get(8)?,
+                    failure_reason: r.get(9)?,
+                    timestamp: r.get(10)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(rows)
     }
 }
 
@@ -872,6 +967,9 @@ mod tests {
             "tgt-hash-bbb",
             false,
             None,
+            "identity",
+            "ok",
+            None,
             "2026-04-28T00:00:00Z",
         )
         .expect("insert");
@@ -899,6 +997,9 @@ mod tests {
             "h2",
             true,
             Some("person"),
+            "identity",
+            "ok",
+            None,
             "2026-04-28T00:01:00Z",
         )
         .expect("insert");
@@ -920,7 +1021,7 @@ mod tests {
         // into SQL, would drop the table. params![] binding stores it as a literal.
         let db = FieldMappingDb::open_in_memory().expect("open");
         let nasty = "x'; DROP TABLE mapping_audit_log; --";
-        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "ts")
+        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "identity", "ok", None, "ts")
             .expect("insert with nasty field_id");
         // Table still exists.
         let count: i64 = db
@@ -1123,6 +1224,115 @@ mod tests {
             rows.iter().all(|r| r.target_field_id.is_empty()),
             "all rows must have empty targetFieldId sentinel"
         );
+    }
+
+    // ── Quick task 260430-0tj: new mapping_audit_log outcome tests ─────────────
+
+    #[test]
+    fn mapping_audit_outcome_ok_when_field_resolved() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.insert_mapping_audit(
+            "copy-1", "summary", "h1", "h2", false, None,
+            "identity", "ok", None, "2026-04-30T00:00:00Z",
+        ).unwrap();
+        let row: (String, String, Option<String>) = db.conn
+            .query_row(
+                "SELECT transformer_kind, outcome, failure_reason
+                 FROM mapping_audit_log WHERE copy_id = 'copy-1'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )
+            .unwrap();
+        assert_eq!(row.0, "identity");
+        assert_eq!(row.1, "ok");
+        assert!(row.2.is_none());
+    }
+
+    #[test]
+    fn mapping_audit_outcome_failed_when_gap() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.insert_mapping_audit(
+            "copy-2", "assignee", "h1", "h2", false, Some("person"),
+            "user", "failed", Some("unresolved person"), "2026-04-30T00:00:00Z",
+        ).unwrap();
+        let row: (String, Option<String>) = db.conn
+            .query_row(
+                "SELECT outcome, failure_reason
+                 FROM mapping_audit_log WHERE copy_id = 'copy-2'",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .unwrap();
+        assert_eq!(row.0, "failed");
+        assert_eq!(row.1.as_deref(), Some("unresolved person"));
+    }
+
+    #[test]
+    fn mapping_audit_outcome_skipped_when_no_value() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        db.insert_mapping_audit(
+            "copy-3", "labels", "h1", "h2", false, None,
+            "identity", "skipped", Some("source value missing"),
+            "2026-04-30T00:00:00Z",
+        ).unwrap();
+        let outcome: String = db.conn
+            .query_row(
+                "SELECT outcome FROM mapping_audit_log WHERE copy_id = 'copy-3'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(outcome, "skipped");
+    }
+
+    #[test]
+    fn get_mapping_audit_log_page_returns_descending_by_id() {
+        let db = FieldMappingDb::open_in_memory().unwrap();
+        for i in 0..5 {
+            db.insert_mapping_audit(
+                &format!("copy-{i}"), "f", "h1", "h2", false, None,
+                "identity", "ok", None, "2026-04-30T00:00:00Z",
+            ).unwrap();
+        }
+        let page = db.get_mapping_audit_log_page(0, 10).unwrap();
+        assert_eq!(page.len(), 5);
+        assert_eq!(page[0].copy_id, "copy-4"); // newest first
+        assert_eq!(page[4].copy_id, "copy-0");
+    }
+
+    #[test]
+    fn legacy_db_migration_adds_new_columns() {
+        // Simulate a pre-fix DB by creating the table with the OLD schema (no new columns),
+        // then opening the FieldMappingDb (which triggers the migration), then inserting
+        // a row with the NEW signature. The migration must have added the columns.
+        let tmpdir = tempfile::tempdir().unwrap();
+        let path = tmpdir.path().join("legacy.db");
+        {
+            let conn = Connection::open(&path).unwrap();
+            conn.execute_batch(
+                "CREATE TABLE mapping_audit_log (
+                    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                    copy_id           TEXT NOT NULL,
+                    field_id          TEXT NOT NULL,
+                    source_value_hash TEXT NOT NULL,
+                    target_value_hash TEXT NOT NULL,
+                    was_overridden    INTEGER NOT NULL DEFAULT 0,
+                    gap_kind          TEXT,
+                    timestamp         TEXT NOT NULL,
+                    created_at        INTEGER DEFAULT (strftime('%s','now'))
+                );",
+            ).unwrap();
+        }
+        // Open through FieldMappingDb — migration runs.
+        let db = FieldMappingDb::open(&path).unwrap();
+        db.insert_mapping_audit(
+            "copy-legacy", "f", "h1", "h2", false, None,
+            "identity", "ok", None, "2026-04-30T00:00:00Z",
+        ).unwrap();
+        let page = db.get_mapping_audit_log_page(0, 10).unwrap();
+        assert_eq!(page.len(), 1);
+        assert_eq!(page[0].transformer_kind, "identity");
+        assert_eq!(page[0].outcome, "ok");
     }
 
     /// After fixing multiple dismissals, a real mapping can still be added for a

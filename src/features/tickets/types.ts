@@ -204,3 +204,19 @@ export interface AuditEntry {
   statusCode: number | null; // camelCase from Rust snake_case
   responseBody: string | null; // Truncated at 10KB, often null
 }
+
+// --- Field Transformation Audit (quick task 260430-0tj) ---
+
+export interface MappingAuditEntry {
+  id: number;
+  copyId: string;
+  fieldId: string;
+  sourceValueHash: string;
+  targetValueHash: string;
+  wasOverridden: boolean;
+  gapKind: string | null;
+  transformerKind: string;
+  outcome: 'ok' | 'failed' | 'skipped';
+  failureReason: string | null;
+  timestamp: string;
+}
