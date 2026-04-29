@@ -5,7 +5,7 @@ milestone_name: milestone
 status: completed
 stopped_at: context exhaustion at 75% (2026-04-29)
 last_updated: "2026-04-29T09:25:10.821Z"
-last_activity: "2026-04-29 — Completed quick task 260429-mjq: JQL presets Mine/All watched/Custom with all_watched default"
+last_activity: "2026-04-29 — Completed quick task 260430-0tj: Log all copy ticket transformations (successful and failed)"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -316,10 +316,11 @@ None yet.
 | 260429-mjq | Modify JQL presets: Mine / All watched / Custom with all_watched as default | 2026-04-29 | TBD | | [260429-mjq-jql-preset-mine-all-watched](./quick/260429-mjq-jql-preset-mine-all-watched/) |
 | 260429-v9y | Redesign audit log table — filter toolbar (search/method/status) + copy-log buttons + visual polish | 2026-04-29 | f363341 | | [260429-v9y-redesign-audit-log-table](./quick/260429-v9y-redesign-audit-log-table/) |
 | 260430-0l2 | Clarify Watched Users settings hint — note current user is auto-included in "All watched users" | 2026-04-29 | ba71eec | | [260430-0l2-add-info-to-the-settings-watched-users-t](./quick/260430-0l2-add-info-to-the-settings-watched-users-t/) |
+| 260430-0tj | Log all copy ticket transformations (successful and failed) — mapping_audit_log + Audit Log "Field Transformations" tab | 2026-04-29 | 69ef569 | | [260430-0tj-log-all-copy-ticket-transformations-succ](./quick/260430-0tj-log-all-copy-ticket-transformations-succ/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260430-0l2: Clarify Watched Users hint about auto-inclusion of current user
+Last activity: 2026-04-29 — Completed quick task 260430-0tj: Log all copy ticket transformations (successful and failed)
 Last session: 2026-04-29T09:25:10.818Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
