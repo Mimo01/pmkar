@@ -1631,11 +1631,16 @@ pub async fn copy_ticket_v2(
         .map_err(|_| AppError::Http("Failed to create issue in Cloud Jira".into()))?;
 
     let create_status = create_resp.status().as_u16();
-    if !create_resp.status().is_success() {
+    // Read the body once — for both success and failure paths so we can
+    // surface Jira's actual error response in CopyStepResult.detail when the
+    // create fails (debug session: copy-400-and-logs-crash). This is the
+    // user's primary diagnostic; without it they must dig into the audit log.
+    let create_text = create_resp.text().await.unwrap_or_default();
+    if !(200..300).contains(&create_status) {
         steps.push(CopyStepResult {
             step: "create_issue".to_string(),
             success: false,
-            detail: Some(format!("Issue creation returned status {create_status}")),
+            detail: Some(format_create_failure_detail(create_status, &create_text)),
         });
         return Ok(CopyTicketResult {
             target_key: None,
@@ -1644,7 +1649,6 @@ pub async fn copy_ticket_v2(
         });
     }
 
-    let create_text = create_resp.text().await.unwrap_or_default();
     let create_json: serde_json::Value =
         serde_json::from_str(&create_text).unwrap_or(serde_json::json!({}));
     let target_key = create_json["key"].as_str().unwrap_or("").to_string();
@@ -1705,6 +1709,41 @@ pub async fn copy_ticket_v2(
         target_url: Some(format!("{trimmed_target}/browse/{target_key}")),
         steps,
     })
+}
+
+/// Format a user-facing detail for a failed `create_issue` response. Embeds
+/// Jira's response body (parsed + compacted, or truncated raw text) so the
+/// user can see the actual error inline in `CopyResultPage` without opening
+/// the audit log (debug session: copy-400-and-logs-crash).
+///
+/// Returns a string like:
+///   `"Issue creation returned status 400: {\"errorMessages\":[],\"errors\":{\"project\":\"valid project is required\"}}"`
+///
+/// Truncates raw bodies to 1024 chars so a runaway HTML error page does not
+/// blow out the result modal layout.
+fn format_create_failure_detail(status: u16, body: &str) -> String {
+    let trimmed = body.trim();
+    if trimmed.is_empty() {
+        return format!("Issue creation returned status {status}");
+    }
+    // If the body is JSON, compact it (single-line) so the failure detail stays
+    // on a tractable footprint. Otherwise embed the raw text truncated.
+    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(trimmed) {
+        if let Ok(compact) = serde_json::to_string(&parsed) {
+            let truncated = if compact.len() > 1024 {
+                format!("{}…", &compact[..1024])
+            } else {
+                compact
+            };
+            return format!("Issue creation returned status {status}: {truncated}");
+        }
+    }
+    let truncated = if trimmed.len() > 1024 {
+        format!("{}…", &trimmed[..1024])
+    } else {
+        trimmed.to_string()
+    };
+    format!("Issue creation returned status {status}: {truncated}")
 }
 
 /// Phase 23 D-07 — apply credential redaction to any string values inside a
@@ -1889,4 +1928,65 @@ pub fn trigger_manual_poll(
     }
 
     Ok(())
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Debug session: copy-400-and-logs-crash — these tests pin the format of
+    // the user-facing detail so the actual Jira error response is always
+    // surfaced in `CopyStepResult.detail` (the only diagnostic the user sees
+    // before the audit log).
+
+    #[test]
+    fn format_create_failure_includes_jira_error_body() {
+        let body = r#"{"errorMessages":[],"errors":{"project":"valid project is required"}}"#;
+        let out = format_create_failure_detail(400, body);
+        assert!(out.contains("400"), "status code present: {out}");
+        assert!(out.contains("valid project is required"), "body content present: {out}");
+        assert!(out.contains("project"), "field name present: {out}");
+    }
+
+    #[test]
+    fn format_create_failure_handles_empty_body() {
+        let out = format_create_failure_detail(500, "");
+        assert_eq!(out, "Issue creation returned status 500");
+    }
+
+    #[test]
+    fn format_create_failure_handles_whitespace_body() {
+        let out = format_create_failure_detail(503, "   
+  ");
+        assert_eq!(out, "Issue creation returned status 503");
+    }
+
+    #[test]
+    fn format_create_failure_compacts_pretty_json() {
+        let body = "{\n  \"errors\": {\n    \"summary\": \"required\"\n  }\n}";
+        let out = format_create_failure_detail(400, body);
+        // Must include status, must include compacted (single-line) JSON.
+        assert!(out.contains("400"), "{out}");
+        assert!(out.contains("\"summary\":\"required\""), "compacted JSON: {out}");
+        assert!(!out.contains('\n'), "no newlines in compacted output: {out}");
+    }
+
+    #[test]
+    fn format_create_failure_truncates_oversize_body() {
+        let big = "x".repeat(5000);
+        let out = format_create_failure_detail(500, &big);
+        assert!(out.starts_with("Issue creation returned status 500: "));
+        // Truncated to 1024 + ellipsis. Some leading "Issue creation..." prefix.
+        assert!(out.contains('…'), "ellipsis present: {}", &out[..120]);
+        assert!(out.len() < 1200, "total bounded: {}", out.len());
+    }
+
+    #[test]
+    fn format_create_failure_falls_through_html_body() {
+        let html = "<html><body>Bad Request</body></html>";
+        let out = format_create_failure_detail(400, html);
+        assert!(out.contains("400"));
+        assert!(out.contains("Bad Request"));
+    }
 }
