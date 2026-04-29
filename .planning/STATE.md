@@ -314,7 +314,7 @@ None yet.
 | 260429-s4t | Ticket list sort by ID, Created, Priority, Status, Assignee | 2026-04-29 | 2b6c87b | | [260429-s4t-add-ticket-list-sort-by-ticket-id](./quick/260429-s4t-add-ticket-list-sort-by-ticket-id/) |
 | 260429-ev2 | Show all source Jira fields dynamically on issue detail and copy modals | 2026-04-29 | 54c64cf | | [260429-ev2-show-all-source-jira-fields-dynamically-](./quick/260429-ev2-show-all-source-jira-fields-dynamically-/) |
 | 260429-mjq | Modify JQL presets: Mine / All watched / Custom with all_watched as default | 2026-04-29 | TBD | | [260429-mjq-jql-preset-mine-all-watched](./quick/260429-mjq-jql-preset-mine-all-watched/) |
-| 260429-v9y | Redesign audit log table — filter toolbar (search/method/status) + copy-log buttons + visual polish | 2026-04-29 | TBD | | [260429-v9y-redesign-audit-log-table](./quick/260429-v9y-redesign-audit-log-table/) |
+| 260429-v9y | Redesign audit log table — filter toolbar (search/method/status) + copy-log buttons + visual polish | 2026-04-29 | f363341 | | [260429-v9y-redesign-audit-log-table](./quick/260429-v9y-redesign-audit-log-table/) |
 
 ## Session Continuity
 
