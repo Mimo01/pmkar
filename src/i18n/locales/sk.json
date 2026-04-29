@@ -384,5 +384,7 @@
   "settings.transformer.component.label": "Komponent",
   "settings.transformer.component.description": "Priradí komponent podľa názvu",
   "settings.transformer.priority.label": "Priorita",
-  "settings.transformer.priority.description": "Mapuje úrovne priority (napr. Vysoká → Vysoká)"
+  "settings.transformer.priority.description": "Mapuje úrovne priority (napr. Vysoká → Vysoká)",
+  "settings.transformer.userName.label": "Meno používateľa",
+  "settings.transformer.userName.description": "Skopíruje zobrazované meno osoby ako prostý text"
 }

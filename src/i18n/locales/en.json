@@ -384,5 +384,7 @@
   "settings.transformer.component.label": "Component",
   "settings.transformer.component.description": "Match components by name",
   "settings.transformer.priority.label": "Priority",
-  "settings.transformer.priority.description": "Map priority levels (e.g. High → High)"
+  "settings.transformer.priority.description": "Map priority levels (e.g. High → High)",
+  "settings.transformer.userName.label": "User Name",
+  "settings.transformer.userName.description": "Copy the person's display name as plain text"
 }

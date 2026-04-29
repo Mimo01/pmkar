@@ -62,7 +62,11 @@ pub async fn apply_mapping(
 
         // User / Array<user>
         if is_user_field(&row.source_schema) {
-            dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+            if row.transformer_kind == "user_name" {
+                dispatch_user_name(row, &src_val, &mut fields);
+            } else {
+                dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+            }
             continue;
         }
 
@@ -95,6 +99,46 @@ fn is_description_row(s: &FieldSchemaType) -> bool {
 
 fn is_array_of(s: &FieldSchemaType, item_kind: &str) -> bool {
     matches!(s, FieldSchemaType::Array { items, .. } if items == item_kind)
+}
+
+/// Extracts the display name (or username fallback) from a source user field and
+/// writes it as a plain string. Used when transformer_kind == "user_name" and
+/// the target field is a text type.
+///
+/// For single user: writes the displayName string (falls back to name, then empty).
+/// For array<user>: joins all display names with ", ".
+fn dispatch_user_name(row: &FieldMappingRow, src_val: &Value, fields: &mut Map<String, Value>) {
+    let extract_name = |obj: &Value| -> String {
+        if let Some(n) = obj.get("displayName").and_then(|x| x.as_str()) {
+            if !n.is_empty() {
+                return n.to_string();
+            }
+        }
+        if let Some(n) = obj.get("name").and_then(|x| x.as_str()) {
+            if !n.is_empty() {
+                return n.to_string();
+            }
+        }
+        String::new()
+    };
+
+    let result = if let Some(arr) = src_val.as_array() {
+        let names: Vec<String> = arr.iter().map(extract_name).filter(|n| !n.is_empty()).collect();
+        if names.is_empty() {
+            return;
+        }
+        names.join(", ")
+    } else if src_val.is_object() {
+        let name = extract_name(src_val);
+        if name.is_empty() {
+            return;
+        }
+        name
+    } else {
+        return;
+    };
+
+    fields.insert(row.target_field_id.clone(), Value::String(result));
 }
 
 fn dispatch_user(
@@ -265,6 +309,16 @@ mod tests {
             transformer_kind: "auto".into(),
             source_schema: schema.clone(),
             target_schema: schema,
+        }
+    }
+
+    fn row_with_kind(src: &str, dst: &str, src_schema: FieldSchemaType, dst_schema: FieldSchemaType, kind: &str) -> FieldMappingRow {
+        FieldMappingRow {
+            source_field_id: src.into(),
+            target_field_id: dst.into(),
+            transformer_kind: kind.into(),
+            source_schema: src_schema,
+            target_schema: dst_schema,
         }
     }
 
@@ -729,5 +783,74 @@ mod tests {
             matches!(result, Err(TransformError::DuplicateTargetField(ref id)) if id == "tgt_shared"),
             "expected DuplicateTargetField(\"tgt_shared\"), got {result:?}",
         );
+    }
+
+    // ── user_name transformer tests ─────────────────────────────────────────
+
+    #[tokio::test]
+    async fn user_name_transformer_extracts_display_name() {
+        let issue = json!({"fields":{"assignee":{"name":"alice","displayName":"Alice Smith","emailAddress":"alice@acme.com"}}});
+        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
+        assert_eq!(out.fields.get("cf_reporter_name"), Some(&json!("Alice Smith")));
+        assert!(out.gaps.is_empty());
+    }
+
+    #[tokio::test]
+    async fn user_name_transformer_falls_back_to_name_when_no_display_name() {
+        let issue = json!({"fields":{"assignee":{"name":"alice.smith"}}});
+        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
+        assert_eq!(out.fields.get("cf_reporter_name"), Some(&json!("alice.smith")));
+    }
+
+    #[tokio::test]
+    async fn user_name_transformer_array_joins_display_names() {
+        let issue = json!({"fields":{"watchers":[
+            {"name":"alice","displayName":"Alice Smith"},
+            {"name":"bob","displayName":"Bob Jones"}
+        ]}});
+        let mapping = vec![row_with_kind("watchers", "cf_watcher_names", s_array("user"), s_str_summary(), "user_name")];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
+        assert_eq!(out.fields.get("cf_watcher_names"), Some(&json!("Alice Smith, Bob Jones")));
+    }
+
+    #[tokio::test]
+    async fn user_name_transformer_skips_null_user() {
+        let issue = json!({"fields":{"assignee":null}});
+        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
+        assert!(!out.fields.contains_key("cf_reporter_name"));
+        assert!(out.gaps.is_empty());
+    }
+
+    #[tokio::test]
+    async fn user_transformer_still_resolves_account_id_when_kind_is_user() {
+        // Regression: user_name check must not affect standard user transformer
+        let issue = json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
+        let mapping = vec![row("assignee", "assignee", s_user())];
+        let (u, v, c) = make_resolvers();
+        let mut map = HashMap::new();
+        map.insert("alice".into(), Some("AID-A".into()));
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
+        assert_eq!(out.fields.get("assignee"), Some(&json!({"accountId":"AID-A"})));
     }
 }

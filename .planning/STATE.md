@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.4.0
-milestone_name: Configurable Field Mapping
+milestone_name: milestone
 status: completed
-stopped_at: milestone close 2026-04-29
-last_updated: "2026-04-29T00:00:00.000Z"
-last_activity: "2026-04-29 -- v0.4.0 milestone closed: 7 phases, 28 plans, archived to milestones/, tagged v0.4.0"
+stopped_at: context exhaustion at 75% (2026-04-29)
+last_updated: "2026-04-29T00:27:34.246Z"
+last_activity: "2026-04-29 — Completed quick task 260429-un1: user_name transformer for user→text field mapping"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -310,10 +310,11 @@ None yet.
 | 260429-0hu | Normalize app container layout — full-width ticket detail and settings | 2026-04-29 | 4a36874 | | [260429-0hu-the-app-container-layout-is-inconsistent](./quick/260429-0hu-the-app-container-layout-is-inconsistent/) |
 | 260429-nhs | Fix field mappings not applied on story copy — typed schema seeds + suggestion persist | 2026-04-29 | 517a4c7 | | [260429-nhs-fix-field-mappings-not-applied-on-copy](./quick/260429-nhs-fix-field-mappings-not-applied-on-copy/) |
 | 260429-47r | PriorityRenderer — VirtualizedCombobox dropdown for priority fields in copy modal | 2026-04-29 | 9a513d4 | | [260429-47r-priority-renderer](./quick/260429-47r-priority-renderer/) |
+| 260429-un1 | user_name transformer — extract display name as plain text for user→string mappings | 2026-04-29 | 31de106 | | [260429-un1-user-name-transformer](./quick/260429-un1-user-name-transformer/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260429-47r: PriorityRenderer for priority schema type
-Last session: 2026-04-28T21:40:22.315Z
-Stopped at: context exhaustion at 75% (2026-04-28)
+Last activity: 2026-04-29 — Completed quick task 260429-un1: user_name transformer for user→text field mapping
+Last session: 2026-04-29T00:27:34.243Z
+Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
