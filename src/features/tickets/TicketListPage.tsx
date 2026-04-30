@@ -15,11 +15,28 @@ import { isDoneTicket } from './utils';
 
 // --- Helpers ---
 
+/**
+ * Build the JQL string sent to the backend.
+ *
+ * Project scoping (debug session: fetched-tasks-wrong-project):
+ *   When `sourceProjectKey` is set in the connection store, the built-in
+ *   presets (`mine`, `all_watched`) are wrapped with `project = "<key>" AND (...)`.
+ *   Without this scope the broadened `mine` clauses (`comment ~ me`,
+ *   `description ~ me`, `issueKey in watchedIssues()`) match across every
+ *   Jira project the user has touched, leaking foreign-project tickets into
+ *   the source list. The legacy `assignee = me` JQL was implicitly project-
+ *   correct only because users tend to be assigned tickets in their own
+ *   project; that coincidence broke when the preset was redesigned (2dd76f1).
+ *
+ *   `custom` is intentionally NOT wrapped — the user wrote raw JQL and may
+ *   already have a `project = ...` clause (or want a cross-project query).
+ */
 function buildJql(
   preset: JqlPreset,
   custom: string | null,
   watchedUsers: { identifier: string }[],
   currentUser: string,
+  sourceProjectKey: string | null,
 ): string {
   if (preset === 'custom' && custom) return custom;
 
@@ -30,18 +47,24 @@ function buildJql(
     `issueKey in watchedIssues()`,
   ];
 
-  // 'all_watched': mine criteria + watched users (assignee, mentioned in comments/description)
+  // Build the OR'd people clause first, then optionally wrap with project scope.
+  let peopleClause: string;
   if (preset === 'all_watched' && watchedUsers.length > 0) {
     const watchedClauses = watchedUsers.flatMap((u) => [
       `assignee = "${u.identifier}"`,
       `comment ~ "${u.identifier}"`,
       `description ~ "${u.identifier}"`,
     ]);
-    return `(${mineClauses.join(' OR ')} OR ${watchedClauses.join(' OR ')}) ORDER BY updated DESC`;
+    peopleClause = `${mineClauses.join(' OR ')} OR ${watchedClauses.join(' OR ')}`;
+  } else {
+    // 'mine' and everything else (including legacy 'assigned'/'mentioned' DB values)
+    peopleClause = mineClauses.join(' OR ');
   }
 
-  // 'mine' and everything else (including legacy 'assigned'/'mentioned' DB values)
-  return `(${mineClauses.join(' OR ')}) ORDER BY updated DESC`;
+  if (sourceProjectKey && sourceProjectKey.length > 0) {
+    return `project = "${sourceProjectKey}" AND (${peopleClause}) ORDER BY updated DESC`;
+  }
+  return `(${peopleClause}) ORDER BY updated DESC`;
 }
 
 function getErrorDetail(error: string, t: (key: string) => string): string {
@@ -92,13 +115,15 @@ export function TicketListPage() {
     const store = useTicketStore.getState();
     store.setFetchStatus('loading');
     try {
-      const serverConn = useConnectionStore.getState().serverConnection;
+      const connState = useConnectionStore.getState();
+      const serverConn = connState.serverConnection;
       if (!serverConn) throw new Error('No server connection');
       const jql = buildJql(
         store.jqlPreset,
         store.jqlCustom,
         store.watchedUsers,
         serverConn.username,
+        connState.sourceProjectKey,
       );
       const result = await invoke<FetchTicketsResult>('fetch_tickets', {
         baseUrl: serverConn.baseUrl,

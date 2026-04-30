@@ -93,17 +93,38 @@ pub async fn run_poll_loop(
     }
 }
 
-/// Extract connection info and watermark from locked state before any async call.
-/// Returns `(watermark, base_url, username, fetch_config)` or `None` on lock failure.
+/// Bundle of values pulled out of the locked DB state for one poll cycle.
+/// Held in its own struct so we can extend it (e.g. with `source_project_key`)
+/// without churning every call site / clippy threshold.
+struct PollParams {
+    watermark: Option<String>,
+    base_url: String,
+    username: String,
+    fetch_config: FetchConfig,
+    /// Configured source project key (or None if user has not selected one).
+    /// Used to scope JQL to the selected project so that broadened "mine"
+    /// clauses (`comment ~ me`, `description ~ me`, `watchedIssues()`) cannot match
+    /// foreign-project tickets. See debug session: fetched-tasks-wrong-project.
+    source_project_key: Option<String>,
+}
+
+/// Extract connection info, watermark, and project scope from locked state
+/// before any async call. Returns `None` on lock failure or missing server
+/// connection.
 fn extract_poll_params(
     triage_db: &Arc<Mutex<TriageDb>>,
     snapshot_db: &Arc<Mutex<SnapshotDb>>,
-) -> Option<(Option<String>, String, String, FetchConfig)> {
+) -> Option<PollParams> {
     let tdb = triage_db.lock().ok()?;
     let sdb = snapshot_db.lock().ok()?;
     let watermark = sdb.get_watermark().ok().flatten();
     let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
     let fetch_config = tdb.get_fetch_config().ok()?;
+    // get_project_keys returns (source_key, target_key, source_name, target_name).
+    let source_project_key = tdb
+        .get_project_keys()
+        .ok()
+        .and_then(|(src, _, _, _)| src);
     drop(sdb);
     let server_meta = conn_meta
         .into_iter()
@@ -111,7 +132,13 @@ fn extract_poll_params(
     let base_url = server_meta.base_url.clone();
     let username = server_meta.username.clone();
     drop(tdb);
-    Some((watermark, base_url, username, fetch_config))
+    Some(PollParams {
+        watermark,
+        base_url,
+        username,
+        fetch_config,
+        source_project_key,
+    })
 }
 
 /// Execute one poll cycle. Fetches tickets updated since watermark, runs change detection.
@@ -124,8 +151,13 @@ async fn do_poll(
     let now = Utc::now().to_rfc3339();
 
     // Step 1: Extract connection info and watermark (lock, extract, drop before await)
-    let Some((watermark, base_url, username, fetch_config)) =
-        extract_poll_params(triage_db, snapshot_db)
+    let Some(PollParams {
+        watermark,
+        base_url,
+        username,
+        fetch_config,
+        source_project_key,
+    }) = extract_poll_params(triage_db, snapshot_db)
     else {
         // No server connection configured or lock failure — nothing to poll
         return PollCompletePayload::ok_no_changes(now);
@@ -149,6 +181,7 @@ async fn do_poll(
         fetch_config.jql_custom.as_deref(),
         &fetch_config.watched_users,
         &username,
+        source_project_key.as_deref(),
     );
     let jql = if let Some(ref wm) = watermark {
         format!("({base_jql}) AND updated >= \"{wm}\"")
@@ -281,13 +314,32 @@ fn build_mine_clauses(username: &str) -> Vec<String> {
     ]
 }
 
+/// Wrap an OR'd people clause with `project = "<key>" AND (...)` when a source
+/// project is configured. Without this scope the broadened "mine" clauses
+/// match across every Jira project the user has touched, leaking foreign-
+/// project tickets into the source list. See debug session:
+/// fetched-tasks-wrong-project.
+fn wrap_with_project(people_or_clause: &str, source_project_key: Option<&str>) -> String {
+    match source_project_key {
+        Some(key) if !key.is_empty() => {
+            format!(
+                "project = \"{key}\" AND ({people_or_clause}) ORDER BY updated DESC"
+            )
+        }
+        _ => format!("({people_or_clause}) ORDER BY updated DESC"),
+    }
+}
+
 fn build_poll_jql(
     preset: &str,
     custom: Option<&str>,
     watched_users: &[WatchedUser],
     username: &str,
+    source_project_key: Option<&str>,
 ) -> String {
     match preset {
+        // `custom` is intentionally NOT scoped — the user wrote raw JQL and may
+        // already have a project clause (or want a deliberate cross-project query).
         "custom" => custom.map_or_else(
             || format!("assignee = \"{username}\" ORDER BY updated DESC"),
             str::to_string,
@@ -295,7 +347,7 @@ fn build_poll_jql(
         "all_watched" => {
             let mine = build_mine_clauses(username);
             if watched_users.is_empty() {
-                return format!("({}) ORDER BY updated DESC", mine.join(" OR "));
+                return wrap_with_project(&mine.join(" OR "), source_project_key);
             }
             let watched: Vec<String> = watched_users
                 .iter()
@@ -308,12 +360,12 @@ fn build_poll_jql(
                 })
                 .collect();
             let all: Vec<String> = mine.into_iter().chain(watched).collect();
-            format!("({}) ORDER BY updated DESC", all.join(" OR "))
+            wrap_with_project(&all.join(" OR "), source_project_key)
         }
         // "mine", "assigned", "mentioned" and unknown presets: current user criteria
         _ => {
             let mine = build_mine_clauses(username);
-            format!("({}) ORDER BY updated DESC", mine.join(" OR "))
+            wrap_with_project(&mine.join(" OR "), source_project_key)
         }
     }
 }
@@ -376,5 +428,75 @@ mod tests {
             json.contains("\"hadError\""),
             "should use camelCase hadError"
         );
+    }
+
+    // ── build_poll_jql project-scope tests ─────────────────────────────────────
+    // Regression coverage for debug session: fetched-tasks-wrong-project.
+
+    #[test]
+    fn test_build_poll_jql_mine_no_project() {
+        let jql = build_poll_jql("mine", None, &[], "alice", None);
+        assert!(
+            !jql.contains("project ="),
+            "no source project key => no project clause"
+        );
+        assert!(jql.contains("assignee = \"alice\""));
+        assert!(jql.contains("comment ~ \"alice\""));
+        assert!(jql.contains("description ~ \"alice\""));
+        assert!(jql.contains("watchedIssues()"));
+        assert!(jql.contains("ORDER BY updated DESC"));
+    }
+
+    #[test]
+    fn test_build_poll_jql_mine_with_project_scope() {
+        let jql = build_poll_jql("mine", None, &[], "alice", Some("XYZ"));
+        // Project clause must be the prefix and AND'd with the people clause
+        assert!(
+            jql.starts_with("project = \"XYZ\" AND ("),
+            "project clause must scope the people clause: got {jql}"
+        );
+        assert!(jql.contains("assignee = \"alice\""));
+        assert!(jql.contains("comment ~ \"alice\""));
+        assert!(jql.contains("description ~ \"alice\""));
+        assert!(jql.contains("watchedIssues()"));
+        assert!(jql.ends_with("ORDER BY updated DESC"));
+    }
+
+    #[test]
+    fn test_build_poll_jql_all_watched_with_project_scope() {
+        let watched = vec![WatchedUser {
+            identifier: "bob".to_string(),
+            display_name: "Bob".to_string(),
+            email: None,
+        }];
+        let jql = build_poll_jql("all_watched", None, &watched, "alice", Some("XYZ"));
+        assert!(jql.starts_with("project = \"XYZ\" AND ("));
+        assert!(jql.contains("assignee = \"alice\""));
+        assert!(jql.contains("assignee = \"bob\""));
+        assert!(jql.contains("comment ~ \"bob\""));
+        assert!(jql.contains("description ~ \"bob\""));
+    }
+
+    #[test]
+    fn test_build_poll_jql_custom_not_wrapped() {
+        // Custom JQL is left untouched even when a source project is selected,
+        // because the user may have written their own project clause or want
+        // a deliberate cross-project query.
+        let jql = build_poll_jql(
+            "custom",
+            Some("project = ABC AND status = Open"),
+            &[],
+            "alice",
+            Some("XYZ"),
+        );
+        assert_eq!(jql, "project = ABC AND status = Open");
+    }
+
+    #[test]
+    fn test_build_poll_jql_empty_project_key_treated_as_none() {
+        // Defensive: if the source project key is the empty string, treat it
+        // as if no project was selected rather than emitting `project = ""`.
+        let jql = build_poll_jql("mine", None, &[], "alice", Some(""));
+        assert!(!jql.contains("project ="));
     }
 }
