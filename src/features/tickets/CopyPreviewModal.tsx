@@ -23,6 +23,7 @@ import { computeGapFields } from './computeGapFields';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { GapsSection } from './GapsSection';
+import { isOverrideValueFilled } from './isOverrideValueFilled';
 import { IssueTypeChooser } from './IssueTypeChooser';
 import type { JiraUser } from './types';
 
@@ -183,6 +184,17 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
     [resolvedTargetFields, mappingRows],
   );
 
+  // Gaps that the user has NOT yet filled in via the GapsSection inputs.
+  // A gap with a non-empty override value is satisfied and must NOT block the
+  // Copy button — the user has provided a value to send to the backend.
+  const unfilledGapFields = useMemo(
+    () =>
+      gapFields.filter(
+        (g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema),
+      ),
+    [gapFields, overrideValues],
+  );
+
   const gapIds = useMemo(() => new Set(gapFields.map((g) => g.fieldId)), [gapFields]);
   const dynamicFormFields = useMemo(
     () => resolvedTargetFields.filter((f) => f.fieldId !== 'summary' && !gapIds.has(f.fieldId)),
@@ -219,7 +231,10 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   }, [reset, onOpenSettingsSection]);
 
   // ── Copy gating ───────────────────────────────────────────────────────────
-  const isGated = gapFields.length > 0;
+  // A gap field gates the copy only while its override value is empty.
+  // Once the user fills in the gap input (writing to overrideValues), the
+  // gate opens — the entered value flows to the backend via copyStore.confirmCopy.
+  const isGated = unfilledGapFields.length > 0;
   const isCopyDisabled = phase === 'copying' || isGated;
 
   const isOpen = phase === 'loading_preview' || phase === 'previewing' || phase === 'copying';
@@ -453,7 +468,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
               {isGated && (
                 <TooltipContent>
                   {t('copy.preview.missingFields', {
-                    fields: gapFields.map((g) => g.name).join(', '),
+                    fields: unfilledGapFields.map((g) => g.name).join(', '),
                   })}
                 </TooltipContent>
               )}
