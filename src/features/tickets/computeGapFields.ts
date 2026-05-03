@@ -12,13 +12,20 @@ import type { FieldMappingRow } from '@/features/field-mapping/types';
  *      `targetFieldId`. The empty-string sentinel (Phase 21 D-07) is a
  *      dismissed suggestion, NOT a coverage commitment, so it does not
  *      remove a field from the gap list.
- *   4. It is NOT the `summary` field — Phase 22 owns a dedicated summary
- *      input (D-01) above the form, so summary never appears as a gap.
+ *   4. It is NOT one of the pipeline-managed fields that `copy_ticket_v2`
+ *      always injects unconditionally regardless of the mapping:
+ *        - `summary`  — dedicated input (D-01) above the form
+ *        - `issuetype` — always set from `args.target_issue_type_id`
+ *        - `project`  — always set from the configured target project key
  *
  * Output preserves the input order of `resolvedTargetFields`.
  *
  * Pure function — no React, no store reads. Tested in isolation.
  */
+
+// Fields that copy_ticket_v2 always injects — never a user-fillable gap.
+const PIPELINE_MANAGED_FIELDS = new Set(['summary', 'issuetype', 'project']);
+
 export function computeGapFields(
   resolvedTargetFields: FieldSchema[],
   mappingRows: FieldMappingRow[],
@@ -35,7 +42,7 @@ export function computeGapFields(
     if (!f.required) continue;
     if (f.hasDefaultValue === true) continue;
     if (mappedTargetIds.has(f.fieldId)) continue;
-    if (f.fieldId === 'summary') continue;
+    if (PIPELINE_MANAGED_FIELDS.has(f.fieldId)) continue;
     out.push(f);
   }
   return out;

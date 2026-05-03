@@ -63,6 +63,29 @@ describe('computeGapFields', () => {
     expect(gaps.map((g) => g.fieldId)).toEqual(['environment']);
   });
 
+  it("always excludes 'issuetype' — copy_ticket_v2 always injects it", () => {
+    const fields = [f('issuetype', true), f('environment', true)];
+    const gaps = computeGapFields(fields, []);
+    expect(gaps.map((g) => g.fieldId)).toEqual(['environment']);
+  });
+
+  it("always excludes 'project' — copy_ticket_v2 always injects it", () => {
+    const fields = [f('project', true), f('environment', true)];
+    const gaps = computeGapFields(fields, []);
+    expect(gaps.map((g) => g.fieldId)).toEqual(['environment']);
+  });
+
+  it('excludes all three pipeline-managed fields together', () => {
+    const fields = [
+      f('summary', true),
+      f('issuetype', true),
+      f('project', true),
+      f('environment', true),
+    ];
+    const gaps = computeGapFields(fields, []);
+    expect(gaps.map((g) => g.fieldId)).toEqual(['environment']);
+  });
+
   it('preserves the input order of remaining gap fields', () => {
     const fields = [
       f('a', true),
