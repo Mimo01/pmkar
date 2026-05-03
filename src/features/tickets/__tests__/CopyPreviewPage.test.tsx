@@ -81,9 +81,9 @@ let mockCache: Record<string, { status: string; fields?: unknown[] }> = {};
 vi.mock('@/stores/schemaCacheStore', () => ({
   useSchemaCacheStore: Object.assign(
     (selector: (s: unknown) => unknown) =>
-      selector({ cache: mockCache, prewarmedIssueTypes: { PROJ: [] } }),
+      selector({ cache: mockCache, prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] }, preWarm: vi.fn().mockResolvedValue(undefined), loadSchema: vi.fn() }),
     {
-      getState: () => ({ cache: mockCache, prewarmedIssueTypes: { PROJ: [] } }),
+      getState: () => ({ cache: mockCache, prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] }, preWarm: vi.fn().mockResolvedValue(undefined), loadSchema: vi.fn() }),
     },
   ),
   schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
@@ -351,7 +351,7 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     await waitFor(() => expect(capturedFormProps.searchCallbacks).toBeDefined());
     const onSearchUsers = (capturedFormProps as { searchCallbacks: { onSearchUsers: (q: string) => Promise<unknown> } }).searchCallbacks.onSearchUsers;
     await onSearchUsers('alice@acme.com');
-    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', { domain: 'acme.com' });
+    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', { baseUrl: 'http://server.example.com', domain: 'acme.com' });
   });
 
   // ── Mapping rows fetch ─────────────────────────────────────────────────────
