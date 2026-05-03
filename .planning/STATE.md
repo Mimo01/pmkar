@@ -318,10 +318,11 @@ None yet.
 | 260430-0l2 | Clarify Watched Users settings hint — note current user is auto-included in "All watched users" | 2026-04-29 | ba71eec | | [260430-0l2-add-info-to-the-settings-watched-users-t](./quick/260430-0l2-add-info-to-the-settings-watched-users-t/) |
 | 260430-0tj | Log all copy ticket transformations (successful and failed) — mapping_audit_log + Audit Log "Field Transformations" tab | 2026-04-29 | 69ef569 | | [260430-0tj-log-all-copy-ticket-transformations-succ](./quick/260430-0tj-log-all-copy-ticket-transformations-succ/) |
 | 260430-26i | Group field transformation logs by copy, add per-group Copy button, persist redacted JSON values | 2026-04-29 | 46b77a9 | | [260430-26i-enhance-field-transformation-logs-group-](./quick/260430-26i-enhance-field-transformation-logs-group-/) |
+| 260503-pht | Full support for any type of properties in copy window | 2026-05-03 | 6857ff4 | | [260503-pht-full-support-for-any-type-of-properties-in](./quick/260503-pht-full-support-for-any-type-of-properties-in/) |
 
 ## Session Continuity
 
-Last activity: 2026-04-29 — Completed quick task 260430-26i: Group field transformation logs by copy, add per-group Copy button, persist redacted JSON values
+Last activity: 2026-05-03 — Completed quick task 260503-pht: Full support for any type of properties in copy window
 Last session: 2026-04-29T09:25:10.818Z
 Stopped at: context exhaustion at 75% (2026-04-29)
 Resume file: None
