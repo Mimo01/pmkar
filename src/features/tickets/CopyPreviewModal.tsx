@@ -197,7 +197,10 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
 
   const gapIds = useMemo(() => new Set(gapFields.map((g) => g.fieldId)), [gapFields]);
   const dynamicFormFields = useMemo(
-    () => resolvedTargetFields.filter((f) => f.fieldId !== 'summary' && !gapIds.has(f.fieldId)),
+    () =>
+      resolvedTargetFields.filter(
+        (f) => f.fieldId !== 'summary' && f.fieldId !== 'issuetype' && f.fieldId !== 'project' && !gapIds.has(f.fieldId),
+      ),
     [resolvedTargetFields, gapIds],
   );
 

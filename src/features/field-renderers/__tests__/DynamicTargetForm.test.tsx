@@ -94,12 +94,12 @@ describe('DynamicTargetForm', () => {
     ).not.toThrow();
   });
 
-  it('CTRL-07 shows informational hint for unsupported types (no editable input, no error badge)', () => {
+  it('CTRL-07 renders text input for type=any without allowedValues (AnyFieldFallbackRenderer → StringRenderer)', () => {
     render(
       <DynamicTargetForm fields={[unknownField]} values={{}} onChange={vi.fn()} />,
     );
-    expect(screen.getByTestId('unsupported-field-cf_strange')).toBeInTheDocument();
-    expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    // AnyFieldFallbackRenderer with no allowedValues falls back to StringRenderer (editable text input)
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+    expect(screen.queryByTestId('unsupported-field-cf_strange')).not.toBeInTheDocument();
   });
 });

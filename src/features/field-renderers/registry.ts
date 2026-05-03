@@ -19,6 +19,8 @@ import { UnsupportedTypeRenderer } from './renderers/UnsupportedTypeRenderer';
 import { UrlRenderer } from './renderers/UrlRenderer';
 import { UserPickerRenderer } from './renderers/UserPickerRenderer';
 import { VersionPickerRenderer } from './renderers/VersionPickerRenderer';
+import { AnyFieldFallbackRenderer } from './renderers/AnyFieldFallbackRenderer';
+import { CascadingSelectRenderer } from './renderers/CascadingSelectRenderer';
 import { PriorityRenderer } from './renderers/PriorityRenderer';
 
 // Jira custom-field-type strings that select dedicated checkbox / radio renderers
@@ -93,8 +95,10 @@ export function getRenderer(schema: FieldSchemaType): React.ComponentType<Render
     case 'priority':
       return PriorityRenderer;
     case 'option-with-child':
-    case 'issuetype':
+      return CascadingSelectRenderer;
     case 'any':
+      return AnyFieldFallbackRenderer;
+    case 'issuetype':
     default:
       return UnsupportedTypeRenderer;
   }
@@ -113,6 +117,8 @@ export function isEditableSchemaType(schema: FieldSchemaType): boolean {
     case 'datetime':
     case 'user':
     case 'option':
+    case 'option-with-child':
+    case 'any':
     case 'priority':
       return true;
     case 'array':

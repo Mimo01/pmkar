@@ -285,7 +285,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const dynamicFormFields = useMemo(
     () =>
       resolvedTargetFields.filter(
-        (f) => f.fieldId !== 'summary' && !gapIds.has(f.fieldId),
+        (f) => f.fieldId !== 'summary' && f.fieldId !== 'issuetype' && f.fieldId !== 'project' && !gapIds.has(f.fieldId),
       ),
     [resolvedTargetFields, gapIds],
   );

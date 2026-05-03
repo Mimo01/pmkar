@@ -387,6 +387,7 @@
   "tickets.truncationWarning": "Result set truncated",
   "tickets.truncationWarningHint": "Your query returned more tickets than the maximum supported. Some tickets are not shown — tighten your JQL to narrow the results.",
   "fieldRenderer.placeholder.select": "Select…",
+  "fieldRenderer.placeholder.selectChild": "Select sub-option…",
   "fieldRenderer.placeholder.searchUsers": "Search users…",
   "fieldRenderer.placeholder.searching": "Searching…",
   "fieldRenderer.noResults": "No results found.",

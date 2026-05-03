@@ -387,6 +387,7 @@
   "tickets.truncationWarning": "Výsledky boli skrátené",
   "tickets.truncationWarningHint": "Váš dopyt vrátil viac tiketov, než je maximum. Niektoré tikety sa nezobrazujú — upravte JQL, aby ste výsledky zúžili.",
   "fieldRenderer.placeholder.select": "Vybrať…",
+  "fieldRenderer.placeholder.selectChild": "Vybrať podovoľbu…",
   "fieldRenderer.placeholder.searchUsers": "Hľadať používateľov…",
   "fieldRenderer.placeholder.searching": "Hľadá sa…",
   "fieldRenderer.noResults": "Žiadne výsledky.",

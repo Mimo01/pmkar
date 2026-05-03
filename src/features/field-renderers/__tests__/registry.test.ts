@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { getRenderer } from '../registry';
+import { AnyFieldFallbackRenderer } from '../renderers/AnyFieldFallbackRenderer';
+import { CascadingSelectRenderer } from '../renderers/CascadingSelectRenderer';
 import { CheckboxRenderer } from '../renderers/CheckboxRenderer';
 import { ComponentPickerRenderer } from '../renderers/ComponentPickerRenderer';
 import { DateRenderer } from '../renderers/DateRenderer';
@@ -80,8 +82,8 @@ describe('getRenderer registry', () => {
     expect(getRenderer({ type: 'array', items: 'group' })).toBe(GroupPickerRenderer);
   });
 
-  it('CTRL-07 returns UnsupportedTypeRenderer for type=any', () => {
-    expect(getRenderer({ type: 'any' })).toBe(UnsupportedTypeRenderer);
+  it('CTRL-07 returns AnyFieldFallbackRenderer for type=any', () => {
+    expect(getRenderer({ type: 'any' })).toBe(AnyFieldFallbackRenderer);
   });
 
   it('CTRL-07 returns UnsupportedTypeRenderer for type=issuetype', () => {
@@ -92,8 +94,8 @@ describe('getRenderer registry', () => {
     expect(getRenderer({ type: 'priority' })).toBe(PriorityRenderer);
   });
 
-  it('CTRL-07 returns UnsupportedTypeRenderer for type=option-with-child', () => {
-    expect(getRenderer({ type: 'option-with-child' })).toBe(UnsupportedTypeRenderer);
+  it('CTRL-07 returns CascadingSelectRenderer for type=option-with-child', () => {
+    expect(getRenderer({ type: 'option-with-child' })).toBe(CascadingSelectRenderer);
   });
 
   it('CTRL-07 returns UnsupportedTypeRenderer for unknown array items kind', () => {
