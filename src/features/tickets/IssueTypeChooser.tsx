@@ -42,9 +42,7 @@ export function IssueTypeChooser({
 }: IssueTypeChooserProps) {
   const { t } = useTranslation();
 
-  const issueTypes = useSchemaCacheStore(
-    (s) => s.prewarmedIssueTypes[projectKey] ?? [],
-  );
+  const issueTypes = useSchemaCacheStore((s) => s.prewarmedIssueTypes[projectKey]) ?? [];
 
   const selected: IssueTypeRef | null = useMemo(() => {
     if (!value) return null;

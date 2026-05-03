@@ -75,30 +75,6 @@ function getProgressPercent(progressStep: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Tauri user-search wrapper (D-17, PERS-03, T-22-15)
-// ---------------------------------------------------------------------------
-
-async function searchUsersForPicker(q: string): Promise<JiraUser[]> {
-  const trimmed = q.trim();
-  if (!trimmed) return [];
-  // The backend command expects a domain. If the query contains '@', extract
-  // the domain after the last '@'. Otherwise pass the query as-is — Cloud's
-  // domain search returns an empty array for unmatched domains rather than
-  // failing, so name-only searches gracefully fall through to "no results"
-  // without crashing the UI.
-  const at = trimmed.lastIndexOf('@');
-  const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-  if (!domain) return [];
-  try {
-    const users = await invoke<JiraUser[]>('search_jira_users_by_domain', { domain });
-    return Array.isArray(users) ? users : [];
-  } catch (e) {
-    console.error('[CopyPreviewPage] search_jira_users_by_domain failed:', e);
-    return [];
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Transformer kinds that can be prefilled directly from raw source field values.
 // User / version / component require async resolution — they remain as gaps.
 // Description is wiki_to_adf and handled server-side only.
@@ -170,6 +146,29 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
   }, [phase]);
+
+  // ── Pre-warm + set default issue type when target project changes mid-preview ──
+  useEffect(() => {
+    if (!targetProjectKey || useCopyStore.getState().phase !== 'previewing') return;
+    void (async () => {
+      const cacheStore = useSchemaCacheStore.getState();
+      let types = cacheStore.prewarmedIssueTypes[targetProjectKey];
+      if (!types || types.length === 0) {
+        await cacheStore.preWarm(targetProjectKey);
+        types = useSchemaCacheStore.getState().prewarmedIssueTypes[targetProjectKey];
+      }
+      if (!types || types.length === 0) return;
+      const currentId = useCopyStore.getState().targetIssueTypeId;
+      if (currentId && types.some((it) => it.id === currentId)) return;
+      const srcName = useCopyStore.getState().sourceTicket?.fields.issuetype?.name ?? '';
+      const matched = srcName
+        ? types.find((it) => it.name.toLowerCase() === srcName.toLowerCase())
+        : null;
+      const id = matched?.id ?? types[0]?.id ?? null;
+      if (id) await setTargetIssueTypeId(id);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetProjectKey]);
 
   // ── Prefill overrideValues from mapping rows (D-PREFILL) ──────────────────
   // Runs once when both mappingRows and sourceTicket are available.
@@ -319,6 +318,34 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
     reset();
     onOpenSettingsSection?.('field-mapping');
   }, [reset, onOpenSettingsSection]);
+
+  // ── Tauri user-search wrapper (D-17, PERS-03, T-22-15) ───────────────────
+  // Defined inside the component so it closes over sourceBaseUrl, which is
+  // required by the search_jira_users_by_domain Rust command. The module-level
+  // version was missing this argument, causing the "missing required key baseUrl"
+  // runtime error.
+  const searchUsersForPicker = useCallback(async (q: string): Promise<JiraUser[]> => {
+    const trimmed = q.trim();
+    if (!trimmed) return [];
+    // The backend command expects a domain. If the query contains '@', extract
+    // the domain after the last '@'. Otherwise pass the query as-is — Cloud's
+    // domain search returns an empty array for unmatched domains rather than
+    // failing, so name-only searches gracefully fall through to "no results"
+    // without crashing the UI.
+    const at = trimmed.lastIndexOf('@');
+    const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+    if (!domain) return [];
+    try {
+      const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
+        baseUrl: sourceBaseUrl,
+        domain,
+      });
+      return Array.isArray(users) ? users : [];
+    } catch (e) {
+      console.error('[CopyPreviewPage] search_jira_users_by_domain failed:', e);
+      return [];
+    }
+  }, [sourceBaseUrl]);
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────
   // A gap field gates the copy only while its override value is empty.
