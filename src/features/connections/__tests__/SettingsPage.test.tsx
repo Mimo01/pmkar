@@ -207,9 +207,9 @@ describe('SettingsPage — JQL Presets section', () => {
   it('shows all three preset options', () => {
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
-    expect(screen.getByRole('radio', { name: /mine/i })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /all watched/i })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /custom/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^mine/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^all watched/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /^custom/i })).toBeInTheDocument();
   });
 
   it('"Mine" is selected when store has mine preset', () => {
@@ -218,7 +218,7 @@ describe('SettingsPage — JQL Presets section', () => {
     >[0]);
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
-    const mineRadio = screen.getByRole('radio', { name: /mine/i });
+    const mineRadio = screen.getByRole('radio', { name: /^mine/i });
     expect(mineRadio).toHaveAttribute('aria-checked', 'true');
   });
 
@@ -409,7 +409,10 @@ describe('SettingsPage — Domain Search sub-section', () => {
 
   // Test 2: Searching a valid domain invokes the command
   it('invokes search_jira_users_by_domain when searching a valid domain', async () => {
-    mockInvoke.mockResolvedValueOnce(mockDomainUsers);
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
+      return Promise.resolve(undefined);
+    });
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^Watched Users$/i }));
 
@@ -423,6 +426,7 @@ describe('SettingsPage — Domain Search sub-section', () => {
 
     await waitFor(() => {
       expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', {
+        baseUrl: 'https://jira.example.com',
         domain: 'acme.com',
       });
     });
