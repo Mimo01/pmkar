@@ -1,8 +1,98 @@
 
+## [0.4.3]
+
+### Bug Fixes
+
+- update CopyPreviewPage mock for baseUrl + preWarm
+- prevent infinite rerender when changing target project
+- achieve 100% passing npm test suite
+- exclude issuetype and project from gap-field gate
+
+### Features
+
+- add CascadingSelectRenderer and AnyFieldFallbackRenderer
+
+### Miscellaneous
+
+- archive v0.4.0 phase directories to milestones
+## [0.4.2]
+
+### Bug Fixes
+
+- unblock Copy when user fills required gap field
+- scope source ticket list to configured project
+- move audit logging from copy commit to preview-open
+- match select styling to inputs, scrollable body, fix duplicate copy
+
+### CI/CD
+
+- auto-create release, fix step name, add README update
+
+### Documentation
+
+- index recent resolved sessions and 26-04-29 session report
+- pre-dispatch plan for field transformation log enhancements
+- pre-dispatch plan for log all copy ticket transformations
+- pre-dispatch plan for Add info to the settings watched users, that the current user is also automatically included in the watched users
+- record commit hash in STATE.md quick task table
+
+### Features
+
+- group field transformations by copy with per-group Copy button and value display
+- persist redacted JSON values in mapping_audit_log
+- add Field Transformations tab to AuditLogPage
+- extend mapping_audit_log schema + audit write site + getter command
+- extend mapping_audit_log schema + audit write site + getter command
+- clarify watched-users hint about auto-inclusion of current user
+- redesign call-log table — filter toolbar + copy-log buttons (260429-v9y)
+
+### Miscellaneous
+
+- v0.4.2
+- merge quick task worktree (worktree-agent-a51bf842750d9b4eb)
+- merge quick task worktree (worktree-agent-a9dacf275434f810b)
+- merge quick task worktree (worktree-agent-a8fadcb7eb571377e)
+
+### Ui
+
+- inline Copy button with Full URL header to avoid extra row
+- keep explicit Copy button in detail, drop row icon
+## [0.4.1]
+
+### Bug Fixes
+
+- add sortField to IgnoredTicketsPage and LinkedTicketsPage
+- switch user domain search to Server PAT auth + API v2
+- render status/issuetype/priority objects without statusCategory
+
+### CI/CD
+
+- fix macOS universal build — use correct rust targets
+- add macOS universal build to release workflow
+
+### Documentation
+
+- pre-dispatch plan for dynamic Jira fields display
+
+### Features
+
+- add detail line to JQL preset options in settings
+- improve JQL preset descriptions to plain English
+- redesign JQL presets — Mine / All watched / Custom
+- add Created, Priority, Status, Assignee sort options
+- AllFieldsSection dynamic field display + wire into OverviewTab and CopyPreviewModal
+- read-only source field value formatter
+- add sort by ticket ID option
+- add user_name transformer for user→text mappings
+
+### Miscellaneous
+
+- merge quick task 260429-ev2 worktree (dynamic Jira fields)
 ## [0.4.0]
 
 ### Bug Fixes
 
+- remove unused afterEach import in connectionStore.probe.test
 - partial UNIQUE INDEX to allow multiple dismissed rows
 - expand prefill to user and wiki_to_adf transformer kinds
 - prefill override dropdowns from field mapping rows
