@@ -56,6 +56,10 @@ export function VirtualizedCombobox<T>({
   const scrollRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestReqRef = useRef(0);
+  const onSearchRef = useRef(onSearch);
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  });
 
   // Pitfall 1 mitigation: shouldFilter={false} on Command + manual filtering here
   const filtered = useMemo(() => {
@@ -105,15 +109,16 @@ export function VirtualizedCombobox<T>({
     }
   }, [open]);
 
-  // D-03: initialQuery auto-trigger on mount
+  // D-03: initialQuery auto-trigger — re-runs only when initialQuery changes.
+  // onSearch is accessed via ref to avoid re-triggering on every parent re-render.
   useEffect(() => {
-    if (initialQuery && onSearch) {
-      onSearch(initialQuery)
+    if (initialQuery && onSearchRef.current) {
+      onSearchRef
+        .current(initialQuery)
         .then((result) => setAsyncItems(result))
         .catch(() => setAsyncItems([]));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuery, onSearch]); // mount only — intentional empty dep array
+  }, [initialQuery]); // stable: onSearch accessed via ref
 
   // Async search debounce (300ms — matches TicketFilterBar pattern)
   function handleQueryChange(next: string) {
