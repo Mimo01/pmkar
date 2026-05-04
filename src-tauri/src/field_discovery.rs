@@ -349,7 +349,6 @@ pub async fn fetch_all_createmeta_fields(
             .map_err(|e| AppError::Http(format!("createmeta parse failed: {e}")))?;
         let page_len = page.fields.len() as u64;
         let declared_total = page.total;
-        let declared_max_results = page.max_results.max(1);
         server_total = declared_total;
         all_fields.extend(page.fields);
         pages_drained += 1;
@@ -365,7 +364,9 @@ pub async fn fetch_all_createmeta_fields(
                 "createmeta pagination exceeded MAX_CREATEMETA_PAGES ({MAX_CREATEMETA_PAGES}) — server reported total={declared_total} but did not converge"
             )));
         }
-        start_at += page_len.max(declared_max_results);
+        // Advance by actual items received (Atlassian API spec requires this —
+        // using max_results instead can skip fields on short pages).
+        start_at += page_len;
     }
 
     let hash_hex = hex::encode(sha2::Digest::finalize(hasher));
