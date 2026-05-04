@@ -11,6 +11,8 @@ export interface DynamicTargetFormProps {
   /** Phase 22 — per-field initial search query (used by user pickers for email pre-fill, D-15). */
   initialQueries?: Record<string, string>;
   onMapLink?: () => void;
+  /** Disables all field renderers (e.g. while a copy is in flight). */
+  disabled?: boolean;
 }
 
 export function DynamicTargetForm({
@@ -20,6 +22,7 @@ export function DynamicTargetForm({
   searchCallbacks,
   initialQueries,
   onMapLink,
+  disabled,
 }: DynamicTargetFormProps) {
   return (
     <div className="flex flex-col gap-6">
@@ -51,6 +54,7 @@ export function DynamicTargetForm({
                 value={values[field.fieldId]}
                 onChange={(v) => onChange(field.fieldId, v)}
                 required={field.required}
+                disabled={disabled}
                 onSearch={isUserPicker ? searchCallbacks?.onSearchUsers : undefined}
                 initialQuery={initialQueries?.[field.fieldId]}
               />
