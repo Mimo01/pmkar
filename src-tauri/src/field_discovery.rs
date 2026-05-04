@@ -414,6 +414,16 @@ pub async fn fetch_target_issue_types(
         .json()
         .await
         .map_err(|_| AppError::Http("issuetype list parse failed".into()))?;
+    // Guard against silent truncation: if the server reports more issue types
+    // than the single page returned, raise an error rather than silently
+    // returning an incomplete list (D-15 pre-warm would miss types).
+    if body.total > body.issue_types.len() as u64 {
+        return Err(AppError::Http(format!(
+            "issuetype list truncated: server reports {} types, only {} returned",
+            body.total,
+            body.issue_types.len()
+        )));
+    }
     Ok(body.issue_types)
 }
 
