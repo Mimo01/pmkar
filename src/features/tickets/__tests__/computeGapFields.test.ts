@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { computeGapFields } from '../computeGapFields';
-import type { FieldSchema } from '@/types/fieldSchema';
 import type { FieldMappingRow } from '@/features/field-mapping/types';
+import type { FieldSchema } from '@/types/fieldSchema';
+import { computeGapFields } from '../computeGapFields';
 
-const f = (
-  fieldId: string,
-  required: boolean,
-  hasDefaultValue?: boolean,
-): FieldSchema => ({
+const f = (fieldId: string, required: boolean, hasDefaultValue?: boolean): FieldSchema => ({
   fieldId,
   name: fieldId,
   required,
@@ -29,12 +25,7 @@ describe('computeGapFields', () => {
   });
 
   it('returns empty when no fields are required', () => {
-    expect(
-      computeGapFields(
-        [f('environment', false), f('components', false)],
-        [],
-      ),
-    ).toEqual([]);
+    expect(computeGapFields([f('environment', false), f('components', false)], [])).toEqual([]);
   });
 
   it('filters out required fields with hasDefaultValue=true', () => {

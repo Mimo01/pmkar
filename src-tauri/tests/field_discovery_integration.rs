@@ -12,8 +12,8 @@
 
 use base64::Engine as _;
 use pmkar_lib::field_discovery::{
-    discover_v2_fields, discover_v3_fields, fetch_all_createmeta_fields,
-    fetch_target_issue_types, get_or_fetch_source_global, get_or_fetch_target_schema,
+    discover_v2_fields, discover_v3_fields, fetch_all_createmeta_fields, fetch_target_issue_types,
+    get_or_fetch_source_global, get_or_fetch_target_schema,
 };
 use pmkar_lib::field_mapping_db::FieldMappingDb;
 use pmkar_lib::fixtures::build_fixtures;
@@ -116,10 +116,9 @@ async fn fetch_all_createmeta_drains_two_pages() {
     start_servers_once();
     let client = reqwest::Client::new();
     let auth = cloud_auth();
-    let (resp, hash) =
-        fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
-            .await
-            .expect("fetch_all_createmeta_fields must succeed");
+    let (resp, hash) = fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
+        .await
+        .expect("fetch_all_createmeta_fields must succeed");
 
     assert_eq!(
         resp.fields.len(),
@@ -144,14 +143,12 @@ async fn fetch_all_createmeta_hash_is_deterministic() {
     let client = reqwest::Client::new();
     let auth = cloud_auth();
 
-    let (_, hash1) =
-        fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
-            .await
-            .expect("first call must succeed");
-    let (_, hash2) =
-        fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
-            .await
-            .expect("second call must succeed");
+    let (_, hash1) = fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
+        .await
+        .expect("first call must succeed");
+    let (_, hash2) = fetch_all_createmeta_fields(&client, v3_base(), &auth, "MYPROJ", "10001")
+        .await
+        .expect("second call must succeed");
 
     assert_eq!(
         hash1, hash2,

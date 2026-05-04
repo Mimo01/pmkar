@@ -115,16 +115,32 @@ mod tests {
     use super::*;
 
     fn s_str() -> FieldSchemaType {
-        FieldSchemaType::String { system: None, custom: None, custom_id: None }
+        FieldSchemaType::String {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
     fn s_num() -> FieldSchemaType {
-        FieldSchemaType::Number { system: None, custom: None, custom_id: None }
+        FieldSchemaType::Number {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
     fn s_date() -> FieldSchemaType {
-        FieldSchemaType::Date { system: None, custom: None, custom_id: None }
+        FieldSchemaType::Date {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
     fn s_datetime() -> FieldSchemaType {
-        FieldSchemaType::Datetime { system: None, custom: None, custom_id: None }
+        FieldSchemaType::Datetime {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
     fn s_arr_string() -> FieldSchemaType {
         FieldSchemaType::Array {
@@ -143,12 +159,19 @@ mod tests {
         }
     }
     fn s_option() -> FieldSchemaType {
-        FieldSchemaType::Option_ { system: None, custom: None, custom_id: None }
+        FieldSchemaType::Option_ {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
 
     #[test]
     fn text_passthrough() {
-        assert_eq!(transform_identity(&json!("hello"), &s_str()), json!("hello"));
+        assert_eq!(
+            transform_identity(&json!("hello"), &s_str()),
+            json!("hello")
+        );
     }
 
     #[test]
@@ -158,7 +181,10 @@ mod tests {
 
     #[test]
     fn date_passthrough() {
-        assert_eq!(transform_identity(&json!("2026-04-27"), &s_date()), json!("2026-04-27"));
+        assert_eq!(
+            transform_identity(&json!("2026-04-27"), &s_date()),
+            json!("2026-04-27")
+        );
     }
 
     #[test]

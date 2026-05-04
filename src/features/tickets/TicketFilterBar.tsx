@@ -12,7 +12,9 @@ interface TicketFilterBarProps {
   assigneeFilter: string;
   onAssigneeChange: (v: string) => void;
   sortField: 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee';
-  onSortFieldChange: (f: 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee') => void;
+  onSortFieldChange: (
+    f: 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee',
+  ) => void;
   sortDirection: 'asc' | 'desc';
   onToggleSort: () => void;
   resultCount: number;
@@ -224,7 +226,11 @@ export function TicketFilterBar({
       <div className="flex items-center gap-0.5 shrink-0">
         <select
           value={sortField}
-          onChange={(e) => onSortFieldChange(e.target.value as 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee')}
+          onChange={(e) =>
+            onSortFieldChange(
+              e.target.value as 'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee',
+            )
+          }
           aria-label={t('tickets.filter.sortBy')}
           className="bg-transparent text-sm text-brand-muted hover:text-brand-text border-none outline-none cursor-pointer appearance-none transition-colors duration-150"
         >
@@ -238,7 +244,9 @@ export function TicketFilterBar({
         <button
           type="button"
           onClick={onToggleSort}
-          aria-label={sortDirection === 'desc' ? t('tickets.filter.sortAsc') : t('tickets.filter.sortDesc')}
+          aria-label={
+            sortDirection === 'desc' ? t('tickets.filter.sortAsc') : t('tickets.filter.sortDesc')
+          }
           className="text-brand-muted hover:text-brand-text transition-colors duration-150"
         >
           {sortDirection === 'desc' ? (

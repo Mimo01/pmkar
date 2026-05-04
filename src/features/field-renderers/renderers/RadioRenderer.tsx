@@ -1,5 +1,5 @@
-import type { RendererProps } from '../types';
 import { cn } from '@/lib/utils';
+import type { RendererProps } from '../types';
 
 interface AllowedValue {
   id?: string;
@@ -32,7 +32,11 @@ export function RadioRenderer({ field, value, onChange, required, disabled }: Re
         const optLabel = getOptionLabel(opt);
         const radioId = `${field.fieldId}-${idx}`;
         return (
-          <label key={`${optLabel}-${idx}`} htmlFor={radioId} className="flex items-center gap-2 text-sm">
+          <label
+            key={optLabel || String(idx)}
+            htmlFor={radioId}
+            className="flex items-center gap-2 text-sm"
+          >
             <input
               id={radioId}
               type="radio"

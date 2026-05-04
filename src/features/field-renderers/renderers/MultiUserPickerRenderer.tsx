@@ -1,14 +1,12 @@
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { UserAvatar } from '@/features/tickets/UserAvatar';
 import type { JiraUser } from '@/features/tickets/types';
+import { UserAvatar } from '@/features/tickets/UserAvatar';
 import { VirtualizedCombobox } from '../components/VirtualizedCombobox';
 import type { RendererProps } from '../types';
 
 function isJiraUser(v: unknown): v is JiraUser {
-  return Boolean(
-    v && typeof v === 'object' && typeof (v as JiraUser).displayName === 'string',
-  );
+  return Boolean(v && typeof v === 'object' && typeof (v as JiraUser).displayName === 'string');
 }
 
 export function MultiUserPickerRenderer({
@@ -43,7 +41,7 @@ export function MultiUserPickerRenderer({
         <div className="flex flex-wrap gap-1.5">
           {users.map((u, idx) => (
             <span
-              key={`${u.accountId ?? u.name ?? u.displayName}-${idx}`}
+              key={u.accountId ?? u.name ?? u.displayName ?? String(idx)}
               className="inline-flex items-center gap-1.5 bg-muted text-foreground text-xs rounded-full px-2.5 py-1 h-8"
             >
               <UserAvatar user={u} size="sm" />
@@ -52,7 +50,10 @@ export function MultiUserPickerRenderer({
                 type="button"
                 disabled={disabled}
                 onClick={() => removeAt(idx)}
-                aria-label={t('fieldRenderer.removeItem', { item: u.displayName, defaultValue: `Remove ${u.displayName}` })}
+                aria-label={t('fieldRenderer.removeItem', {
+                  item: u.displayName,
+                  defaultValue: `Remove ${u.displayName}`,
+                })}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3 h-3" aria-hidden="true" />

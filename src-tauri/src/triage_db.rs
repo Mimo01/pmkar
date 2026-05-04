@@ -633,7 +633,10 @@ mod tests {
     fn target_project_key_round_trips() {
         let db = TriageDb::open_in_memory().expect("open_in_memory");
         db.set_target_project_key(Some("ACME")).expect("set");
-        assert_eq!(db.get_target_project_key().expect("get"), Some("ACME".to_string()));
+        assert_eq!(
+            db.get_target_project_key().expect("get"),
+            Some("ACME".to_string())
+        );
     }
 
     #[test]

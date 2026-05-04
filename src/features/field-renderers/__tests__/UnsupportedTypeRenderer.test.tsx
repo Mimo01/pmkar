@@ -21,7 +21,9 @@ describe('UnsupportedTypeRenderer', () => {
   });
 
   it('CTRL-07 displays field.schema.type in label text for debugging', () => {
-    render(<UnsupportedTypeRenderer field={makeField('issuetype')} value={null} onChange={vi.fn()} />);
+    render(
+      <UnsupportedTypeRenderer field={makeField('issuetype')} value={null} onChange={vi.fn()} />,
+    );
     expect(screen.getByRole('status').textContent).toMatch(/issuetype/);
   });
 
@@ -33,12 +35,20 @@ describe('UnsupportedTypeRenderer', () => {
 
   it('CTRL-07 does not crash when given an unknown FieldSchemaType', () => {
     expect(() =>
-      render(<UnsupportedTypeRenderer field={makeField('completely-unknown-type')} value={null} onChange={vi.fn()} />),
+      render(
+        <UnsupportedTypeRenderer
+          field={makeField('completely-unknown-type')}
+          value={null}
+          onChange={vi.fn()}
+        />,
+      ),
     ).not.toThrow();
   });
 
   it('CTRL-07 aria-label includes "Unsupported field type:" prefix', () => {
-    render(<UnsupportedTypeRenderer field={makeField('priority')} value={null} onChange={vi.fn()} />);
+    render(
+      <UnsupportedTypeRenderer field={makeField('priority')} value={null} onChange={vi.fn()} />,
+    );
     const status = screen.getByRole('status');
     expect(status).toHaveAttribute('aria-label', expect.stringMatching(/Unsupported field type:/));
   });

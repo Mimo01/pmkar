@@ -1,7 +1,7 @@
 import type { FieldSchema } from '@/types/fieldSchema';
 import { getRenderer, isEditableSchemaType } from './registry';
-import { UnsupportedFieldHint } from './UnsupportedFieldHint';
 import type { SearchCallbacks } from './types';
+import { UnsupportedFieldHint } from './UnsupportedFieldHint';
 
 export interface DynamicTargetFormProps {
   fields: FieldSchema[];

@@ -1,9 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
+import type { JiraUser } from '@/features/tickets/types';
 import { UserPickerRenderer } from '../renderers/UserPickerRenderer';
 import type { RendererProps } from '../types';
-import type { JiraUser } from '@/features/tickets/types';
 
 // cmdk uses ResizeObserver internally; jsdom does not implement it — mock globally
 class MockResizeObserver {
@@ -45,7 +44,11 @@ const field: RendererProps['field'] = {
   schema: { type: 'user' },
 };
 
-const alice: JiraUser = { accountId: 'a1', displayName: 'Alice Anderson', emailAddress: 'alice@example.com' };
+const alice: JiraUser = {
+  accountId: 'a1',
+  displayName: 'Alice Anderson',
+  emailAddress: 'alice@example.com',
+};
 
 describe('UserPickerRenderer', () => {
   beforeEach(() => {
@@ -131,7 +134,10 @@ describe('UserPickerRenderer', () => {
       await vi.runAllTimersAsync();
     });
     // Verify no console output contains the email
-    const allCalls = [...consoleSpy.mock.calls, ...consoleErr.mock.calls].flat().map(String).join(' ');
+    const allCalls = [...consoleSpy.mock.calls, ...consoleErr.mock.calls]
+      .flat()
+      .map(String)
+      .join(' ');
     expect(allCalls).not.toContain('secret@example.com');
     consoleSpy.mockRestore();
     consoleErr.mockRestore();

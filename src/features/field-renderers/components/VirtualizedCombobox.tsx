@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Command } from 'cmdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { Command } from 'cmdk';
 import { ChevronDown, Loader2, Search } from 'lucide-react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -109,7 +109,7 @@ export function VirtualizedCombobox<T>({
         .catch(() => setAsyncItems([]));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // mount only — intentional empty dep array
+  }, [initialQuery, onSearch]); // mount only — intentional empty dep array
 
   // Async search debounce (300ms — matches TicketFilterBar pattern)
   function handleQueryChange(next: string) {
@@ -127,8 +127,11 @@ export function VirtualizedCombobox<T>({
     }, 300);
   }
 
-  const triggerLabel = value ? displayLabel(value) : (placeholder ?? t('fieldRenderer.placeholder.select'));
-  const searchInputPlaceholder = searchPlaceholder ?? placeholder ?? t('fieldRenderer.placeholder.select');
+  const triggerLabel = value
+    ? displayLabel(value)
+    : (placeholder ?? t('fieldRenderer.placeholder.select'));
+  const searchInputPlaceholder =
+    searchPlaceholder ?? placeholder ?? t('fieldRenderer.placeholder.select');
 
   return (
     <div className="relative w-full">
@@ -182,7 +185,10 @@ export function VirtualizedCombobox<T>({
                 <div
                   ref={scrollRef}
                   // Pitfall 4 mitigation: explicit height on scroll element
-                  style={{ height: `${Math.min(filtered.length * itemHeight, 280)}px`, overflow: 'auto' }}
+                  style={{
+                    height: `${Math.min(filtered.length * itemHeight, 280)}px`,
+                    overflow: 'auto',
+                  }}
                 >
                   <div
                     style={{

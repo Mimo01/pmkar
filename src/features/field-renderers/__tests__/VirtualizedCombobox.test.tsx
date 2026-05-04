@@ -117,7 +117,7 @@ describe('VirtualizedCombobox', () => {
     const user = userEvent.setup();
     render(
       <div>
-        <button>Outside</button>
+        <button type="button">Outside</button>
         <VirtualizedCombobox {...baseProps} onChange={vi.fn()} placeholder="Pick fruit" />
       </div>,
     );
@@ -177,12 +177,7 @@ describe('VirtualizedCombobox', () => {
 
   it('CTRL-08 disables trigger when disabled prop is true', () => {
     render(
-      <VirtualizedCombobox
-        {...baseProps}
-        onChange={vi.fn()}
-        placeholder="Pick fruit"
-        disabled
-      />,
+      <VirtualizedCombobox {...baseProps} onChange={vi.fn()} placeholder="Pick fruit" disabled />,
     );
     expect(screen.getByRole('button', { name: /pick fruit/i })).toBeDisabled();
   });

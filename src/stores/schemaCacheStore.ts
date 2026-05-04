@@ -13,9 +13,17 @@ export interface SchemaCacheEntry {
 interface SchemaCacheState {
   cache: Record<string, SchemaCacheEntry>;
   prewarmedIssueTypes: Record<string, IssueTypeRef[]>;
-  loadSchema: (side: FieldSide, projectKey: string | null, issuetypeId: string | null) => Promise<void>;
+  loadSchema: (
+    side: FieldSide,
+    projectKey: string | null,
+    issuetypeId: string | null,
+  ) => Promise<void>;
   preWarm: (projectKey: string) => Promise<void>;
-  refresh: (side: FieldSide, projectKey: string | null, issuetypeId: string | null) => Promise<void>;
+  refresh: (
+    side: FieldSide,
+    projectKey: string | null,
+    issuetypeId: string | null,
+  ) => Promise<void>;
   clearCache: () => void;
 }
 
@@ -50,8 +58,7 @@ export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
         },
       });
     } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
+      const msg = e instanceof Error ? e.message : typeof e === 'string' ? e : JSON.stringify(e);
       set({
         cache: { ...get().cache, [key]: { status: 'error', error: msg } },
       });

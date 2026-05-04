@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import ProbeStatusBanner from '../ProbeStatusBanner';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConnectionStore } from '../connectionStore';
+import ProbeStatusBanner from '../ProbeStatusBanner';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),

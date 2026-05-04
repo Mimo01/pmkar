@@ -21,11 +21,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { type Language, useLanguageStore } from '../../i18n/languageStore';
+import {
+  FieldMappingSection,
+  FieldMappingSectionHeader,
+} from '../field-mapping/FieldMappingSection';
 import { type ThemeMode, useThemeStore } from '../theme/themeStore';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { FetchConfig, JqlPreset, WatchedUser } from '../tickets/types';
 import { AboutSection } from '../update/AboutSection';
-import { FieldMappingSection, FieldMappingSectionHeader } from '../field-mapping/FieldMappingSection';
 import { ConnectionCard } from './ConnectionCard';
 import { ConnectionForm } from './ConnectionForm';
 import { useConnectionStore } from './connectionStore';
@@ -1225,9 +1228,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
         </nav>
 
         {/* Section content — scrollable */}
-        <div className="flex-1 overflow-y-auto px-8 py-6">
-          {renderContent()}
-        </div>
+        <div className="flex-1 overflow-y-auto px-8 py-6">{renderContent()}</div>
       </div>
     </div>
   );

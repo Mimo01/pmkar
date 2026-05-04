@@ -662,7 +662,10 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
             // Quick task 260430-26i: grouped, collapsible rendering — one card
             // per copyId, ordered newest-first by virtue of the input order.
             <ScrollArea className="flex-1">
-              <ul className="divide-y divide-brand-border-subtle/50" aria-label="Field transformations log">
+              <ul
+                className="divide-y divide-brand-border-subtle/50"
+                aria-label="Field transformations log"
+              >
                 {fieldGroups.map((group) => {
                   const isExpanded = expandedGroups.has(group.copyId);
                   const copyKey = `group-${group.copyId}`;
@@ -673,10 +676,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                     t('audit.fields.group.count.total', { count: group.total }),
                   ];
                   if (group.failed > 0) {
-                    summaryParts.push(t('audit.fields.group.count.failed', { count: group.failed }));
+                    summaryParts.push(
+                      t('audit.fields.group.count.failed', { count: group.failed }),
+                    );
                   }
                   if (group.skipped > 0) {
-                    summaryParts.push(t('audit.fields.group.count.skipped', { count: group.skipped }));
+                    summaryParts.push(
+                      t('audit.fields.group.count.skipped', { count: group.skipped }),
+                    );
                   }
                   return (
                     <li key={group.copyId} className="bg-brand-surface">
@@ -689,9 +696,15 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                           className="flex-1 flex items-center gap-3 px-3 py-2 text-left hover:bg-brand-surface-hover focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px] transition-colors duration-150"
                         >
                           {isExpanded ? (
-                            <ChevronDown className="w-3.5 h-3.5 text-brand-muted shrink-0" aria-hidden="true" />
+                            <ChevronDown
+                              className="w-3.5 h-3.5 text-brand-muted shrink-0"
+                              aria-hidden="true"
+                            />
                           ) : (
-                            <ChevronRight className="w-3.5 h-3.5 text-brand-muted shrink-0" aria-hidden="true" />
+                            <ChevronRight
+                              className="w-3.5 h-3.5 text-brand-muted shrink-0"
+                              aria-hidden="true"
+                            />
                           )}
                           <span className="text-xs font-mono text-brand-text-secondary shrink-0 w-44">
                             {safeFormatTimestamp(group.latestTimestamp)}
@@ -722,8 +735,14 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                       {isExpanded && (
                         <ul className="border-t border-brand-border-subtle/50 bg-brand-surface-raised">
                           {group.rows.map((row) => {
-                            const sourceText = valueOrHash(row.sourceValueJson, row.sourceValueHash);
-                            const targetText = valueOrHash(row.targetValueJson, row.targetValueHash);
+                            const sourceText = valueOrHash(
+                              row.sourceValueJson,
+                              row.sourceValueHash,
+                            );
+                            const targetText = valueOrHash(
+                              row.targetValueJson,
+                              row.targetValueHash,
+                            );
                             const sourceLegacy = !row.sourceValueJson;
                             const targetLegacy = !row.targetValueJson;
                             return (
@@ -732,7 +751,9 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                                 className="px-3 py-2 border-b border-brand-border-subtle/30 last:border-b-0"
                               >
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-mono text-xs text-brand-text break-all">{row.fieldId}</span>
+                                  <span className="font-mono text-xs text-brand-text break-all">
+                                    {row.fieldId}
+                                  </span>
                                   <Badge variant="outline" className="text-[10px] font-mono">
                                     {row.transformerKind || '—'}
                                   </Badge>
@@ -794,7 +815,9 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
               </ul>
               {mappingHasMore && (
                 <div className="flex flex-col items-center gap-1 py-3">
-                  <p className="text-[11px] text-brand-muted">{t('audit.fields.partialGroupHint')}</p>
+                  <p className="text-[11px] text-brand-muted">
+                    {t('audit.fields.partialGroupHint')}
+                  </p>
                   <button
                     type="button"
                     onClick={loadMoreMapping}

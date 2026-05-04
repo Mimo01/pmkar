@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-
+import type { JiraUser } from '@/features/tickets/types';
 import { MultiUserPickerRenderer } from '../renderers/MultiUserPickerRenderer';
 import type { RendererProps } from '../types';
-import type { JiraUser } from '@/features/tickets/types';
 
 // cmdk uses ResizeObserver internally; jsdom does not implement it — mock globally
 class MockResizeObserver {

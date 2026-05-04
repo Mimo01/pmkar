@@ -311,7 +311,11 @@ describe('renderSourceFieldValue', () => {
   // -------------------------------------------------------------------------
 
   it('Test 20a — any + fieldId="status" with bare {name,id}: StatusBadge', () => {
-    const container = renderNode({ type: 'any' }, { name: 'Open', id: '1' }, { fieldId: 'status' })!;
+    const container = renderNode(
+      { type: 'any' },
+      { name: 'Open', id: '1' },
+      { fieldId: 'status' },
+    )!;
     expect(container.textContent).toContain('Open');
     expect(container.querySelector('code')).toBeNull();
   });
@@ -327,21 +331,13 @@ describe('renderSourceFieldValue', () => {
   });
 
   it('Test 20c — any + fieldId="priority" with bare {name}: PriorityIcon', () => {
-    const container = renderNode(
-      { type: 'any' },
-      { name: 'High' },
-      { fieldId: 'priority' },
-    )!;
+    const container = renderNode({ type: 'any' }, { name: 'High' }, { fieldId: 'priority' })!;
     expect(container.textContent).toContain('High');
     expect(container.querySelector('code')).toBeNull();
   });
 
   it('Test 20d — any + fieldId="resolution" with {name}: plain text', () => {
-    const container = renderNode(
-      { type: 'any' },
-      { name: 'Won\'t Do' },
-      { fieldId: 'resolution' },
-    )!;
+    const container = renderNode({ type: 'any' }, { name: "Won't Do" }, { fieldId: 'resolution' })!;
     expect(container.textContent).toContain("Won't Do");
     expect(container.querySelector('code')).toBeNull();
   });

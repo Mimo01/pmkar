@@ -20,7 +20,9 @@ export function IgnoredTicketsPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [sortField, setSortField] = useState<'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee'>('updated');
+  const [sortField, setSortField] = useState<
+    'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee'
+  >('updated');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showInfoCard, setShowInfoCard] = useState(true);
   const tickets = useTicketStore((s) => s.tickets);
@@ -51,17 +53,25 @@ export function IgnoredTicketsPage() {
     return [...filtered].sort((a: JiraTicket, b: JiraTicket) => {
       let diff: number;
       if (sortField === 'key') {
-        const parse = (k: string) => { const m = k.match(/^(.*)-(\d+)$/); return m ? { proj: m[1], num: parseInt(m[2], 10) } : { proj: k, num: 0 }; };
-        const ka = parse(a.key); const kb = parse(b.key);
+        const parse = (k: string) => {
+          const m = k.match(/^(.*)-(\d+)$/);
+          return m ? { proj: m[1], num: parseInt(m[2], 10) } : { proj: k, num: 0 };
+        };
+        const ka = parse(a.key);
+        const kb = parse(b.key);
         diff = ka.proj !== kb.proj ? ka.proj.localeCompare(kb.proj) : ka.num - kb.num;
       } else if (sortField === 'created') {
-        diff = new Date(a.fields.created ?? a.fields.updated).getTime() - new Date(b.fields.created ?? b.fields.updated).getTime();
+        diff =
+          new Date(a.fields.created ?? a.fields.updated).getTime() -
+          new Date(b.fields.created ?? b.fields.updated).getTime();
       } else if (sortField === 'priority') {
         diff = parseInt(a.fields.priority.id, 10) - parseInt(b.fields.priority.id, 10);
       } else if (sortField === 'status') {
         diff = a.fields.status.name.localeCompare(b.fields.status.name);
       } else if (sortField === 'assignee') {
-        diff = (a.fields.assignee?.displayName ?? '').localeCompare(b.fields.assignee?.displayName ?? '');
+        diff = (a.fields.assignee?.displayName ?? '').localeCompare(
+          b.fields.assignee?.displayName ?? '',
+        );
       } else {
         diff = new Date(a.fields.updated).getTime() - new Date(b.fields.updated).getTime();
       }

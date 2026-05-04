@@ -54,7 +54,10 @@ describe('MultiSelectRenderer', () => {
     render(
       <MultiSelectRenderer
         field={field}
-        value={[{ id: '1', value: 'Frontend' }, { id: '2', value: 'Backend' }]}
+        value={[
+          { id: '1', value: 'Frontend' },
+          { id: '2', value: 'Backend' },
+        ]}
         onChange={vi.fn()}
       />,
     );
@@ -85,7 +88,10 @@ describe('MultiSelectRenderer', () => {
     render(
       <MultiSelectRenderer
         field={field}
-        value={[{ id: '1', value: 'Frontend' }, { id: '2', value: 'Backend' }]}
+        value={[
+          { id: '1', value: 'Frontend' },
+          { id: '2', value: 'Backend' },
+        ]}
         onChange={onChange}
       />,
     );

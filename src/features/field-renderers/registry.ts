@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { FieldSchemaType } from '@/types/fieldSchema';
-import type { RendererProps } from './types';
-
+import { AnyFieldFallbackRenderer } from './renderers/AnyFieldFallbackRenderer';
+import { CascadingSelectRenderer } from './renderers/CascadingSelectRenderer';
 import { CheckboxRenderer } from './renderers/CheckboxRenderer';
 import { ComponentPickerRenderer } from './renderers/ComponentPickerRenderer';
 import { DateRenderer } from './renderers/DateRenderer';
@@ -11,6 +11,7 @@ import { LabelsRenderer } from './renderers/LabelsRenderer';
 import { MultiSelectRenderer } from './renderers/MultiSelectRenderer';
 import { MultiUserPickerRenderer } from './renderers/MultiUserPickerRenderer';
 import { NumberRenderer } from './renderers/NumberRenderer';
+import { PriorityRenderer } from './renderers/PriorityRenderer';
 import { RadioRenderer } from './renderers/RadioRenderer';
 import { SingleSelectRenderer } from './renderers/SingleSelectRenderer';
 import { StringRenderer } from './renderers/StringRenderer';
@@ -19,9 +20,7 @@ import { UnsupportedTypeRenderer } from './renderers/UnsupportedTypeRenderer';
 import { UrlRenderer } from './renderers/UrlRenderer';
 import { UserPickerRenderer } from './renderers/UserPickerRenderer';
 import { VersionPickerRenderer } from './renderers/VersionPickerRenderer';
-import { AnyFieldFallbackRenderer } from './renderers/AnyFieldFallbackRenderer';
-import { CascadingSelectRenderer } from './renderers/CascadingSelectRenderer';
-import { PriorityRenderer } from './renderers/PriorityRenderer';
+import type { RendererProps } from './types';
 
 // Jira custom-field-type strings that select dedicated checkbox / radio renderers
 // (CTRL-06). These are the standard Jira custom field IDs surfaced via FieldSchema.custom
@@ -98,7 +97,6 @@ export function getRenderer(schema: FieldSchemaType): React.ComponentType<Render
       return CascadingSelectRenderer;
     case 'any':
       return AnyFieldFallbackRenderer;
-    case 'issuetype':
     default:
       return UnsupportedTypeRenderer;
   }

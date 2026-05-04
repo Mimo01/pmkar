@@ -279,7 +279,9 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                         {t('detail.handled')}
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">{t('detail.handled.tooltip')}</TooltipContent>
+                    <TooltipContent aria-hidden="true">
+                      {t('detail.handled.tooltip')}
+                    </TooltipContent>
                   </Tooltip>
                 ) : isIgnored ? (
                   <Tooltip>
@@ -308,7 +310,9 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           {t('detail.ignore')}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent aria-hidden="true">{t('detail.ignore.tooltip')}</TooltipContent>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.ignore.tooltip')}
+                      </TooltipContent>
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -320,7 +324,9 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           {t('detail.markHandled')}
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent aria-hidden="true">{t('detail.markHandled.tooltip')}</TooltipContent>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.markHandled.tooltip')}
+                      </TooltipContent>
                     </Tooltip>
                   </>
                 )}

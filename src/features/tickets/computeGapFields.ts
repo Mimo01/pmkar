@@ -1,5 +1,5 @@
-import type { FieldSchema } from '@/types/fieldSchema';
 import type { FieldMappingRow } from '@/features/field-mapping/types';
+import type { FieldSchema } from '@/types/fieldSchema';
 
 /**
  * Phase 22 — derive the `FieldSchema[]` of required-but-unmapped target fields

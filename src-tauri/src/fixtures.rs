@@ -164,8 +164,8 @@ pub type SharedFixtures = Arc<Mutex<FixtureState>>;
 // Helper to create v2 user
 fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
     let email: Option<&str> = match name {
-        "jdoe"    => Some("jdoe@example.com"),
-        "csmith"  => Some("csmith@example.com"),
+        "jdoe" => Some("jdoe@example.com"),
+        "csmith" => Some("csmith@example.com"),
         "bwilson" => Some("bwilson@example.com"),
         _ => None,
     };
@@ -189,8 +189,8 @@ fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
 // Known test accounts include emailAddress; unknown/privacy accounts omit it (PERS-04).
 fn v3_user(account_id: &str, display_name: &str) -> serde_json::Value {
     let email: Option<&str> = match account_id {
-        "acc-jdoe"    => Some("jane.doe@example.com"),
-        "acc-csmith"  => Some("chris.smith@example.com"),
+        "acc-jdoe" => Some("jane.doe@example.com"),
+        "acc-csmith" => Some("chris.smith@example.com"),
         "acc-bwilson" => Some("bob.wilson@example.com"),
         _ => None,
     };
@@ -294,7 +294,12 @@ fn createmeta_field(
 
 // Helper to build a global field entry (for /field endpoint)
 #[allow(clippy::needless_pass_by_value)]
-fn global_field(id: &str, name: &str, custom: bool, schema: serde_json::Value) -> serde_json::Value {
+fn global_field(
+    id: &str,
+    name: &str,
+    custom: bool,
+    schema: serde_json::Value,
+) -> serde_json::Value {
     json!({
         "id": id,
         "name": name,
@@ -339,14 +344,14 @@ pub fn build_fixtures() -> SharedFixtures {
             "filename": "screenshot.png",
             "size": 45231,
             "mimeType": "image/png",
-            "content": "http://localhost:8080/secure/attachment/10100/screenshot.png"
+            "content": "http://127.0.0.1:8080/secure/attachment/10100/screenshot.png"
         }]);
         let attachment_v3 = json!([{
             "id": "10100",
             "filename": "screenshot.png",
             "size": 45231,
             "mimeType": "image/png",
-            "content": "http://localhost:8081/secure/attachment/10100/screenshot.png"
+            "content": "http://127.0.0.1:8081/secure/attachment/10100/screenshot.png"
         }]);
 
         let comments_v2 = json!([
@@ -651,14 +656,14 @@ pub fn build_fixtures() -> SharedFixtures {
             "filename": "malformed-export.csv",
             "size": 8192,
             "mimeType": "text/csv",
-            "content": "http://localhost:8080/secure/attachment/10101/malformed-export.csv"
+            "content": "http://127.0.0.1:8080/secure/attachment/10101/malformed-export.csv"
         }]);
         let attachment_v3 = json!([{
             "id": "10101",
             "filename": "malformed-export.csv",
             "size": 8192,
             "mimeType": "text/csv",
-            "content": "http://localhost:8081/secure/attachment/10101/malformed-export.csv"
+            "content": "http://127.0.0.1:8081/secure/attachment/10101/malformed-export.csv"
         }]);
 
         let comments_v2 = json!([v2_comment(
@@ -810,14 +815,14 @@ pub fn build_fixtures() -> SharedFixtures {
             "filename": "error-log.txt",
             "size": 12048,
             "mimeType": "text/plain",
-            "content": "http://localhost:8080/secure/attachment/10102/error-log.txt"
+            "content": "http://127.0.0.1:8080/secure/attachment/10102/error-log.txt"
         }]);
         let attachment_v3 = json!([{
             "id": "10102",
             "filename": "error-log.txt",
             "size": 12048,
             "mimeType": "text/plain",
-            "content": "http://localhost:8081/secure/attachment/10102/error-log.txt"
+            "content": "http://127.0.0.1:8081/secure/attachment/10102/error-log.txt"
         }]);
 
         let comments_v2 = json!([
@@ -1585,38 +1590,43 @@ pub fn build_fixtures() -> SharedFixtures {
     ]);
 
     // Schemas reused across global field list AND createmeta entries
-    let sp_schema     = json!({ "type": "number", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float", "customId": 10001 });
+    let sp_schema = json!({ "type": "number", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float", "customId": 10001 });
     let sprint_schema = json!({ "type": "array", "items": "string", "custom": "com.pyxis.greenhopper.jira:gh-sprint", "customId": 10002 });
-    let epic_schema   = json!({ "type": "string", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:epic-link", "customId": 10003 });
-    let team_schema   = json!({ "type": "array", "items": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multiselect", "customId": 10004 });
-    let dept_schema   = json!({ "type": "option-with-child", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect", "customId": 10005 });
-    let sev_schema    = json!({ "type": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select", "customId": 10006 });
+    let epic_schema = json!({ "type": "string", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:epic-link", "customId": 10003 });
+    let team_schema = json!({ "type": "array", "items": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:multiselect", "customId": 10004 });
+    let dept_schema = json!({ "type": "option-with-child", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:cascadingselect", "customId": 10005 });
+    let sev_schema = json!({ "type": "option", "custom": "com.atlassian.jira.plugin.system.customfieldtypes:select", "customId": 10006 });
 
-    let summary_schema  = json!({ "type": "string",   "system": "summary" });
+    let summary_schema = json!({ "type": "string",   "system": "summary" });
     let assignee_schema = json!({ "type": "user",     "system": "assignee" });
     let reporter_schema = json!({ "type": "user",     "system": "reporter" });
     let priority_schema = json!({ "type": "priority", "system": "priority" });
-    let labels_schema   = json!({ "type": "array",    "items": "string", "system": "labels" });
-    let fixv_schema     = json!({ "type": "array",    "items": "version", "system": "fixVersions" });
-    let comp_schema     = json!({ "type": "array",    "items": "component", "system": "components" });
-    let desc_schema_v2  = json!({ "type": "string",   "system": "description" });
+    let labels_schema = json!({ "type": "array",    "items": "string", "system": "labels" });
+    let fixv_schema = json!({ "type": "array",    "items": "version", "system": "fixVersions" });
+    let comp_schema = json!({ "type": "array",    "items": "component", "system": "components" });
+    let desc_schema_v2 = json!({ "type": "string",   "system": "description" });
 
     // Global field list — v2
     let v2_fields = vec![
-        global_field("summary",     "Summary",      false, summary_schema.clone()),
-        global_field("description", "Description",  false, desc_schema_v2.clone()),
-        global_field("priority",    "Priority",     false, priority_schema.clone()),
-        global_field("assignee",    "Assignee",     false, assignee_schema.clone()),
-        global_field("reporter",    "Reporter",     false, reporter_schema.clone()),
-        global_field("labels",      "Labels",       false, labels_schema.clone()),
+        global_field("summary", "Summary", false, summary_schema.clone()),
+        global_field("description", "Description", false, desc_schema_v2.clone()),
+        global_field("priority", "Priority", false, priority_schema.clone()),
+        global_field("assignee", "Assignee", false, assignee_schema.clone()),
+        global_field("reporter", "Reporter", false, reporter_schema.clone()),
+        global_field("labels", "Labels", false, labels_schema.clone()),
         global_field("fixVersions", "Fix Versions", false, fixv_schema.clone()),
-        global_field("components",  "Components",   false, comp_schema.clone()),
-        global_field("customfield_10001", "Story Points",    true, sp_schema.clone()),
-        global_field("customfield_10002", "Sprint",          true, sprint_schema.clone()),
-        global_field("customfield_10003", "Epic Link",       true, epic_schema.clone()),
-        global_field("customfield_10004", "Team",            true, team_schema.clone()),
-        global_field("customfield_10005", "Department/Team", true, dept_schema.clone()),
-        global_field("customfield_10006", "Severity",        true, sev_schema.clone()),
+        global_field("components", "Components", false, comp_schema.clone()),
+        global_field("customfield_10001", "Story Points", true, sp_schema.clone()),
+        global_field("customfield_10002", "Sprint", true, sprint_schema.clone()),
+        global_field("customfield_10003", "Epic Link", true, epic_schema.clone()),
+        global_field("customfield_10004", "Team", true, team_schema.clone()),
+        global_field(
+            "customfield_10005",
+            "Department/Team",
+            true,
+            dept_schema.clone(),
+        ),
+        global_field("customfield_10006", "Severity", true, sev_schema.clone()),
     ];
 
     // Global field list — v3 (same logical fields; divergences enforced at createmeta level)
@@ -1644,32 +1654,110 @@ pub fn build_fixtures() -> SharedFixtures {
 
     // Bug — 8 fields total (Pitfall F pagination boundary). Required: summary + priority + Severity
     let bug_fields = vec![
-        createmeta_field("summary",           "Summary",         true,  summary_schema.clone(),  None),
-        createmeta_field("description",       "Description",     false, desc_schema_v2.clone(),  None),
-        createmeta_field("priority",          "Priority",        true,  priority_schema.clone(), Some(priority_allowed.clone())),
-        createmeta_field("customfield_10006", "Severity",        true,  sev_schema.clone(),      Some(severity_allowed)),
-        createmeta_field("assignee",          "Assignee",        false, assignee_schema.clone(), None),
-        createmeta_field("customfield_10001", "Story Points",    false, sp_schema.clone(),       None),
-        createmeta_field("customfield_10004", "Team",            false, team_schema.clone(),     Some(team_allowed.clone())),
-        createmeta_field("customfield_10005", "Department/Team", false, dept_schema.clone(),     Some(dept_allowed.clone())),
+        createmeta_field("summary", "Summary", true, summary_schema.clone(), None),
+        createmeta_field(
+            "description",
+            "Description",
+            false,
+            desc_schema_v2.clone(),
+            None,
+        ),
+        createmeta_field(
+            "priority",
+            "Priority",
+            true,
+            priority_schema.clone(),
+            Some(priority_allowed.clone()),
+        ),
+        createmeta_field(
+            "customfield_10006",
+            "Severity",
+            true,
+            sev_schema.clone(),
+            Some(severity_allowed),
+        ),
+        createmeta_field("assignee", "Assignee", false, assignee_schema.clone(), None),
+        createmeta_field(
+            "customfield_10001",
+            "Story Points",
+            false,
+            sp_schema.clone(),
+            None,
+        ),
+        createmeta_field(
+            "customfield_10004",
+            "Team",
+            false,
+            team_schema.clone(),
+            Some(team_allowed.clone()),
+        ),
+        createmeta_field(
+            "customfield_10005",
+            "Department/Team",
+            false,
+            dept_schema.clone(),
+            Some(dept_allowed.clone()),
+        ),
     ];
 
     // Task — only summary required
     let task_fields = vec![
-        createmeta_field("summary",           "Summary",     true,  summary_schema.clone(),  None),
-        createmeta_field("description",       "Description", false, desc_schema_v2.clone(),  None),
-        createmeta_field("priority",          "Priority",     false, priority_schema.clone(), Some(priority_allowed.clone())),
-        createmeta_field("assignee",          "Assignee",     false, assignee_schema.clone(), None),
-        createmeta_field("customfield_10002", "Sprint",   false, sprint_schema.clone(),   None),
+        createmeta_field("summary", "Summary", true, summary_schema.clone(), None),
+        createmeta_field(
+            "description",
+            "Description",
+            false,
+            desc_schema_v2.clone(),
+            None,
+        ),
+        createmeta_field(
+            "priority",
+            "Priority",
+            false,
+            priority_schema.clone(),
+            Some(priority_allowed.clone()),
+        ),
+        createmeta_field("assignee", "Assignee", false, assignee_schema.clone(), None),
+        createmeta_field(
+            "customfield_10002",
+            "Sprint",
+            false,
+            sprint_schema.clone(),
+            None,
+        ),
     ];
 
     // Story — Story Points required
     let story_fields = vec![
-        createmeta_field("summary",           "Summary",      false, summary_schema.clone(),  None),
-        createmeta_field("description",       "Description",  false, desc_schema_v2.clone(),  None),
-        createmeta_field("customfield_10001", "Story Points", true,  sp_schema.clone(),       None),
-        createmeta_field("priority",          "Priority",     false, priority_schema.clone(), Some(priority_allowed)),
-        createmeta_field("customfield_10004", "Team",         false, team_schema.clone(),     Some(team_allowed)),
+        createmeta_field("summary", "Summary", false, summary_schema.clone(), None),
+        createmeta_field(
+            "description",
+            "Description",
+            false,
+            desc_schema_v2.clone(),
+            None,
+        ),
+        createmeta_field(
+            "customfield_10001",
+            "Story Points",
+            true,
+            sp_schema.clone(),
+            None,
+        ),
+        createmeta_field(
+            "priority",
+            "Priority",
+            false,
+            priority_schema.clone(),
+            Some(priority_allowed),
+        ),
+        createmeta_field(
+            "customfield_10004",
+            "Team",
+            false,
+            team_schema.clone(),
+            Some(team_allowed),
+        ),
     ];
 
     let mut v3_createmeta_fields: HashMap<String, Vec<serde_json::Value>> = HashMap::new();

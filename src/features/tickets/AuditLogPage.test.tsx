@@ -517,10 +517,12 @@ describe('AuditLogPage', () => {
       // default. Each row has its own copyId here so we get two groups; expand
       // both before asserting field-id contents.
       await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: /Expand transformation group/i })).toHaveLength(2);
+        expect(
+          screen.getAllByRole('button', { name: /Expand transformation group/i }),
+        ).toHaveLength(2);
       });
       const groupButtons = screen.getAllByRole('button', { name: /Expand transformation group/i });
-      groupButtons.forEach((btn) => fireEvent.click(btn));
+      for (const btn of groupButtons) fireEvent.click(btn);
 
       // Both field ids should appear
       await waitFor(() => {

@@ -6,11 +6,11 @@
 //! contains two rows targeting the same `target_field_id` (T-525-02 guard).
 
 use crate::field_discovery::FieldSchemaType;
+use crate::field_transform::{identity, wiki_to_adf, FieldMappingRow};
 use crate::field_transform::{
     user::extract_usernames_from_field, user::is_user_field, GapVariant, ResolvedFields,
     TransformContext, TransformError, UnresolvedComponent, UnresolvedPerson, UnresolvedVersion,
 };
-use crate::field_transform::{identity, wiki_to_adf, FieldMappingRow};
 use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 
@@ -37,7 +37,9 @@ pub async fn apply_mapping(
             continue;
         }
         if !seen_targets.insert(row.target_field_id.as_str()) {
-            return Err(TransformError::DuplicateTargetField(row.target_field_id.clone()));
+            return Err(TransformError::DuplicateTargetField(
+                row.target_field_id.clone(),
+            ));
         }
     }
 
@@ -102,7 +104,7 @@ fn is_array_of(s: &FieldSchemaType, item_kind: &str) -> bool {
 }
 
 /// Extracts the display name (or username fallback) from a source user field and
-/// writes it as a plain string. Used when transformer_kind == "user_name" and
+/// writes it as a plain string. Used when `transformer_kind` == `"user_name"` and
 /// the target field is a text type.
 ///
 /// For single user: writes the displayName string (falls back to name, then empty).
@@ -123,7 +125,11 @@ fn dispatch_user_name(row: &FieldMappingRow, src_val: &Value, fields: &mut Map<S
     };
 
     let result = if let Some(arr) = src_val.as_array() {
-        let names: Vec<String> = arr.iter().map(extract_name).filter(|n| !n.is_empty()).collect();
+        let names: Vec<String> = arr
+            .iter()
+            .map(extract_name)
+            .filter(|n| !n.is_empty())
+            .collect();
         if names.is_empty() {
             return;
         }
@@ -160,8 +166,14 @@ fn dispatch_user(
                     .and_then(|x| x.as_str())
                     .unwrap_or("")
                     .to_string();
-                let email = entry.get("emailAddress").and_then(|x| x.as_str()).map(str::to_string);
-                let key = entry.get("key").and_then(|x| x.as_str()).map(str::to_string);
+                let email = entry
+                    .get("emailAddress")
+                    .and_then(|x| x.as_str())
+                    .map(str::to_string);
+                let key = entry
+                    .get("key")
+                    .and_then(|x| x.as_str())
+                    .map(str::to_string);
                 match ctx.user_map.get(&username).and_then(|v| v.as_ref()) {
                     Some(account_id) => {
                         resolved.push(json!({ "accountId": account_id.as_str() }));
@@ -169,7 +181,11 @@ fn dispatch_user(
                     None => {
                         gaps.push(GapVariant::Person(UnresolvedPerson {
                             target_field_id: row.target_field_id.clone(),
-                            source_username: if username.is_empty() { None } else { Some(username) },
+                            source_username: if username.is_empty() {
+                                None
+                            } else {
+                                Some(username)
+                            },
                             source_key: key,
                             source_email: email,
                         }));
@@ -187,8 +203,14 @@ fn dispatch_user(
         // Single user.
         let names = extract_usernames_from_field(src_val);
         let username = names.into_iter().next().unwrap_or_default();
-        let email = src_val.get("emailAddress").and_then(|x| x.as_str()).map(str::to_string);
-        let key = src_val.get("key").and_then(|x| x.as_str()).map(str::to_string);
+        let email = src_val
+            .get("emailAddress")
+            .and_then(|x| x.as_str())
+            .map(str::to_string);
+        let key = src_val
+            .get("key")
+            .and_then(|x| x.as_str())
+            .map(str::to_string);
         if username.is_empty() {
             // Field is null/missing — emit a gap so Phase 22 prompts the user.
             // Only emit if target requires it. Phase 18 doesn't read required-ness;
@@ -224,11 +246,19 @@ async fn dispatch_version_array(
     let mut resolved: Vec<Value> = Vec::new();
     if let Some(arr) = src_val.as_array() {
         for entry in arr {
-            let name = entry.get("name").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let name = entry
+                .get("name")
+                .and_then(|x| x.as_str())
+                .unwrap_or("")
+                .to_string();
             if name.is_empty() {
                 continue;
             }
-            match ctx.version_resolver.resolve_name(ctx.target_project_key, &name).await {
+            match ctx
+                .version_resolver
+                .resolve_name(ctx.target_project_key, &name)
+                .await
+            {
                 Some(id) => resolved.push(json!({ "id": id })),
                 None => gaps.push(GapVariant::Version(UnresolvedVersion {
                     target_field_id: row.target_field_id.clone(),
@@ -253,11 +283,19 @@ async fn dispatch_component_array(
     let mut resolved: Vec<Value> = Vec::new();
     if let Some(arr) = src_val.as_array() {
         for entry in arr {
-            let name = entry.get("name").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let name = entry
+                .get("name")
+                .and_then(|x| x.as_str())
+                .unwrap_or("")
+                .to_string();
             if name.is_empty() {
                 continue;
             }
-            match ctx.component_resolver.resolve_name(ctx.target_project_key, &name).await {
+            match ctx
+                .component_resolver
+                .resolve_name(ctx.target_project_key, &name)
+                .await
+            {
                 Some(id) => resolved.push(json!({ "id": id })),
                 None => gaps.push(GapVariant::Component(UnresolvedComponent {
                     target_field_id: row.target_field_id.clone(),
@@ -296,10 +334,19 @@ mod tests {
         }
     }
     fn s_user() -> FieldSchemaType {
-        FieldSchemaType::User { system: None, custom: None, custom_id: None }
+        FieldSchemaType::User {
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
     fn s_array(items: &str) -> FieldSchemaType {
-        FieldSchemaType::Array { items: items.into(), system: None, custom: None, custom_id: None }
+        FieldSchemaType::Array {
+            items: items.into(),
+            system: None,
+            custom: None,
+            custom_id: None,
+        }
     }
 
     fn row(src: &str, dst: &str, schema: FieldSchemaType) -> FieldMappingRow {
@@ -312,7 +359,13 @@ mod tests {
         }
     }
 
-    fn row_with_kind(src: &str, dst: &str, src_schema: FieldSchemaType, dst_schema: FieldSchemaType, kind: &str) -> FieldMappingRow {
+    fn row_with_kind(
+        src: &str,
+        dst: &str,
+        src_schema: FieldSchemaType,
+        dst_schema: FieldSchemaType,
+        kind: &str,
+    ) -> FieldMappingRow {
         FieldMappingRow {
             source_field_id: src.into(),
             target_field_id: dst.into(),
@@ -365,7 +418,9 @@ mod tests {
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert_eq!(out.fields.get("summary"), Some(&json!("Hello")));
         assert!(out.gaps.is_empty());
     }
@@ -379,8 +434,13 @@ mod tests {
         map.insert("alice".into(), Some("AID-A".into()));
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
-        assert_eq!(out.fields.get("assignee"), Some(&json!({"accountId":"AID-A"})));
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert_eq!(
+            out.fields.get("assignee"),
+            Some(&json!({"accountId":"AID-A"}))
+        );
         assert!(out.gaps.is_empty());
     }
 
@@ -393,7 +453,9 @@ mod tests {
         map.insert("alice".into(), None);
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert!(!out.fields.contains_key("assignee"));
         assert_eq!(out.gaps.len(), 1);
         match &out.gaps[0] {
@@ -414,7 +476,11 @@ mod tests {
             {"name":"bob","emailAddress":"bob@acme.com"},
             {"name":"ghost","emailAddress":"ghost@acme.com"}
         ]}});
-        let mapping = vec![row("customfield_10010", "customfield_10010", s_array("user"))];
+        let mapping = vec![row(
+            "customfield_10010",
+            "customfield_10010",
+            s_array("user"),
+        )];
         let (u, v, c) = make_resolvers();
         let mut map = HashMap::new();
         map.insert("alice".into(), Some("AID-A".into()));
@@ -422,7 +488,9 @@ mod tests {
         map.insert("ghost".into(), None);
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert_eq!(
             out.fields.get("customfield_10010"),
             Some(&json!([{"accountId":"AID-A"},{"accountId":"AID-B"}]))
@@ -438,16 +506,14 @@ mod tests {
     #[tokio::test]
     async fn apply_mapping_priority_strips_to_id_write_shape() {
         let issue = json!({"fields":{"priority":{"id":"3","name":"Medium","self":"http://x/3"}}});
-        let mapping = vec![row(
-            "priority",
-            "priority",
-            FieldSchemaType::Priority,
-        )];
+        let mapping = vec![row("priority", "priority", FieldSchemaType::Priority)];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert_eq!(out.fields.get("priority"), Some(&json!({"id":"3"})));
     }
 
@@ -528,8 +594,13 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
-        assert_eq!(out.fields.get("fixVersions"), Some(&json!([{"id":"20010"}])));
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert_eq!(
+            out.fields.get("fixVersions"),
+            Some(&json!([{"id":"20010"}]))
+        );
         h.abort();
     }
 
@@ -545,7 +616,9 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "MYPROJ");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert!(!out.fields.contains_key("fixVersions"));
         assert_eq!(out.gaps.len(), 1);
         if let GapVariant::Version(g) = &out.gaps[0] {
@@ -569,7 +642,9 @@ mod tests {
         let mapping = vec![row("components", "components", s_array("component"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert_eq!(out.fields.get("components"), Some(&json!([{"id":"30001"}])));
         h.abort();
     }
@@ -590,7 +665,9 @@ mod tests {
         let mapping = vec![row("fixVersions", "fixVersions", s_array("version"))];
         let map = HashMap::new();
         let ctx = ctx_with_map(&client, &u, &v, &comp, &map, "MYPROJ", "unused");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         assert_eq!(
             out.fields.get("fixVersions"),
             Some(&json!([{"id":"20010"},{"id":"20011"}]))
@@ -616,7 +693,9 @@ mod tests {
         map.insert("jdoe".into(), Some("AID-J".into()));
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
         let adf = out.fields.get("description").expect("description present");
         assert_eq!(adf["type"], "doc");
         let s = serde_json::to_string(adf).unwrap();
@@ -652,12 +731,26 @@ mod tests {
         });
 
         let mapping = vec![
-            row("customfield_10001", "customfield_10001",
-                FieldSchemaType::Number { system: None, custom: Some("com.atlassian.jira.plugin.system.customfieldtypes:float".into()), custom_id: Some(10001) }),
+            row(
+                "customfield_10001",
+                "customfield_10001",
+                FieldSchemaType::Number {
+                    system: None,
+                    custom: Some("com.atlassian.jira.plugin.system.customfieldtypes:float".into()),
+                    custom_id: Some(10001),
+                },
+            ),
             row("customfield_10006", "customfield_10006", s_array("option")),
             row("customfield_10003", "customfield_10003", s_user()),
-            row("customfield_10004", "customfield_10004",
-                FieldSchemaType::Date { system: None, custom: None, custom_id: Some(10004) }),
+            row(
+                "customfield_10004",
+                "customfield_10004",
+                FieldSchemaType::Date {
+                    system: None,
+                    custom: None,
+                    custom_id: Some(10004),
+                },
+            ),
             row("description", "description", s_str_description()),
             row("fixVersions", "fixVersions", s_array("version")),
             row("components", "components", s_array("component")),
@@ -675,7 +768,9 @@ mod tests {
 
         // Phase 2: apply mapping.
         let ctx = ctx_with_map(&client, &u, &v, &comp, &user_map, "MYPROJ", &base);
-        let out = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
 
         // ── Assertions: each field type emits the right write shape ──────────
         // 1. Number — passthrough.
@@ -691,27 +786,34 @@ mod tests {
             Some(&json!({"accountId":"AID-A"}))
         );
         // 4. Date — passthrough.
-        assert_eq!(out.fields.get("customfield_10004"), Some(&json!("2026-04-27")));
+        assert_eq!(
+            out.fields.get("customfield_10004"),
+            Some(&json!("2026-04-27"))
+        );
         // 5. Description — ADF doc with mention.
         let desc = out.fields.get("description").expect("description present");
         assert_eq!(desc["type"], "doc");
         let desc_str = serde_json::to_string(desc).unwrap();
-        assert!(desc_str.contains("AID-A"), "description mention should reference AID-A: {desc_str}");
+        assert!(
+            desc_str.contains("AID-A"),
+            "description mention should reference AID-A: {desc_str}"
+        );
         // 6. fixVersions partial resolution — only 1.2.0 resolves, missing emits gap.
         assert_eq!(
             out.fields.get("fixVersions"),
             Some(&json!([{"id":"20010"}]))
         );
         // 7. components — API resolves.
-        assert_eq!(
-            out.fields.get("components"),
-            Some(&json!([{"id":"30001"}]))
-        );
+        assert_eq!(out.fields.get("components"), Some(&json!([{"id":"30001"}])));
         // 8. priority — strip to {id}.
         assert_eq!(out.fields.get("priority"), Some(&json!({"id":"3"})));
 
         // ── Gap assertions ───────────────────────────────────────────────────
-        assert_eq!(out.gaps.len(), 1, "exactly one gap (UnresolvedVersion for 'missing')");
+        assert_eq!(
+            out.gaps.len(),
+            1,
+            "exactly one gap (UnresolvedVersion for 'missing')"
+        );
         match &out.gaps[0] {
             GapVariant::Version(g) => {
                 assert_eq!(g.source_name, "missing");
@@ -760,7 +862,9 @@ mod tests {
         let user_map = u.resolve_batch(&issue, &mapping).await;
         // Phase 2.
         let ctx = ctx_with_map(&client, &u, &v, &comp, &user_map, "MYPROJ", &base);
-        let _ = apply_mapping(&issue, &mapping, &ctx).await.expect("apply_mapping ok");
+        let _ = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
 
         // TRAN-06: exactly one HTTP call on @acme.com.
         assert_eq!(user_search_counter.load(Ordering::SeqCst), 1);
@@ -790,26 +894,44 @@ mod tests {
     #[tokio::test]
     async fn user_name_transformer_extracts_display_name() {
         let issue = json!({"fields":{"assignee":{"name":"alice","displayName":"Alice Smith","emailAddress":"alice@acme.com"}}});
-        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let mapping = vec![row_with_kind(
+            "assignee",
+            "cf_reporter_name",
+            s_user(),
+            s_str_summary(),
+            "user_name",
+        )];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
         let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
-        assert_eq!(out.fields.get("cf_reporter_name"), Some(&json!("Alice Smith")));
+        assert_eq!(
+            out.fields.get("cf_reporter_name"),
+            Some(&json!("Alice Smith"))
+        );
         assert!(out.gaps.is_empty());
     }
 
     #[tokio::test]
     async fn user_name_transformer_falls_back_to_name_when_no_display_name() {
         let issue = json!({"fields":{"assignee":{"name":"alice.smith"}}});
-        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let mapping = vec![row_with_kind(
+            "assignee",
+            "cf_reporter_name",
+            s_user(),
+            s_str_summary(),
+            "user_name",
+        )];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
         let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
-        assert_eq!(out.fields.get("cf_reporter_name"), Some(&json!("alice.smith")));
+        assert_eq!(
+            out.fields.get("cf_reporter_name"),
+            Some(&json!("alice.smith"))
+        );
     }
 
     #[tokio::test]
@@ -818,19 +940,34 @@ mod tests {
             {"name":"alice","displayName":"Alice Smith"},
             {"name":"bob","displayName":"Bob Jones"}
         ]}});
-        let mapping = vec![row_with_kind("watchers", "cf_watcher_names", s_array("user"), s_str_summary(), "user_name")];
+        let mapping = vec![row_with_kind(
+            "watchers",
+            "cf_watcher_names",
+            s_array("user"),
+            s_str_summary(),
+            "user_name",
+        )];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
         let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
-        assert_eq!(out.fields.get("cf_watcher_names"), Some(&json!("Alice Smith, Bob Jones")));
+        assert_eq!(
+            out.fields.get("cf_watcher_names"),
+            Some(&json!("Alice Smith, Bob Jones"))
+        );
     }
 
     #[tokio::test]
     async fn user_name_transformer_skips_null_user() {
         let issue = json!({"fields":{"assignee":null}});
-        let mapping = vec![row_with_kind("assignee", "cf_reporter_name", s_user(), s_str_summary(), "user_name")];
+        let mapping = vec![row_with_kind(
+            "assignee",
+            "cf_reporter_name",
+            s_user(),
+            s_str_summary(),
+            "user_name",
+        )];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
         let client = reqwest::Client::new();
@@ -851,6 +988,9 @@ mod tests {
         let client = reqwest::Client::new();
         let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
         let out = apply_mapping(&issue, &mapping, &ctx).await.expect("ok");
-        assert_eq!(out.fields.get("assignee"), Some(&json!({"accountId":"AID-A"})));
+        assert_eq!(
+            out.fields.get("assignee"),
+            Some(&json!({"accountId":"AID-A"}))
+        );
     }
 }

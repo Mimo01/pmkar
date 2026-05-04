@@ -113,7 +113,12 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
   runProbe: async () => {
     const target = get().targetProjectKey;
     if (!target) {
-      set({ probeStatus: 'skipped', probeError: null, probeEndpointUrl: null, probeStatusCode: null });
+      set({
+        probeStatus: 'skipped',
+        probeError: null,
+        probeEndpointUrl: null,
+        probeStatusCode: null,
+      });
       return;
     }
     try {

@@ -46,10 +46,13 @@ async fn test_v2_field_returns_custom_fields() {
     assert_eq!(resp.status().as_u16(), 200);
     let body: serde_json::Value = resp.json().await.expect("Invalid JSON");
     let fields = body.as_array().expect("Response should be an array");
-    let has_story_points = fields.iter().any(|f| {
-        f["id"] == "customfield_10001" && f["name"] == "Story Points"
-    });
-    assert!(has_story_points, "v2 /field should contain customfield_10001 'Story Points'");
+    let has_story_points = fields
+        .iter()
+        .any(|f| f["id"] == "customfield_10001" && f["name"] == "Story Points");
+    assert!(
+        has_story_points,
+        "v2 /field should contain customfield_10001 'Story Points'"
+    );
 }
 
 // Test 2: v3 /field returns array with all 6 custom fields
@@ -76,10 +79,7 @@ async fn test_v3_field_returns_custom_fields() {
         "customfield_10006",
     ] {
         let has_field = fields.iter().any(|f| f["id"] == *field_id);
-        assert!(
-            has_field,
-            "v3 /field should contain {field_id}"
-        );
+        assert!(has_field, "v3 /field should contain {field_id}");
     }
 }
 
@@ -102,9 +102,15 @@ async fn test_v3_createmeta_issuetypes_returns_three() {
         .expect("issueTypes should be an array");
     assert_eq!(issue_types.len(), 3, "Should have 3 issue types");
 
-    let has_bug = issue_types.iter().any(|t| t["id"] == "10001" && t["name"] == "Bug");
-    let has_task = issue_types.iter().any(|t| t["id"] == "10002" && t["name"] == "Task");
-    let has_story = issue_types.iter().any(|t| t["id"] == "10003" && t["name"] == "Story");
+    let has_bug = issue_types
+        .iter()
+        .any(|t| t["id"] == "10001" && t["name"] == "Bug");
+    let has_task = issue_types
+        .iter()
+        .any(|t| t["id"] == "10002" && t["name"] == "Task");
+    let has_story = issue_types
+        .iter()
+        .any(|t| t["id"] == "10003" && t["name"] == "Story");
     assert!(has_bug, "Should contain Bug issue type with id 10001");
     assert!(has_task, "Should contain Task issue type with id 10002");
     assert!(has_story, "Should contain Story issue type with id 10003");
@@ -130,14 +136,18 @@ async fn test_v3_createmeta_bug_required_fields() {
     let priority_required = fields
         .iter()
         .any(|f| f["fieldId"] == "priority" && f["required"] == true);
-    assert!(priority_required, "Bug createmeta should have priority as required");
+    assert!(
+        priority_required,
+        "Bug createmeta should have priority as required"
+    );
 
     let severity_required = fields.iter().any(|f| {
-        f["fieldId"] == "customfield_10006"
-            && f["name"] == "Severity"
-            && f["required"] == true
+        f["fieldId"] == "customfield_10006" && f["name"] == "Severity" && f["required"] == true
     });
-    assert!(severity_required, "Bug createmeta should have customfield_10006 Severity as required");
+    assert!(
+        severity_required,
+        "Bug createmeta should have customfield_10006 Severity as required"
+    );
 }
 
 // Test 5: v3 createmeta Task (10002) has only summary as required
@@ -160,7 +170,10 @@ async fn test_v3_createmeta_task_minimal_required() {
     let summary_required = fields
         .iter()
         .any(|f| f["fieldId"] == "summary" && f["required"] == true);
-    assert!(summary_required, "Task createmeta should have summary as required");
+    assert!(
+        summary_required,
+        "Task createmeta should have summary as required"
+    );
 
     // No other field should be required
     let other_required: Vec<_> = fields
@@ -191,9 +204,9 @@ async fn test_v3_createmeta_story_required() {
         .as_array()
         .expect("fields should be an array");
 
-    let story_points_required = fields.iter().any(|f| {
-        f["fieldId"] == "customfield_10001" && f["required"] == true
-    });
+    let story_points_required = fields
+        .iter()
+        .any(|f| f["fieldId"] == "customfield_10001" && f["required"] == true);
     assert!(
         story_points_required,
         "Story createmeta should have customfield_10001 Story Points as required"
@@ -214,10 +227,7 @@ async fn test_v3_project_versions_diverge_from_v2() {
     assert_eq!(resp.status().as_u16(), 200);
     let body: serde_json::Value = resp.json().await.expect("Invalid JSON");
     let versions = body.as_array().expect("Response should be an array");
-    assert!(
-        !versions.is_empty(),
-        "Should return at least one version"
-    );
+    assert!(!versions.is_empty(), "Should return at least one version");
     // Target version id "20010" is different from any v2 source version id
     // (v2 source fixtures use ids like "10010")
     let has_divergent_id = versions.iter().any(|v| v["id"] == "20010");
@@ -269,12 +279,14 @@ async fn test_v3_cascading_select_shape() {
         .expect("fields should be an array");
 
     let dept_field = fields.iter().find(|f| f["fieldId"] == "customfield_10005");
-    assert!(dept_field.is_some(), "Bug page 2 should contain customfield_10005 Department/Team");
+    assert!(
+        dept_field.is_some(),
+        "Bug page 2 should contain customfield_10005 Department/Team"
+    );
 
     let dept = dept_field.unwrap();
     assert_eq!(
-        dept["schema"]["type"],
-        "option-with-child",
+        dept["schema"]["type"], "option-with-child",
         "customfield_10005 schema type should be option-with-child"
     );
 

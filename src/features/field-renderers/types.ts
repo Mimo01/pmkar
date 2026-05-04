@@ -1,5 +1,5 @@
-import type { FieldSchema } from '@/types/fieldSchema';
 import type { JiraUser } from '@/features/tickets/types';
+import type { FieldSchema } from '@/types/fieldSchema';
 
 /**
  * Component reference for picker renderers (multi-select Components field).

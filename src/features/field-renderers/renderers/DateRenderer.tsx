@@ -1,5 +1,5 @@
-import type { RendererProps } from '../types';
 import { cn } from '@/lib/utils';
+import type { RendererProps } from '../types';
 
 export function DateRenderer({ field, value, onChange, required, disabled }: RendererProps) {
   const strValue = typeof value === 'string' ? value : '';
@@ -10,7 +10,7 @@ export function DateRenderer({ field, value, onChange, required, disabled }: Ren
       value={strValue}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      aria-required={required}
+      required={required}
       className={cn(
         'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

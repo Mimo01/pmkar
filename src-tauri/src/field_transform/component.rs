@@ -140,7 +140,9 @@ mod tests {
                     if status == 200 {
                         (axum::http::StatusCode::OK, Json(b)).into_response()
                     } else {
-                        axum::http::StatusCode::from_u16(status).unwrap().into_response()
+                        axum::http::StatusCode::from_u16(status)
+                            .unwrap()
+                            .into_response()
                     }
                 }
             }),
@@ -166,29 +168,29 @@ mod tests {
         )
         .await;
         let r = build_resolver_against(base);
-        assert_eq!(r.resolve_name("MYPROJ", "API").await.as_deref(), Some("30001"));
+        assert_eq!(
+            r.resolve_name("MYPROJ", "API").await.as_deref(),
+            Some("30001")
+        );
         h.abort();
     }
 
     #[tokio::test]
     async fn resolve_name_case_insensitive() {
-        let (base, _c, h) = spawn_components_mock(
-            vec![json!({"id":"30001","name":"API"})],
-            200,
-        )
-        .await;
+        let (base, _c, h) =
+            spawn_components_mock(vec![json!({"id":"30001","name":"API"})], 200).await;
         let r = build_resolver_against(base);
-        assert_eq!(r.resolve_name("MYPROJ", "api").await.as_deref(), Some("30001"));
+        assert_eq!(
+            r.resolve_name("MYPROJ", "api").await.as_deref(),
+            Some("30001")
+        );
         h.abort();
     }
 
     #[tokio::test]
     async fn resolve_name_returns_none_for_missing() {
-        let (base, _c, h) = spawn_components_mock(
-            vec![json!({"id":"30001","name":"API"})],
-            200,
-        )
-        .await;
+        let (base, _c, h) =
+            spawn_components_mock(vec![json!({"id":"30001","name":"API"})], 200).await;
         let r = build_resolver_against(base);
         assert_eq!(r.resolve_name("MYPROJ", "Backend").await, None);
         h.abort();
@@ -196,11 +198,8 @@ mod tests {
 
     #[tokio::test]
     async fn cache_hit_skips_second_http() {
-        let (base, counter, h) = spawn_components_mock(
-            vec![json!({"id":"30001","name":"API"})],
-            200,
-        )
-        .await;
+        let (base, counter, h) =
+            spawn_components_mock(vec![json!({"id":"30001","name":"API"})], 200).await;
         let r = build_resolver_against(base);
         let _ = r.resolve_name("MYPROJ", "API").await;
         let _ = r.resolve_name("MYPROJ", "API").await;

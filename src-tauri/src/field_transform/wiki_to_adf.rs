@@ -16,7 +16,13 @@ use std::hash::BuildHasher;
 /// Macros we treat as "no ADF equivalent — surface as placeholder text".
 /// Conservative list; expand as field-test reveals more.
 const UNSUPPORTED_MACROS: &[&str] = &[
-    "{toc}", "{toc:", "{page-break}", "{anchor:", "{info}", "{note}", "{warning}",
+    "{toc}",
+    "{toc:",
+    "{page-break}",
+    "{anchor:",
+    "{info}",
+    "{note}",
+    "{warning}",
 ];
 
 /// Converts source HTML to ADF and runs a post-processor pass.
@@ -31,8 +37,7 @@ pub fn convert_and_postprocess<S: BuildHasher>(
         return empty_doc();
     }
     let adf_str = htmltoadf::convert_html_str_to_adf_str(html.to_string());
-    let mut adf: serde_json::Value =
-        serde_json::from_str(&adf_str).unwrap_or_else(|_| empty_doc());
+    let mut adf: serde_json::Value = serde_json::from_str(&adf_str).unwrap_or_else(|_| empty_doc());
 
     // Step 2: post-processor walk.
     walk_adf_node_mut(&mut adf, user_map, WalkContext::default());
@@ -60,7 +65,11 @@ pub(crate) fn walk_adf_node_mut<S: BuildHasher>(
     user_map: &HashMap<String, Option<String>, S>,
     ctx: WalkContext,
 ) {
-    let kind = node.get("type").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let kind = node
+        .get("type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
 
     // Determine whether this node enters a code context.
     let mut next_ctx = ctx;
@@ -114,7 +123,10 @@ fn splice_mentions_in_content_array<S: BuildHasher>(
             i += 1;
             continue;
         }
-        let text = content[i].get("text").and_then(|x| x.as_str()).unwrap_or("");
+        let text = content[i]
+            .get("text")
+            .and_then(|x| x.as_str())
+            .unwrap_or("");
         if !text.contains("[~") {
             i += 1;
             continue;
@@ -242,7 +254,11 @@ fn splice_macros_in_content_array(content: &mut [serde_json::Value]) {
         if node.get("type").and_then(|t| t.as_str()) != Some("text") {
             continue;
         }
-        let text = node.get("text").and_then(|x| x.as_str()).unwrap_or("").trim();
+        let text = node
+            .get("text")
+            .and_then(|x| x.as_str())
+            .unwrap_or("")
+            .trim();
         let mut should_replace = false;
         for prefix in UNSUPPORTED_MACROS {
             if text.starts_with(prefix) {
@@ -251,7 +267,11 @@ fn splice_macros_in_content_array(content: &mut [serde_json::Value]) {
             }
         }
         if should_replace {
-            let original = node.get("text").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let original = node
+                .get("text")
+                .and_then(|x| x.as_str())
+                .unwrap_or("")
+                .to_string();
             node["text"] = serde_json::Value::String(format!("[Not converted: {original}]"));
         }
     }
@@ -297,7 +317,10 @@ mod tests {
         let has_mention = inner.iter().any(|n| {
             n["type"] == "mention" && n["attrs"]["id"] == "AID-A" && n["attrs"]["text"] == "@jdoe"
         });
-        assert!(has_mention, "ADF tree did not contain expected mention node: {v:?}");
+        assert!(
+            has_mention,
+            "ADF tree did not contain expected mention node: {v:?}"
+        );
     }
 
     #[test]
@@ -307,7 +330,10 @@ mod tests {
         let v = convert_and_postprocess("<p>Hi [~ghost]</p>", &m);
         let s = serde_json::to_string(&v).unwrap();
         assert!(s.contains("@ghost"));
-        assert!(!s.contains("\"type\":\"mention\""), "should NOT contain mention");
+        assert!(
+            !s.contains("\"type\":\"mention\""),
+            "should NOT contain mention"
+        );
     }
 
     #[test]
@@ -322,7 +348,10 @@ mod tests {
     fn unsupported_macro_becomes_placeholder() {
         let v = convert_and_postprocess("<p>{toc}</p>", &HashMap::new());
         let s = serde_json::to_string(&v).unwrap();
-        assert!(s.contains("[Not converted: {toc}]"), "expected placeholder, got: {s}");
+        assert!(
+            s.contains("[Not converted: {toc}]"),
+            "expected placeholder, got: {s}"
+        );
     }
 
     #[test]
@@ -342,7 +371,10 @@ mod tests {
         m.insert("jdoe".into(), Some("AID-A".into()));
         walk_adf_node_mut(&mut adf, &m, WalkContext::default());
         // Code block text MUST be unchanged.
-        assert_eq!(adf["content"][0]["content"][0]["text"], "let pat = [~jdoe];");
+        assert_eq!(
+            adf["content"][0]["content"][0]["text"],
+            "let pat = [~jdoe];"
+        );
         // Outside code block: a mention node must have been spliced in.
         let outer_para = adf["content"][1]["content"].as_array().unwrap();
         let has_mention = outer_para.iter().any(|n| n["type"] == "mention");

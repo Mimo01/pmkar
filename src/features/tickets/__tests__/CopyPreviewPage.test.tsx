@@ -67,7 +67,7 @@ vi.mock('../IssueTypeChooser', () => ({
     lastChooserProps = props as Record<string, unknown>;
     const p = props as { onChange: (id: string) => void };
     return (
-      <button data-testid="chooser-pick-it-2" onClick={() => p.onChange('it-2')}>
+      <button type="button" data-testid="chooser-pick-it-2" onClick={() => p.onChange('it-2')}>
         pick-it-2
       </button>
     );

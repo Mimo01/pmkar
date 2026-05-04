@@ -65,28 +65,18 @@ export function IssueTypeChooser({
 
   return (
     <div className="mb-3">
-      <label
-        htmlFor="copy-target-issuetype"
-        className="text-xs text-brand-muted block mb-1"
-      >
+      <label htmlFor="copy-target-issuetype" className="text-xs text-brand-muted block mb-1">
         {t('copy.preview.issueType')}
       </label>
-      <div
-        className="[&_button]:min-h-9 relative"
-        data-testid="issue-type-chooser-wrapper"
-      >
+      <div className="[&_button]:min-h-9 relative" data-testid="issue-type-chooser-wrapper">
         <VirtualizedCombobox<IssueTypeRef>
           items={issueTypes}
           value={selected}
           onChange={(it) => onChange(it.id)}
           displayLabel={(it) => it.name}
-          filterFn={(it, q) =>
-            it.name.toLowerCase().includes(q.toLowerCase())
-          }
+          filterFn={(it, q) => it.name.toLowerCase().includes(q.toLowerCase())}
           placeholder={
-            noIssueTypes
-              ? t('copy.preview.issueTypeEmpty')
-              : t('copy.preview.issueTypePlaceholder')
+            noIssueTypes ? t('copy.preview.issueTypeEmpty') : t('copy.preview.issueTypePlaceholder')
           }
           searchPlaceholder={t('copy.preview.issueTypePlaceholder')}
           ariaLabel={t('copy.preview.issueTypeAriaLabel')}
@@ -103,10 +93,7 @@ export function IssueTypeChooser({
         )}
       </div>
       {isDefaulted && !loading && (
-        <p
-          className="text-xs text-brand-muted mt-1"
-          data-testid="issue-type-defaulted-notice"
-        >
+        <p className="text-xs text-brand-muted mt-1" data-testid="issue-type-defaulted-notice">
           {t('copy.preview.issueTypeDefaulted', {
             sourceTypeName: sourceIssueTypeName,
           })}

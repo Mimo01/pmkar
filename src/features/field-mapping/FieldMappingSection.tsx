@@ -1,20 +1,20 @@
 import { invoke } from '@tauri-apps/api/core';
+import { HelpCircle, Loader2, Plus, RefreshCw, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { create } from 'zustand';
-import { HelpCircle, Loader2, Plus, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { create } from 'zustand';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
 import { useConnectionStore } from '@/features/connections/connectionStore';
-import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
-import type { FieldMappingRow } from './types';
-import { MappingRow } from './MappingRow';
-import { SuggestionsPanel, type Suggestion } from './SuggestionsPanel';
-import { findNameMatchSuggestion } from './heuristics';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
+import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
+import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
+import { findNameMatchSuggestion } from './heuristics';
+import { MappingRow } from './MappingRow';
+import { type Suggestion, SuggestionsPanel } from './SuggestionsPanel';
+import type { FieldMappingRow } from './types';
 
 // ─── Module-scoped Zustand store ──────────────────────────────────────────────
 // Both FieldMappingSection (body) and FieldMappingSectionHeader (header) share
@@ -152,15 +152,12 @@ export function FieldMappingSectionHeader() {
           <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
         )}
         <span className="text-xs">
-          {refreshing ? t('settings.fieldMapping.refreshing') : t('settings.fieldMapping.refreshSchema')}
+          {refreshing
+            ? t('settings.fieldMapping.refreshing')
+            : t('settings.fieldMapping.refreshSchema')}
         </span>
       </Button>
-      <span
-        className="text-[13px] text-muted-foreground"
-        aria-label={relativeLabel}
-      >
-        {relativeLabel}
-      </span>
+      <span className="text-[13px] text-muted-foreground">{relativeLabel}</span>
     </div>
   );
 }
@@ -201,7 +198,8 @@ export function FieldMappingSection() {
           if (!useSchemaCacheStore.getState().prewarmedIssueTypes[targetProjectKey]?.length) {
             await preWarm(targetProjectKey);
           }
-          const issueTypeId = useSchemaCacheStore.getState().prewarmedIssueTypes[targetProjectKey]?.[0]?.id;
+          const issueTypeId =
+            useSchemaCacheStore.getState().prewarmedIssueTypes[targetProjectKey]?.[0]?.id;
           if (issueTypeId) {
             await loadSchema('target', targetProjectKey, issueTypeId);
           }
@@ -215,7 +213,7 @@ export function FieldMappingSection() {
     }
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // mount only — intentional
+  }, [loadSchema, preWarm, setLastRefreshed, setLoading, setMappingRows, targetProjectKey]); // mount only — intentional
 
   // ── Drift detection (MAP-05) ───────────────────────────────────────────────
   // Rows whose non-empty targetFieldId is NOT present in the target schema cache are drifted.
@@ -264,7 +262,10 @@ export function FieldMappingSection() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  async function handleAcceptSuggestion(sourceFieldId: string, target: import('@/types/fieldSchema').FieldSchema) {
+  async function handleAcceptSuggestion(
+    sourceFieldId: string,
+    target: import('@/types/fieldSchema').FieldSchema,
+  ) {
     const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
     const newRow: FieldMappingRow = {
       sourceFieldId,
@@ -363,8 +364,12 @@ export function FieldMappingSection() {
       {/* Mapping rows or empty state */}
       {mappingRows.length === 0 && !pendingAdd ? (
         <div className="py-8 text-center">
-          <p className="text-sm text-brand-text font-medium">{t('settings.fieldMapping.emptyHeading')}</p>
-          <p className="text-xs text-muted-foreground mt-1">{t('settings.fieldMapping.emptyBody')}</p>
+          <p className="text-sm text-brand-text font-medium">
+            {t('settings.fieldMapping.emptyHeading')}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t('settings.fieldMapping.emptyBody')}
+          </p>
         </div>
       ) : (
         <div>
@@ -386,7 +391,9 @@ export function FieldMappingSection() {
             <div className="grid grid-cols-[35fr_35fr_20fr_10fr] gap-3 items-center min-h-[40px] py-2 border-b border-brand-border last:border-0">
               <div className="[&_button]:min-h-9">
                 <VirtualizedCombobox<FieldSchema>
-                  items={sourceFields.filter((sf) => !mappingRows.some((r) => r.sourceFieldId === sf.fieldId))}
+                  items={sourceFields.filter(
+                    (sf) => !mappingRows.some((r) => r.sourceFieldId === sf.fieldId),
+                  )}
                   value={null}
                   onChange={handleSelectNewSource}
                   displayLabel={(f) => f.name}

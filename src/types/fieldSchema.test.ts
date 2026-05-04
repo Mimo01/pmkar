@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   type FieldSchema,
   type FieldSchemaType,
@@ -11,25 +11,61 @@ import {
 } from './fieldSchema';
 
 const BUG_PAGE_1: unknown[] = [
-  { fieldId: 'summary', key: 'summary', name: 'Summary', required: true, schema: { type: 'string', system: 'summary' } },
-  { fieldId: 'priority', key: 'priority', name: 'Priority', required: true, schema: { type: 'priority', system: 'priority' } },
-  { fieldId: 'customfield_10006', key: 'customfield_10006', name: 'Severity', required: true, schema: { type: 'option', custom: '...:select', customId: 10006 } },
-  { fieldId: 'assignee', key: 'assignee', name: 'Assignee', required: false, schema: { type: 'user', system: 'assignee' } },
-  { fieldId: 'customfield_10001', key: 'customfield_10001', name: 'Story Points', required: false, schema: { type: 'number', custom: '...:float', customId: 10001 } },
+  {
+    fieldId: 'summary',
+    key: 'summary',
+    name: 'Summary',
+    required: true,
+    schema: { type: 'string', system: 'summary' },
+  },
+  {
+    fieldId: 'priority',
+    key: 'priority',
+    name: 'Priority',
+    required: true,
+    schema: { type: 'priority', system: 'priority' },
+  },
+  {
+    fieldId: 'customfield_10006',
+    key: 'customfield_10006',
+    name: 'Severity',
+    required: true,
+    schema: { type: 'option', custom: '...:select', customId: 10006 },
+  },
+  {
+    fieldId: 'assignee',
+    key: 'assignee',
+    name: 'Assignee',
+    required: false,
+    schema: { type: 'user', system: 'assignee' },
+  },
+  {
+    fieldId: 'customfield_10001',
+    key: 'customfield_10001',
+    name: 'Story Points',
+    required: false,
+    schema: { type: 'number', custom: '...:float', customId: 10001 },
+  },
 ];
 
 const CASCADING_FIELD: unknown = {
-  fieldId: 'customfield_10005', name: 'Department/Team', required: false,
+  fieldId: 'customfield_10005',
+  name: 'Department/Team',
+  required: false,
   schema: { type: 'option-with-child', custom: '...:cascadingselect', customId: 10005 },
 };
 
 const ARRAY_OPTION_FIELD: unknown = {
-  fieldId: 'customfield_10004', name: 'Team', required: false,
+  fieldId: 'customfield_10004',
+  name: 'Team',
+  required: false,
   schema: { type: 'array', items: 'option', custom: '...:multiselect', customId: 10004 },
 };
 
 const UNKNOWN_FIELD: unknown = {
-  fieldId: 'watcher_field', name: 'Watcher', required: false,
+  fieldId: 'watcher_field',
+  name: 'Watcher',
+  required: false,
   schema: { type: 'watches' },
 };
 

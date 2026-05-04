@@ -15,7 +15,12 @@ export function UnsupportedTypeRenderer({ field }: RendererProps) {
       className={cn('text-xs font-medium text-muted-foreground gap-1 inline-flex items-center')}
     >
       <AlertCircle className="w-3 h-3" aria-hidden="true" />
-      <span>{t('fieldRenderer.unsupportedType', { type: typeStr, defaultValue: `Unsupported: ${typeStr}` })}</span>
+      <span>
+        {t('fieldRenderer.unsupportedType', {
+          type: typeStr,
+          defaultValue: `Unsupported: ${typeStr}`,
+        })}
+      </span>
     </Badge>
   );
 }

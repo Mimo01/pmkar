@@ -23,7 +23,9 @@ vi.mock('@tauri-apps/api/core', () => ({
 // Fixtures
 // ---------------------------------------------------------------------------
 
-function makeEntry(partial: Partial<MappingAuditEntry> & Pick<MappingAuditEntry, 'id' | 'copyId' | 'fieldId'>): MappingAuditEntry {
+function makeEntry(
+  partial: Partial<MappingAuditEntry> & Pick<MappingAuditEntry, 'id' | 'copyId' | 'fieldId'>,
+): MappingAuditEntry {
   return {
     sourceValueHash: 'src-hash',
     targetValueHash: 'tgt-hash',
@@ -187,7 +189,9 @@ describe('AuditLogPage — Field Transformations grouping (quick task 260430-26i
     });
 
     // Copy buttons (one per group). Pick the first.
-    const copyButtons = await screen.findAllByRole('button', { name: /Copy this transformation group/i });
+    const copyButtons = await screen.findAllByRole('button', {
+      name: /Copy this transformation group/i,
+    });
     expect(copyButtons.length).toBe(2);
 
     // Switch to fake timers AFTER the data has loaded so the async setup

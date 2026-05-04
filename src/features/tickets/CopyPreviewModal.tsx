@@ -23,8 +23,8 @@ import { computeGapFields } from './computeGapFields';
 import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { GapsSection } from './GapsSection';
-import { isOverrideValueFilled } from './isOverrideValueFilled';
 import { IssueTypeChooser } from './IssueTypeChooser';
+import { isOverrideValueFilled } from './isOverrideValueFilled';
 import type { JiraUser } from './types';
 
 // ---------------------------------------------------------------------------
@@ -162,7 +162,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
       setOverrideValue(row.targetFieldId, rawValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mappingRows, sourceTicket]);
+  }, [mappingRows, sourceTicket, overrideValues, setOverrideValue]);
   // Intentionally omit overrideValues and setOverrideValue from deps:
   // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
   // setOverrideValue is a stable store action reference and does not need to be in deps.
@@ -185,10 +185,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   // A gap with a non-empty override value is satisfied and must NOT block the
   // Copy button — the user has provided a value to send to the backend.
   const unfilledGapFields = useMemo(
-    () =>
-      gapFields.filter(
-        (g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema),
-      ),
+    () => gapFields.filter((g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema)),
     [gapFields, overrideValues],
   );
 
@@ -196,7 +193,11 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   const dynamicFormFields = useMemo(
     () =>
       resolvedTargetFields.filter(
-        (f) => f.fieldId !== 'summary' && f.fieldId !== 'issuetype' && f.fieldId !== 'project' && !gapIds.has(f.fieldId),
+        (f) =>
+          f.fieldId !== 'summary' &&
+          f.fieldId !== 'issuetype' &&
+          f.fieldId !== 'project' &&
+          !gapIds.has(f.fieldId),
       ),
     [resolvedTargetFields, gapIds],
   );

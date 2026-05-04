@@ -12,12 +12,20 @@ function componentKey(c: JiraComponent): string {
   return c.id ?? c.name;
 }
 
-export function ComponentPickerRenderer({ field, value, onChange, required, disabled }: RendererProps) {
+export function ComponentPickerRenderer({
+  field,
+  value,
+  onChange,
+  required,
+  disabled,
+}: RendererProps) {
   const { t } = useTranslation();
   const allItems: JiraComponent[] = Array.isArray(field.allowedValues)
     ? (field.allowedValues.filter(isComponent) as JiraComponent[])
     : [];
-  const selected: JiraComponent[] = Array.isArray(value) ? (value.filter(isComponent) as JiraComponent[]) : [];
+  const selected: JiraComponent[] = Array.isArray(value)
+    ? (value.filter(isComponent) as JiraComponent[])
+    : [];
   const selectedKeys = new Set(selected.map(componentKey));
   const remaining = allItems.filter((c) => !selectedKeys.has(componentKey(c)));
 
@@ -33,13 +41,16 @@ export function ComponentPickerRenderer({ field, value, onChange, required, disa
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((c, idx) => (
-            <Badge key={`${componentKey(c)}-${idx}`} variant="secondary" className="gap-1.5">
+            <Badge key={componentKey(c) || String(idx)} variant="secondary" className="gap-1.5">
               <span className="truncate max-w-[160px]">{c.name}</span>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => remove(idx)}
-                aria-label={t('fieldRenderer.removeItem', { item: c.name, defaultValue: `Remove ${c.name}` })}
+                aria-label={t('fieldRenderer.removeItem', {
+                  item: c.name,
+                  defaultValue: `Remove ${c.name}`,
+                })}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3 h-3" aria-hidden="true" />

@@ -1695,9 +1695,9 @@ fn redact_string_in_value(v: &serde_json::Value) -> serde_json::Value {
     }
 }
 
-/// Returns a page of mapping_audit_log entries (newest first). Frontend uses
+/// Returns a page of `mapping_audit_log` entries (newest first). Frontend uses
 /// this on the Audit Log page's "Field Transformations" tab.
-/// Quick task 260430-0tj. Limit is clamped server-side (T-0tj-03 DoS mitigation).
+/// Quick task 260430-0tj. Limit is clamped server-side (T-0tj-03 denial-of-service mitigation).
 #[tauri::command]
 pub fn get_mapping_audit_log_page(
     offset: i64,
@@ -1754,7 +1754,7 @@ fn cap_audit_json(s: String) -> String {
 /// entries. Called by the copy preview page once after pre-fill so the user can
 /// later inspect "what got pre-filled and why" in the Audit Log page.
 ///
-/// Best-effort: per-row insert errors are swallowed so a transient SQLite hiccup
+/// Best-effort: per-row insert errors are swallowed so a transient `SQLite` hiccup
 /// cannot block the user's preview/copy flow (mirrors `AuditDb::insert`).
 ///
 /// Quick task 260430-26i: always persist redacted JSON values alongside hashes;

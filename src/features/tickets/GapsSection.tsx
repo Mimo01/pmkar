@@ -35,16 +35,15 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
   const isEditable = isEditableSchemaType(field.schema);
 
   return (
-    <div
-      className="flex flex-col gap-1.5"
-      data-testid={`gap-row-${field.fieldId}`}
-    >
+    <div className="flex flex-col gap-1.5" data-testid={`gap-row-${field.fieldId}`}>
       <label
         htmlFor={isEditable ? `gap-input-${field.fieldId}` : undefined}
         className="text-xs font-medium text-foreground"
       >
         {field.name}
-        <span className="text-destructive ml-0.5" aria-hidden="true">*</span>
+        <span className="text-destructive ml-0.5" aria-hidden="true">
+          *
+        </span>
       </label>
       <div className="flex items-start gap-2">
         {isEditable ? (
@@ -59,9 +58,7 @@ function GapRow({ field, value, onChange, onMapLink, onSearchUsers }: GapRowProp
           </div>
         ) : (
           <div className="flex-1">
-            <UnsupportedFieldHint
-              data-testid={`gap-unsupported-${field.fieldId}`}
-            />
+            <UnsupportedFieldHint data-testid={`gap-unsupported-${field.fieldId}`} />
           </div>
         )}
         <Button
@@ -95,8 +92,7 @@ export function GapsSection({
   if (gapFields.length === 0) return null;
 
   return (
-    <div
-      role="region"
+    <section
       aria-label={t('copy.preview.gapsHeader')}
       className="mb-6 flex flex-col gap-6"
       data-testid="gaps-section"
@@ -111,6 +107,6 @@ export function GapsSection({
           onSearchUsers={onSearchUsers}
         />
       ))}
-    </div>
+    </section>
   );
 }

@@ -1,9 +1,13 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { schemaCacheKey, useSchemaCacheStore } from '../../../stores/schemaCacheStore';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { useSchemaCacheStore, schemaCacheKey } from '../../../stores/schemaCacheStore';
 import { useConnectionStore } from '../../connections/connectionStore';
-import { FieldMappingSection, FieldMappingSectionHeader, useMappingEditorStore } from '../FieldMappingSection';
+import {
+  FieldMappingSection,
+  FieldMappingSectionHeader,
+  useMappingEditorStore,
+} from '../FieldMappingSection';
 import type { FieldMappingRow } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
@@ -138,8 +142,18 @@ describe('FieldMappingSection — load + render', () => {
 
   it('[EDIT-02] SuggestionsPanel receives suggestions for unmapped source fields', async () => {
     const sourceFields = [
-      { fieldId: 'labels', name: 'Labels', required: false, schema: { type: 'array', items: 'string' } as const },
-      { fieldId: 'priority', name: 'Priority', required: false, schema: { type: 'priority' } as const },
+      {
+        fieldId: 'labels',
+        name: 'Labels',
+        required: false,
+        schema: { type: 'array', items: 'string' } as const,
+      },
+      {
+        fieldId: 'priority',
+        name: 'Priority',
+        required: false,
+        schema: { type: 'priority' } as const,
+      },
     ];
     // Return no mapping rows so everything is unmapped; return source fields from discover
     mockInvoke.mockImplementation(async (cmd: string) => {
@@ -174,7 +188,9 @@ describe('FieldMappingSectionHeader — refresh', () => {
 
     await waitFor(() => {
       // refresh_field_schema_cache called for source AND for target
-      const refreshCalls = mockInvoke.mock.calls.filter((c) => c[0] === 'refresh_field_schema_cache');
+      const refreshCalls = mockInvoke.mock.calls.filter(
+        (c) => c[0] === 'refresh_field_schema_cache',
+      );
       expect(refreshCalls.length).toBeGreaterThanOrEqual(2);
     });
   });

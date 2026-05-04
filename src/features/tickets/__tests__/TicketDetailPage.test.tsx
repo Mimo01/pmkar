@@ -13,10 +13,20 @@ vi.mock('@/stores/schemaCacheStore', () => ({
             status: 'success',
             fields: [
               { fieldId: 'status', name: 'Status', required: false, schema: { type: 'any' } },
-              { fieldId: 'priority', name: 'Priority', required: false, schema: { type: 'priority' } },
+              {
+                fieldId: 'priority',
+                name: 'Priority',
+                required: false,
+                schema: { type: 'priority' },
+              },
               { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
               { fieldId: 'reporter', name: 'Reporter', required: false, schema: { type: 'user' } },
-              { fieldId: 'labels', name: 'Labels', required: false, schema: { type: 'array', items: 'string' } },
+              {
+                fieldId: 'labels',
+                name: 'Labels',
+                required: false,
+                schema: { type: 'array', items: 'string' },
+              },
             ],
           },
         },

@@ -7,7 +7,8 @@ vi.mock('react-i18next', () => ({
     t: (key: string) => {
       if (key === 'copy.preview.gapsHeader') return 'Required fields with no mapping';
       if (key === 'copy.preview.mapLink') return 'Map field';
-      if (key === 'copy.preview.unsupportedFieldHint') return "This field type has no manual input — use Map field to configure copying.";
+      if (key === 'copy.preview.unsupportedFieldHint')
+        return 'This field type has no manual input — use Map field to configure copying.';
       return key;
     },
   }),
@@ -153,8 +154,8 @@ describe('GapsSection', () => {
         onSearchUsers={onSearchUsers}
       />,
     );
-    expect(capturedRendererProps['environment'].onSearch).toBeUndefined();
-    expect(capturedRendererProps['assignee'].onSearch).toBe(onSearchUsers);
+    expect(capturedRendererProps.environment.onSearch).toBeUndefined();
+    expect(capturedRendererProps.assignee.onSearch).toBe(onSearchUsers);
   });
 
   it('section has role=region with aria-label set to header text', () => {
@@ -188,7 +189,9 @@ describe('GapsSection', () => {
   it('shows hint instead of renderer for unsupported field types (priority)', () => {
     render(
       <GapsSection
-        gapFields={[{ fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } }]}
+        gapFields={[
+          { fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } },
+        ]}
         overrideValues={{}}
         onOverrideChange={vi.fn()}
         onMapLink={vi.fn()}
@@ -201,7 +204,14 @@ describe('GapsSection', () => {
   it('shows hint for option-with-child (cascading select)', () => {
     render(
       <GapsSection
-        gapFields={[{ fieldId: 'department', name: 'Department', required: true, schema: { type: 'option-with-child' } }]}
+        gapFields={[
+          {
+            fieldId: 'department',
+            name: 'Department',
+            required: true,
+            schema: { type: 'option-with-child' },
+          },
+        ]}
         overrideValues={{}}
         onOverrideChange={vi.fn()}
         onMapLink={vi.fn()}
@@ -215,7 +225,9 @@ describe('GapsSection', () => {
     const onMapLink = vi.fn();
     render(
       <GapsSection
-        gapFields={[{ fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } }]}
+        gapFields={[
+          { fieldId: 'priority', name: 'Priority', required: true, schema: { type: 'priority' } },
+        ]}
         overrideValues={{}}
         onOverrideChange={vi.fn()}
         onMapLink={onMapLink}

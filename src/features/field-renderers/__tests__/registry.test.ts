@@ -12,11 +12,11 @@ import { LabelsRenderer } from '../renderers/LabelsRenderer';
 import { MultiSelectRenderer } from '../renderers/MultiSelectRenderer';
 import { MultiUserPickerRenderer } from '../renderers/MultiUserPickerRenderer';
 import { NumberRenderer } from '../renderers/NumberRenderer';
+import { PriorityRenderer } from '../renderers/PriorityRenderer';
 import { RadioRenderer } from '../renderers/RadioRenderer';
 import { SingleSelectRenderer } from '../renderers/SingleSelectRenderer';
 import { StringRenderer } from '../renderers/StringRenderer';
 import { TextAreaRenderer } from '../renderers/TextAreaRenderer';
-import { PriorityRenderer } from '../renderers/PriorityRenderer';
 import { UnsupportedTypeRenderer } from '../renderers/UnsupportedTypeRenderer';
 import { UrlRenderer } from '../renderers/UrlRenderer';
 import { UserPickerRenderer } from '../renderers/UserPickerRenderer';
@@ -100,7 +100,9 @@ describe('getRenderer registry', () => {
 
   it('CTRL-07 returns UnsupportedTypeRenderer for unknown array items kind', () => {
     // @ts-expect-error — intentionally invalid items value to exercise default branch
-    expect(getRenderer({ type: 'array', items: 'never-heard-of-this' })).toBe(UnsupportedTypeRenderer);
+    expect(getRenderer({ type: 'array', items: 'never-heard-of-this' })).toBe(
+      UnsupportedTypeRenderer,
+    );
   });
 
   // CTRL-06 — checkbox/radio routing via schema.custom (planner Option A; revision iteration 1 of Phase 20 plan)

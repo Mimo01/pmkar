@@ -53,7 +53,7 @@ const CREATE_MAPPING_META: &str = "
     );
 ";
 
-/// Migration pre-step: remove duplicate non-empty target_field_id rows from any
+/// Migration pre-step: remove duplicate non-empty `target_field_id` rows from any
 /// existing database, keeping the highest-id row for each real target so the
 /// partial unique index below can always be created cleanly.
 /// The empty-string dismissed sentinel ('') is excluded — multiple dismissed
@@ -76,13 +76,13 @@ const DROP_OLD_TARGET_INDEX: &str = "
     DROP INDEX IF EXISTS idx_fm_target_unique;
 ";
 
-/// Migration step B: add a *partial* unique index on non-empty target_field_id
+/// Migration step B: add a *partial* unique index on non-empty `target_field_id`
 /// values only, so no two rows can map different source fields to the same real
 /// target. The empty-string dismissed-suggestion sentinel ('') is explicitly
-/// excluded from the index — multiple dismissed rows with targetFieldId='' must
+/// excluded from the index — multiple dismissed rows with `targetFieldId=''` must
 /// be allowed to coexist.
 ///
-/// SQLite will return `UNIQUE constraint failed: field_mapping.target_field_id`
+/// `SQLite` will return `UNIQUE constraint failed: field_mapping.target_field_id`
 /// (or `idx_fm_target_unique`) if a caller attempts to insert a second non-empty
 /// row with the same `target_field_id`.
 const ADD_UNIQUE_TARGET: &str = "
@@ -95,8 +95,8 @@ const ADD_UNIQUE_TARGET: &str = "
 /// (not audit.db) because its structure mirrors mapping data, NOT HTTP calls.
 /// Hash columns store SHA-256 hex (64 chars). `gap_kind` is one of NULL,
 /// "person", "version", "component" (matches `GapVariant` tag in `field_transform/mod.rs`).
-/// Quick task 260430-0tj extends with transformer_kind, outcome, failure_reason.
-/// Quick task 260430-26i extends with source_value_json, target_value_json
+/// Quick task 260430-0tj extends with `transformer_kind`, `outcome`, `failure_reason`.
+/// Quick task 260430-26i extends with `source_value_json`, `target_value_json`
 /// (redacted, capped at 4096 bytes server-side — T-26i-04 `DoS` mitigation).
 /// Hash columns are retained for backward compatibility with rows written before 26i.
 const CREATE_MAPPING_AUDIT_LOG: &str = "
@@ -118,9 +118,9 @@ const CREATE_MAPPING_AUDIT_LOG: &str = "
     );
 ";
 
-/// Migration: add transformer_kind/outcome/failure_reason columns to existing
-/// mapping_audit_log tables. SQLite ADD COLUMN is idempotent only via guard;
-/// we use pragma_table_info + a per-column conditional. Failure here would
+/// Migration: add `transformer_kind`/`outcome`/`failure_reason` columns to existing
+/// `mapping_audit_log` tables. `SQLite` `ADD COLUMN` is idempotent only via guard;
+/// we use `pragma_table_info` + a per-column conditional. Failure here would
 /// brick the app — surface the error rather than silently ignoring it.
 fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
     let existing: Vec<String> = conn
@@ -139,23 +139,17 @@ fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
         )?;
     }
     if !has("failure_reason") {
-        conn.execute_batch(
-            "ALTER TABLE mapping_audit_log ADD COLUMN failure_reason TEXT;",
-        )?;
+        conn.execute_batch("ALTER TABLE mapping_audit_log ADD COLUMN failure_reason TEXT;")?;
     }
     // Quick task 260430-26i: persist redacted JSON values alongside hashes so
     // operators can see what actually got transformed without rebuilding from
     // the original source. Both columns are nullable — legacy rows from before
     // 26i keep NULL here and the UI falls back to the hash columns.
     if !has("source_value_json") {
-        conn.execute_batch(
-            "ALTER TABLE mapping_audit_log ADD COLUMN source_value_json TEXT;",
-        )?;
+        conn.execute_batch("ALTER TABLE mapping_audit_log ADD COLUMN source_value_json TEXT;")?;
     }
     if !has("target_value_json") {
-        conn.execute_batch(
-            "ALTER TABLE mapping_audit_log ADD COLUMN target_value_json TEXT;",
-        )?;
+        conn.execute_batch("ALTER TABLE mapping_audit_log ADD COLUMN target_value_json TEXT;")?;
     }
     Ok(())
 }
@@ -212,32 +206,48 @@ pub(crate) fn update_null_schema_defaults(conn: &Connection) -> AppResult<()> {
 }
 
 fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
-    let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM field_mapping",
-        [],
-        |r| r.get(0),
-    )?;
+    let count: i64 = conn.query_row("SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0))?;
     if count > 0 {
         return Ok(());
     }
     let now = Utc::now().to_rfc3339();
     // (src_id, tgt_id, transformer_kind, src_schema_json, tgt_schema_json)
     let defaults: [(&str, &str, &str, &str, &str); 5] = [
-        ("description", "description", "wiki_to_adf",
-         r#"{"type":"string","system":"description"}"#,
-         r#"{"type":"string","system":"description"}"#),
-        ("labels", "labels", "identity",
-         r#"{"type":"array","items":"string"}"#,
-         r#"{"type":"array","items":"string"}"#),
-        ("priority", "priority", "priority",
-         r#"{"type":"priority"}"#,
-         r#"{"type":"priority"}"#),
-        ("assignee", "assignee", "user",
-         r#"{"type":"user","system":"assignee"}"#,
-         r#"{"type":"user","system":"assignee"}"#),
-        ("reporter", "reporter", "user",
-         r#"{"type":"user","system":"reporter"}"#,
-         r#"{"type":"user","system":"reporter"}"#),
+        (
+            "description",
+            "description",
+            "wiki_to_adf",
+            r#"{"type":"string","system":"description"}"#,
+            r#"{"type":"string","system":"description"}"#,
+        ),
+        (
+            "labels",
+            "labels",
+            "identity",
+            r#"{"type":"array","items":"string"}"#,
+            r#"{"type":"array","items":"string"}"#,
+        ),
+        (
+            "priority",
+            "priority",
+            "priority",
+            r#"{"type":"priority"}"#,
+            r#"{"type":"priority"}"#,
+        ),
+        (
+            "assignee",
+            "assignee",
+            "user",
+            r#"{"type":"user","system":"assignee"}"#,
+            r#"{"type":"user","system":"assignee"}"#,
+        ),
+        (
+            "reporter",
+            "reporter",
+            "user",
+            r#"{"type":"user","system":"reporter"}"#,
+            r#"{"type":"user","system":"reporter"}"#,
+        ),
     ];
     for (src, tgt, kind, src_schema, tgt_schema) in defaults {
         conn.execute(
@@ -360,12 +370,20 @@ impl FieldMappingDb {
             let required: i64 = row.get(3)?;
             let allowed_values_json: Option<String> = row.get(4)?;
             let has_default: i64 = row.get(5)?;
-            Ok((field_id, field_name, schema_json, required, allowed_values_json, has_default))
+            Ok((
+                field_id,
+                field_name,
+                schema_json,
+                required,
+                allowed_values_json,
+                has_default,
+            ))
         })?;
 
         let mut out = Vec::new();
         for r in rows {
-            let (field_id, field_name, schema_json, required, allowed_values_json, has_default) = r?;
+            let (field_id, field_name, schema_json, required, allowed_values_json, has_default) =
+                r?;
             let schema: FieldSchemaType = serde_json::from_str(&schema_json)
                 .map_err(|e| crate::error::AppError::Internal(format!("schema_json parse: {e}")))?;
             let allowed_values = match allowed_values_json {
@@ -571,7 +589,7 @@ impl FieldMappingDb {
         Ok(())
     }
 
-    /// Returns mapping_audit_log entries newest first (ORDER BY id DESC).
+    /// Returns `mapping_audit_log` entries newest first (ORDER BY id DESC).
     /// Bounded by limit; offset is for pagination by the UI.
     /// Quick task 260430-0tj. Quick task 260430-26i adds the JSON columns —
     /// legacy rows return None for them so the UI can fall back to hashes.
@@ -627,9 +645,8 @@ pub fn compute_schema_hash(raw_json_bytes: &[u8]) -> String {
 /// — base64-encoded JSON `{"`), `xoxb-` / `xoxp-` (Slack tokens), AKIA / ASIA (AWS
 /// access key prefixes).
 pub fn redact_credential_value(s: &str) -> String {
-    const CREDENTIAL_MARKERS: &[&str] = &[
-        "Bearer ", "Basic ", "eyJ", "xoxb-", "xoxp-", "AKIA", "ASIA",
-    ];
+    const CREDENTIAL_MARKERS: &[&str] =
+        &["Bearer ", "Basic ", "eyJ", "xoxb-", "xoxp-", "AKIA", "ASIA"];
     for marker in CREDENTIAL_MARKERS {
         if s.contains(marker) {
             return "[REDACTED]".to_string();
@@ -685,8 +702,14 @@ mod tests {
     fn upsert_and_get_round_trips_field_schema() {
         let db = FieldMappingDb::open_in_memory().unwrap();
         let f = sample_field("customfield_10001", false);
-        db.upsert_schema_row(FieldSide::Target, Some("MYPROJ"), Some("10001"), &f, "hash-1")
-            .unwrap();
+        db.upsert_schema_row(
+            FieldSide::Target,
+            Some("MYPROJ"),
+            Some("10001"),
+            &f,
+            "hash-1",
+        )
+        .unwrap();
         let got = db
             .get_cached_schemas(FieldSide::Target, Some("MYPROJ"), Some("10001"))
             .unwrap();
@@ -723,7 +746,9 @@ mod tests {
         let f = sample_field("description", false);
         db.upsert_schema_row(FieldSide::Source, None, None, &f, "src-hash")
             .unwrap();
-        let got = db.get_cached_schemas(FieldSide::Source, None, None).unwrap();
+        let got = db
+            .get_cached_schemas(FieldSide::Source, None, None)
+            .unwrap();
         assert_eq!(got.len(), 1);
         assert_eq!(got[0].field_id, "description");
     }
@@ -770,9 +795,11 @@ mod tests {
     fn schema_hash_is_lowercase_hex_64() {
         let h = compute_schema_hash(b"some response bytes");
         assert_eq!(h.len(), 64);
-        assert!(h
-            .chars()
-            .all(|c| c.is_ascii_hexdigit() && (!c.is_ascii_alphabetic() || c.is_ascii_lowercase())));
+        assert!(
+            h.chars()
+                .all(|c| c.is_ascii_hexdigit()
+                    && (!c.is_ascii_alphabetic() || c.is_ascii_lowercase()))
+        );
     }
 
     #[test]
@@ -840,11 +867,15 @@ mod tests {
         assert_eq!(
             rows,
             vec![
-                ("description".into(), "description".into(), "wiki_to_adf".into()),
-                ("labels".into(),      "labels".into(),      "identity".into()),
-                ("priority".into(),    "priority".into(),    "priority".into()),
-                ("assignee".into(),    "assignee".into(),    "user".into()),
-                ("reporter".into(),    "reporter".into(),    "user".into()),
+                (
+                    "description".into(),
+                    "description".into(),
+                    "wiki_to_adf".into()
+                ),
+                ("labels".into(), "labels".into(), "identity".into()),
+                ("priority".into(), "priority".into(), "priority".into()),
+                ("assignee".into(), "assignee".into(), "user".into()),
+                ("reporter".into(), "reporter".into(), "user".into()),
             ],
             "default seed must match D-07/D-08 transformer_kind values exactly"
         );
@@ -885,7 +916,10 @@ mod tests {
         let db = FieldMappingDb::open_in_memory().expect("open in memory");
         let rows = db.get_all_mapping_rows().expect("get_all_mapping_rows");
         assert_eq!(rows.len(), 5, "5 default rows seeded");
-        assert_eq!(rows[0].source_field_id, "description", "D-06 ORDER BY id ASC: description first");
+        assert_eq!(
+            rows[0].source_field_id, "description",
+            "D-06 ORDER BY id ASC: description first"
+        );
         assert_eq!(rows[0].transformer_kind, "wiki_to_adf");
         assert_eq!(rows[1].source_field_id, "labels");
         assert_eq!(rows[2].source_field_id, "priority");
@@ -912,7 +946,10 @@ mod tests {
             .iter()
             .find(|r| r.source_field_id == "description")
             .expect("description row exists");
-        assert_eq!(desc.transformer_kind, "identity", "transformer_kind replaced");
+        assert_eq!(
+            desc.transformer_kind, "identity",
+            "transformer_kind replaced"
+        );
 
         // Inserting a brand new row increases the count.
         let custom = FieldMappingRow {
@@ -936,11 +973,13 @@ mod tests {
     fn delete_mapping_row_is_idempotent() {
         let db = FieldMappingDb::open_in_memory().expect("open in memory");
         db.delete_mapping_row("description").expect("first delete");
-        db.delete_mapping_row("description").expect("second delete must not error (D-05)");
+        db.delete_mapping_row("description")
+            .expect("second delete must not error (D-05)");
         let rows = db.get_all_mapping_rows().expect("get");
         assert_eq!(rows.len(), 4, "after delete, 4 rows remain");
         // Deleting a non-existent id is also Ok.
-        db.delete_mapping_row("never_existed_field").expect("delete unknown id");
+        db.delete_mapping_row("never_existed_field")
+            .expect("delete unknown id");
         let rows = db.get_all_mapping_rows().expect("get");
         assert_eq!(rows.len(), 4, "deleting unknown id does not change count");
     }
@@ -964,7 +1003,7 @@ mod tests {
             let rows = db.get_all_mapping_rows().expect("get");
             assert_eq!(rows.len(), 6, "5 seeded + 1 custom in same connection");
         } // db drops here, releasing SQLite file handle
-        // Open #2: same path, no re-seed (D-02), custom row still present.
+          // Open #2: same path, no re-seed (D-02), custom row still present.
         let db2 = FieldMappingDb::open(&path).expect("open #2");
         let rows = db2.get_all_mapping_rows().expect("get after reopen");
         assert_eq!(rows.len(), 6, "round-trip: rows persist across reopen");
@@ -1058,8 +1097,10 @@ mod tests {
         // into SQL, would drop the table. params![] binding stores it as a literal.
         let db = FieldMappingDb::open_in_memory().expect("open");
         let nasty = "x'; DROP TABLE mapping_audit_log; --";
-        db.insert_mapping_audit("c1", nasty, "h", "h", false, None, "identity", "ok", None, "ts", None, None)
-            .expect("insert with nasty field_id");
+        db.insert_mapping_audit(
+            "c1", nasty, "h", "h", false, None, "identity", "ok", None, "ts", None, None,
+        )
+        .expect("insert with nasty field_id");
         // Table still exists.
         let count: i64 = db
             .conn
@@ -1100,22 +1141,49 @@ mod tests {
 
     #[test]
     fn redact_credential_value_redacts_known_markers() {
-        assert_eq!(super::redact_credential_value("Bearer abc.def.ghi"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("Basic dXNlcjpwYXNz"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("eyJhbGciOiJIUzI1NiJ9.payload.sig"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("xoxb-1234-abcd"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("xoxp-1234-abcd"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("AKIAIOSFODNN7EXAMPLE"), "[REDACTED]");
-        assert_eq!(super::redact_credential_value("ASIAIOSFODNN7EXAMPLE"), "[REDACTED]");
+        assert_eq!(
+            super::redact_credential_value("Bearer abc.def.ghi"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("Basic dXNlcjpwYXNz"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("eyJhbGciOiJIUzI1NiJ9.payload.sig"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("xoxb-1234-abcd"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("xoxp-1234-abcd"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("AKIAIOSFODNN7EXAMPLE"),
+            "[REDACTED]"
+        );
+        assert_eq!(
+            super::redact_credential_value("ASIAIOSFODNN7EXAMPLE"),
+            "[REDACTED]"
+        );
     }
 
     #[test]
     fn redact_credential_value_passes_safe_strings() {
         assert_eq!(super::redact_credential_value("hello world"), "hello world");
         assert_eq!(super::redact_credential_value(""), "");
-        assert_eq!(super::redact_credential_value("a normal description with no secrets"), "a normal description with no secrets");
+        assert_eq!(
+            super::redact_credential_value("a normal description with no secrets"),
+            "a normal description with no secrets"
+        );
         // 'eye' ≠ 'eyJ' — should not be redacted
-        assert_eq!(super::redact_credential_value("eyes are blue"), "eyes are blue");
+        assert_eq!(
+            super::redact_credential_value("eyes are blue"),
+            "eyes are blue"
+        );
     }
 
     #[test]
@@ -1126,38 +1194,58 @@ mod tests {
         assert_eq!(rows.len(), 5);
 
         // description → String { system: Some("description") }
-        let desc = rows.iter().find(|r| r.source_field_id == "description").expect("description row");
+        let desc = rows
+            .iter()
+            .find(|r| r.source_field_id == "description")
+            .expect("description row");
         assert!(
             matches!(&desc.source_schema, FieldSchemaType::String { system, .. } if system.as_deref() == Some("description")),
-            "description source_schema must be String{{system:description}}, got {:?}", desc.source_schema
+            "description source_schema must be String{{system:description}}, got {:?}",
+            desc.source_schema
         );
 
         // labels → Array { items: "string" }
-        let labels = rows.iter().find(|r| r.source_field_id == "labels").expect("labels row");
+        let labels = rows
+            .iter()
+            .find(|r| r.source_field_id == "labels")
+            .expect("labels row");
         assert!(
             matches!(&labels.source_schema, FieldSchemaType::Array { items, .. } if items == "string"),
-            "labels source_schema must be Array{{items:string}}, got {:?}", labels.source_schema
+            "labels source_schema must be Array{{items:string}}, got {:?}",
+            labels.source_schema
         );
 
         // priority → Priority
-        let priority = rows.iter().find(|r| r.source_field_id == "priority").expect("priority row");
+        let priority = rows
+            .iter()
+            .find(|r| r.source_field_id == "priority")
+            .expect("priority row");
         assert!(
             matches!(&priority.source_schema, FieldSchemaType::Priority),
-            "priority source_schema must be Priority, got {:?}", priority.source_schema
+            "priority source_schema must be Priority, got {:?}",
+            priority.source_schema
         );
 
         // assignee → User { system: Some("assignee") }
-        let assignee = rows.iter().find(|r| r.source_field_id == "assignee").expect("assignee row");
+        let assignee = rows
+            .iter()
+            .find(|r| r.source_field_id == "assignee")
+            .expect("assignee row");
         assert!(
             matches!(&assignee.source_schema, FieldSchemaType::User { system, .. } if system.as_deref() == Some("assignee")),
-            "assignee source_schema must be User{{system:assignee}}, got {:?}", assignee.source_schema
+            "assignee source_schema must be User{{system:assignee}}, got {:?}",
+            assignee.source_schema
         );
 
         // reporter → User { system: Some("reporter") }
-        let reporter = rows.iter().find(|r| r.source_field_id == "reporter").expect("reporter row");
+        let reporter = rows
+            .iter()
+            .find(|r| r.source_field_id == "reporter")
+            .expect("reporter row");
         assert!(
             matches!(&reporter.source_schema, FieldSchemaType::User { system, .. } if system.as_deref() == Some("reporter")),
-            "reporter source_schema must be User{{system:reporter}}, got {:?}", reporter.source_schema
+            "reporter source_schema must be User{{system:reporter}}, got {:?}",
+            reporter.source_schema
         );
     }
 
@@ -1178,7 +1266,8 @@ mod tests {
                   source_schema_json, target_schema_json, created_at, updated_at)
              VALUES ('priority', 'priority', 'priority', NULL, NULL, ?1, ?1)",
             params![now],
-        ).expect("insert null-schema row");
+        )
+        .expect("insert null-schema row");
 
         // Run the migration
         update_null_schema_defaults(&conn).expect("migration");
@@ -1186,14 +1275,19 @@ mod tests {
         // Wrap in FieldMappingDb for get_all_mapping_rows
         let db = FieldMappingDb { conn };
         let rows = db.get_all_mapping_rows().expect("get");
-        let priority = rows.iter().find(|r| r.source_field_id == "priority").expect("priority row");
+        let priority = rows
+            .iter()
+            .find(|r| r.source_field_id == "priority")
+            .expect("priority row");
         assert!(
             matches!(&priority.source_schema, FieldSchemaType::Priority),
-            "after migration, priority source_schema must be Priority, got {:?}", priority.source_schema
+            "after migration, priority source_schema must be Priority, got {:?}",
+            priority.source_schema
         );
         assert!(
             matches!(&priority.target_schema, FieldSchemaType::Priority),
-            "after migration, priority target_schema must be Priority, got {:?}", priority.target_schema
+            "after migration, priority target_schema must be Priority, got {:?}",
+            priority.target_schema
         );
     }
 
@@ -1222,7 +1316,9 @@ mod tests {
             .expect_err("second insert must fail — duplicate non-empty target");
         let msg = err.to_string();
         assert!(
-            msg.contains("UNIQUE") || msg.contains("constraint") || msg.contains("idx_fm_target_unique"),
+            msg.contains("UNIQUE")
+                || msg.contains("constraint")
+                || msg.contains("idx_fm_target_unique"),
             "error should mention unique constraint, got: {msg}"
         );
     }
@@ -1269,11 +1365,22 @@ mod tests {
     fn mapping_audit_outcome_ok_when_field_resolved() {
         let db = FieldMappingDb::open_in_memory().unwrap();
         db.insert_mapping_audit(
-            "copy-1", "summary", "h1", "h2", false, None,
-            "identity", "ok", None, "2026-04-30T00:00:00Z",
-            None, None,
-        ).unwrap();
-        let row: (String, String, Option<String>) = db.conn
+            "copy-1",
+            "summary",
+            "h1",
+            "h2",
+            false,
+            None,
+            "identity",
+            "ok",
+            None,
+            "2026-04-30T00:00:00Z",
+            None,
+            None,
+        )
+        .unwrap();
+        let row: (String, String, Option<String>) = db
+            .conn
             .query_row(
                 "SELECT transformer_kind, outcome, failure_reason
                  FROM mapping_audit_log WHERE copy_id = 'copy-1'",
@@ -1290,11 +1397,22 @@ mod tests {
     fn mapping_audit_outcome_failed_when_gap() {
         let db = FieldMappingDb::open_in_memory().unwrap();
         db.insert_mapping_audit(
-            "copy-2", "assignee", "h1", "h2", false, Some("person"),
-            "user", "failed", Some("unresolved person"), "2026-04-30T00:00:00Z",
-            None, None,
-        ).unwrap();
-        let row: (String, Option<String>) = db.conn
+            "copy-2",
+            "assignee",
+            "h1",
+            "h2",
+            false,
+            Some("person"),
+            "user",
+            "failed",
+            Some("unresolved person"),
+            "2026-04-30T00:00:00Z",
+            None,
+            None,
+        )
+        .unwrap();
+        let row: (String, Option<String>) = db
+            .conn
             .query_row(
                 "SELECT outcome, failure_reason
                  FROM mapping_audit_log WHERE copy_id = 'copy-2'",
@@ -1310,12 +1428,22 @@ mod tests {
     fn mapping_audit_outcome_skipped_when_no_value() {
         let db = FieldMappingDb::open_in_memory().unwrap();
         db.insert_mapping_audit(
-            "copy-3", "labels", "h1", "h2", false, None,
-            "identity", "skipped", Some("source value missing"),
+            "copy-3",
+            "labels",
+            "h1",
+            "h2",
+            false,
+            None,
+            "identity",
+            "skipped",
+            Some("source value missing"),
             "2026-04-30T00:00:00Z",
-            None, None,
-        ).unwrap();
-        let outcome: String = db.conn
+            None,
+            None,
+        )
+        .unwrap();
+        let outcome: String = db
+            .conn
             .query_row(
                 "SELECT outcome FROM mapping_audit_log WHERE copy_id = 'copy-3'",
                 [],
@@ -1330,10 +1458,20 @@ mod tests {
         let db = FieldMappingDb::open_in_memory().unwrap();
         for i in 0..5 {
             db.insert_mapping_audit(
-                &format!("copy-{i}"), "f", "h1", "h2", false, None,
-                "identity", "ok", None, "2026-04-30T00:00:00Z",
-                None, None,
-            ).unwrap();
+                &format!("copy-{i}"),
+                "f",
+                "h1",
+                "h2",
+                false,
+                None,
+                "identity",
+                "ok",
+                None,
+                "2026-04-30T00:00:00Z",
+                None,
+                None,
+            )
+            .unwrap();
         }
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 5);
@@ -1362,15 +1500,26 @@ mod tests {
                     timestamp         TEXT NOT NULL,
                     created_at        INTEGER DEFAULT (strftime('%s','now'))
                 );",
-            ).unwrap();
+            )
+            .unwrap();
         }
         // Open through FieldMappingDb — migration runs.
         let db = FieldMappingDb::open(&path).unwrap();
         db.insert_mapping_audit(
-            "copy-legacy", "f", "h1", "h2", false, None,
-            "identity", "ok", None, "2026-04-30T00:00:00Z",
-            None, None,
-        ).unwrap();
+            "copy-legacy",
+            "f",
+            "h1",
+            "h2",
+            false,
+            None,
+            "identity",
+            "ok",
+            None,
+            "2026-04-30T00:00:00Z",
+            None,
+            None,
+        )
+        .unwrap();
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 1);
         assert_eq!(page[0].transformer_kind, "identity");
@@ -1383,10 +1532,20 @@ mod tests {
     fn insert_mapping_audit_persists_json_values() {
         let db = FieldMappingDb::open_in_memory().unwrap();
         db.insert_mapping_audit(
-            "copy-26i-1", "summary", "h1", "h2", false, None,
-            "identity", "ok", None, "2026-04-30T00:00:00Z",
-            Some("\"hello\""), Some("\"world\""),
-        ).unwrap();
+            "copy-26i-1",
+            "summary",
+            "h1",
+            "h2",
+            false,
+            None,
+            "identity",
+            "ok",
+            None,
+            "2026-04-30T00:00:00Z",
+            Some("\"hello\""),
+            Some("\"world\""),
+        )
+        .unwrap();
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 1);
         assert_eq!(page[0].source_value_json.as_deref(), Some("\"hello\""));
@@ -1399,10 +1558,20 @@ mod tests {
         // surface NULL on the new JSON columns so the UI can hash-fallback.
         let db = FieldMappingDb::open_in_memory().unwrap();
         db.insert_mapping_audit(
-            "copy-26i-2", "summary", "h-old", "h-old", false, None,
-            "identity", "ok", None, "2026-04-30T00:00:00Z",
-            None, None,
-        ).unwrap();
+            "copy-26i-2",
+            "summary",
+            "h-old",
+            "h-old",
+            false,
+            None,
+            "identity",
+            "ok",
+            None,
+            "2026-04-30T00:00:00Z",
+            None,
+            None,
+        )
+        .unwrap();
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 1);
         assert!(page[0].source_value_json.is_none());
@@ -1435,14 +1604,25 @@ mod tests {
                     timestamp         TEXT NOT NULL,
                     created_at        INTEGER DEFAULT (strftime('%s','now'))
                 );",
-            ).unwrap();
+            )
+            .unwrap();
         }
         let db = FieldMappingDb::open(&path).unwrap();
         db.insert_mapping_audit(
-            "copy-26i-3", "f", "h1", "h2", false, None,
-            "identity", "ok", None, "2026-04-30T00:00:00Z",
-            Some("\"src\""), Some("\"tgt\""),
-        ).unwrap();
+            "copy-26i-3",
+            "f",
+            "h1",
+            "h2",
+            false,
+            None,
+            "identity",
+            "ok",
+            None,
+            "2026-04-30T00:00:00Z",
+            Some("\"src\""),
+            Some("\"tgt\""),
+        )
+        .unwrap();
         let page = db.get_mapping_audit_log_page(0, 10).unwrap();
         assert_eq!(page.len(), 1);
         assert_eq!(page[0].source_value_json.as_deref(), Some("\"src\""));

@@ -132,8 +132,9 @@ pub async fn copy_attachments(ctx: &CopyContext, source_body: &Value) -> Vec<Cop
         let same_origin = url::Url::parse(&ctx.source_base_url)
             .ok()
             .zip(url::Url::parse(download_url).ok())
-            .map(|(b, d)| b.scheme() == d.scheme() && b.host() == d.host() && b.port() == d.port())
-            .unwrap_or(false);
+            .is_some_and(|(b, d)| {
+                b.scheme() == d.scheme() && b.host() == d.host() && b.port() == d.port()
+            });
         if !same_origin {
             out.push(CopyStepResult {
                 step: format!("attach:{filename}"),
@@ -356,6 +357,7 @@ pub async fn copy_comments(ctx: &CopyContext, source_body: &Value) -> Vec<CopySt
 
 /// Copy worklogs. Step names `"worklog:<n>"`.
 /// Extracted from commands.rs lines 2085-2168.
+#[allow(clippy::too_many_lines)]
 pub async fn copy_worklogs(ctx: &CopyContext) -> Vec<CopyStepResult> {
     let mut out: Vec<CopyStepResult> = Vec::new();
 

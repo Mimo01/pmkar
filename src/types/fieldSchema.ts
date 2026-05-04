@@ -10,23 +10,17 @@
 
 export type FieldSide = 'source' | 'target';
 
-export type ArrayItemKind =
-  | 'option'
-  | 'string'
-  | 'user'
-  | 'component'
-  | 'version'
-  | 'group';
+export type ArrayItemKind = 'option' | 'string' | 'user' | 'component' | 'version' | 'group';
 
 /** All known Atlassian schema.type discriminants. Unknown values map to `'any'`. */
 export type FieldSchemaType =
-  | { type: 'string';            system?: string; custom?: string; customId?: number }
-  | { type: 'number';            system?: string; custom?: string; customId?: number }
-  | { type: 'date';              system?: string; custom?: string; customId?: number }
-  | { type: 'datetime';          system?: string; custom?: string; customId?: number }
-  | { type: 'user';              system?: string; custom?: string; customId?: number }
-  | { type: 'array';             items: ArrayItemKind; system?: string; custom?: string; customId?: number }
-  | { type: 'option';            system?: string; custom?: string; customId?: number }
+  | { type: 'string'; system?: string; custom?: string; customId?: number }
+  | { type: 'number'; system?: string; custom?: string; customId?: number }
+  | { type: 'date'; system?: string; custom?: string; customId?: number }
+  | { type: 'datetime'; system?: string; custom?: string; customId?: number }
+  | { type: 'user'; system?: string; custom?: string; customId?: number }
+  | { type: 'array'; items: ArrayItemKind; system?: string; custom?: string; customId?: number }
+  | { type: 'option'; system?: string; custom?: string; customId?: number }
   | { type: 'option-with-child'; system?: string; custom?: string; customId?: number }
   | { type: 'issuetype' }
   | { type: 'priority' }
@@ -81,7 +75,9 @@ export interface CreatemetaResponse {
 
 // ─── Type guards ──────────────────────────────────────────────────────────────
 
-export function isOptionField(s: FieldSchemaType): s is Extract<FieldSchemaType, { type: 'option' }> {
+export function isOptionField(
+  s: FieldSchemaType,
+): s is Extract<FieldSchemaType, { type: 'option' }> {
   return s.type === 'option';
 }
 
@@ -91,9 +87,7 @@ export function isCascadingField(
   return s.type === 'option-with-child';
 }
 
-export function isArrayField(
-  s: FieldSchemaType,
-): s is Extract<FieldSchemaType, { type: 'array' }> {
+export function isArrayField(s: FieldSchemaType): s is Extract<FieldSchemaType, { type: 'array' }> {
   return s.type === 'array';
 }
 
@@ -128,7 +122,8 @@ export function parseFieldSchemas(input: unknown): FieldSchema[] {
   for (const raw of input) {
     if (!raw || typeof raw !== 'object') continue;
     const r = raw as Record<string, unknown>;
-    const fieldId = typeof r.fieldId === 'string' ? r.fieldId : (typeof r.id === 'string' ? r.id : null);
+    const fieldId =
+      typeof r.fieldId === 'string' ? r.fieldId : typeof r.id === 'string' ? r.id : null;
     const name = typeof r.name === 'string' ? r.name : null;
     if (!fieldId || !name) continue;
     const schema = parseSchemaType(r.schema);

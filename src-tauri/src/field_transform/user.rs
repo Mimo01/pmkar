@@ -33,7 +33,11 @@ pub struct UserResolver {
 
 impl UserResolver {
     pub fn new(client: reqwest::Client, cloud_auth: String, cloud_base_url: String) -> Self {
-        Self { client, cloud_auth, cloud_base_url }
+        Self {
+            client,
+            cloud_auth,
+            cloud_base_url,
+        }
     }
 
     /// Pre-scans the source issue for ALL unique user identifiers (person fields +
@@ -54,7 +58,9 @@ impl UserResolver {
                 continue;
             }
             let path = format!("/fields/{}", row.source_field_id);
-            let Some(field_val) = source_issue.pointer(&path) else { continue };
+            let Some(field_val) = source_issue.pointer(&path) else {
+                continue;
+            };
             for username in extract_usernames_from_field(field_val) {
                 let email = extract_email_for_username(field_val, &username);
                 identifiers.entry(username).or_insert(email);
@@ -72,7 +78,10 @@ impl UserResolver {
             if let Some(e) = email {
                 if let Some(domain) = e.split('@').nth(1) {
                     if !domain.is_empty() {
-                        by_domain.entry(domain.to_string()).or_default().push(username.clone());
+                        by_domain
+                            .entry(domain.to_string())
+                            .or_default()
+                            .push(username.clone());
                         continue;
                     }
                 }
@@ -83,16 +92,24 @@ impl UserResolver {
         // 4. Fetch per-domain (one HTTP per unique domain — TRAN-06 invariant).
         let mut out: HashMap<String, Option<String>> = HashMap::new();
         for (domain, usernames_in_domain) in by_domain {
-            let users = self.fetch_users_by_domain(&domain).await.unwrap_or_default();
+            let users = self
+                .fetch_users_by_domain(&domain)
+                .await
+                .unwrap_or_default();
             for username in usernames_in_domain {
-                let email_for_user = identifiers.get(&username).and_then(std::clone::Clone::clone);
+                let email_for_user = identifiers
+                    .get(&username)
+                    .and_then(std::clone::Clone::clone);
                 let acct = match_user_in_results(&users, email_for_user.as_deref(), &username);
                 out.insert(username, acct);
             }
         }
         // 5. Fallback for no-domain identifiers (rare; description-only mentions).
         for username in no_domain {
-            let users = self.fetch_users_by_query(&username).await.unwrap_or_default();
+            let users = self
+                .fetch_users_by_query(&username)
+                .await
+                .unwrap_or_default();
             let acct = match_user_in_results(&users, None, &username);
             out.insert(username, acct);
         }
@@ -299,7 +316,9 @@ fn extract_email_for_username(field_val: &serde_json::Value, username: &str) -> 
     let single = |obj: &serde_json::Value| -> Option<String> {
         let n = obj.get("name").and_then(|x| x.as_str())?;
         if n == username {
-            obj.get("emailAddress").and_then(|x| x.as_str()).map(str::to_string)
+            obj.get("emailAddress")
+                .and_then(|x| x.as_str())
+                .map(str::to_string)
         } else {
             None
         }
@@ -327,8 +346,11 @@ fn match_user_in_results(
     email: Option<&str>,
     username: &str,
 ) -> Option<String> {
-    let read_account_id =
-        |u: &serde_json::Value| u.get("accountId").and_then(|x| x.as_str()).map(str::to_string);
+    let read_account_id = |u: &serde_json::Value| {
+        u.get("accountId")
+            .and_then(|x| x.as_str())
+            .map(str::to_string)
+    };
 
     if let Some(em) = email {
         // 1. Exact email match.
@@ -349,7 +371,10 @@ fn match_user_in_results(
     }
     // 3. Single-result + displayName match (case-insensitive).
     if results.len() == 1 {
-        let display = results[0].get("displayName").and_then(|x| x.as_str()).unwrap_or("");
+        let display = results[0]
+            .get("displayName")
+            .and_then(|x| x.as_str())
+            .unwrap_or("");
         if display.eq_ignore_ascii_case(username) {
             return read_account_id(&results[0]);
         }
@@ -408,8 +433,7 @@ mod tests {
 
     #[test]
     fn scan_html_profile_link_extracts_name_param() {
-        let html =
-            r#"<p>Hello <a href="/secure/ViewProfile.jspa?name=jdoe">@jdoe</a> here</p>"#;
+        let html = r#"<p>Hello <a href="/secure/ViewProfile.jspa?name=jdoe">@jdoe</a> here</p>"#;
         let got = scan_html_profile_links(html);
         assert!(got.contains("jdoe"));
     }
@@ -423,7 +447,11 @@ mod tests {
 
     #[test]
     fn is_user_field_recognises_single_user() {
-        let s = FieldSchemaType::User { system: None, custom: None, custom_id: None };
+        let s = FieldSchemaType::User {
+            system: None,
+            custom: None,
+            custom_id: None,
+        };
         assert!(is_user_field(&s));
     }
 
@@ -517,10 +545,9 @@ mod tests {
                 }
             }),
         );
-        let listener =
-            tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0)))
-                .await
-                .unwrap();
+        let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0)))
+            .await
+            .unwrap();
         let addr = listener.local_addr().unwrap();
         let handle = tokio::spawn(async move {
             axum::serve(listener, app).await.unwrap();
@@ -533,8 +560,16 @@ mod tests {
             source_field_id: source_field_id.into(),
             target_field_id: source_field_id.into(),
             transformer_kind: "user".into(),
-            source_schema: FieldSchemaType::User { system: None, custom: None, custom_id: None },
-            target_schema: FieldSchemaType::User { system: None, custom: None, custom_id: None },
+            source_schema: FieldSchemaType::User {
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+            target_schema: FieldSchemaType::User {
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
         }
     }
 
@@ -568,10 +603,20 @@ mod tests {
             user_field_row("customfield_10003"),
         ];
         let map = r.resolve_batch(&issue, &mapping).await;
-        assert_eq!(counter.load(Ordering::SeqCst), 1, "exactly ONE HTTP call per domain");
-        assert_eq!(map.get("alice").cloned().flatten().as_deref(), Some("AID-A"));
+        assert_eq!(
+            counter.load(Ordering::SeqCst),
+            1,
+            "exactly ONE HTTP call per domain"
+        );
+        assert_eq!(
+            map.get("alice").cloned().flatten().as_deref(),
+            Some("AID-A")
+        );
         assert_eq!(map.get("bob").cloned().flatten().as_deref(), Some("AID-B"));
-        assert_eq!(map.get("carol").cloned().flatten().as_deref(), Some("AID-C"));
+        assert_eq!(
+            map.get("carol").cloned().flatten().as_deref(),
+            Some("AID-C")
+        );
         h.abort();
     }
 
@@ -640,16 +685,21 @@ mod tests {
         // Privacy mode: emailAddress omitted, but exactly ONE result returned.
         responses.insert(
             "@acme.com".into(),
-            (vec![json!({"accountId":"AID-A","displayName":"Alice"})], 200),
+            (
+                vec![json!({"accountId":"AID-A","displayName":"Alice"})],
+                200,
+            ),
         );
         let (base, _c, h) = spawn_user_search_mock(responses).await;
         let r = UserResolver::new(reqwest::Client::new(), "Basic Zm9vOmJhcg==".into(), base);
-        let issue =
-            json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
+        let issue = json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
         let mapping = vec![user_field_row("assignee")];
         let map = r.resolve_batch(&issue, &mapping).await;
         // Pitfall 2: single result without emailAddress on a domain query treated as match.
-        assert_eq!(map.get("alice").cloned().flatten().as_deref(), Some("AID-A"));
+        assert_eq!(
+            map.get("alice").cloned().flatten().as_deref(),
+            Some("AID-A")
+        );
         h.abort();
     }
 
@@ -659,8 +709,7 @@ mod tests {
         responses.insert("@acme.com".into(), (vec![], 500));
         let (base, _c, h) = spawn_user_search_mock(responses).await;
         let r = UserResolver::new(reqwest::Client::new(), "Basic Zm9vOmJhcg==".into(), base);
-        let issue =
-            json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
+        let issue = json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
         let mapping = vec![user_field_row("assignee")];
         let map = r.resolve_batch(&issue, &mapping).await;
         assert_eq!(map.get("alice").cloned().flatten(), None);
@@ -695,10 +744,9 @@ mod tests {
                 (axum::http::StatusCode::OK, Json(page)).into_response()
             }),
         );
-        let listener =
-            tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0)))
-                .await
-                .unwrap();
+        let listener = tokio::net::TcpListener::bind(SocketAddr::from(([127, 0, 0, 1], 0)))
+            .await
+            .unwrap();
         let addr = listener.local_addr().unwrap();
         let h = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
         let r = UserResolver::new(
@@ -706,12 +754,14 @@ mod tests {
             "Basic Zm9vOmJhcg==".into(),
             format!("http://{addr}"),
         );
-        let issue =
-            json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
+        let issue = json!({"fields":{"assignee":{"name":"alice","emailAddress":"alice@acme.com"}}});
         let mapping = vec![user_field_row("assignee")];
         let map = r.resolve_batch(&issue, &mapping).await;
         // Alice is on page 1 — the resolver MUST paginate.
-        assert_eq!(map.get("alice").cloned().flatten().as_deref(), Some("AID-50"));
+        assert_eq!(
+            map.get("alice").cloned().flatten().as_deref(),
+            Some("AID-50")
+        );
         h.abort();
     }
 
@@ -737,7 +787,10 @@ mod tests {
         let map = r.resolve_batch(&issue, &mapping).await;
         assert_eq!(counter.load(Ordering::SeqCst), 1);
         assert_eq!(map.len(), 1, "alice deduped to one entry");
-        assert_eq!(map.get("alice").cloned().flatten().as_deref(), Some("AID-A"));
+        assert_eq!(
+            map.get("alice").cloned().flatten().as_deref(),
+            Some("AID-A")
+        );
         h.abort();
     }
 }

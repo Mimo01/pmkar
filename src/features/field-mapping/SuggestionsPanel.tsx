@@ -1,11 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
-import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
-import type { FieldMappingRow } from './types';
 import { getTransformerOptions } from './transformerOptions';
+import type { FieldMappingRow } from './types';
 
 /** A heuristic suggestion: an unmapped source field paired with a recommended target field. */
 export interface Suggestion {
@@ -35,7 +35,8 @@ export function SuggestionsPanel({ suggestions, onAccept, onDismiss }: Suggestio
     const row: FieldMappingRow = {
       sourceFieldId: s.sourceFieldId,
       targetFieldId: s.target.fieldId,
-      transformerKind: getTransformerOptions(s.target.schema, t, s.sourceSchema)[0]?.value ?? 'identity',
+      transformerKind:
+        getTransformerOptions(s.target.schema, t, s.sourceSchema)[0]?.value ?? 'identity',
       sourceSchema: s.sourceSchema,
       targetSchema: s.target.schema,
     };
@@ -71,7 +72,10 @@ export function SuggestionsPanel({ suggestions, onAccept, onDismiss }: Suggestio
       className="mb-4 rounded-lg border border-brand-border bg-brand-surface-hover p-3"
     >
       <summary className="flex items-center gap-1.5 cursor-pointer list-none text-sm font-medium text-brand-text select-none">
-        <ChevronRight className="h-4 w-4 transition-transform [details[open]_&]:rotate-90" aria-hidden="true" />
+        <ChevronRight
+          className="h-4 w-4 transition-transform [details[open]_&]:rotate-90"
+          aria-hidden="true"
+        />
         {t('settings.fieldMapping.suggestions', { count: suggestions.length })}
       </summary>
       <div className="mt-2 divide-y divide-brand-border">
@@ -85,7 +89,9 @@ export function SuggestionsPanel({ suggestions, onAccept, onDismiss }: Suggestio
                 {s.sourceFieldId}
               </span>
             </div>
-            <span className="text-brand-muted px-1" aria-hidden="true">→</span>
+            <span className="text-brand-muted px-1" aria-hidden="true">
+              →
+            </span>
             <span className="truncate text-brand-text" title={s.target.name}>
               {s.target.name}
             </span>

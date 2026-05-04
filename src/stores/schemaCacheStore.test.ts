@@ -6,7 +6,7 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
-import { useSchemaCacheStore, schemaCacheKey } from './schemaCacheStore';
+import { schemaCacheKey, useSchemaCacheStore } from './schemaCacheStore';
 
 describe('schemaCacheStore', () => {
   beforeEach(() => {
@@ -63,8 +63,10 @@ describe('schemaCacheStore', () => {
       { id: '10002', name: 'Task' },
     ]);
     await useSchemaCacheStore.getState().preWarm('MYPROJ');
-    expect(invokeMock).toHaveBeenCalledWith('pre_warm_target_issue_types', { projectKey: 'MYPROJ' });
-    expect(useSchemaCacheStore.getState().prewarmedIssueTypes['MYPROJ']).toHaveLength(2);
+    expect(invokeMock).toHaveBeenCalledWith('pre_warm_target_issue_types', {
+      projectKey: 'MYPROJ',
+    });
+    expect(useSchemaCacheStore.getState().prewarmedIssueTypes.MYPROJ).toHaveLength(2);
   });
 
   it('refresh clears the cache entry then calls refresh_field_schema_cache', async () => {

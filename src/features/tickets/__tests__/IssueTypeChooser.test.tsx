@@ -43,8 +43,7 @@ vi.mock('@/features/field-renderers/components/VirtualizedCombobox', () => ({
 // Mock schemaCacheStore selector.
 let prewarmedIssueTypes: Record<string, Array<{ id: string; name: string }>> = {};
 vi.mock('@/stores/schemaCacheStore', () => ({
-  useSchemaCacheStore: (selector: (s: unknown) => unknown) =>
-    selector({ prewarmedIssueTypes }),
+  useSchemaCacheStore: (selector: (s: unknown) => unknown) => selector({ prewarmedIssueTypes }),
   schemaCacheKey: () => 'k',
 }));
 

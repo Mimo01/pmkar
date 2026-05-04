@@ -1,14 +1,14 @@
 import { invoke } from '@tauri-apps/api/core';
+import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
+import { cn } from '@/lib/utils';
 import type { FieldSchema } from '@/types/fieldSchema';
-import type { FieldMappingRow } from './types';
 import { DriftWarning } from './DriftWarning';
 import { getTransformerOptions, type TransformerOption } from './transformerOptions';
+import type { FieldMappingRow } from './types';
 
 export interface MappingRowProps {
   row: FieldMappingRow;
@@ -20,13 +20,23 @@ export interface MappingRowProps {
   onRowDelete: (sourceFieldId: string) => void;
 }
 
-export function MappingRow({ row, sourceName, targetFields, usedTargetFieldIds, isDrifted, onRowUpdate, onRowDelete }: MappingRowProps) {
+export function MappingRow({
+  row,
+  sourceName,
+  targetFields,
+  usedTargetFieldIds,
+  isDrifted,
+  onRowUpdate,
+  onRowDelete,
+}: MappingRowProps) {
   const { t } = useTranslation();
   const [feedback, setFeedback] = useState<'saved' | null>(null);
 
   // Resolve current target FieldSchema from cache (null if drifted or empty sentinel)
   const targetField =
-    row.targetFieldId === '' ? null : targetFields.find((f) => f.fieldId === row.targetFieldId) ?? null;
+    row.targetFieldId === ''
+      ? null
+      : (targetFields.find((f) => f.fieldId === row.targetFieldId) ?? null);
 
   // Filter out targets already used by other rows. Allow the row's OWN current
   // target through so the combobox always shows the current selection.
@@ -43,7 +53,8 @@ export function MappingRow({ row, sourceName, targetFields, usedTargetFieldIds, 
     const updated: FieldMappingRow = {
       sourceFieldId: row.sourceFieldId,
       targetFieldId: newTarget.fieldId,
-      transformerKind: getTransformerOptions(newTarget.schema, t, row.sourceSchema)[0]?.value ?? 'identity',
+      transformerKind:
+        getTransformerOptions(newTarget.schema, t, row.sourceSchema)[0]?.value ?? 'identity',
       sourceSchema: row.sourceSchema,
       targetSchema: newTarget.schema,
     };
@@ -86,7 +97,10 @@ export function MappingRow({ row, sourceName, targetFields, usedTargetFieldIds, 
       )}
     >
       <div className="min-w-0">
-        <span className="block text-sm text-brand-text truncate" title={sourceName ?? row.sourceFieldId}>
+        <span
+          className="block text-sm text-brand-text truncate"
+          title={sourceName ?? row.sourceFieldId}
+        >
           {sourceName ?? row.sourceFieldId}
         </span>
         {sourceName && (

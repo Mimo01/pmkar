@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-
-import { DynamicTargetForm } from '../DynamicTargetForm';
-import type { FieldSchema } from '@/types/fieldSchema';
 import type { JiraUser } from '@/features/tickets/types';
+import type { FieldSchema } from '@/types/fieldSchema';
+import { DynamicTargetForm } from '../DynamicTargetForm';
 
 const summaryField: FieldSchema = {
   fieldId: 'summary',
@@ -85,19 +84,13 @@ describe('DynamicTargetForm', () => {
   it('CTRL-01..08 renders without crashing when searchCallbacks is undefined (D-05 graceful)', () => {
     expect(() =>
       render(
-        <DynamicTargetForm
-          fields={[summaryField, assigneeField]}
-          values={{}}
-          onChange={vi.fn()}
-        />,
+        <DynamicTargetForm fields={[summaryField, assigneeField]} values={{}} onChange={vi.fn()} />,
       ),
     ).not.toThrow();
   });
 
   it('CTRL-07 renders text input for type=any without allowedValues (AnyFieldFallbackRenderer → StringRenderer)', () => {
-    render(
-      <DynamicTargetForm fields={[unknownField]} values={{}} onChange={vi.fn()} />,
-    );
+    render(<DynamicTargetForm fields={[unknownField]} values={{}} onChange={vi.fn()} />);
     // AnyFieldFallbackRenderer with no allowedValues falls back to StringRenderer (editable text input)
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByTestId('unsupported-field-cf_strange')).not.toBeInTheDocument();

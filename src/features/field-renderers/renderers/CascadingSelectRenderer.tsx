@@ -13,7 +13,13 @@ function optLabel(o: CascadeOption): string {
   return o.value ?? o.id ?? '';
 }
 
-export function CascadingSelectRenderer({ field, value, onChange, required, disabled }: RendererProps) {
+export function CascadingSelectRenderer({
+  field,
+  value,
+  onChange,
+  required,
+  disabled,
+}: RendererProps) {
   const { t } = useTranslation();
   const parentItems = useMemo<CascadeOption[]>(
     () => (Array.isArray(field.allowedValues) ? (field.allowedValues as CascadeOption[]) : []),
@@ -56,10 +62,15 @@ export function CascadingSelectRenderer({ field, value, onChange, required, disa
   const handleChildChange = (c: CascadeOption) => {
     setSelectedChild(c);
     if (!selectedParent) return;
-    onChange({ value: selectedParent.value, id: selectedParent.id, child: { value: c.value, id: c.id } });
+    onChange({
+      value: selectedParent.value,
+      id: selectedParent.id,
+      child: { value: c.value, id: c.id },
+    });
   };
 
-  const hasChildren = childItems.length > 0 || (selectedParent !== null && Array.isArray(selectedParent.children));
+  const hasChildren =
+    childItems.length > 0 || (selectedParent !== null && Array.isArray(selectedParent.children));
 
   return (
     <div className="flex flex-col gap-2">

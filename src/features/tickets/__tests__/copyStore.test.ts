@@ -373,7 +373,9 @@ describe('copyStore — Phase 22 override state', () => {
     useCopyStore.setState({
       targetIssueTypeId: 'it-1',
       overrideValues: { x: 1 },
-      resolvedTargetFields: [{ fieldId: 'f', name: 'F', required: false, schema: { type: 'any' } } as never],
+      resolvedTargetFields: [
+        { fieldId: 'f', name: 'F', required: false, schema: { type: 'any' } } as never,
+      ],
       targetSummary: 'KEEP ME',
     });
     useCopyStore.getState().clearOverrides();

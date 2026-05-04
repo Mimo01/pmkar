@@ -61,7 +61,9 @@ async fn probe_succeeds_against_known_project() {
         "endpoint_url must contain the project key"
     );
     assert!(
-        result.endpoint_url.contains("/rest/api/3/issue/createmeta/MYPROJ/issuetypes"),
+        result
+            .endpoint_url
+            .contains("/rest/api/3/issue/createmeta/MYPROJ/issuetypes"),
         "endpoint_url must contain the issuetypes path"
     );
     assert!(result.hint.is_none(), "Probe success must not set hint");
@@ -74,13 +76,7 @@ async fn probe_fails_with_endpoint_and_status_in_message() {
     let auth = "Basic dGVzdDp0ZXN0"; // base64("test:test")
 
     // Closed port — connection refused → ok=false, status_code=None
-    let result = probe_paginated_createmeta(
-        &client,
-        "http://127.0.0.1:9999",
-        auth,
-        "MYPROJ",
-    )
-    .await;
+    let result = probe_paginated_createmeta(&client, "http://127.0.0.1:9999", auth, "MYPROJ").await;
 
     let probe = result.expect("probe must produce a ProbeResult, never an Err");
     assert!(!probe.ok, "Probe on closed port must be ok=false");
@@ -89,7 +85,9 @@ async fn probe_fails_with_endpoint_and_status_in_message() {
         "endpoint_url must contain the port (9999)"
     );
     assert!(
-        probe.endpoint_url.contains("/rest/api/3/issue/createmeta/MYPROJ/issuetypes"),
+        probe
+            .endpoint_url
+            .contains("/rest/api/3/issue/createmeta/MYPROJ/issuetypes"),
         "endpoint_url must reference the createmeta path"
     );
     if let Some(hint) = &probe.hint {
@@ -108,14 +106,9 @@ async fn probe_redacts_credentials() {
     let auth = format!("Basic {secret}");
 
     // Force failure (closed port) so the error path is exercised
-    let probe = probe_paginated_createmeta(
-        &client,
-        "http://127.0.0.1:9999",
-        &auth,
-        "MYPROJ",
-    )
-    .await
-    .expect("ProbeResult");
+    let probe = probe_paginated_createmeta(&client, "http://127.0.0.1:9999", &auth, "MYPROJ")
+        .await
+        .expect("ProbeResult");
 
     // Serialize to JSON and check the credential does not appear anywhere
     let serialized = serde_json::to_string(&probe).unwrap();

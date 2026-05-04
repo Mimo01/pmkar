@@ -1,5 +1,5 @@
-import type { RendererProps } from '../types';
 import { cn } from '@/lib/utils';
+import type { RendererProps } from '../types';
 
 export function StringRenderer({ field, value, onChange, required, disabled }: RendererProps) {
   const strValue = typeof value === 'string' ? value : '';

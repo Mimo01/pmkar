@@ -16,7 +16,13 @@ function optLabel(o: OptionRef): string {
   return o.value ?? o.name ?? o.id ?? '';
 }
 
-export function SingleSelectRenderer({ field, value, onChange, required, disabled }: RendererProps) {
+export function SingleSelectRenderer({
+  field,
+  value,
+  onChange,
+  required,
+  disabled,
+}: RendererProps) {
   const { t } = useTranslation();
   const items: OptionRef[] = Array.isArray(field.allowedValues)
     ? (field.allowedValues.filter(isOption) as OptionRef[])

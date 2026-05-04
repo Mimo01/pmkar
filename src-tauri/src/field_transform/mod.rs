@@ -167,8 +167,14 @@ mod tests {
         });
         let v = serde_json::to_value(&g).unwrap();
         assert_eq!(v.get("kind").and_then(|x| x.as_str()), Some("person"));
-        assert_eq!(v.get("targetFieldId").and_then(|x| x.as_str()), Some("assignee"));
-        assert_eq!(v.get("sourceUsername").and_then(|x| x.as_str()), Some("jdoe"));
+        assert_eq!(
+            v.get("targetFieldId").and_then(|x| x.as_str()),
+            Some("assignee")
+        );
+        assert_eq!(
+            v.get("sourceUsername").and_then(|x| x.as_str()),
+            Some("jdoe")
+        );
     }
 
     #[test]

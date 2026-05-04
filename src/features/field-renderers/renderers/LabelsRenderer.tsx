@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { X } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { VirtualizedCombobox } from '../components/VirtualizedCombobox';
@@ -32,13 +32,16 @@ export function LabelsRenderer({ field, value, onChange, required, disabled }: R
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((label, idx) => (
-            <Badge key={`${label}-${idx}`} variant="outline" className="gap-1.5">
+            <Badge key={label || String(idx)} variant="outline" className="gap-1.5">
               <span className="truncate max-w-[160px]">{label}</span>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => remove(idx)}
-                aria-label={t('fieldRenderer.removeItem', { item: label, defaultValue: `Remove ${label}` })}
+                aria-label={t('fieldRenderer.removeItem', {
+                  item: label,
+                  defaultValue: `Remove ${label}`,
+                })}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3 h-3" aria-hidden="true" />

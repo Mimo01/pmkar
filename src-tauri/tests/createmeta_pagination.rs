@@ -51,8 +51,7 @@ async fn test_bug_createmeta_paginates_two_pages() {
     let body1: serde_json::Value = resp1.json().await.expect("Page 1 invalid JSON");
 
     assert_eq!(
-        body1["total"],
-        8,
+        body1["total"], 8,
         "Bug createmeta total should be 8 (Pitfall F pagination boundary)"
     );
     let page1_fields = body1["fields"]
@@ -75,8 +74,7 @@ async fn test_bug_createmeta_paginates_two_pages() {
     let body2: serde_json::Value = resp2.json().await.expect("Page 2 invalid JSON");
 
     assert_eq!(
-        body2["total"],
-        8,
+        body2["total"], 8,
         "Bug createmeta total on page 2 should still be 8"
     );
     let page2_fields = body2["fields"]

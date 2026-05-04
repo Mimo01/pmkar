@@ -232,7 +232,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
 
         {/* Action buttons */}
         <TooltipProvider delayDuration={300}>
-        <div className="flex items-center gap-3 flex-wrap mb-6">
+          <div className="flex items-center gap-3 flex-wrap mb-6">
             {!isCopied && !isIgnored && !isHandled && (
               <Button
                 variant="default"
@@ -355,9 +355,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {activeTab === 'overview' && <OverviewTab detail={detail} baseUrl={baseUrl} />}
           {activeTab === 'comments' && <CommentsTab comments={detail.fields.comment.comments} />}
           {activeTab === 'worklog' && <WorkLogTab issueKey={issueKey} baseUrl={baseUrl} />}
-          {activeTab === 'attachments' && (
-            <AttachmentsTab attachments={detail.fields.attachment} />
-          )}
+          {activeTab === 'attachments' && <AttachmentsTab attachments={detail.fields.attachment} />}
           {activeTab === 'history' && <HistoryTab issueKey={issueKey} baseUrl={baseUrl} />}
           {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
         </div>

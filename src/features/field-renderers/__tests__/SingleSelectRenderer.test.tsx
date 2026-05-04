@@ -42,7 +42,10 @@ const field: RendererProps['field'] = {
   name: 'Priority',
   required: false,
   schema: { type: 'option' },
-  allowedValues: [{ id: '1', value: 'High' }, { id: '2', value: 'Low' }],
+  allowedValues: [
+    { id: '1', value: 'High' },
+    { id: '2', value: 'Low' },
+  ],
 };
 
 describe('SingleSelectRenderer', () => {
@@ -62,7 +65,9 @@ describe('SingleSelectRenderer', () => {
   });
 
   it('CTRL-03 displays current value name in trigger when set', () => {
-    render(<SingleSelectRenderer field={field} value={{ id: '1', value: 'High' }} onChange={vi.fn()} />);
+    render(
+      <SingleSelectRenderer field={field} value={{ id: '1', value: 'High' }} onChange={vi.fn()} />,
+    );
     expect(screen.getByRole('button').textContent).toMatch(/High/);
   });
 });

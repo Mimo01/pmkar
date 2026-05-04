@@ -44,13 +44,16 @@ export function MultiSelectRenderer({ field, value, onChange, required, disabled
       {selected.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {selected.map((o, idx) => (
-            <Badge key={`${optKey(o)}-${idx}`} variant="secondary" className="gap-1.5">
+            <Badge key={optKey(o) || String(idx)} variant="secondary" className="gap-1.5">
               <span className="truncate max-w-[160px]">{optLabel(o)}</span>
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => remove(idx)}
-                aria-label={t('fieldRenderer.removeItem', { item: optLabel(o), defaultValue: `Remove ${optLabel(o)}` })}
+                aria-label={t('fieldRenderer.removeItem', {
+                  item: optLabel(o),
+                  defaultValue: `Remove ${optLabel(o)}`,
+                })}
                 className="shrink-0 text-muted-foreground hover:text-foreground"
               >
                 <X className="w-3 h-3" aria-hidden="true" />

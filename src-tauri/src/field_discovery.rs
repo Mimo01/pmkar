@@ -437,8 +437,7 @@ pub async fn probe_paginated_createmeta(
     let trimmed = base_url.trim_end_matches('/');
     let project_enc = urlencoding::encode(project_key);
     // endpoint_url contains NO credential value — only the scheme+host+path
-    let endpoint_url =
-        format!("{trimmed}/rest/api/3/issue/createmeta/{project_enc}/issuetypes");
+    let endpoint_url = format!("{trimmed}/rest/api/3/issue/createmeta/{project_enc}/issuetypes");
 
     match client
         .get(&endpoint_url)
@@ -461,8 +460,7 @@ pub async fn probe_paginated_createmeta(
                     endpoint_url,
                     status_code: Some(status.as_u16()),
                     hint: Some(
-                        "Your proxy may not expose the paginated createmeta endpoint."
-                            .to_string(),
+                        "Your proxy may not expose the paginated createmeta endpoint.".to_string(),
                     ),
                 })
             }
@@ -578,7 +576,9 @@ mod tests {
     #[test]
     fn serde_round_trip_string() {
         let parsed = round_trip(json!({"type": "string", "system": "summary"}));
-        assert!(matches!(parsed, FieldSchemaType::String { ref system, .. } if system.as_deref() == Some("summary")));
+        assert!(
+            matches!(parsed, FieldSchemaType::String { ref system, .. } if system.as_deref() == Some("summary"))
+        );
     }
 
     #[test]
@@ -589,8 +589,13 @@ mod tests {
             "customId": 10001
         }));
         match parsed {
-            FieldSchemaType::Number { custom, custom_id, .. } => {
-                assert_eq!(custom.as_deref(), Some("com.atlassian.jira.plugin.system.customfieldtypes:float"));
+            FieldSchemaType::Number {
+                custom, custom_id, ..
+            } => {
+                assert_eq!(
+                    custom.as_deref(),
+                    Some("com.atlassian.jira.plugin.system.customfieldtypes:float")
+                );
                 assert_eq!(custom_id, Some(10001));
             }
             _ => panic!("expected Number variant"),
@@ -612,7 +617,9 @@ mod tests {
     #[test]
     fn serde_round_trip_user() {
         let parsed = round_trip(json!({"type": "user", "system": "assignee"}));
-        assert!(matches!(parsed, FieldSchemaType::User { ref system, .. } if system.as_deref() == Some("assignee")));
+        assert!(
+            matches!(parsed, FieldSchemaType::User { ref system, .. } if system.as_deref() == Some("assignee"))
+        );
     }
 
     #[test]
@@ -624,7 +631,9 @@ mod tests {
             "customId": 10004
         }));
         match parsed {
-            FieldSchemaType::Array { items, custom_id, .. } => {
+            FieldSchemaType::Array {
+                items, custom_id, ..
+            } => {
                 assert_eq!(items, "option");
                 assert_eq!(custom_id, Some(10004));
             }
@@ -683,7 +692,8 @@ mod tests {
                 "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float",
                 "customId": 10001
             }
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(row.field_id, "customfield_10001");
         assert!(matches!(row.schema, FieldSchemaType::Number { .. }));
     }
@@ -695,7 +705,8 @@ mod tests {
             "maxResults": 5,
             "total": 7,
             "fields": []
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(resp.start_at, 0);
         assert_eq!(resp.max_results, 5);
         assert_eq!(resp.total, 7);
@@ -708,15 +719,22 @@ mod tests {
             "name": "Bug",
             "description": "A defect",
             "iconUrl": "https://example.com/bug.png"
-        })).unwrap();
+        }))
+        .unwrap();
         assert_eq!(it.id, "10001");
         assert_eq!(it.name, "Bug");
     }
 
     #[test]
     fn field_side_serializes_lowercase() {
-        assert_eq!(serde_json::to_value(FieldSide::Source).unwrap(), json!("source"));
-        assert_eq!(serde_json::to_value(FieldSide::Target).unwrap(), json!("target"));
+        assert_eq!(
+            serde_json::to_value(FieldSide::Source).unwrap(),
+            json!("source")
+        );
+        assert_eq!(
+            serde_json::to_value(FieldSide::Target).unwrap(),
+            json!("target")
+        );
     }
 
     #[test]
@@ -734,9 +752,7 @@ mod tests {
             endpoint_url: "http://127.0.0.1:9999/rest/api/3/issue/createmeta/MYPROJ/issuetypes"
                 .into(),
             status_code: None,
-            hint: Some(
-                "Your proxy may not expose the paginated createmeta endpoint.".into(),
-            ),
+            hint: Some("Your proxy may not expose the paginated createmeta endpoint.".into()),
         };
         let s = serde_json::to_string(&r).unwrap();
         // Must use camelCase keys

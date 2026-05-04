@@ -90,7 +90,9 @@ export function TicketListPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [sortField, setSortField] = useState<'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee'>('updated');
+  const [sortField, setSortField] = useState<
+    'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee'
+  >('updated');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
@@ -283,7 +285,9 @@ export function TicketListPage() {
       } else if (sortField === 'status') {
         diff = a.fields.status.name.localeCompare(b.fields.status.name);
       } else if (sortField === 'assignee') {
-        diff = (a.fields.assignee?.displayName ?? '').localeCompare(b.fields.assignee?.displayName ?? '');
+        diff = (a.fields.assignee?.displayName ?? '').localeCompare(
+          b.fields.assignee?.displayName ?? '',
+        );
       } else {
         diff = new Date(a.fields.updated).getTime() - new Date(b.fields.updated).getTime();
       }

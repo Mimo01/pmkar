@@ -213,9 +213,7 @@ describe('SettingsPage — JQL Presets section', () => {
   });
 
   it('"Mine" is selected when store has mine preset', () => {
-    useTicketStore.setState({ jqlPreset: 'mine' } as Parameters<
-      typeof useTicketStore.setState
-    >[0]);
+    useTicketStore.setState({ jqlPreset: 'mine' } as Parameters<typeof useTicketStore.setState>[0]);
     renderWithI18n(<SettingsPage onClose={noop} />);
     fireEvent.click(screen.getByRole('button', { name: /^JQL Presets$/i }));
     const mineRadio = screen.getByRole('radio', { name: /^mine/i });
