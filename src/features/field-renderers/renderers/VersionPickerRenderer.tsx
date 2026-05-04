@@ -61,6 +61,7 @@ export function VersionPickerRenderer({
         </div>
       )}
       <VirtualizedCombobox<JiraVersion>
+        id={field.fieldId}
         items={remaining}
         value={null}
         onChange={add}

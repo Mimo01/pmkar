@@ -33,6 +33,7 @@ export function SingleSelectRenderer({
 
   return (
     <VirtualizedCombobox<OptionRef>
+      id={field.fieldId}
       items={items}
       value={selected}
       onChange={(o) => onChange(o)}

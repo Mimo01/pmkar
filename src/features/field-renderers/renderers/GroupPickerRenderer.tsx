@@ -20,6 +20,7 @@ export function GroupPickerRenderer({ field, value, onChange, required, disabled
 
   return (
     <VirtualizedCombobox<GroupRef>
+      id={field.fieldId}
       items={items}
       value={selected}
       onChange={(g) => onChange(g)}

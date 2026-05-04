@@ -65,6 +65,7 @@ export function MultiSelectRenderer({ field, value, onChange, required, disabled
         </div>
       )}
       <VirtualizedCombobox<OptionRef>
+        id={field.fieldId}
         items={remaining}
         value={null}
         onChange={add}

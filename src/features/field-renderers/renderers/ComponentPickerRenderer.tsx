@@ -60,6 +60,7 @@ export function ComponentPickerRenderer({
         </div>
       )}
       <VirtualizedCombobox<JiraComponent>
+        id={field.fieldId}
         items={remaining}
         value={null}
         onChange={add}

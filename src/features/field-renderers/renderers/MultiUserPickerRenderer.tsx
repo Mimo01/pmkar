@@ -63,6 +63,7 @@ export function MultiUserPickerRenderer({
         </div>
       )}
       <VirtualizedCombobox<JiraUser>
+        id={field.fieldId}
         items={[]}
         value={null}
         onChange={addUser}

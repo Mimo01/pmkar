@@ -24,6 +24,8 @@ export interface VirtualizedComboboxProps<T> {
   align?: 'start' | 'end';
   /** Height per item in px for virtualizer. Default 36. Use a larger value for multi-line renderItem. */
   itemHeight?: number;
+  /** Applied to the trigger Button so DynamicTargetForm's htmlFor label wires up correctly. */
+  id?: string;
 }
 
 export function VirtualizedCombobox<T>({
@@ -42,6 +44,7 @@ export function VirtualizedCombobox<T>({
   ariaLabel,
   align = 'start',
   itemHeight = 36,
+  id,
 }: VirtualizedComboboxProps<T>) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -142,6 +145,7 @@ export function VirtualizedCombobox<T>({
   return (
     <div className="relative w-full">
       <Button
+        id={id}
         ref={triggerRef}
         type="button"
         variant="outline"

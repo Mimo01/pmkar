@@ -24,6 +24,7 @@ export function UserPickerRenderer({
   // When omitted (D-05 graceful), the picker reverts to "no results" — no crash.
   return (
     <VirtualizedCombobox<JiraUser>
+      id={field.fieldId}
       items={[]} // async-only: items come from onSearch results
       value={selected}
       onChange={(u) => onChange(u)}
