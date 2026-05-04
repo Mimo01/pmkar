@@ -104,8 +104,8 @@ export function getRenderer(schema: FieldSchemaType): React.ComponentType<Render
 
 /**
  * Returns true when a schema type has an editable renderer in GapsSection.
- * Types that fall through to UnsupportedTypeRenderer (priority, option-with-child,
- * issuetype, any, unknown array items) return false.
+ * Returns false only for types with no dedicated renderer: unknown array items
+ * (e.g. items: 'issuetype') and the default branch.
  */
 export function isEditableSchemaType(schema: FieldSchemaType): boolean {
   switch (schema.type) {
