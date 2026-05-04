@@ -1152,10 +1152,16 @@ pub async fn search_jira_users_by_domain(
             .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;
 
         if !resp.status().is_success() {
-            break;
+            return Err(AppError::Http(format!(
+                "User domain search returned status {} at startAt={start_at}",
+                resp.status().as_u16()
+            )));
         }
 
-        let page: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
+        let page: Vec<serde_json::Value> = resp
+            .json()
+            .await
+            .map_err(|e| AppError::Http(format!("Failed to parse user search page: {e}")))?;
         let page_len = page.len();
         all_users.extend(page);
 
