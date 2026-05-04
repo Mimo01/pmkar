@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Command } from 'cmdk';
 import { ChevronDown, Loader2, Search } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -17,7 +17,7 @@ export interface VirtualizedComboboxProps<T> {
   disabled?: boolean;
   onSearch?: (q: string) => Promise<T[]>;
   initialQuery?: string;
-  renderItem?: (item: T) => React.ReactNode;
+  renderItem?: (item: T) => ReactNode;
   loading?: boolean;
   ariaLabel?: string;
   /** Which edge of the trigger to anchor the popup to. Default "start" (left). */
