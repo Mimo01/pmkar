@@ -656,8 +656,8 @@ pub fn open_external_url(url: String) -> Result<(), AppError> {
     }
     #[cfg(target_os = "windows")]
     {
-        std::process::Command::new("cmd")
-            .args(["/C", "start", &url])
+        std::process::Command::new("rundll32")
+            .args(["url.dll,FileProtocolHandler", &url])
             .spawn()
             .map_err(|e| AppError::Internal(format!("Failed to open URL: {e}")))?;
     }
