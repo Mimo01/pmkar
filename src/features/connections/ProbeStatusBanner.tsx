@@ -25,6 +25,8 @@ export default function ProbeStatusBanner() {
     <div
       className="relative mx-4 mt-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3 pr-10"
       role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
       data-testid="probe-status-banner"
     >
       <p className="text-sm text-red-400">Required-field detection unavailable on Cloud target.</p>
