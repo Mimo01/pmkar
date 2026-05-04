@@ -39,6 +39,8 @@ function App() {
   const hasSetup = useConnectionStore((s) => s.hasCompletedSetup());
   const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
   const runProbe = useConnectionStore((s) => s.runProbe);
+  // Track cloud base URL so the probe re-fires when credentials change (WR-07)
+  const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl);
   const [hydrated, setHydrated] = useState(false);
   useApplyTheme();
   useUpdateCheck();
@@ -101,12 +103,17 @@ function App() {
     };
   }, []);
 
-  // Fire probe after setup + project key is available; re-run when targetProjectKey changes
+  // Fire probe after setup + project key is available; re-run when targetProjectKey or
+  // cloudBaseUrl changes so a credential update is reflected in the banner immediately.
+  // cloudBaseUrl is intentionally included as a trigger dependency even though it is
+  // not referenced in the effect body — runProbe() reads the current cloud connection
+  // from the Zustand store internally.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cloudBaseUrl is a trigger dependency
   useEffect(() => {
     if (hasSetup && targetProjectKey) {
       void runProbe();
     }
-  }, [hasSetup, targetProjectKey, runProbe]);
+  }, [hasSetup, targetProjectKey, cloudBaseUrl, runProbe]);
 
   const selectedTicketKey = useTicketStore((s) => s.selectedTicketKey);
   const copyPhase = useCopyStore((s) => s.phase);
