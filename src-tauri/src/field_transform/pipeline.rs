@@ -64,10 +64,17 @@ pub async fn apply_mapping(
 
         // User / Array<user>
         if is_user_field(&row.source_schema) {
-            if row.transformer_kind == "user_name" {
-                dispatch_user_name(row, &src_val, &mut fields);
-            } else {
-                dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+            match row.transformer_kind.as_str() {
+                "user_name" => dispatch_user_name(row, &src_val, &mut fields),
+                "user" | "auto" | "" => dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps),
+                other => {
+                    // Unknown kind: log and fall back rather than silently using the wrong path.
+                    eprintln!(
+                        "field_transform: unknown transformer_kind {:?} for user field {:?}",
+                        other, row.source_field_id
+                    );
+                    dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+                }
             }
             continue;
         }
