@@ -42,14 +42,19 @@ export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
   prewarmedIssueTypes: {},
 
   loadSchema: async (side, projectKey, issuetypeId) => {
-    const key = schemaCacheKey(side, projectKey, issuetypeId);
+    // Source schema is global — project/issuetype are irrelevant.
+    // Normalise to null so all source calls share a single cache entry
+    // regardless of what project/issuetype the caller passed in.
+    const effectiveProjectKey = side === 'source' ? null : projectKey;
+    const effectiveIssuetypeId = side === 'source' ? null : issuetypeId;
+    const key = schemaCacheKey(side, effectiveProjectKey, effectiveIssuetypeId);
     set({ cache: { ...get().cache, [key]: { status: 'loading' } } });
     try {
       const fields = await (side === 'source'
         ? invoke<FieldSchema[]>('discover_source_fields', {})
         : invoke<FieldSchema[]>('get_target_field_schema_for_issuetype', {
-            projectKey,
-            issuetypeId,
+            projectKey: effectiveProjectKey,
+            issuetypeId: effectiveIssuetypeId,
           }));
       set({
         cache: {
