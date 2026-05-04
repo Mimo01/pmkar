@@ -52,6 +52,7 @@ export function LabelsRenderer({ field, value, onChange, required, disabled }: R
       )}
       <div className="flex gap-2">
         <input
+          id={field.fieldId}
           type="text"
           value={pending}
           disabled={disabled}
