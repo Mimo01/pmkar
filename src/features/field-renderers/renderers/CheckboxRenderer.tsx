@@ -18,14 +18,14 @@ function getOptionLabel(opt: unknown): string {
 
 export function CheckboxRenderer({ field, value, onChange, disabled }: RendererProps) {
   const allowed = Array.isArray(field.allowedValues) ? field.allowedValues : [];
-  const selected = Array.isArray(value) ? (value as string[]) : [];
+  const selected = Array.isArray(value) ? value : [];
   const labelId = `${field.fieldId}-label`;
 
-  function toggle(optLabel: string, isOn: boolean) {
+  function toggle(opt: unknown, optLabel: string, isOn: boolean) {
     if (isOn) {
-      onChange([...selected, optLabel]);
+      onChange([...selected, opt]);
     } else {
-      onChange(selected.filter((v) => v !== optLabel));
+      onChange((selected as unknown[]).filter((v) => getOptionLabel(v) !== optLabel));
     }
   }
 
@@ -35,7 +35,7 @@ export function CheckboxRenderer({ field, value, onChange, disabled }: RendererP
       {allowed.map((opt, idx) => {
         const optLabel = getOptionLabel(opt);
         const checkboxId = `${field.fieldId}-${idx}`;
-        const checked = selected.includes(optLabel);
+        const checked = (selected as unknown[]).some((v) => getOptionLabel(v) === optLabel);
         return (
           <label
             key={optLabel || String(idx)}
@@ -47,7 +47,7 @@ export function CheckboxRenderer({ field, value, onChange, disabled }: RendererP
               type="checkbox"
               checked={checked}
               disabled={disabled}
-              onChange={(e) => toggle(optLabel, e.target.checked)}
+              onChange={(e) => toggle(opt, optLabel, e.target.checked)}
               className="h-4 w-4 rounded border border-input"
             />
             <span>{optLabel}</span>

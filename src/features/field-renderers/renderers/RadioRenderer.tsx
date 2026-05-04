@@ -18,7 +18,6 @@ function getOptionLabel(opt: unknown): string {
 
 export function RadioRenderer({ field, value, onChange, required, disabled }: RendererProps) {
   const allowed = Array.isArray(field.allowedValues) ? field.allowedValues : [];
-  const current = typeof value === 'string' ? value : '';
   const labelId = `${field.fieldId}-label`;
 
   return (
@@ -42,9 +41,9 @@ export function RadioRenderer({ field, value, onChange, required, disabled }: Re
               type="radio"
               name={field.fieldId}
               value={optLabel}
-              checked={current === optLabel}
+              checked={getOptionLabel(value) === optLabel}
               disabled={disabled}
-              onChange={() => onChange(optLabel)}
+              onChange={() => onChange(opt)}
               className="h-4 w-4 border border-input"
             />
             <span>{optLabel}</span>

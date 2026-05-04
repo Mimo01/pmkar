@@ -30,10 +30,10 @@ describe('RadioRenderer', () => {
     expect(radios[1].checked).toBe(true);
   });
 
-  it('CTRL-06 calls onChange with selected option string when radio clicked', () => {
+  it('CTRL-06 calls onChange with selected option object when radio clicked', () => {
     const onChange = vi.fn();
     render(<RadioRenderer field={field} value="" onChange={onChange} />);
     fireEvent.click(screen.getAllByRole('radio')[2]);
-    expect(onChange).toHaveBeenCalledWith('three');
+    expect(onChange).toHaveBeenCalledWith({ value: 'three' });
   });
 });
