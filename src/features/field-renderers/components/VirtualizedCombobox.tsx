@@ -18,7 +18,6 @@ export interface VirtualizedComboboxProps<T> {
   onSearch?: (q: string) => Promise<T[]>;
   initialQuery?: string;
   renderItem?: (item: T) => ReactNode;
-  loading?: boolean;
   ariaLabel?: string;
   /** Which edge of the trigger to anchor the popup to. Default "start" (left). */
   align?: 'start' | 'end';
@@ -40,7 +39,6 @@ export function VirtualizedCombobox<T>({
   onSearch,
   initialQuery,
   renderItem,
-  loading,
   ariaLabel,
   align = 'start',
   itemHeight = 36,
@@ -51,6 +49,7 @@ export function VirtualizedCombobox<T>({
   const [openUpward, setOpenUpward] = useState(false);
   const [query, setQuery] = useState('');
   const [asyncItems, setAsyncItems] = useState<T[] | null>(null);
+  const [asyncLoading, setAsyncLoading] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -127,16 +126,24 @@ export function VirtualizedCombobox<T>({
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (next.trim().length === 0) {
       setAsyncItems(null);
+      setAsyncLoading(false);
       return;
     }
+    setAsyncLoading(true);
     debounceRef.current = setTimeout(() => {
       const reqId = ++latestReqRef.current;
       onSearch(next.trim())
         .then((result) => {
-          if (reqId === latestReqRef.current) setAsyncItems(result);
+          if (reqId === latestReqRef.current) {
+            setAsyncItems(result);
+            setAsyncLoading(false);
+          }
         })
         .catch(() => {
-          if (reqId === latestReqRef.current) setAsyncItems([]);
+          if (reqId === latestReqRef.current) {
+            setAsyncItems([]);
+            setAsyncLoading(false);
+          }
         });
     }, 300);
   }
@@ -163,7 +170,7 @@ export function VirtualizedCombobox<T>({
         onClick={() => setOpen((o) => !o)}
       >
         <span className={cn('truncate', !value && 'text-muted-foreground')}>{triggerLabel}</span>
-        {loading ? (
+        {asyncLoading ? (
           <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden="true" />
         ) : (
           <ChevronDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden="true" />
