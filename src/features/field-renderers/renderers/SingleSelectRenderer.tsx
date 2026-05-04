@@ -9,7 +9,9 @@ interface OptionRef {
 }
 
 function isOption(v: unknown): v is OptionRef {
-  return Boolean(v && typeof v === 'object');
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return false;
+  const o = v as Record<string, unknown>;
+  return typeof o.value === 'string' || typeof o.name === 'string' || typeof o.id === 'string';
 }
 
 function optLabel(o: OptionRef): string {
