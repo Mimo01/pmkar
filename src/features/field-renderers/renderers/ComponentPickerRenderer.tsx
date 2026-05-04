@@ -26,7 +26,7 @@ export function ComponentPickerRenderer({
   const selected: JiraComponent[] = Array.isArray(value)
     ? (value.filter(isComponent) as JiraComponent[])
     : [];
-  const selectedKeys = new Set(selected.map(componentKey));
+  const selectedKeys = new Set(selected.map((c, i) => componentKey(c) || `__idx_${i}`));
   const remaining = allItems.filter((c) => !selectedKeys.has(componentKey(c)));
 
   function add(c: JiraComponent) {

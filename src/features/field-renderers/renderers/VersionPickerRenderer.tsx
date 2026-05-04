@@ -26,7 +26,7 @@ export function VersionPickerRenderer({
   const selected: JiraVersion[] = Array.isArray(value)
     ? (value.filter(isVersion) as JiraVersion[])
     : [];
-  const selectedKeys = new Set(selected.map(versionKey));
+  const selectedKeys = new Set(selected.map((v, i) => versionKey(v) || `__idx_${i}`));
   const remaining = allItems.filter((v) => !selectedKeys.has(versionKey(v)));
 
   function add(v: JiraVersion) {

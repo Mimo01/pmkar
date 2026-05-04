@@ -30,7 +30,7 @@ export function MultiSelectRenderer({ field, value, onChange, required, disabled
     ? (field.allowedValues.filter(isOption) as OptionRef[])
     : [];
   const selected: OptionRef[] = Array.isArray(value) ? (value.filter(isOption) as OptionRef[]) : [];
-  const selectedKeys = new Set(selected.map(optKey));
+  const selectedKeys = new Set(selected.map((o, i) => optKey(o) || `__idx_${i}`));
   const remaining = allItems.filter((o) => !selectedKeys.has(optKey(o)));
 
   function add(o: OptionRef) {
