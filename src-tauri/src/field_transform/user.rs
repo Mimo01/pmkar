@@ -222,7 +222,7 @@ pub(crate) fn scan_mention_patterns(text: &str) -> HashSet<String> {
     let bytes = text.as_bytes();
     let limit = bytes.len().min(MAX_DESCRIPTION_SCAN_BYTES);
     let mut i = 0;
-    while i + 2 < limit {
+    while i + 1 < limit {
         // Look for "[~"
         if bytes[i] == b'[' && bytes[i + 1] == b'~' {
             let start = i + 2;
