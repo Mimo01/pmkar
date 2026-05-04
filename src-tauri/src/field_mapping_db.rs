@@ -658,10 +658,15 @@ pub fn redact_credential_value(s: &str) -> String {
 /// Phase 23 CUTV-03 — deterministic SHA-256 hex digest of a JSON value.
 /// Mirrors `compute_schema_hash` pattern using `sha2` + `hex`.
 pub fn hash_field_value(v: &serde_json::Value) -> String {
-    let json_str = serde_json::to_string(v).unwrap_or_default();
-    let mut hasher = Sha256::new();
-    hasher.update(json_str.as_bytes());
-    hex::encode(hasher.finalize())
+    match serde_json::to_string(v) {
+        Ok(json_str) => {
+            let mut hasher = Sha256::new();
+            hasher.update(json_str.as_bytes());
+            hex::encode(hasher.finalize())
+        }
+        // Distinct sentinel — never a valid SHA-256 hex string (wrong length + prefix)
+        Err(_) => "HASH_ERROR_SERIALIZATION_FAILED".to_string(),
+    }
 }
 
 #[cfg(test)]
