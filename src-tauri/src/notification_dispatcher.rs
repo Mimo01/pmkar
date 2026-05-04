@@ -54,11 +54,11 @@ pub fn build_comment_body(new_json: &str) -> Option<String> {
         .and_then(|v| v.as_str())
         .unwrap_or("Unknown");
     let body_text = last.get("body").and_then(|v| v.as_str()).unwrap_or("");
-    let snippet = if body_text.len() > 60 {
-        &body_text[..60]
-    } else {
-        body_text
-    };
+    let snippet = body_text
+        .char_indices()
+        .take(60)
+        .last()
+        .map_or(body_text, |(i, c)| &body_text[..i + c.len_utf8()]);
     Some(format!("Comment by {author} \u{2014} '{snippet}'"))
 }
 

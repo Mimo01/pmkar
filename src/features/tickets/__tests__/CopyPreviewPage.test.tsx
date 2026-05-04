@@ -48,7 +48,11 @@ const capturedFormProps: Record<string, unknown> = {};
 vi.mock('@/features/field-renderers/DynamicTargetForm', () => ({
   DynamicTargetForm: (props: unknown) => {
     Object.assign(capturedFormProps, props as object);
-    const p = props as { fields: Array<{ fieldId: string }>; searchCallbacks?: unknown; initialQueries?: Record<string, string> };
+    const p = props as {
+      fields: Array<{ fieldId: string }>;
+      searchCallbacks?: unknown;
+      initialQueries?: Record<string, string>;
+    };
     return <div data-testid="dyn-form">fields:{p.fields.map((f) => f.fieldId).join(',')}</div>;
   },
 }));
@@ -63,10 +67,7 @@ vi.mock('../IssueTypeChooser', () => ({
     lastChooserProps = props as Record<string, unknown>;
     const p = props as { onChange: (id: string) => void };
     return (
-      <button
-        data-testid="chooser-pick-it-2"
-        onClick={() => p.onChange('it-2')}
-      >
+      <button data-testid="chooser-pick-it-2" onClick={() => p.onChange('it-2')}>
         pick-it-2
       </button>
     );
@@ -81,9 +82,19 @@ let mockCache: Record<string, { status: string; fields?: unknown[] }> = {};
 vi.mock('@/stores/schemaCacheStore', () => ({
   useSchemaCacheStore: Object.assign(
     (selector: (s: unknown) => unknown) =>
-      selector({ cache: mockCache, prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] }, preWarm: vi.fn().mockResolvedValue(undefined), loadSchema: vi.fn() }),
+      selector({
+        cache: mockCache,
+        prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] },
+        preWarm: vi.fn().mockResolvedValue(undefined),
+        loadSchema: vi.fn(),
+      }),
     {
-      getState: () => ({ cache: mockCache, prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] }, preWarm: vi.fn().mockResolvedValue(undefined), loadSchema: vi.fn() }),
+      getState: () => ({
+        cache: mockCache,
+        prewarmedIssueTypes: { PROJ: [{ id: 'it-1', name: 'Bug' }] },
+        preWarm: vi.fn().mockResolvedValue(undefined),
+        loadSchema: vi.fn(),
+      }),
     },
   ),
   schemaCacheKey: (side: string, pk: string | null, it: string | null) =>
@@ -170,12 +181,9 @@ function buildState(overrides: Record<string, unknown> = {}): Record<string, unk
 }
 
 vi.mock('../copyStore', () => ({
-  useCopyStore: Object.assign(
-    (selector: (s: unknown) => unknown) => selector(currentStoreState),
-    {
-      getState: () => currentStoreState,
-    },
-  ),
+  useCopyStore: Object.assign((selector: (s: unknown) => unknown) => selector(currentStoreState), {
+    getState: () => currentStoreState,
+  }),
 }));
 
 // ---------------------------------------------------------------------------
@@ -349,9 +357,14 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
   it('searchUsersForPicker invokes search_jira_users_by_domain with extracted domain', async () => {
     render(<CopyPreviewPage />);
     await waitFor(() => expect(capturedFormProps.searchCallbacks).toBeDefined());
-    const onSearchUsers = (capturedFormProps as { searchCallbacks: { onSearchUsers: (q: string) => Promise<unknown> } }).searchCallbacks.onSearchUsers;
+    const onSearchUsers = (
+      capturedFormProps as { searchCallbacks: { onSearchUsers: (q: string) => Promise<unknown> } }
+    ).searchCallbacks.onSearchUsers;
     await onSearchUsers('alice@acme.com');
-    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', { baseUrl: 'http://server.example.com', domain: 'acme.com' });
+    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', {
+      baseUrl: 'http://server.example.com',
+      domain: 'acme.com',
+    });
   });
 
   // ── Mapping rows fetch ─────────────────────────────────────────────────────
@@ -370,11 +383,15 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
       if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
       if (cmd === 'get_field_mapping') {
         return [
-          { sourceFieldId: 'summary',     targetFieldId: 'summary',     transformerKind: 'identity'  },
-          { sourceFieldId: 'priority',    targetFieldId: 'priority',    transformerKind: 'priority'  },
-          { sourceFieldId: 'assignee',    targetFieldId: 'assignee',    transformerKind: 'user'      },
-          { sourceFieldId: 'fixVersions', targetFieldId: 'fixVersions', transformerKind: 'version'   },
-          { sourceFieldId: 'missing_src', targetFieldId: 'orphan',      transformerKind: 'identity'  },
+          { sourceFieldId: 'summary', targetFieldId: 'summary', transformerKind: 'identity' },
+          { sourceFieldId: 'priority', targetFieldId: 'priority', transformerKind: 'priority' },
+          { sourceFieldId: 'assignee', targetFieldId: 'assignee', transformerKind: 'user' },
+          {
+            sourceFieldId: 'fixVersions',
+            targetFieldId: 'fixVersions',
+            transformerKind: 'version',
+          },
+          { sourceFieldId: 'missing_src', targetFieldId: 'orphan', transformerKind: 'identity' },
         ];
       }
       if (cmd === 'search_jira_users_by_domain') return [];
@@ -395,15 +412,24 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
 
     const logCall = mockInvoke.mock.calls.find(([c]) => c === 'log_preview_transformations');
     expect(logCall).toBeDefined();
-    const entries = (logCall![1] as { entries: Array<{ targetFieldId: string; outcome: string; failureReason: string | null; transformerKind: string }> }).entries;
+    const entries = (
+      logCall![1] as {
+        entries: Array<{
+          targetFieldId: string;
+          outcome: string;
+          failureReason: string | null;
+          transformerKind: string;
+        }>;
+      }
+    ).entries;
     const byField = Object.fromEntries(entries.map((e) => [e.targetFieldId, e]));
 
     // identity with present source → ok (pre-filled)
     expect(byField.summary?.outcome).toBe('ok');
     // priority transformer is prefillable; source priority object present → ok
     expect(byField.priority?.outcome).toBe('ok');
-    // user transformer is prefillable; assignee object present → ok
-    expect(byField.assignee?.outcome).toBe('ok');
+    // user transformer requires async accountId resolution — not prefillable → skipped
+    expect(byField.assignee?.outcome).toBe('skipped');
     // version transformer is NOT prefillable → skipped, "runs at copy time"
     expect(byField.fixVersions?.outcome).toBe('skipped');
     expect(byField.fixVersions?.failureReason).toMatch(/runs at copy time/);

@@ -35,6 +35,7 @@ base64 = "0.22"
 sha2 = "0.10"
 hex = "0.4"
 urlencoding = "2"
+url = "2"
 sys-locale = "0.3"
 tauri-plugin-notification = "2"
 

@@ -949,9 +949,16 @@ pub async fn fetch_jira_image(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<String, AppError> {
-    // Security: prevent SSRF by validating URL origin
-    let trimmed_base = base_url.trim_end_matches('/');
-    if !image_url.starts_with(trimmed_base) {
+    // Security: prevent SSRF by comparing scheme + host + port exactly.
+    // starts_with() is vulnerable to prefix spoofing (e.g. jira.example.com.evil.com).
+    let base_parsed =
+        url::Url::parse(&base_url).map_err(|_| AppError::Internal("Invalid base URL".into()))?;
+    let img_parsed =
+        url::Url::parse(&image_url).map_err(|_| AppError::Internal("Invalid image URL".into()))?;
+    if img_parsed.scheme() != base_parsed.scheme()
+        || img_parsed.host() != base_parsed.host()
+        || img_parsed.port() != base_parsed.port()
+    {
         return Err(AppError::Internal(
             "URL not from configured Jira instance".into(),
         ));
@@ -1095,10 +1102,16 @@ pub async fn search_jira_users(
         .map_err(|_| AppError::Http("Failed to search users".into()))?;
 
     if !resp.status().is_success() {
-        return Ok(vec![]);
+        return Err(AppError::Http(format!(
+            "User search returned status {}",
+            resp.status().as_u16()
+        )));
     }
 
-    let users: Vec<serde_json::Value> = resp.json().await.unwrap_or_default();
+    let users: Vec<serde_json::Value> = resp
+        .json()
+        .await
+        .map_err(|e| AppError::Http(format!("Failed to parse user search response: {e}")))?;
 
     Ok(users)
 }
@@ -1199,8 +1212,7 @@ pub async fn get_target_field_schema_for_issuetype(
     let (base_url, cloud_email, api_token) = get_cloud_credentials(triage_db.inner())?;
     let cloud_auth = format!(
         "Basic {}",
-        base64::engine::general_purpose::STANDARD
-            .encode(format!("{cloud_email}:{api_token}"))
+        base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
     );
     let client = reqwest::Client::new();
     field_discovery::get_or_fetch_target_schema(
@@ -1254,12 +1266,10 @@ pub async fn probe_createmeta(
     };
     let cloud_auth = format!(
         "Basic {}",
-        base64::engine::general_purpose::STANDARD
-            .encode(format!("{cloud_email}:{api_token}"))
+        base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
     );
     let client = reqwest::Client::new();
-    field_discovery::probe_paginated_createmeta(&client, &base_url, &cloud_auth, &project_key)
-        .await
+    field_discovery::probe_paginated_createmeta(&client, &base_url, &cloud_auth, &project_key).await
 }
 
 /// Pre-warm the issue-type list for the given target project (D-01 + D-15
@@ -1278,17 +1288,11 @@ pub async fn pre_warm_target_issue_types(
     };
     let cloud_auth = format!(
         "Basic {}",
-        base64::engine::general_purpose::STANDARD
-            .encode(format!("{cloud_email}:{api_token}"))
+        base64::engine::general_purpose::STANDARD.encode(format!("{cloud_email}:{api_token}"))
     );
     let client = reqwest::Client::new();
-    match field_discovery::fetch_target_issue_types(
-        &client,
-        &base_url,
-        &cloud_auth,
-        &project_key,
-    )
-    .await
+    match field_discovery::fetch_target_issue_types(&client, &base_url, &cloud_auth, &project_key)
+        .await
     {
         Ok(list) => Ok(list),
         Err(_) => Ok(vec![]),
@@ -1317,11 +1321,7 @@ pub fn refresh_field_schema_cache(
     let guard = mapping_db
         .lock()
         .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
-    guard.clear_cache_for(
-        side_enum,
-        project_key.as_deref(),
-        issuetype_id.as_deref(),
-    )?;
+    guard.clear_cache_for(side_enum, project_key.as_deref(), issuetype_id.as_deref())?;
     Ok(())
 }
 
@@ -1426,10 +1426,12 @@ pub async fn copy_ticket_v2(
         let g = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        g.get_target_project_key()?
-            .ok_or_else(|| AppError::Internal(
-                "No target_project_key configured. Open Settings to choose a target project.".into()
-            ))?
+        g.get_target_project_key()?.ok_or_else(|| {
+            AppError::Internal(
+                "No target_project_key configured. Open Settings to choose a target project."
+                    .into(),
+            )
+        })?
     };
 
     // D-04: Load saved mapping rows from mapping.db inside the command.
@@ -1485,12 +1487,21 @@ pub async fn copy_ticket_v2(
 
     // ── Phase 3 — Run apply_mapping (Phase 18 two-phase pipeline) ────────────
     let plain_client = reqwest::Client::new();
-    let user_resolver =
-        UserResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
-    let version_resolver =
-        VersionResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
-    let component_resolver =
-        ComponentResolver::new(plain_client.clone(), cloud_auth.clone(), trimmed_target.clone());
+    let user_resolver = UserResolver::new(
+        plain_client.clone(),
+        cloud_auth.clone(),
+        trimmed_target.clone(),
+    );
+    let version_resolver = VersionResolver::new(
+        plain_client.clone(),
+        cloud_auth.clone(),
+        trimmed_target.clone(),
+    );
+    let component_resolver = ComponentResolver::new(
+        plain_client.clone(),
+        cloud_auth.clone(),
+        trimmed_target.clone(),
+    );
 
     // Phase 1 — batch user resolution (TRAN-06 one-HTTP-per-domain).
     let user_map = user_resolver
@@ -1957,7 +1968,6 @@ pub fn trigger_manual_poll(
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1972,7 +1982,10 @@ mod tests {
         let body = r#"{"errorMessages":[],"errors":{"project":"valid project is required"}}"#;
         let out = format_create_failure_detail(400, body);
         assert!(out.contains("400"), "status code present: {out}");
-        assert!(out.contains("valid project is required"), "body content present: {out}");
+        assert!(
+            out.contains("valid project is required"),
+            "body content present: {out}"
+        );
         assert!(out.contains("project"), "field name present: {out}");
     }
 
@@ -1984,8 +1997,10 @@ mod tests {
 
     #[test]
     fn format_create_failure_handles_whitespace_body() {
-        let out = format_create_failure_detail(503, "   
-  ");
+        let out = format_create_failure_detail(
+            503, "   
+  ",
+        );
         assert_eq!(out, "Issue creation returned status 503");
     }
 
@@ -1995,8 +2010,14 @@ mod tests {
         let out = format_create_failure_detail(400, body);
         // Must include status, must include compacted (single-line) JSON.
         assert!(out.contains("400"), "{out}");
-        assert!(out.contains("\"summary\":\"required\""), "compacted JSON: {out}");
-        assert!(!out.contains('\n'), "no newlines in compacted output: {out}");
+        assert!(
+            out.contains("\"summary\":\"required\""),
+            "compacted JSON: {out}"
+        );
+        assert!(
+            !out.contains('\n'),
+            "no newlines in compacted output: {out}"
+        );
     }
 
     #[test]

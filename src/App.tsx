@@ -43,6 +43,7 @@ function App() {
   useApplyTheme();
   useUpdateCheck();
   const updateStatus = useUpdateStore((s) => s.status);
+  const updateInfo = useUpdateStore((s) => s.updateInfo);
 
   useEffect(() => {
     Promise.all([invoke<StoredConnectionMeta[]>('get_all_connection_meta'), hydrateLanguage()])
@@ -74,9 +75,16 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<
-    | 'source' | 'destination' | 'jql-presets' | 'watched-users'
-    | 'field-mapping' | 'polling' | 'notifications' | 'theme'
-    | 'language' | 'about'
+    | 'source'
+    | 'destination'
+    | 'jql-presets'
+    | 'watched-users'
+    | 'field-mapping'
+    | 'polling'
+    | 'notifications'
+    | 'theme'
+    | 'language'
+    | 'about'
     | undefined
   >(undefined);
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
@@ -116,16 +124,13 @@ function App() {
     useTicketStore.getState().selectTicket(null);
   }, []);
 
-  const handleOpenSettingsSection = useCallback(
-    (section: 'field-mapping') => {
-      setShowDetail(false);
-      setDetailTicketKey(null);
-      useTicketStore.getState().selectTicket(null);
-      setSettingsInitialSection(section);
-      setShowSettings(true);
-    },
-    [],
-  );
+  const handleOpenSettingsSection = useCallback((section: 'field-mapping') => {
+    setShowDetail(false);
+    setDetailTicketKey(null);
+    useTicketStore.getState().selectTicket(null);
+    setSettingsInitialSection(section);
+    setShowSettings(true);
+  }, []);
 
   // Wait for hydration before deciding what to show
   if (!hydrated) {
@@ -136,7 +141,7 @@ function App() {
     updateStatus === 'available' ||
     updateStatus === 'downloading' ||
     updateStatus === 'installing' ||
-    (updateStatus === 'error' && useUpdateStore.getState().updateInfo !== null);
+    (updateStatus === 'error' && updateInfo !== null);
 
   // Show wizard if not set up OR if user clicked Edit on a connection
   if (!hasSetup || editStep !== null) {

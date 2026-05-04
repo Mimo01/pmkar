@@ -121,10 +121,7 @@ fn extract_poll_params(
     let conn_meta = tdb.get_all_connection_meta().ok().unwrap_or_default();
     let fetch_config = tdb.get_fetch_config().ok()?;
     // get_project_keys returns (source_key, target_key, source_name, target_name).
-    let source_project_key = tdb
-        .get_project_keys()
-        .ok()
-        .and_then(|(src, _, _, _)| src);
+    let source_project_key = tdb.get_project_keys().ok().and_then(|(src, _, _, _)| src);
     drop(sdb);
     let server_meta = conn_meta
         .into_iter()
@@ -305,11 +302,16 @@ async fn process_tickets(
     results
 }
 
+fn jql_escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
 fn build_mine_clauses(username: &str) -> Vec<String> {
+    let u = jql_escape(username);
     vec![
-        format!("assignee = \"{username}\""),
-        format!("comment ~ \"{username}\""),
-        format!("description ~ \"{username}\""),
+        format!("assignee = \"{u}\""),
+        format!("comment ~ \"{u}\""),
+        format!("description ~ \"{u}\""),
         "issueKey in watchedIssues()".to_string(),
     ]
 }
@@ -323,7 +325,8 @@ fn wrap_with_project(people_or_clause: &str, source_project_key: Option<&str>) -
     match source_project_key {
         Some(key) if !key.is_empty() => {
             format!(
-                "project = \"{key}\" AND ({people_or_clause}) ORDER BY updated DESC"
+                "project = \"{}\" AND ({people_or_clause}) ORDER BY updated DESC",
+                jql_escape(key)
             )
         }
         _ => format!("({people_or_clause}) ORDER BY updated DESC"),
@@ -341,7 +344,12 @@ fn build_poll_jql(
         // `custom` is intentionally NOT scoped — the user wrote raw JQL and may
         // already have a project clause (or want a deliberate cross-project query).
         "custom" => custom.map_or_else(
-            || format!("assignee = \"{username}\" ORDER BY updated DESC"),
+            || {
+                format!(
+                    "assignee = \"{}\" ORDER BY updated DESC",
+                    jql_escape(username)
+                )
+            },
             str::to_string,
         ),
         "all_watched" => {
@@ -352,10 +360,11 @@ fn build_poll_jql(
             let watched: Vec<String> = watched_users
                 .iter()
                 .flat_map(|u| {
+                    let esc = jql_escape(&u.identifier);
                     vec![
-                        format!("assignee = \"{}\"", u.identifier),
-                        format!("comment ~ \"{}\"", u.identifier),
-                        format!("description ~ \"{}\"", u.identifier),
+                        format!("assignee = \"{esc}\""),
+                        format!("comment ~ \"{esc}\""),
+                        format!("description ~ \"{esc}\""),
                     ]
                 })
                 .collect();

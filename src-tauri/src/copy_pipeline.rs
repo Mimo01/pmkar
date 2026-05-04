@@ -43,10 +43,7 @@ pub struct CopyContext {
 /// Create the "copied from" remote link on the target Cloud issue.
 /// Returns ONE `CopyStepResult` (step name `"add_remotelink"`).
 /// Extracted from commands.rs lines 1828-1865.
-pub async fn add_remote_link(
-    ctx: &CopyContext,
-    source_summary: &str,
-) -> CopyStepResult {
+pub async fn add_remote_link(ctx: &CopyContext, source_summary: &str) -> CopyStepResult {
     let encoded_source_url = urlencoding::encode(&ctx.source_base_url).to_string();
     let remote_link_body = serde_json::json!({
         "globalId": format!("pmkar-source={}&key={}", encoded_source_url, ctx.source_key),
@@ -107,10 +104,7 @@ pub async fn add_remote_link(
 /// download (audited) and a fresh `reqwest::Client::new()` for the multipart
 /// upload (existing pattern: `ClientWithMiddleware` lacks `.multipart()`).
 #[allow(clippy::too_many_lines)]
-pub async fn copy_attachments(
-    ctx: &CopyContext,
-    source_body: &Value,
-) -> Vec<CopyStepResult> {
+pub async fn copy_attachments(ctx: &CopyContext, source_body: &Value) -> Vec<CopyStepResult> {
     let mut out: Vec<CopyStepResult> = Vec::new();
     let attachments = source_body["fields"]["attachment"]
         .as_array()
@@ -130,6 +124,23 @@ pub async fn copy_attachments(
                 step: format!("attach:{filename}"),
                 success: false,
                 detail: Some("No download URL".to_string()),
+            });
+            continue;
+        }
+
+        // Security: validate attachment URL is from the same origin as source.
+        let same_origin = url::Url::parse(&ctx.source_base_url)
+            .ok()
+            .zip(url::Url::parse(download_url).ok())
+            .map(|(b, d)| b.scheme() == d.scheme() && b.host() == d.host() && b.port() == d.port())
+            .unwrap_or(false);
+        if !same_origin {
+            out.push(CopyStepResult {
+                step: format!("attach:{filename}"),
+                success: false,
+                detail: Some(
+                    "Attachment URL is not from the configured source instance".to_string(),
+                ),
             });
             continue;
         }
@@ -228,10 +239,7 @@ pub async fn copy_attachments(
 
 /// Copy comments. Step names `"comment:<n>"`.
 /// Extracted from commands.rs lines 1977-2083.
-pub async fn copy_comments(
-    ctx: &CopyContext,
-    source_body: &Value,
-) -> Vec<CopyStepResult> {
+pub async fn copy_comments(ctx: &CopyContext, source_body: &Value) -> Vec<CopyStepResult> {
     let mut out: Vec<CopyStepResult> = Vec::new();
 
     let rendered_comments = source_body["renderedFields"]["comment"]["comments"]
@@ -348,9 +356,7 @@ pub async fn copy_comments(
 
 /// Copy worklogs. Step names `"worklog:<n>"`.
 /// Extracted from commands.rs lines 2085-2168.
-pub async fn copy_worklogs(
-    ctx: &CopyContext,
-) -> Vec<CopyStepResult> {
+pub async fn copy_worklogs(ctx: &CopyContext) -> Vec<CopyStepResult> {
     let mut out: Vec<CopyStepResult> = Vec::new();
 
     let worklog_url = format!(
@@ -411,8 +417,7 @@ pub async fn copy_worklogs(
         let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
         let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
 
-        let attribution =
-            format!("{author_name} \u{2014} {started_date} ({time_spent})");
+        let attribution = format!("{author_name} \u{2014} {started_date} ({time_spent})");
 
         let wl_comment_adf = serde_json::json!({
             "version": 1,
@@ -480,10 +485,7 @@ pub async fn copy_worklogs(
 ///
 /// CRITICAL CUTV-04: the inner POST body uses `ctx.target_project_key` — NOT a
 /// literal — for the `"project": { "key": ... }` field.
-pub async fn copy_subtasks(
-    ctx: &CopyContext,
-    subtasks: &[Value],
-) -> Vec<CopyStepResult> {
+pub async fn copy_subtasks(ctx: &CopyContext, subtasks: &[Value]) -> Vec<CopyStepResult> {
     let mut out: Vec<CopyStepResult> = Vec::new();
     for st in subtasks {
         let st_summary = st["fields"]["summary"].as_str().unwrap_or("Sub-task");

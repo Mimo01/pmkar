@@ -6,17 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useConnectionStore } from '../connections/connectionStore';
-import { DynamicTargetForm } from '@/features/field-renderers/DynamicTargetForm';
-import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import type { FieldMappingRow } from '@/features/field-mapping/types';
-import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
-import { useCopyStore } from './copyStore';
+import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
+import { DynamicTargetForm } from '@/features/field-renderers/DynamicTargetForm';
+import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
+import { useConnectionStore } from '../connections/connectionStore';
 import { computeGapFields } from './computeGapFields';
+import { useCopyStore } from './copyStore';
 import { DescriptionRenderer } from './DescriptionRenderer';
 import { GapsSection } from './GapsSection';
-import { isOverrideValueFilled } from './isOverrideValueFilled';
 import { IssueTypeChooser } from './IssueTypeChooser';
+import { isOverrideValueFilled } from './isOverrideValueFilled';
 import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
 import type { JiraUser } from './types';
@@ -80,7 +80,7 @@ function getProgressPercent(progressStep: string): number {
 // Description is wiki_to_adf and handled server-side only.
 // ---------------------------------------------------------------------------
 
-const PREFILLABLE_KINDS = new Set(['identity', 'priority', 'user']);
+const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewPage
@@ -168,7 +168,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       if (id) await setTargetIssueTypeId(id);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetProjectKey]);
+  }, [targetProjectKey, setTargetIssueTypeId]);
 
   // ── Prefill overrideValues from mapping rows (D-PREFILL) ──────────────────
   // Runs once when both mappingRows and sourceTicket are available.
@@ -246,7 +246,13 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mappingRows, sourceTicket, previewCopyId]);
+  }, [
+    mappingRows,
+    sourceTicket,
+    previewCopyId,
+    overrideValues, // Pre-fill the override and record an "ok" outcome.
+    setOverrideValue,
+  ]);
   // Intentionally omit overrideValues and setOverrideValue from deps:
   // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
   // setOverrideValue is a stable store action reference and does not need to be in deps.
@@ -269,10 +275,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // A gap with a non-empty override value is satisfied and must NOT block the
   // Copy button — the user has provided a value to send to the backend.
   const unfilledGapFields = useMemo(
-    () =>
-      gapFields.filter(
-        (g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema),
-      ),
+    () => gapFields.filter((g) => !isOverrideValueFilled(overrideValues[g.fieldId], g.schema)),
     [gapFields, overrideValues],
   );
 
@@ -281,7 +284,11 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const dynamicFormFields = useMemo(
     () =>
       resolvedTargetFields.filter(
-        (f) => f.fieldId !== 'summary' && f.fieldId !== 'issuetype' && f.fieldId !== 'project' && !gapIds.has(f.fieldId),
+        (f) =>
+          f.fieldId !== 'summary' &&
+          f.fieldId !== 'issuetype' &&
+          f.fieldId !== 'project' &&
+          !gapIds.has(f.fieldId),
       ),
     [resolvedTargetFields, gapIds],
   );
@@ -290,8 +297,10 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const initialQueriesByFieldId = useMemo<Record<string, string>>(() => {
     const out: Record<string, string> = {};
     if (!sourceTicket) return out;
-    const assigneeEmail = (sourceTicket.fields.assignee as { emailAddress?: string } | null)?.emailAddress;
-    const reporterEmail = (sourceTicket.fields.reporter as { emailAddress?: string } | null)?.emailAddress;
+    const assigneeEmail = (sourceTicket.fields.assignee as { emailAddress?: string } | null)
+      ?.emailAddress;
+    const reporterEmail = (sourceTicket.fields.reporter as { emailAddress?: string } | null)
+      ?.emailAddress;
     for (const f of resolvedTargetFields) {
       const isUser =
         f.schema.type === 'user' ||
@@ -320,28 +329,31 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // required by the search_jira_users_by_domain Rust command. The module-level
   // version was missing this argument, causing the "missing required key baseUrl"
   // runtime error.
-  const searchUsersForPicker = useCallback(async (q: string): Promise<JiraUser[]> => {
-    const trimmed = q.trim();
-    if (!trimmed) return [];
-    // The backend command expects a domain. If the query contains '@', extract
-    // the domain after the last '@'. Otherwise pass the query as-is — Cloud's
-    // domain search returns an empty array for unmatched domains rather than
-    // failing, so name-only searches gracefully fall through to "no results"
-    // without crashing the UI.
-    const at = trimmed.lastIndexOf('@');
-    const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-    if (!domain) return [];
-    try {
-      const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
-        baseUrl: sourceBaseUrl,
-        domain,
-      });
-      return Array.isArray(users) ? users : [];
-    } catch (e) {
-      console.error('[CopyPreviewPage] search_jira_users_by_domain failed:', e);
-      return [];
-    }
-  }, [sourceBaseUrl]);
+  const searchUsersForPicker = useCallback(
+    async (q: string): Promise<JiraUser[]> => {
+      const trimmed = q.trim();
+      if (!trimmed) return [];
+      // The backend command expects a domain. If the query contains '@', extract
+      // the domain after the last '@'. Otherwise pass the query as-is — Cloud's
+      // domain search returns an empty array for unmatched domains rather than
+      // failing, so name-only searches gracefully fall through to "no results"
+      // without crashing the UI.
+      const at = trimmed.lastIndexOf('@');
+      const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+      if (!domain) return [];
+      try {
+        const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
+          baseUrl: sourceBaseUrl,
+          domain,
+        });
+        return Array.isArray(users) ? users : [];
+      } catch (e) {
+        console.error('[CopyPreviewPage] search_jira_users_by_domain failed:', e);
+        return [];
+      }
+    },
+    [sourceBaseUrl],
+  );
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────
   // A gap field gates the copy only while its override value is empty.
@@ -452,7 +464,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
               <StatusBadge status={sourceTicket.fields.status.name} />
             </SourceFieldRow>
             <SourceFieldRow label="Priority">
-              <PriorityIcon priority={sourceTicket.fields.priority.name} size="sm" />
+              <PriorityIcon priority={sourceTicket.fields.priority?.name ?? ''} size="sm" />
             </SourceFieldRow>
             <SourceFieldRow label="Assignee">
               <span className="flex items-center gap-1.5">
@@ -552,7 +564,9 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
                 projectKey={targetProjectKey}
                 sourceIssueTypeName={sourceTicket.fields.issuetype?.name ?? ''}
                 value={targetIssueTypeId}
-                onChange={(id) => { void setTargetIssueTypeId(id); }}
+                onChange={(id) => {
+                  void setTargetIssueTypeId(id);
+                }}
                 loading={isSchemaLoading}
               />
             )}
@@ -560,7 +574,10 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
             {/* Summary (D-01, D-02) */}
             <div className="mb-4">
               <label htmlFor="copy-target-summary" className="text-xs text-brand-muted block mb-1">
-                Summary <span className="text-destructive" aria-hidden="true">*</span>
+                Summary{' '}
+                <span className="text-destructive" aria-hidden="true">
+                  *
+                </span>
               </label>
               <input
                 id="copy-target-summary"

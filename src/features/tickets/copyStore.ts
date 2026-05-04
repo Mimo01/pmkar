@@ -1,8 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
-import { useConnectionStore } from '../connections/connectionStore';
-import { useSchemaCacheStore, schemaCacheKey } from '@/stores/schemaCacheStore';
+import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema } from '@/types/fieldSchema';
+import { useConnectionStore } from '../connections/connectionStore';
 import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
 
 interface CopyState {
@@ -106,7 +106,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       const defaultStatus = matchedStatus?.name || meta.availableStatuses[0]?.name || '';
 
       // Prefill priority: map source priority name to target if possible
-      const sourcePriorityName = ticket.fields.priority.name;
+      const sourcePriorityName = ticket.fields.priority?.name ?? '';
       const matchedPriority = meta.availablePriorities.find(
         (p) => p.name.toLowerCase() === sourcePriorityName.toLowerCase(),
       );
@@ -138,15 +138,11 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           if (prewarmed.length > 0) {
             const sourceTypeName = ticket.fields.issuetype?.name ?? '';
             const matched = sourceTypeName
-              ? prewarmed.find(
-                  (it) => it.name.toLowerCase() === sourceTypeName.toLowerCase(),
-                )
+              ? prewarmed.find((it) => it.name.toLowerCase() === sourceTypeName.toLowerCase())
               : null;
             const defaultTypeId = matched?.id ?? prewarmed[0]?.id ?? null;
             if (defaultTypeId) {
-              await useSchemaCacheStore
-                .getState()
-                .loadSchema('target', projectKey, defaultTypeId);
+              await useSchemaCacheStore.getState().loadSchema('target', projectKey, defaultTypeId);
               const entry =
                 useSchemaCacheStore.getState().cache[
                   schemaCacheKey('target', projectKey, defaultTypeId)
@@ -195,8 +191,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
     const projectKey = get().targetProjectKey;
     if (!projectKey) return;
     await useSchemaCacheStore.getState().loadSchema('target', projectKey, id);
-    const entry =
-      useSchemaCacheStore.getState().cache[schemaCacheKey('target', projectKey, id)];
+    const entry = useSchemaCacheStore.getState().cache[schemaCacheKey('target', projectKey, id)];
     set({ resolvedTargetFields: entry?.fields ?? [] });
   },
 
@@ -217,7 +212,9 @@ export const useCopyStore = create<CopyState>((set, get) => ({
         result: {
           targetKey: null,
           targetUrl: null,
-          steps: [{ step: 'create_issue', success: false, detail: 'No target issue type selected.' }],
+          steps: [
+            { step: 'create_issue', success: false, detail: 'No target issue type selected.' },
+          ],
         },
         progressStep: '',
       });
