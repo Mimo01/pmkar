@@ -263,7 +263,9 @@ pub(crate) fn scan_html_profile_links(text: &str) -> HashSet<String> {
         if &bytes[i..i + needle.len()] == needle {
             // Only accept if preceded by '?' or '&' (a URL query param) — guards
             // against matching e.g. `<input name="…">` legitimate HTML attributes.
-            let preceding_ok = i == 0 || bytes[i - 1] == b'?' || bytes[i - 1] == b'&';
+            // i == 0 is NOT a valid query-param context: a string starting with
+            // `name=` has no preceding delimiter, so it must be rejected.
+            let preceding_ok = i > 0 && (bytes[i - 1] == b'?' || bytes[i - 1] == b'&');
             if preceding_ok {
                 let start = i + needle.len();
                 let mut j = start;
