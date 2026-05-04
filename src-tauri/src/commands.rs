@@ -1179,6 +1179,12 @@ use crate::field_transform::{apply_mapping, FieldMappingRow, TransformContext};
 
 /// Source v2 global field list. Cache-first via `get_or_fetch_source_global`
 /// (`side='source'`, `project_key=NULL`, `issuetype_id=NULL` — D-14).
+///
+/// # Audit note
+/// This command uses a bare `reqwest::Client` and therefore does not log HTTP
+/// calls to the audit trail. `AuditDb` state is not threaded into this command.
+/// TODO: thread `AuditDb` state to enable audit logging for field discovery
+/// (same pattern as `fetch_tickets` which uses `build_audited_client`).
 #[tauri::command]
 pub async fn discover_source_fields(
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
@@ -1202,6 +1208,12 @@ pub async fn discover_source_fields(
 
 /// Target v3 paginated createmeta for a specific issue type. Cache-first via
 /// `get_or_fetch_target_schema`; subsequent calls hit the cache (D-15).
+///
+/// # Audit note
+/// This command uses a bare `reqwest::Client` and therefore does not log HTTP
+/// calls to the audit trail. `AuditDb` state is not threaded into this command.
+/// TODO: thread `AuditDb` state to enable audit logging for field discovery
+/// (same pattern as `fetch_tickets` which uses `build_audited_client`).
 #[tauri::command]
 pub async fn get_target_field_schema_for_issuetype(
     project_key: String,
