@@ -268,6 +268,7 @@ pub struct FieldMappingDb {
 impl FieldMappingDb {
     pub fn open(path: &std::path::Path) -> AppResult<Self> {
         let conn = Connection::open(path)?;
+        conn.execute_batch("PRAGMA journal_mode=WAL;")?;
         conn.execute_batch(CREATE_FIELD_SCHEMA_CACHE)?;
         conn.execute_batch(CREATE_INDEX)?;
         conn.execute_batch(CREATE_FIELD_MAPPING)?;
