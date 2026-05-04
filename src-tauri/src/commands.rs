@@ -1795,6 +1795,10 @@ pub fn log_preview_transformations(
         .lock()
         .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
 
+    // Wrap the batch in an explicit transaction for atomicity and reduced I/O.
+    // Best-effort: if begin or commit fails the rows are simply not persisted;
+    // the preview/copy flow is unaffected (mirrors AuditDb::insert semantics).
+    let _ = mdb.begin_transaction();
     for e in &entries {
         // Quick task 260430-26i: always persist redacted JSON values alongside
         // hashes; previous audit_verbose branch removed.
@@ -1819,6 +1823,7 @@ pub fn log_preview_transformations(
             tgt_json.as_deref(),
         );
     }
+    let _ = mdb.commit_transaction();
     Ok(())
 }
 

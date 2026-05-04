@@ -589,6 +589,21 @@ impl FieldMappingDb {
         Ok(())
     }
 
+    /// Wrap the body of a write batch in an explicit `SQLite` transaction.
+    /// Callers call `begin_transaction`, issue N inserts, then call
+    /// `commit_transaction`. On error, the transaction is automatically rolled
+    /// back when the connection is dropped or when the next statement fails.
+    pub fn begin_transaction(&self) -> AppResult<()> {
+        self.conn.execute_batch("BEGIN")?;
+        Ok(())
+    }
+
+    /// Commit an in-progress explicit transaction started with `begin_transaction`.
+    pub fn commit_transaction(&self) -> AppResult<()> {
+        self.conn.execute_batch("COMMIT")?;
+        Ok(())
+    }
+
     /// Returns `mapping_audit_log` entries newest first (ORDER BY id DESC).
     /// Bounded by limit; offset is for pagination by the UI.
     /// Quick task 260430-0tj. Quick task 260430-26i adds the JSON columns —
