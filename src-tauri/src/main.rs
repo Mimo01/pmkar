@@ -153,11 +153,15 @@ fn main() {
                 let tdb = app.state::<Arc<Mutex<TriageDb>>>();
                 let freq_str = tdb
                     .lock()
-                    .unwrap()
+                    .map_err(|_| "TriageDb lock poisoned during startup")?
                     .get_poll_frequency()
                     .unwrap_or_else(|_| "off".to_string());
                 let initial_freq = PollFrequency::from_str(&freq_str);
-                let _ = poll_tx.lock().unwrap().send(initial_freq);
+                poll_tx
+                    .lock()
+                    .map_err(|_| "poll_tx lock poisoned during startup")?
+                    .send(initial_freq)
+                    .ok();
             }
 
             app.manage(poll_tx); // type: Arc<Mutex<watch::Sender<PollFrequency>>>
