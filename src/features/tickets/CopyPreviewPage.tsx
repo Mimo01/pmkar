@@ -80,7 +80,7 @@ function getProgressPercent(progressStep: string): number {
 // Description is wiki_to_adf and handled server-side only.
 // ---------------------------------------------------------------------------
 
-const PREFILLABLE_KINDS = new Set(['identity', 'priority', 'user', 'wiki_to_adf']);
+const PREFILLABLE_KINDS = new Set(['identity', 'priority', 'user']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewPage
@@ -212,10 +212,6 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         // user / version / component — handled at copy commit by apply_mapping.
         outcome = 'skipped';
         failureReason = `${row.transformerKind} requires async resolution — runs at copy time`;
-      } else if (row.transformerKind === 'wiki_to_adf' && typeof rawValue !== 'string') {
-        // Cloud v3 ADF object source: pre-fill deferred to copy commit.
-        outcome = 'skipped';
-        failureReason = 'ADF source — pre-fill deferred to copy time';
       } else if (userAlreadyHasValue) {
         // User had already set this override (e.g. prior preview state) — preserve it.
         outcome = 'ok';
