@@ -95,8 +95,11 @@ export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
     try {
       await invoke('refresh_field_schema_cache', { side, projectKey, issuetypeId });
     } catch {
-      // Non-fatal: caller can re-trigger loadSchema regardless.
+      // Non-fatal: proceed to reload regardless.
     }
+    // Reload immediately so the cache is never transiently empty — callers
+    // should not need to call loadSchema separately after refresh.
+    await get().loadSchema(side, projectKey, issuetypeId);
   },
 
   clearCache: () => set({ cache: {}, prewarmedIssueTypes: {} }),

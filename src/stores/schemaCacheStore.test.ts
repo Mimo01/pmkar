@@ -69,20 +69,25 @@ describe('schemaCacheStore', () => {
     expect(useSchemaCacheStore.getState().prewarmedIssueTypes.MYPROJ).toHaveLength(2);
   });
 
-  it('refresh clears the cache entry then calls refresh_field_schema_cache', async () => {
+  it('refresh clears the cache entry, calls refresh_field_schema_cache, then reloads', async () => {
     // Seed an existing entry
     const key = schemaCacheKey('target', 'MYPROJ', '10001');
     useSchemaCacheStore.setState({
       cache: { [key]: { status: 'success', fields: [] } },
       prewarmedIssueTypes: {},
     });
+    // First mock: refresh_field_schema_cache; second mock: get_target_field_schema_for_issuetype (reload)
     invokeMock.mockResolvedValueOnce(undefined);
+    invokeMock.mockResolvedValueOnce([]);
     await useSchemaCacheStore.getState().refresh('target', 'MYPROJ', '10001');
     expect(invokeMock).toHaveBeenCalledWith('refresh_field_schema_cache', {
       side: 'target',
       projectKey: 'MYPROJ',
       issuetypeId: '10001',
     });
-    expect(useSchemaCacheStore.getState().cache[key]).toBeUndefined();
+    // Cache entry should be repopulated (not undefined) after the reload
+    const entry = useSchemaCacheStore.getState().cache[key];
+    expect(entry).toBeDefined();
+    expect(entry?.status).toBe('success');
   });
 });
