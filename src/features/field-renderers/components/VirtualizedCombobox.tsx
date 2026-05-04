@@ -52,6 +52,7 @@ export function VirtualizedCombobox<T>({
   const popoverRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestReqRef = useRef(0);
 
   // Pitfall 1 mitigation: shouldFilter={false} on Command + manual filtering here
   const filtered = useMemo(() => {
@@ -121,9 +122,14 @@ export function VirtualizedCombobox<T>({
       return;
     }
     debounceRef.current = setTimeout(() => {
+      const reqId = ++latestReqRef.current;
       onSearch(next.trim())
-        .then((result) => setAsyncItems(result))
-        .catch(() => setAsyncItems([]));
+        .then((result) => {
+          if (reqId === latestReqRef.current) setAsyncItems(result);
+        })
+        .catch(() => {
+          if (reqId === latestReqRef.current) setAsyncItems([]);
+        });
     }, 300);
   }
 
