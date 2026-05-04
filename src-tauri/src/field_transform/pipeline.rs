@@ -215,6 +215,12 @@ fn dispatch_user(
             // Field is null/missing — emit a gap so Phase 22 prompts the user.
             // Only emit if target requires it. Phase 18 doesn't read required-ness;
             // emit regardless and let Phase 22 filter via target schema.
+            gaps.push(GapVariant::Person(UnresolvedPerson {
+                target_field_id: row.target_field_id.clone(),
+                source_username: None,
+                source_key: key,
+                source_email: email,
+            }));
             return;
         }
         match ctx.user_map.get(&username).and_then(|v| v.as_ref()) {
