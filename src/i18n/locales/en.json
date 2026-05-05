@@ -280,6 +280,7 @@
   "audit.fields.outcome.copied": "copied",
   "audit.fields.loadMore": "Load more",
   "audit.fields.loadError": "Could not load field transformations.",
+  "audit.fields.group.count.total": "{{count}} fields",
   "audit.fields.group.count.total_one": "{{count}} field",
   "audit.fields.group.count.total_few": "{{count}} fields",
   "audit.fields.group.count.total_other": "{{count}} fields",

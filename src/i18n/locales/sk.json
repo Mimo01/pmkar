@@ -280,6 +280,7 @@
   "audit.fields.outcome.copied": "skopírované",
   "audit.fields.loadMore": "Načítať ďalšie",
   "audit.fields.loadError": "Transformácie polí sa nepodarilo načítať.",
+  "audit.fields.group.count.total": "{{count}} polí",
   "audit.fields.group.count.total_one": "{{count}} pole",
   "audit.fields.group.count.total_few": "{{count}} polia",
   "audit.fields.group.count.total_other": "{{count}} polí",
