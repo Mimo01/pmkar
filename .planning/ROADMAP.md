@@ -69,6 +69,20 @@ Plans:
 - [x] 24-01-PLAN.md — Backend: add copy_id to CopyTicketV2Args, copy-time audit loop in copy_ticket_v2, thread previewCopyId through copyStore
 - [x] 24-02-PLAN.md — Frontend: 'copied' outcome badge (blue), i18n keys in EN+SK, fieldGrouping tests
 
+## Phase 25: Preview-Time Resolution of wiki_to_adf and User Fields
+
+**Goal:** Resolve `description` (wiki_to_adf) and all `user`-type fields at copy-preview-open time so users can review and edit resolved values in the copy preview modal before clicking Copy.
+
+**Problem:** `CopyPreviewPage.tsx:83` defines `PREFILLABLE_KINDS = Set(['identity','priority'])`. At preview-open time, `wiki_to_adf` and `user` fields log `skipped / target: null` with reason "requires async resolution — runs at copy time." Users see blank target fields for description and assignee in the preview modal and cannot review or edit them before the copy executes.
+
+**Fix:** At preview-open time, (1) fetch `renderedFields` for the source issue and convert the description HTML to ADF via a new Tauri command `resolve_wiki_to_adf`; (2) run Cloud user lookup for all `user`-kind fields using existing `resolve_batch`; (3) store results in `overrideValues` so they appear as editable inputs in the target form. Edits in the modal update `overrideValues` and flow through to `copy_ticket_v2` unchanged.
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 25-01-PLAN.md — Backend: resolve_description_to_adf + resolve_users_preview Tauri commands, Rust unit tests, register in main.rs
+- [ ] 25-02-PLAN.md — Frontend: async pre-fill effect, description read-only display, user picker pre-fill, frontend tests
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -97,3 +111,4 @@ Plans:
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 24. Audit Log Copy-Time Resolution | hotfix | 0/2 | In Progress | — |
+| 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 0/2 | In Progress | — |
