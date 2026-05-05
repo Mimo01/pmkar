@@ -353,8 +353,11 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const isCopying = phase === 'copying';
   const isLoading = phase === 'loading_preview';
   const isProjectMissing = !targetProjectKey;
+  const isIssueTypeMissing = !targetIssueTypeId;
   const isGated = unfilledGapFields.length > 0;
-  const isCopyDisabled = isCopying || isLoading || isProjectMissing || isGated;
+  // Mirror CopyPreviewModal: gate on missing issue type so the backend confirmCopy guard
+  // never fires silently with null targetIssueTypeId (D-11 parity).
+  const isCopyDisabled = isCopying || isLoading || isProjectMissing || isIssueTypeMissing || isGated;
 
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
   const progressPercent = getProgressPercent(progressStep);
@@ -411,11 +414,13 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
                 </Button>
               </span>
             </TooltipTrigger>
-            {isGated && (
+            {(isGated || isIssueTypeMissing) && (
               <TooltipContent>
-                {t('copy.preview.missingFields', {
-                  fields: unfilledGapFields.map((g) => g.name).join(', '),
-                })}
+                {isGated
+                  ? t('copy.preview.missingFields', {
+                      fields: unfilledGapFields.map((g) => g.name).join(', '),
+                    })
+                  : t('copy.preview.issueTypePlaceholder')}
               </TooltipContent>
             )}
           </Tooltip>

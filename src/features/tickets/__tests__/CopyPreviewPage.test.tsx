@@ -296,6 +296,15 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     });
   });
 
+  it('Copy button is disabled when targetIssueTypeId is null (D-11 parity with CopyPreviewModal)', async () => {
+    currentStoreState = buildState({ targetIssueTypeId: null });
+    render(<CopyPreviewPage />);
+    await waitFor(() => {
+      const copyBtn = screen.getByRole('button', { name: /Copy to PROJ/i });
+      expect(copyBtn).toBeDisabled();
+    });
+  });
+
   // ── IssueTypeChooser ───────────────────────────────────────────────────────
 
   it('selecting a different issue type calls setTargetIssueTypeId', async () => {

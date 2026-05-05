@@ -667,6 +667,12 @@ mod v3 {
         } else {
             serde_json::to_value(AdfDoc::paragraph("")).unwrap()
         };
+        // Preserve assignee from create body when provided (e.g. accountId from copy pipeline).
+        let assignee = if body["fields"]["assignee"].is_object() {
+            body["fields"]["assignee"].clone()
+        } else {
+            Value::Null
+        };
 
         let now = chrono::Utc::now().to_rfc3339();
         let new_issue = JiraIssue {
@@ -677,7 +683,7 @@ mod v3 {
                 "status": { "name": "Open", "statusCategory": { "key": "new" } },
                 "priority": body["fields"]["priority"].clone(),
                 "description": description,
-                "assignee": null,
+                "assignee": assignee,
                 "reporter": null,
                 "labels": if body["fields"]["labels"].is_array() { body["fields"]["labels"].clone() } else { json!([]) },
                 "components": [],

@@ -1,3 +1,4 @@
+use pmkar_lib::field_discovery::fetch_target_issue_types;
 use pmkar_lib::fixtures::build_fixtures;
 use pmkar_lib::mock_server::start_mock_servers;
 use std::sync::Once;
@@ -114,6 +115,38 @@ async fn test_v3_createmeta_issuetypes_returns_three() {
     assert!(has_bug, "Should contain Bug issue type with id 10001");
     assert!(has_task, "Should contain Task issue type with id 10002");
     assert!(has_story, "Should contain Story issue type with id 10003");
+}
+
+// Test 3b: fetch_target_issue_types (used by pre_warm_target_issue_types command) successfully
+// deserializes the mock server response into Vec<IssueTypeRef>. This exercises the full
+// Rust deserialization path that pre_warm_target_issue_types uses at runtime — previously
+// this was untested, meaning a shape mismatch could silently return Ok(vec![]).
+#[tokio::test(flavor = "multi_thread")]
+async fn test_fetch_target_issue_types_deserializes_mock_response() {
+    start_servers_once();
+    let client = reqwest::Client::new();
+    let result = fetch_target_issue_types(
+        &client,
+        "http://127.0.0.1:8081",
+        auth_header(),
+        "MYPROJ",
+    )
+    .await;
+    assert!(
+        result.is_ok(),
+        "fetch_target_issue_types should succeed against mock: {:?}",
+        result.err()
+    );
+    let types = result.unwrap();
+    assert_eq!(
+        types.len(),
+        3,
+        "Should return 3 issue types, got: {:?}",
+        types
+    );
+    let bug = types.iter().find(|t| t.id == "10001");
+    assert!(bug.is_some(), "Should contain Bug (id 10001)");
+    assert_eq!(bug.unwrap().name, "Bug");
 }
 
 // Test 4: v3 createmeta Bug (10001) has priority and Severity as required
