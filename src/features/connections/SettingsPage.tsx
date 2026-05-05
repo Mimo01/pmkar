@@ -1000,7 +1000,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
                     <button
                       type="button"
                       onClick={handleAddDomainResults}
-                      aria-disabled={selectedAccountIds.size === 0}
+                      disabled={selectedAccountIds.size === 0}
                       className="text-xs font-semibold text-white bg-brand px-2 py-1 rounded-lg hover:bg-brand-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       {t('settings.watchedUsers.domainSearch.addSelected')}
