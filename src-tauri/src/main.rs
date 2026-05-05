@@ -249,6 +249,8 @@ fn main() {
             commands::get_field_mapping,
             commands::set_field_mapping,
             commands::delete_field_mapping,
+            commands::resolve_description_to_adf,
+            commands::resolve_users_preview,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
