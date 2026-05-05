@@ -381,6 +381,7 @@ impl TriageDb {
         Option<String>,
         Option<String>,
     )> {
+        use rusqlite::OptionalExtension;
         let result = self
             .conn
             .query_row(
@@ -395,9 +396,8 @@ impl TriageDb {
                     ))
                 },
             )
-            .ok()
-            .unwrap_or((None, None, None, None));
-        Ok(result)
+            .optional()?;
+        Ok(result.unwrap_or((None, None, None, None)))
     }
 
     pub fn set_source_project_key(&self, key: Option<&str>) -> AppResult<()> {
