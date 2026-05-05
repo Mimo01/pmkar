@@ -419,6 +419,20 @@ pub async fn copy_worklogs(ctx: &CopyContext) -> Vec<CopyStepResult> {
         let time_spent = wl["timeSpent"].as_str().unwrap_or("?");
         let time_spent_seconds = wl["timeSpentSeconds"].as_i64().unwrap_or(0);
 
+        // Skip malformed entries rather than posting a zero-second worklog to Cloud Jira,
+        // which would be rejected (400) or produce nonsense data.
+        if time_spent_seconds <= 0 {
+            out.push(CopyStepResult {
+                step: format!("worklog:{}", idx + 1),
+                success: false,
+                detail: Some(format!(
+                    "Skipped: worklog has no valid timeSpentSeconds (raw: {})",
+                    wl["timeSpentSeconds"]
+                )),
+            });
+            continue;
+        }
+
         let attribution = format!("{author_name} \u{2014} {started_date} ({time_spent})");
 
         let wl_comment_adf = serde_json::json!({
