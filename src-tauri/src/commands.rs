@@ -131,6 +131,10 @@ pub struct CopyTicketV2Args {
     pub target_base_url: String,
     pub target_issue_type_id: String,
     pub override_values: serde_json::Map<String, serde_json::Value>,
+    /// Phase 24 — frontend-generated UUID shared with `log_preview_transformations`
+    /// so preview-time and copy-time audit rows appear in the same group in the UI.
+    /// `Option` so callers that omit the field (older frontend, tests) still compile.
+    pub copy_id: Option<String>,
 }
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -1541,14 +1545,23 @@ pub async fn copy_ticket_v2(
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
 
-    // Quick task 260430-0tj — preview-time audit logging is now performed by the
-    // frontend via `log_preview_transformations` when the copy preview opens, so
-    // users see "what got pre-filled and why" before they commit. The previous
-    // commit-time audit loop here was redundant by the time the user clicked Copy.
-
     // ── Phase 5 — Merge override_values on top of resolved.fields ────────────
     for (k, v) in &args.override_values {
         resolved.fields.insert(k.clone(), v.clone());
+    }
+
+    // Phase 24 — Copy-time audit entries written AFTER override merge so
+    // resolved.fields contains the final values actually sent to Jira Cloud.
+    // Best-effort: transaction and per-row errors are swallowed so an audit
+    // hiccup never blocks the copy operation.
+    {
+        let copy_id = args.copy_id.clone().unwrap_or_else(|| {
+            uuid::Uuid::new_v4().to_string()
+        });
+        let mdb = mapping_db
+            .lock()
+            .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
+        write_copy_time_audit(&mdb, &copy_id, &mapping_rows, &source_body, &resolved, &args.override_values);
     }
 
     // ── Phase 6 — Create issue in Cloud ──────────────────────────────────────
@@ -1702,6 +1715,95 @@ fn format_create_failure_detail(status: u16, body: &str) -> String {
         trimmed.to_string()
     };
     format!("Issue creation returned status {status}: {truncated}")
+}
+
+/// Phase 24 — Write per-field copy-time audit rows to `mapping_audit_log` after
+/// `apply_mapping` resolves values and after `override_values` are merged.
+/// Extracted as a free function so unit tests can call it directly with an
+/// in-memory `FieldMappingDb` without going through the full Tauri command layer.
+///
+/// Best-effort: the entire write is wrapped in a single `SQLite` transaction;
+/// per-row and transaction errors are swallowed so an audit hiccup never blocks
+/// the copy operation.
+fn write_copy_time_audit(
+    mdb: &crate::field_mapping_db::FieldMappingDb,
+    copy_id: &str,
+    mapping_rows: &[crate::field_transform::FieldMappingRow],
+    source_body: &serde_json::Value,
+    resolved: &crate::field_transform::ResolvedFields,
+    override_keys: &serde_json::Map<String, serde_json::Value>,
+) {
+    let timestamp = chrono::Utc::now().to_rfc3339();
+    let _ = mdb.begin_transaction();
+    for row in mapping_rows {
+        if row.target_field_id.is_empty() {
+            continue;
+        }
+        let src_path = format!("/fields/{}", row.source_field_id);
+        let src_val = source_body
+            .pointer(&src_path)
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
+        let tgt_val = resolved
+            .fields
+            .get(&row.target_field_id)
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
+
+        let (outcome, gap_kind, failure_reason): (&str, Option<&str>, Option<&str>) =
+            if !tgt_val.is_null() {
+                ("copied", None, None)
+            } else if src_val.is_null() {
+                ("skipped", None, Some("source value missing"))
+            } else {
+                let gap = resolved.gaps.iter().find(|g| match g {
+                    crate::field_transform::GapVariant::Person(p) => {
+                        p.target_field_id == row.target_field_id
+                    }
+                    crate::field_transform::GapVariant::Version(v) => {
+                        v.target_field_id == row.target_field_id
+                    }
+                    crate::field_transform::GapVariant::Component(c) => {
+                        c.target_field_id == row.target_field_id
+                    }
+                });
+                match gap {
+                    Some(crate::field_transform::GapVariant::Person(_)) => {
+                        ("failed", Some("person"), Some("user not resolved"))
+                    }
+                    Some(crate::field_transform::GapVariant::Version(_)) => {
+                        ("failed", Some("version"), Some("version not resolved"))
+                    }
+                    Some(crate::field_transform::GapVariant::Component(_)) => {
+                        ("failed", Some("component"), Some("component not resolved"))
+                    }
+                    None => ("skipped", None, Some("source value missing")),
+                }
+            };
+
+        let was_overridden = override_keys.contains_key(&row.target_field_id);
+        let src_red = redact_string_in_value(&src_val);
+        let tgt_red = redact_string_in_value(&tgt_val);
+        let src_hash = hash_field_value(&src_red);
+        let tgt_hash = hash_field_value(&tgt_red);
+        let src_json = serde_json::to_string(&src_red).ok().map(cap_audit_json);
+        let tgt_json = serde_json::to_string(&tgt_red).ok().map(cap_audit_json);
+        let _ = mdb.insert_mapping_audit(
+            copy_id,
+            &row.target_field_id,
+            &src_hash,
+            &tgt_hash,
+            was_overridden,
+            gap_kind,
+            &row.transformer_kind,
+            outcome,
+            failure_reason,
+            &timestamp,
+            src_json.as_deref(),
+            tgt_json.as_deref(),
+        );
+    }
+    let _ = mdb.commit_transaction();
 }
 
 /// Phase 23 D-07 — apply credential redaction to any string values inside a
@@ -2070,5 +2172,140 @@ mod tests {
         let out = format_create_failure_detail(400, html);
         assert!(out.contains("400"));
         assert!(out.contains("Bad Request"));
+    }
+
+    // ── Phase 24: copy-time audit loop unit tests ─────────────────────────────
+    // Each test constructs an in-memory FieldMappingDb, calls write_copy_time_audit
+    // directly, then reads back the rows to assert outcomes.
+
+    fn make_row(
+        src: &str,
+        tgt: &str,
+        kind: &str,
+    ) -> crate::field_transform::FieldMappingRow {
+        crate::field_transform::FieldMappingRow {
+            source_field_id: src.to_string(),
+            target_field_id: tgt.to_string(),
+            transformer_kind: kind.to_string(),
+            source_schema: crate::field_discovery::FieldSchemaType::String {
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+            target_schema: crate::field_discovery::FieldSchemaType::String {
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+        }
+    }
+
+    #[test]
+    fn copy_time_audit_loop_writes_copied_for_resolved_field() {
+        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
+            .expect("open in-memory db");
+        let mapping_rows = vec![make_row("description", "description", "wiki_to_adf")];
+        let source_body = serde_json::json!({ "fields": { "description": "some wiki text" } });
+        let mut resolved = crate::field_transform::ResolvedFields::default();
+        resolved
+            .fields
+            .insert("description".to_string(), serde_json::json!("ADF content"));
+        let overrides = serde_json::Map::new();
+
+        write_copy_time_audit(&mdb, "test-uuid-1234", &mapping_rows, &source_body, &resolved, &overrides);
+
+        let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
+        assert_eq!(rows.len(), 1, "expected one row, got {}", rows.len());
+        assert_eq!(rows[0].outcome, "copied");
+        assert_eq!(rows[0].field_id, "description");
+        assert!(!rows[0].source_value_hash.is_empty(), "source hash non-empty");
+        assert!(!rows[0].target_value_hash.is_empty(), "target hash non-empty");
+    }
+
+    #[test]
+    fn copy_time_audit_loop_writes_skipped_for_null_source() {
+        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
+            .expect("open in-memory db");
+        let mapping_rows = vec![make_row("customfield_99", "customfield_99", "identity")];
+        // source_body has no customfield_99
+        let source_body = serde_json::json!({ "fields": {} });
+        let resolved = crate::field_transform::ResolvedFields::default();
+        let overrides = serde_json::Map::new();
+
+        write_copy_time_audit(&mdb, "skip-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+
+        let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].outcome, "skipped");
+        assert_eq!(
+            rows[0].failure_reason.as_deref(),
+            Some("source value missing")
+        );
+    }
+
+    #[test]
+    fn copy_time_audit_loop_writes_failed_for_gap() {
+        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
+            .expect("open in-memory db");
+        let mapping_rows = vec![make_row("assignee", "assignee", "user")];
+        // Source has an assignee, but it couldn't be resolved (gap)
+        let source_body =
+            serde_json::json!({ "fields": { "assignee": { "name": "jdoe" } } });
+        let mut resolved = crate::field_transform::ResolvedFields::default();
+        resolved
+            .gaps
+            .push(crate::field_transform::GapVariant::Person(
+                crate::field_transform::UnresolvedPerson {
+                    target_field_id: "assignee".to_string(),
+                    source_username: Some("jdoe".to_string()),
+                    source_key: None,
+                    source_email: None,
+                },
+            ));
+        let overrides = serde_json::Map::new();
+
+        write_copy_time_audit(&mdb, "fail-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+
+        let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].outcome, "failed");
+        assert_eq!(rows[0].gap_kind.as_deref(), Some("person"));
+    }
+
+    #[test]
+    fn copy_time_audit_loop_uses_copy_id() {
+        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
+            .expect("open in-memory db");
+        let mapping_rows = vec![make_row("summary", "summary", "identity")];
+        let source_body = serde_json::json!({ "fields": { "summary": "Bug title" } });
+        let mut resolved = crate::field_transform::ResolvedFields::default();
+        resolved
+            .fields
+            .insert("summary".to_string(), serde_json::json!("Bug title"));
+        let overrides = serde_json::Map::new();
+
+        write_copy_time_audit(&mdb, "test-uuid-1234", &mapping_rows, &source_body, &resolved, &overrides);
+
+        let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
+        assert!(!rows.is_empty());
+        for row in &rows {
+            assert_eq!(row.copy_id, "test-uuid-1234");
+        }
+    }
+
+    #[test]
+    fn copy_time_audit_loop_skips_empty_target_field_id() {
+        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
+            .expect("open in-memory db");
+        // Row with empty target_field_id (dismissed suggestion)
+        let mapping_rows = vec![make_row("description", "", "identity")];
+        let source_body = serde_json::json!({ "fields": { "description": "text" } });
+        let resolved = crate::field_transform::ResolvedFields::default();
+        let overrides = serde_json::Map::new();
+
+        write_copy_time_audit(&mdb, "skip-empty-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+
+        let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
+        assert_eq!(rows.len(), 0, "no rows written for empty target_field_id");
     }
 }
