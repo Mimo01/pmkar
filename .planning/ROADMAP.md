@@ -55,6 +55,20 @@ Full details: [milestones/v0.4.0-ROADMAP.md](milestones/v0.4.0-ROADMAP.md)
 
 </details>
 
+## Phase 24: Audit Log Copy-Time Resolution
+
+**Goal:** Add copy-time per-field audit entries to `copy_ticket_v2` so the Field Transformations log reflects actual `apply_mapping` resolution outcomes for `wiki_to_adf` and `user` fields — not just the preview-time pre-fill snapshot.
+
+**Problem:** `CopyPreviewPage.tsx:83` defines `PREFILLABLE_KINDS = Set(['identity','priority'])`. At preview-open time, `wiki_to_adf` and `user` fields are logged as `skipped / target: null` with reason "requires async resolution — runs at copy time." These entries are written to the audit DB before Copy is clicked. The copy-time audit loop was removed from `commands.rs:1544` as "redundant," so the log never shows what `apply_mapping` actually resolved. Users reading the audit tab see `target: null` for every async field and conclude nothing was copied.
+
+**Fix:** After `apply_mapping` completes in `copy_ticket_v2`, write per-field audit rows with actual resolved target values. Distinguish copy-time outcomes from preview-time pre-fill entries (e.g., `outcome = 'copied'` vs `outcome = 'prefill_skipped'`).
+
+**Plans:** 2 plans
+
+Plans:
+- [ ] 24-01-PLAN.md — Backend: add copy_id to CopyTicketV2Args, copy-time audit loop in copy_ticket_v2, thread previewCopyId through copyStore
+- [ ] 24-02-PLAN.md — Frontend: 'copied' outcome badge (blue), i18n keys in EN+SK, fieldGrouping tests
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -82,3 +96,4 @@ Full details: [milestones/v0.4.0-ROADMAP.md](milestones/v0.4.0-ROADMAP.md)
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 3/3 | Complete | 2026-04-28 |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
+| 24. Audit Log Copy-Time Resolution | hotfix | 0/2 | In Progress | — |
