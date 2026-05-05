@@ -235,6 +235,11 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           targetIssueTypeId: state.targetIssueTypeId ?? '',
           overrideValues: {
             summary: state.targetSummary,
+            // Forward prefilled fields from startPreview so they reach the backend.
+            // Phase 22 overrideValues (renderer-level overrides) take precedence over
+            // these defaults via the spread order below.
+            ...(state.targetPriorityId ? { priority: { id: state.targetPriorityId } } : {}),
+            ...(state.selectedLabels.length ? { labels: state.selectedLabels } : {}),
             ...state.overrideValues,
           },
         },
