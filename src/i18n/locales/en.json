@@ -420,6 +420,7 @@
   "settings.fieldMapping.driftRemove": "Remove",
   "settings.fieldMapping.saved": "Saved",
   "settings.fieldMapping.saveError": "Failed to save mapping. Try again.",
+  "settings.fieldMapping.loadError": "Failed to load field mappings. Check your connection and try again.",
   "settings.fieldMapping.deleteError": "Failed to delete mapping. Try again.",
   "settings.fieldMapping.refreshError": "Schema refresh failed. Check your connection and try again.",
   "settings.fieldMapping.emptyHeading": "No field mappings yet",

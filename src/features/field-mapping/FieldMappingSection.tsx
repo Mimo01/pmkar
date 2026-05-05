@@ -177,13 +177,13 @@ export function FieldMappingSection() {
   const setLoading = useMappingEditorStore((s) => s.setLoading);
   const updateRow = useMappingEditorStore((s) => s.updateRow);
   const deleteRow = useMappingEditorStore((s) => s.deleteRow);
-  const setLastRefreshed = useMappingEditorStore((s) => s.setLastRefreshed);
 
   const loadSchema = useSchemaCacheStore((s) => s.loadSchema);
   const preWarm = useSchemaCacheStore((s) => s.preWarm);
   const { sourceFields, targetFields, targetProjectKey, firstIssueTypeId } = useSchemaArrays();
 
   const [pendingAdd, setPendingAdd] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   // ── Initial load (mount only) ──────────────────────────────────────────────
   useEffect(() => {
@@ -204,16 +204,17 @@ export function FieldMappingSection() {
             await loadSchema('target', targetProjectKey, issueTypeId);
           }
         }
-        setLastRefreshed(Date.now());
-      } catch (e) {
-        console.error('Failed to load field mapping:', e);
+      } catch {
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
     }
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSchema, preWarm, setLastRefreshed, setLoading, setMappingRows, targetProjectKey]); // mount only — intentional
+    // Re-runs on mount and when targetProjectKey changes (store hydration or user selection).
+    // Stable Zustand setter refs (loadSchema, preWarm, setLoading, setMappingRows) are stable
+    // references that never change identity, so listing them does not cause extra re-runs.
+  }, [targetProjectKey, loadSchema, preWarm, setLoading, setMappingRows]);
 
   // ── Drift detection (MAP-05) ───────────────────────────────────────────────
   // Rows whose non-empty targetFieldId is NOT present in the target schema cache are drifted.
@@ -321,6 +322,14 @@ export function FieldMappingSection() {
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+
+  if (loadError) {
+    return (
+      <p className="text-sm text-destructive py-4 text-center">
+        {t('settings.fieldMapping.loadError')}
+      </p>
+    );
+  }
 
   if (loading) {
     return (

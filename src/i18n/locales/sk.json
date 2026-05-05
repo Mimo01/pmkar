@@ -420,6 +420,7 @@
   "settings.fieldMapping.driftRemove": "Odstrániť",
   "settings.fieldMapping.saved": "Uložené",
   "settings.fieldMapping.saveError": "Uloženie mapovania zlyhalo. Skúste to znova.",
+  "settings.fieldMapping.loadError": "Nepodarilo sa načítať mapovania polí. Skontrolujte pripojenie a skúste znova.",
   "settings.fieldMapping.deleteError": "Odstránenie mapovania zlyhalo. Skúste to znova.",
   "settings.fieldMapping.refreshError": "Obnovenie schémy zlyhalo. Skontrolujte pripojenie a skúste to znova.",
   "settings.fieldMapping.emptyHeading": "Zatiaľ žiadne mapovania polí",
