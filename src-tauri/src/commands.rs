@@ -1677,16 +1677,27 @@ fn format_create_failure_detail(status: u16, body: &str) -> String {
     // on a tractable footprint. Otherwise embed the raw text truncated.
     if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(trimmed) {
         if let Ok(compact) = serde_json::to_string(&parsed) {
+            // JSON compact path: walk back to a valid UTF-8 char boundary before
+            // slicing so we never split a multi-byte sequence.
+            let mut end = 1024_usize.min(compact.len());
+            while end > 0 && !compact.is_char_boundary(end) {
+                end -= 1;
+            }
             let truncated = if compact.len() > 1024 {
-                format!("{}…", &compact[..1024])
+                format!("{}…", &compact[..end])
             } else {
                 compact
             };
             return format!("Issue creation returned status {status}: {truncated}");
         }
     }
+    // Raw text path: must respect char boundaries.
+    let mut end = 1024_usize.min(trimmed.len());
+    while end > 0 && !trimmed.is_char_boundary(end) {
+        end -= 1;
+    }
     let truncated = if trimmed.len() > 1024 {
-        format!("{}…", &trimmed[..1024])
+        format!("{}…", &trimmed[..end])
     } else {
         trimmed.to_string()
     };
