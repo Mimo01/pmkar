@@ -173,7 +173,8 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // ── Prefill overrideValues from mapping rows (D-PREFILL) ──────────────────
   // Runs once when both mappingRows and sourceTicket are available.
   // Seeds overrideValues for identity/priority transformer rows using raw source
-  // field values. Skips user/version/component kinds (require async resolution).
+  // field values. Phase 25: also invokes resolve_description_to_adf for wiki_to_adf
+  // rows and resolve_users_preview for user-kind rows.
   // Does not overwrite values already set by the user.
   // Quick task 260430-0tj — also batches a per-row audit entry describing what
   // the pre-fill did (or didn't) and emits log_preview_transformations once at
@@ -181,71 +182,255 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // biome-ignore lint/correctness/useExhaustiveDependencies: overrideValues and setOverrideValue intentionally omitted — overrideValues in deps causes an infinite loop (setOverrideValue → overrideValues changes → effect fires again); setOverrideValue is a stable store action reference.
   useEffect(() => {
     if (!sourceTicket || mappingRows.length === 0 || !previewCopyId) return;
-    const sourceFields = sourceTicket.fields as Record<string, unknown>;
+    let cancelled = false;
 
-    type LogEntry = {
-      targetFieldId: string;
-      sourceFieldId: string;
-      transformerKind: string;
-      outcome: 'ok' | 'failed' | 'skipped';
-      failureReason: string | null;
-      wasOverridden: boolean;
-      gapKind: string | null;
-      sourceValue: unknown;
-      targetValue: unknown;
-    };
-    const logEntries: LogEntry[] = [];
+    void (async () => {
+      const sourceFields = sourceTicket.fields as Record<string, unknown>;
 
-    for (const row of mappingRows) {
-      if (!row.targetFieldId) continue;
-      const rawValue = sourceFields[row.sourceFieldId] ?? null;
-      const userAlreadyHasValue = overrideValues[row.targetFieldId] !== undefined;
-      const prefillable = PREFILLABLE_KINDS.has(row.transformerKind);
+      type LogEntry = {
+        targetFieldId: string;
+        sourceFieldId: string;
+        transformerKind: string;
+        outcome: 'ok' | 'failed' | 'skipped';
+        failureReason: string | null;
+        wasOverridden: boolean;
+        gapKind: string | null;
+        sourceValue: unknown;
+        targetValue: unknown;
+      };
+      const logEntries: LogEntry[] = [];
 
-      let outcome: 'ok' | 'failed' | 'skipped' = 'skipped';
-      let failureReason: string | null = null;
-      let targetValue: unknown = null;
+      // ── 1. Identity / priority rows (synchronous — unchanged) ──────────────
+      for (const row of mappingRows) {
+        if (!row.targetFieldId) continue;
+        if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
+        const rawValue = (sourceFields[row.sourceFieldId] ?? null) as unknown;
+        const userAlreadyHasValue = overrideValues[row.targetFieldId] !== undefined;
 
-      if (rawValue === null || rawValue === undefined) {
-        outcome = 'skipped';
-        failureReason = 'source value missing';
-      } else if (!prefillable) {
-        // user / version / component — handled at copy commit by apply_mapping.
-        outcome = 'skipped';
-        failureReason = `${row.transformerKind} requires async resolution — runs at copy time`;
-      } else if (userAlreadyHasValue) {
-        // User had already set this override (e.g. prior preview state) — preserve it.
-        outcome = 'ok';
-        targetValue = overrideValues[row.targetFieldId];
-      } else {
-        // Pre-fill the override and record an "ok" outcome.
-        setOverrideValue(row.targetFieldId, rawValue);
-        outcome = 'ok';
-        targetValue = rawValue;
+        let outcome: 'ok' | 'failed' | 'skipped' = 'skipped';
+        let failureReason: string | null = null;
+        let targetValue: unknown = null;
+
+        if (rawValue === null || rawValue === undefined) {
+          outcome = 'skipped';
+          failureReason = 'source value missing';
+        } else if (userAlreadyHasValue) {
+          outcome = 'ok';
+          targetValue = overrideValues[row.targetFieldId];
+        } else {
+          setOverrideValue(row.targetFieldId, rawValue);
+          outcome = 'ok';
+          targetValue = rawValue;
+        }
+
+        logEntries.push({
+          targetFieldId: row.targetFieldId,
+          sourceFieldId: row.sourceFieldId,
+          transformerKind: row.transformerKind,
+          outcome,
+          failureReason,
+          wasOverridden: userAlreadyHasValue,
+          gapKind: null,
+          sourceValue: rawValue,
+          targetValue,
+        });
       }
 
-      logEntries.push({
-        targetFieldId: row.targetFieldId,
-        sourceFieldId: row.sourceFieldId,
-        transformerKind: row.transformerKind,
-        outcome,
-        failureReason,
-        wasOverridden: userAlreadyHasValue,
-        gapKind: null,
-        sourceValue: rawValue,
-        targetValue,
-      });
-    }
+      // ── 2. wiki_to_adf row (description — async, read-only in preview) ────
+      // Design decision D-01 (Phase 25): description is SHOWN READ-ONLY in the
+      // preview modal. The ADF value stored in overrideValues flows verbatim to
+      // copy_ticket_v2 via the override merge. No TextAreaRenderer involved.
+      const descRow = mappingRows.find(
+        (r) =>
+          r.transformerKind === 'wiki_to_adf' ||
+          (r.targetFieldId === 'description' &&
+            'system' in r.sourceSchema &&
+            r.sourceSchema.system === 'description'),
+      );
+      const descHtml = sourceTicket.renderedFields?.description ?? null;
 
-    if (logEntries.length > 0) {
-      invoke('log_preview_transformations', {
-        copyId: previewCopyId,
-        entries: logEntries,
-      }).catch((err) => {
-        // Audit logging must never break the preview UI.
-        console.error('[CopyPreviewPage] log_preview_transformations failed:', err);
-      });
-    }
+      let descPromise: Promise<void> = Promise.resolve();
+      if (descRow && descHtml) {
+        descPromise = invoke<unknown>('resolve_description_to_adf', { html: descHtml })
+          .then((adf) => {
+            if (cancelled || !adf) return;
+            setOverrideValue(descRow.targetFieldId, adf);
+            logEntries.push({
+              targetFieldId: descRow.targetFieldId,
+              sourceFieldId: descRow.sourceFieldId,
+              transformerKind: descRow.transformerKind,
+              outcome: 'ok',
+              failureReason: null,
+              wasOverridden: overrideValues[descRow.targetFieldId] !== undefined,
+              gapKind: null,
+              sourceValue: descHtml,
+              targetValue: adf,
+            });
+          })
+          .catch(() => {
+            if (cancelled) return;
+            logEntries.push({
+              targetFieldId: descRow.targetFieldId,
+              sourceFieldId: descRow.sourceFieldId,
+              transformerKind: descRow.transformerKind,
+              outcome: 'skipped',
+              failureReason: 'resolve_description_to_adf failed',
+              wasOverridden: false,
+              gapKind: null,
+              sourceValue: descHtml,
+              targetValue: null,
+            });
+          });
+      } else if (descRow) {
+        // No rendered HTML — skip and log
+        logEntries.push({
+          targetFieldId: descRow.targetFieldId,
+          sourceFieldId: descRow.sourceFieldId,
+          transformerKind: descRow.transformerKind,
+          outcome: 'skipped',
+          failureReason: 'source rendered description missing',
+          wasOverridden: false,
+          gapKind: null,
+          sourceValue: null,
+          targetValue: null,
+        });
+      }
+
+      // ── 3. user rows (all user-kind mappings — async) ─────────────────────
+      const userRows = mappingRows.filter(
+        (r) =>
+          r.transformerKind === 'user' ||
+          r.sourceSchema?.type === 'user' ||
+          (r.sourceSchema?.type === 'array' && r.sourceSchema?.items === 'user'),
+      );
+
+      // Build the user entries list from source ticket fields.
+      // Each entry: { username: string, email: string | null }
+      type UserEntry = { username: string; email: string | null };
+      const userEntries: UserEntry[] = [];
+      const rowsWithEntry: Array<{ row: (typeof userRows)[0]; entryIndex: number }> = [];
+
+      for (const row of userRows) {
+        const fieldVal = sourceFields[row.sourceFieldId];
+        if (!fieldVal || typeof fieldVal !== 'object') {
+          // Source user field is missing or not an object — log as skipped before continuing.
+          logEntries.push({
+            targetFieldId: row.targetFieldId,
+            sourceFieldId: row.sourceFieldId,
+            transformerKind: row.transformerKind,
+            outcome: 'skipped',
+            failureReason: 'source user field missing',
+            wasOverridden: false,
+            gapKind: null,
+            sourceValue: fieldVal ?? null,
+            targetValue: null,
+          });
+          continue;
+        }
+        const val = fieldVal as Record<string, unknown>;
+        // Single user: { name, emailAddress }
+        const username =
+          (val.name as string | undefined) ?? (val.key as string | undefined) ?? null;
+        if (!username) continue;
+        const email = (val.emailAddress as string | undefined) ?? null;
+        const entryIndex = userEntries.length;
+        userEntries.push({ username, email });
+        rowsWithEntry.push({ row, entryIndex });
+      }
+
+      let usersPromise: Promise<void> = Promise.resolve();
+      if (userEntries.length > 0) {
+        usersPromise = invoke<(Record<string, unknown> | null)[]>('resolve_users_preview', {
+          users: userEntries,
+          cloudBaseUrl,
+        })
+          .then((resolved) => {
+            if (cancelled) return;
+            for (const { row, entryIndex } of rowsWithEntry) {
+              const resolvedUser = resolved[entryIndex] ?? null;
+              const sourceVal = sourceFields[row.sourceFieldId];
+              if (resolvedUser?.accountId) {
+                setOverrideValue(row.targetFieldId, resolvedUser);
+                logEntries.push({
+                  targetFieldId: row.targetFieldId,
+                  sourceFieldId: row.sourceFieldId,
+                  transformerKind: row.transformerKind,
+                  outcome: 'ok',
+                  failureReason: null,
+                  wasOverridden: overrideValues[row.targetFieldId] !== undefined,
+                  gapKind: null,
+                  sourceValue: sourceVal,
+                  targetValue: resolvedUser,
+                });
+              } else {
+                logEntries.push({
+                  targetFieldId: row.targetFieldId,
+                  sourceFieldId: row.sourceFieldId,
+                  transformerKind: row.transformerKind,
+                  outcome: 'skipped',
+                  failureReason: 'user not resolved in Cloud',
+                  wasOverridden: false,
+                  gapKind: 'person',
+                  sourceValue: sourceVal,
+                  targetValue: null,
+                });
+              }
+            }
+          })
+          .catch(() => {
+            if (cancelled) return;
+            for (const { row } of rowsWithEntry) {
+              logEntries.push({
+                targetFieldId: row.targetFieldId,
+                sourceFieldId: row.sourceFieldId,
+                transformerKind: row.transformerKind,
+                outcome: 'skipped',
+                failureReason: 'resolve_users_preview failed',
+                wasOverridden: false,
+                gapKind: null,
+                sourceValue: sourceFields[row.sourceFieldId] ?? null,
+                targetValue: null,
+              });
+            }
+          });
+      } else {
+        // No user rows to resolve — log skipped for any non-prefillable, non-wiki_to_adf rows
+        for (const row of mappingRows) {
+          if (!row.targetFieldId) continue;
+          if (PREFILLABLE_KINDS.has(row.transformerKind)) continue;
+          if (row.transformerKind === 'wiki_to_adf') continue;
+          if (userRows.some((r) => r.targetFieldId === row.targetFieldId)) continue;
+          const rawValue = sourceFields[row.sourceFieldId] ?? null;
+          logEntries.push({
+            targetFieldId: row.targetFieldId,
+            sourceFieldId: row.sourceFieldId,
+            transformerKind: row.transformerKind,
+            outcome: 'skipped',
+            failureReason: `${row.transformerKind} requires async resolution — runs at copy time`,
+            wasOverridden: false,
+            gapKind: null,
+            sourceValue: rawValue,
+            targetValue: null,
+          });
+        }
+      }
+
+      // Wait for both async resolution paths before flushing the audit log.
+      await Promise.all([descPromise, usersPromise]);
+
+      if (!cancelled && logEntries.length > 0) {
+        invoke('log_preview_transformations', {
+          copyId: previewCopyId,
+          entries: logEntries,
+        }).catch((err: unknown) => {
+          console.error('[CopyPreviewPage] log_preview_transformations failed:', err);
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [mappingRows, sourceTicket, previewCopyId]);
 
   // ── Schema-loading visual ──────────────────────────────────────────────────
@@ -279,6 +464,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
           f.fieldId !== 'summary' &&
           f.fieldId !== 'issuetype' &&
           f.fieldId !== 'project' &&
+          f.fieldId !== 'description' &&
           !gapIds.has(f.fieldId),
       ),
     [resolvedTargetFields, gapIds],
@@ -357,7 +543,8 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   const isGated = unfilledGapFields.length > 0;
   // Mirror CopyPreviewModal: gate on missing issue type so the backend confirmCopy guard
   // never fires silently with null targetIssueTypeId (D-11 parity).
-  const isCopyDisabled = isCopying || isLoading || isProjectMissing || isIssueTypeMissing || isGated;
+  const isCopyDisabled =
+    isCopying || isLoading || isProjectMissing || isIssueTypeMissing || isGated;
 
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
   const progressPercent = getProgressPercent(progressStep);
@@ -592,6 +779,28 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
               onMapLink={handleMapLink}
               onSearchUsers={searchUsersForPicker}
             />
+
+            {/* Description — read-only (Phase 25, D-01: ADF editor deferred post-v0.4.0) */}
+            {overrideValues.description !== undefined && renderedDescription && (
+              <div className="mb-4">
+                <span className="text-xs text-brand-muted block mb-1">
+                  {t('copy.preview.descriptionReadOnly', 'Description (will be copied)')}
+                </span>
+                <div className="rounded border border-brand-border bg-brand-bg p-3 text-sm opacity-75 pointer-events-none overflow-hidden max-h-40">
+                  <DescriptionRenderer
+                    description={sourceTicket?.fields.description}
+                    renderedHtml={renderedDescription ?? undefined}
+                    baseUrl={sourceBaseUrl}
+                  />
+                </div>
+                <p className="text-xs text-brand-muted mt-1">
+                  {t(
+                    'copy.preview.descriptionReadOnlyHint',
+                    'Resolved description will be copied as formatted content.',
+                  )}
+                </p>
+              </div>
+            )}
 
             {/* Mapped fields via DynamicTargetForm (excluding summary + already-shown gaps) */}
             <div

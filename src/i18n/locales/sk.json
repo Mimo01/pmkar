@@ -132,6 +132,8 @@
   "copy.preview.fieldNoManualInput": "Bez manuálneho vstupu",
   "copy.preview.unsupportedFieldHint": "Tento typ poľa sa nedá nastaviť manuálne — použite Mapovať pole pre konfiguráciu kopírovania.",
   "copy.preview.missingFields": "Vyplňte povinné polia: {{fields}}",
+  "copy.preview.descriptionReadOnly": "Popis (bude skopírovaný)",
+  "copy.preview.descriptionReadOnlyHint": "Preložený popis bude skopírovaný ako formátovaný obsah.",
   "copy.result.complete": "Kopírovanie dokončené",
   "copy.result.withErrors": "Kopírovanie dokončené s chybami",
   "copy.result.openInJira": "Otvoriť v {{name}}",
