@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-05T11:23:46Z",
+  "phase": "24",
+  "phase_name": "audit-log-copy-time-resolution",
+  "phase_dir": ".planning/phases/24-audit-log-copy-time-resolution",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "Phase 24 execution (copy-time audit loop + UI badge)", "status": "done", "commit": "fc84c1f"},
+    {"id": 2, "name": "Phase 24 bug fixes (i18n, catch blocks, failure reason, previewCopyId)", "status": "done", "commit": "583d904"},
+    {"id": 3, "name": "Debug: wiki_to_adf/user fields showing skipped in audit log", "status": "done — root cause resolved", "commit": "4fc24c7"},
+    {"id": 4, "name": "Fix: Copy button missing !targetIssueTypeId guard", "status": "done", "commit": "4fc24c7"},
+    {"id": 5, "name": "Fix: mock server create_issue discarding assignee", "status": "done", "commit": "4fc24c7"},
+    {"id": 6, "name": "Fix: CopyPreviewModal.test.tsx regressions from Phase 24", "status": "done", "commit": "4fc24c7"}
+  ],
+  "remaining_tasks": [
+    {"id": 7, "name": "NEW PHASE: preview-time resolution of wiki_to_adf and user fields", "status": "not_started"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {
+      "decision": "New phase required for preview-time resolution",
+      "rationale": "User wants description (wiki_to_adf) and all user fields pre-filled and editable in the copy preview modal before clicking Copy. Current architecture explicitly defers these to copy time. This is a separate phase, not a bug fix.",
+      "phase": "25-tbd"
+    },
+    {
+      "decision": "Description field: editable (not read-only)",
+      "rationale": "User confirmed they want to edit description before copying",
+      "phase": "25-tbd"
+    },
+    {
+      "decision": "User fields: all of them (not just assignee)",
+      "rationale": "User confirmed all user-type fields should be pre-filled",
+      "phase": "25-tbd"
+    }
+  ],
+  "uncommitted_files": [
+    ".planning/STATE.md",
+    ".planning/debug/wiki-adf-user-map-copy-skip.md",
+    ".planning/phases/24-audit-log-copy-time-resolution/24-RESEARCH.md",
+    ".planning/phases/24-audit-log-copy-time-resolution/24-VALIDATION.md"
+  ],
+  "next_action": "Start new phase for preview-time resolution. Run /gsd:discuss-phase or /gsd:plan-phase. Phase goal: resolve wiki_to_adf fields (description etc.) and user fields at copy-preview-open time so users can review and edit them before clicking Copy.",
+  "context_notes": "Phase 24 is complete and all its fixes are committed. The copy workflow works end-to-end (copy_ticket_v2 now runs when issue type is selected). User discovered that wiki_to_adf and user fields show as skipped in the preview modal — this is by design (async resolution runs at copy time) but user wants them pre-filled and editable at preview time. This is a new phase. Key design decisions already made: (1) description should be editable, (2) all user fields should be resolved. The wiki_to_adf approach will need a backend command to convert HTML→ADF at preview time, storing result in overrideValues. User fields need Cloud user resolution at preview time."
+}
