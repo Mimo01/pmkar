@@ -46,7 +46,11 @@ interface CopyState {
   setTargetPriorityId: (priorityId: string) => void;
   setTargetProjectKey: (key: string) => void;
   toggleLabel: (label: string) => void;
-  confirmCopy: (sourceBaseUrl: string, cloudBaseUrl: string) => Promise<void>;
+  confirmCopy: (
+    sourceBaseUrl: string,
+    cloudBaseUrl: string,
+    copyId: string | null,
+  ) => Promise<void>;
   reset: () => void;
 
   // Phase 22 actions (D-11)
@@ -203,7 +207,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
   clearOverrides: () =>
     set({ targetIssueTypeId: null, overrideValues: {}, resolvedTargetFields: [] }),
 
-  confirmCopy: async (sourceBaseUrl, cloudBaseUrl) => {
+  confirmCopy: async (sourceBaseUrl, cloudBaseUrl, copyId) => {
     const state = get();
     if (!state.sourceKey || !state.cloudMeta) return;
     if (!state.targetIssueTypeId) {
@@ -244,6 +248,9 @@ export const useCopyStore = create<CopyState>((set, get) => ({
             ...(state.selectedLabels.length ? { labels: state.selectedLabels } : {}),
             ...state.overrideValues,
           },
+          // Phase 24 — thread preview UUID so copy-time and preview-time audit
+          // rows share the same copy_id group in the Field Transformations tab.
+          copyId,
         },
       });
 

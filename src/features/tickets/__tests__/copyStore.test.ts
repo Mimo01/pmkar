@@ -233,14 +233,14 @@ describe('copyStore', () => {
   describe('confirmCopy', () => {
     it('does nothing when sourceKey is null', async () => {
       useCopyStore.setState({ sourceKey: null, cloudMeta: makeCloudMeta() });
-      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud');
+      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud', null);
 
       expect(mockInvoke).not.toHaveBeenCalled();
     });
 
     it('does nothing when cloudMeta is null', async () => {
       useCopyStore.setState({ sourceKey: 'PROJ-1', cloudMeta: null });
-      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud');
+      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud', null);
 
       expect(mockInvoke).not.toHaveBeenCalled();
     });
@@ -263,7 +263,7 @@ describe('copyStore', () => {
         targetIssueTypeId: 'it-1',
       });
 
-      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud');
+      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud', null);
 
       const state = useCopyStore.getState();
       expect(state.phase).toBe('result');
@@ -283,7 +283,7 @@ describe('copyStore', () => {
         selectedLabels: [],
       });
 
-      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud');
+      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud', null);
 
       const state = useCopyStore.getState();
       expect(state.phase).toBe('result');
