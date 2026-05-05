@@ -38,11 +38,13 @@ export function findNameMatchSuggestion(
   if (byName) return byName;
 
   // 3. Synonym lookup
+  // When the source name belongs to a synonym group, that group is exclusive:
+  // return the match or null immediately — do not fall through to the next group.
   for (const [canonical, syns] of Object.entries(SYNONYMS)) {
     const allForms = [canonical, ...syns];
     if (allForms.includes(lower)) {
       const match = targetFields.find((f) => allForms.includes(normalize(f.name)));
-      if (match) return match;
+      return match ?? null; // found or explicitly not found — do not continue
     }
   }
   return null;
