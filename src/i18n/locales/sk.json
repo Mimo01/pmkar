@@ -277,6 +277,7 @@
   "audit.fields.outcome.ok": "ok",
   "audit.fields.outcome.failed": "zlyhalo",
   "audit.fields.outcome.skipped": "preskočené",
+  "audit.fields.outcome.copied": "skopírované",
   "audit.fields.loadMore": "Načítať ďalšie",
   "audit.fields.loadError": "Transformácie polí sa nepodarilo načítať.",
   "audit.fields.group.count.total_one": "{{count}} pole",

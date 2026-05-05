@@ -216,7 +216,7 @@ export interface MappingAuditEntry {
   wasOverridden: boolean;
   gapKind: string | null;
   transformerKind: string;
-  outcome: 'ok' | 'failed' | 'skipped';
+  outcome: 'ok' | 'copied' | 'failed' | 'skipped';
   failureReason: string | null;
   timestamp: string;
   // Quick task 260430-26i — redacted JSON values, optional + nullable so legacy
