@@ -27,7 +27,14 @@ fn start_servers_once() {
                 }
             });
         });
+        // Initial grace period, then TCP probe for up to ~600ms more.
         std::thread::sleep(Duration::from_millis(300));
+        for _ in 0..30 {
+            if std::net::TcpStream::connect("127.0.0.1:8081").is_ok() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
     });
 }
 
