@@ -106,6 +106,18 @@ const CREATE_APP_CONFIG_SQL: &str = "CREATE TABLE IF NOT EXISTS app_config (
     language TEXT NOT NULL DEFAULT 'en'
 );";
 
+/// Pass through `Ok(())` and "duplicate column" `SQLite` errors (`SQLITE_ERROR`, code 1),
+/// which are expected when a migration ALTER TABLE column already exists. Any other
+/// error variant is propagated so real failures are not silently swallowed.
+fn ignore_duplicate_column(result: rusqlite::Result<()>) -> rusqlite::Result<()> {
+    match result {
+        Err(rusqlite::Error::SqliteFailure(e, _)) if e.extended_code == 1 /* SQLITE_ERROR */ => {
+            Ok(())
+        }
+        other => other,
+    }
+}
+
 impl TriageDb {
     /// Detects whether the existing `triage_state` table's `CHECK` constraint already
     /// includes 'handled'. If not, rebuilds the table to widen the constraint.
@@ -133,7 +145,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_CONNECTION_META_SQL)?;
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
-        let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        ignore_duplicate_column(conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY))?;
         Self::migrate_triage_check_constraint(&conn)?;
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
@@ -153,7 +165,7 @@ impl TriageDb {
         conn.execute_batch(CREATE_CONNECTION_META_SQL)?;
         conn.execute_batch(CREATE_FETCH_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO fetch_config(id) VALUES(1)", [])?;
-        let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY);
+        ignore_duplicate_column(conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY))?;
         Self::migrate_triage_check_constraint(&conn)?;
         conn.execute_batch(CREATE_APP_CONFIG_SQL)?;
         conn.execute("INSERT OR IGNORE INTO app_config(id) VALUES(1)", [])?;
