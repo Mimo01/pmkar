@@ -2308,4 +2308,91 @@ mod tests {
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert_eq!(rows.len(), 0, "no rows written for empty target_field_id");
     }
+
+    // ── Phase 25 tests ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn resolve_description_to_adf_returns_doc_for_html() {
+        use std::collections::HashMap;
+        let result = crate::field_transform::wiki_to_adf::convert_and_postprocess(
+            "<p>Hello world</p>",
+            &HashMap::<String, Option<String>>::new(),
+        );
+        assert_eq!(result["type"], "doc");
+        assert_eq!(result["version"], 1);
+    }
+
+    #[test]
+    fn resolve_description_to_adf_returns_empty_doc_for_empty_html() {
+        use std::collections::HashMap;
+        let result = crate::field_transform::wiki_to_adf::convert_and_postprocess(
+            "",
+            &HashMap::<String, Option<String>>::new(),
+        );
+        assert_eq!(result["type"], "doc");
+        let content = result["content"].as_array().expect("content must be array");
+        assert!(content.is_empty());
+    }
+
+    #[test]
+    fn resolve_description_to_adf_paragraph_content_non_empty() {
+        use std::collections::HashMap;
+        let result = crate::field_transform::wiki_to_adf::convert_and_postprocess(
+            "<p>Test content</p>",
+            &HashMap::<String, Option<String>>::new(),
+        );
+        let content = result["content"].as_array().expect("content must be array");
+        assert!(!content.is_empty());
+        assert_eq!(content[0]["type"], "paragraph");
+    }
+
+    #[test]
+    fn preview_user_domain_grouping_two_same_domain() {
+        // Verify that two users with the same email domain land in a single domain bucket.
+        let entries = vec![
+            PreviewUserEntry { username: "alice".into(), email: Some("alice@acme.com".into()) },
+            PreviewUserEntry { username: "bob".into(), email: Some("bob@acme.com".into()) },
+        ];
+        let mut by_domain: std::collections::HashMap<String, Vec<(usize, String)>> =
+            std::collections::HashMap::new();
+        let mut no_domain: Vec<(usize, String)> = Vec::new();
+        for (i, entry) in entries.iter().enumerate() {
+            if let Some(email) = &entry.email {
+                if let Some(domain) = email.split('@').nth(1) {
+                    if !domain.is_empty() {
+                        by_domain.entry(domain.to_string()).or_default().push((i, entry.username.clone()));
+                        continue;
+                    }
+                }
+            }
+            no_domain.push((i, entry.username.clone()));
+        }
+        assert_eq!(by_domain.len(), 1, "both users should share one domain bucket");
+        assert_eq!(by_domain["acme.com"].len(), 2);
+        assert!(no_domain.is_empty());
+    }
+
+    #[test]
+    fn preview_user_domain_grouping_no_email_goes_to_no_domain() {
+        let entries = vec![
+            PreviewUserEntry { username: "carol".into(), email: None },
+        ];
+        let mut by_domain: std::collections::HashMap<String, Vec<(usize, String)>> =
+            std::collections::HashMap::new();
+        let mut no_domain: Vec<(usize, String)> = Vec::new();
+        for (i, entry) in entries.iter().enumerate() {
+            if let Some(email) = &entry.email {
+                if let Some(domain) = email.split('@').nth(1) {
+                    if !domain.is_empty() {
+                        by_domain.entry(domain.to_string()).or_default().push((i, entry.username.clone()));
+                        continue;
+                    }
+                }
+            }
+            no_domain.push((i, entry.username.clone()));
+        }
+        assert!(by_domain.is_empty());
+        assert_eq!(no_domain.len(), 1);
+        assert_eq!(no_domain[0].1, "carol");
+    }
 }

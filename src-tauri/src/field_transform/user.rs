@@ -118,7 +118,7 @@ impl UserResolver {
 
     /// Paginated GET /rest/api/3/user/search?query=@\<domain\>. Mirrors
     /// `commands.rs`:1096-1147 verbatim, sans the `AuditDb` wiring (test traffic).
-    async fn fetch_users_by_domain(&self, domain: &str) -> Result<Vec<serde_json::Value>, ()> {
+    pub(crate) async fn fetch_users_by_domain(&self, domain: &str) -> Result<Vec<serde_json::Value>, ()> {
         const PAGE_SIZE: usize = 50;
         let trimmed = self.cloud_base_url.trim_end_matches('/');
         let clean_domain = domain.trim_start_matches('@');
@@ -152,7 +152,7 @@ impl UserResolver {
     }
 
     /// Single-page query (no pagination expected for username-only fallback).
-    async fn fetch_users_by_query(&self, query: &str) -> Result<Vec<serde_json::Value>, ()> {
+    pub(crate) async fn fetch_users_by_query(&self, query: &str) -> Result<Vec<serde_json::Value>, ()> {
         let trimmed = self.cloud_base_url.trim_end_matches('/');
         let encoded_query = urlencoding::encode(query);
         let url = format!(
