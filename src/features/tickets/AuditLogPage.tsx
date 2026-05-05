@@ -390,6 +390,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       if (rows.length < PAGE_SIZE) {
         setMappingHasMore(false);
       }
+    } catch (err) {
+      setMappingError(String(err));
     } finally {
       setMappingLoading(false);
     }
@@ -437,6 +439,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
       if (rows.length < PAGE_SIZE) {
         setHasMore(false);
       }
+    } catch (err) {
+      setError(String(err));
     } finally {
       setLoadingMore(false);
     }
