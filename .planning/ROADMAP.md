@@ -80,8 +80,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 25-01-PLAN.md — Backend: resolve_description_to_adf + resolve_users_preview Tauri commands, Rust unit tests, register in main.rs
-- [ ] 25-02-PLAN.md — Frontend: async pre-fill effect, description read-only display, user picker pre-fill, frontend tests
+- [x] 25-01-PLAN.md — Backend: resolve_description_to_adf + resolve_users_preview Tauri commands, Rust unit tests, register in main.rs
+- [x] 25-02-PLAN.md — Frontend: async pre-fill effect, description read-only display, user picker pre-fill, frontend tests
 
 ## Progress
 
@@ -110,5 +110,5 @@ Plans:
 | 21. Mapping Editor (Settings UI) | v0.4.0 | 3/3 | Complete | 2026-04-28 |
 | 22. Copy Preview Override Panel + Issue-Type Chooser + Required-Field Gating | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
-| 24. Audit Log Copy-Time Resolution | hotfix | 0/2 | In Progress | — |
-| 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 0/2 | In Progress | — |
+| 24. Audit Log Copy-Time Resolution | hotfix | 2/2 | Complete | 2026-05-05 |
+| 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 2/2 | Complete | 2026-05-05 |

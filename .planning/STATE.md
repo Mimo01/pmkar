@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: milestone
 status: completed
-stopped_at: context exhaustion at 75% (2026-04-29)
-last_updated: "2026-04-29T09:25:10.821Z"
-last_activity: "2026-04-29 — Completed quick task 260430-26i: Group field transformation logs by copy, add per-group Copy button, persist redacted JSON values"
+stopped_at: context exhaustion at 80% (2026-05-05)
+last_updated: "2026-05-05T14:25:00.000Z"
+last_activity: "2026-05-05 — Completed Phase 25: Preview-Time Resolution of wiki_to_adf and User Fields (2/2 plans)"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 28
-  completed_plans: 28
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 100
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 ## Current Position
 
 Milestone v0.4.0 COMPLETE — archived 2026-04-29.
-All 7 phases (17-23), 28 plans done.
-Ready to start v0.5.0 with `/gsd-new-milestone`.
+Post-milestone hotfixes complete: Phase 24 (audit log copy-time resolution) and Phase 25 (preview-time wiki_to_adf + user resolution) — both shipped 2026-05-05.
+Security note: CR-01 (SSRF in resolve_users_preview) open — address with /gsd-code-review 25 --fix.
 
 ## Deferred Items
 
@@ -323,6 +323,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-05-03 — Completed quick task 260503-pht: Full support for any type of properties in copy window
-Last session: 2026-04-29T09:25:10.818Z
-Stopped at: context exhaustion at 75% (2026-04-29)
+Last session: 2026-05-05T11:20:49.513Z
+Stopped at: context exhaustion at 80% (2026-05-05)
 Resume file: None
