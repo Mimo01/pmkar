@@ -1229,13 +1229,16 @@ pub async fn resolve_users_preview(
     }
 
     // Retrieve Cloud credentials from OS keychain.
-    let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
+    // Use the stored base URL from credentials rather than the frontend-supplied
+    // cloud_base_url argument to prevent origin confusion / SSRF.
+    let (stored_base_url, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
     let cloud_auth = format!(
         "Basic {}",
         base64::engine::general_purpose::STANDARD
             .encode(format!("{cloud_email}:{cloud_api_token}"))
     );
-    let trimmed_base = cloud_base_url.trim_end_matches('/').to_string();
+    let trimmed_base = stored_base_url.trim_end_matches('/').to_string();
+    let _ = cloud_base_url; // parameter retained in signature for API compat; not used
 
     let client = reqwest::Client::new();
     let resolver = crate::field_transform::user::UserResolver::new(
