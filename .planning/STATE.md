@@ -319,10 +319,11 @@ None yet.
 | 260430-0tj | Log all copy ticket transformations (successful and failed) — mapping_audit_log + Audit Log "Field Transformations" tab | 2026-04-29 | 69ef569 | | [260430-0tj-log-all-copy-ticket-transformations-succ](./quick/260430-0tj-log-all-copy-ticket-transformations-succ/) |
 | 260430-26i | Group field transformation logs by copy, add per-group Copy button, persist redacted JSON values | 2026-04-29 | 46b77a9 | | [260430-26i-enhance-field-transformation-logs-group-](./quick/260430-26i-enhance-field-transformation-logs-group-/) |
 | 260503-pht | Full support for any type of properties in copy window | 2026-05-03 | 6857ff4 | | [260503-pht-full-support-for-any-type-of-properties-in](./quick/260503-pht-full-support-for-any-type-of-properties-in/) |
+| 260505-o6z | Release next version, v0.4.4 | 2026-05-05 | e62b8d3 | | [260505-o6z-release-next-version-v0-4-4](./quick/260505-o6z-release-next-version-v0-4-4/) |
 
 ## Session Continuity
 
-Last activity: 2026-05-03 — Completed quick task 260503-pht: Full support for any type of properties in copy window
+Last activity: 2026-05-05 — Completed quick task 260505-o6z: Release next version, v0.4.4
 Last session: 2026-05-05T11:20:49.513Z
 Stopped at: context exhaustion at 80% (2026-05-05)
 Resume file: None
