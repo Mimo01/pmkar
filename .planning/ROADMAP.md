@@ -66,7 +66,7 @@ Full details: [milestones/v0.4.0-ROADMAP.md](milestones/v0.4.0-ROADMAP.md)
 **Plans:** 2 plans
 
 Plans:
-- [ ] 24-01-PLAN.md — Backend: add copy_id to CopyTicketV2Args, copy-time audit loop in copy_ticket_v2, thread previewCopyId through copyStore
+- [x] 24-01-PLAN.md — Backend: add copy_id to CopyTicketV2Args, copy-time audit loop in copy_ticket_v2, thread previewCopyId through copyStore
 - [ ] 24-02-PLAN.md — Frontend: 'copied' outcome badge (blue), i18n keys in EN+SK, fieldGrouping tests
 
 ## Progress
