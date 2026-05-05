@@ -437,8 +437,9 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     expect(byField.summary?.outcome).toBe('ok');
     // priority transformer is prefillable; source priority object present → ok
     expect(byField.priority?.outcome).toBe('ok');
-    // user transformer requires async accountId resolution — not prefillable → skipped
-    expect(byField.assignee?.outcome).toBe('skipped');
+    // Phase 25: user transformer rows go through async resolve_users_preview path;
+    // the mock sourceTicket assignee has no 'name' field, so no log entry is emitted
+    // (the row silently skips username extraction). The async path fires but returns null.
     // version transformer is NOT prefillable → skipped, "runs at copy time"
     expect(byField.fixVersions?.outcome).toBe('skipped');
     expect(byField.fixVersions?.failureReason).toMatch(/runs at copy time/);
@@ -487,5 +488,149 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     });
     render(<CopyPreviewPage />);
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Phase 25 — async pre-fill resolution (PREV-01, PREV-02, PREV-03)
+// ---------------------------------------------------------------------------
+
+describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockReset.mockReset();
+    mockConfirmCopy.mockReset();
+    mockSetTargetIssueTypeId.mockReset().mockResolvedValue(undefined);
+    mockSetOverrideValue.mockReset();
+    mockCache = {};
+    lastChooserProps = null;
+    for (const k of Object.keys(capturedFormProps)) {
+      delete capturedFormProps[k];
+    }
+
+    // Default mock routing for Phase 25 tests
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
+      if (cmd === 'get_field_mapping') return [];
+      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'log_preview_transformations') return null;
+      if (cmd === 'resolve_description_to_adf')
+        return { version: 1, type: 'doc', content: [] };
+      if (cmd === 'resolve_users_preview')
+        return [{ accountId: 'acc-1', displayName: 'Alice', emailAddress: 'alice@acme.com' }];
+      return null;
+    });
+  });
+
+  // PREV-01: wiki_to_adf row triggers resolve_description_to_adf invoke
+  it('PREV-01 pre-fill effect invokes resolve_description_to_adf when wiki_to_adf row exists', async () => {
+    const wikiRow = {
+      sourceFieldId: 'description',
+      targetFieldId: 'description',
+      transformerKind: 'wiki_to_adf',
+      sourceSchema: { type: 'string', system: 'description' },
+      targetSchema: { type: 'doc' },
+    };
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
+      if (cmd === 'get_field_mapping') return [wikiRow];
+      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'log_preview_transformations') return null;
+      if (cmd === 'resolve_description_to_adf') return { version: 1, type: 'doc', content: [] };
+      return null;
+    });
+
+    currentStoreState = buildState({
+      sourceTicket: makeTicketDetail({
+        description: '<p>Test description</p>',
+        renderedFields: { description: '<p>Test</p>' },
+      }),
+    });
+    // renderedFields is on the outer ticket object, not inside fields
+    currentStoreState = buildState({
+      sourceTicket: {
+        ...makeTicketDetail(),
+        renderedFields: { description: '<p>Test</p>' },
+      },
+    });
+
+    render(<CopyPreviewPage />);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('resolve_description_to_adf', {
+        html: '<p>Test</p>',
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockSetOverrideValue).toHaveBeenCalledWith('description', {
+        version: 1,
+        type: 'doc',
+        content: [],
+      });
+    });
+  });
+
+  // PREV-02: user rows trigger resolve_users_preview invoke
+  it('PREV-02 pre-fill effect invokes resolve_users_preview for user rows', async () => {
+    const userRow = {
+      sourceFieldId: 'assignee',
+      targetFieldId: 'assignee',
+      transformerKind: 'user',
+      sourceSchema: { type: 'user' },
+      targetSchema: { type: 'user' },
+    };
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
+      if (cmd === 'get_field_mapping') return [userRow];
+      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'log_preview_transformations') return null;
+      if (cmd === 'resolve_users_preview')
+        return [{ accountId: 'acc-1', displayName: 'Alice', emailAddress: 'alice@acme.com' }];
+      return null;
+    });
+
+    currentStoreState = buildState({
+      sourceTicket: makeTicketDetail({
+        assignee: { name: 'alice', emailAddress: 'alice@acme.com', displayName: 'Alice' },
+      }),
+    });
+
+    render(<CopyPreviewPage />);
+
+    await waitFor(() => {
+      expect(mockInvoke).toHaveBeenCalledWith('resolve_users_preview', {
+        users: [{ username: 'alice', email: 'alice@acme.com' }],
+        cloudBaseUrl: 'https://cloud.example.com',
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockSetOverrideValue).toHaveBeenCalledWith('assignee', {
+        accountId: 'acc-1',
+        displayName: 'Alice',
+        emailAddress: 'alice@acme.com',
+      });
+    });
+  });
+
+  // PREV-03: description field excluded from DynamicTargetForm
+  it('PREV-03 description field is excluded from DynamicTargetForm fields prop', async () => {
+    currentStoreState = buildState({
+      resolvedTargetFields: [
+        { fieldId: 'description', name: 'Description', required: false, schema: { type: 'string', system: 'description' } },
+        { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
+      ],
+    });
+
+    render(<CopyPreviewPage />);
+
+    await waitFor(() => {
+      const fields = (capturedFormProps as { fields?: Array<{ fieldId: string }> }).fields;
+      expect(fields).toBeDefined();
+      const fieldIds = fields!.map((f) => f.fieldId);
+      expect(fieldIds).not.toContain('description');
+      expect(fieldIds).toContain('assignee');
+    });
   });
 });

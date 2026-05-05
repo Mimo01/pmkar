@@ -534,3 +534,73 @@ describe('copyStore — Phase 22 override state', () => {
     expect(mockLoadSchema).not.toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Phase 25 — override values in confirmCopy (PREV-04)
+// ---------------------------------------------------------------------------
+
+describe('copyStore — Phase 25 override values in confirmCopy', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    useCopyStore.setState({
+      phase: 'idle',
+      sourceTicket: null,
+      sourceKey: null,
+      targetSummary: '',
+      targetDescription: '',
+      targetStatus: '',
+      targetPriorityId: '',
+      targetLabels: [],
+      selectedLabels: [],
+      targetProjectKey: 'PROJ',
+      cloudMeta: null,
+      result: null,
+      error: null,
+      progressStep: '',
+      targetIssueTypeId: 'it-p25',
+      overrideValues: {},
+      resolvedTargetFields: [],
+    });
+  });
+
+  it('PREV-04: confirmCopy invoke args contain Phase 25 override values (description ADF + user accountId)', async () => {
+    const copyResult = {
+      targetKey: 'CLOUD-1',
+      targetUrl: 'https://cloud/CLOUD-1',
+      steps: [{ step: 'create_issue', success: true, detail: 'CLOUD-1' }],
+    };
+    mockInvoke.mockResolvedValue(copyResult);
+
+    // Set up store state with Phase 25 override values pre-populated (as if the pre-fill effect ran)
+    useCopyStore.setState({
+      sourceKey: 'SRC-25',
+      cloudMeta: makeCloudMeta(),
+      targetSummary: 'Phase 25 test ticket',
+      targetDescription: '',
+      targetStatus: 'To Do',
+      targetPriorityId: '',
+      selectedLabels: [],
+      targetIssueTypeId: 'it-p25',
+    });
+    useCopyStore.getState().setOverrideValue('description', { version: 1, type: 'doc', content: [] });
+    useCopyStore.getState().setOverrideValue('assignee', {
+      accountId: 'acc-phase25',
+      displayName: 'Phase25 User',
+      emailAddress: 'p25@acme.com',
+    });
+
+    await useCopyStore.getState().confirmCopy('http://source.example.com', 'http://cloud.example.com', 'copy-id-p25');
+
+    expect(mockInvoke).toHaveBeenCalledWith(
+      'copy_ticket_v2',
+      expect.objectContaining({
+        args: expect.objectContaining({
+          overrideValues: expect.objectContaining({
+            description: { version: 1, type: 'doc', content: [] },
+            assignee: expect.objectContaining({ accountId: 'acc-phase25' }),
+          }),
+        }),
+      }),
+    );
+  });
+});

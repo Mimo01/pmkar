@@ -132,6 +132,8 @@
   "copy.preview.fieldNoManualInput": "No manual input",
   "copy.preview.unsupportedFieldHint": "This field type cannot be set manually — use Map field to configure copying.",
   "copy.preview.missingFields": "Fill in required fields: {{fields}}",
+  "copy.preview.descriptionReadOnly": "Description (will be copied)",
+  "copy.preview.descriptionReadOnlyHint": "Resolved description will be copied as formatted content.",
   "copy.result.complete": "Copy Complete",
   "copy.result.withErrors": "Copy Finished with Errors",
   "copy.result.openInJira": "Open in {{name}}",
