@@ -233,12 +233,31 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
     onOpenSettingsSection?.('field-mapping');
   }, [reset, onOpenSettingsSection]);
 
+  // ── previewCopyId — stable UUID generated when previewing opens ───────────
+  // Mirrors the pattern in CopyPreviewPage (lines 138-148) so that the
+  // log_preview_transformations rows and the write_copy_time_audit rows share
+  // the same copyId group in the Audit Log's Field Transformations tab.
+  const [previewCopyId, setPreviewCopyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (phase !== 'previewing') {
+      setPreviewCopyId(null);
+      return;
+    }
+    setPreviewCopyId(
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+  }, [phase]);
+
   // ── Copy gating ───────────────────────────────────────────────────────────
   // A gap field gates the copy only while its override value is empty.
   // Once the user fills in the gap input (writing to overrideValues), the
   // gate opens — the entered value flows to the backend via copyStore.confirmCopy.
   const isGated = unfilledGapFields.length > 0;
-  const isCopyDisabled = phase === 'copying' || isGated || !targetIssueTypeId;
+  const isProjectMissing = !targetProjectKey;
+  const isCopyDisabled = phase === 'copying' || isGated || !targetIssueTypeId || isProjectMissing;
 
   const isOpen = phase === 'loading_preview' || phase === 'previewing' || phase === 'copying';
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
@@ -249,7 +268,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   };
 
   const handleConfirm = () => {
-    confirmCopy(sourceBaseUrl, cloudBaseUrl, null);
+    confirmCopy(sourceBaseUrl, cloudBaseUrl, previewCopyId);
   };
 
   return (
