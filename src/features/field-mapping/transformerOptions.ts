@@ -1,7 +1,16 @@
 import type { FieldSchemaType } from '@/types/fieldSchema';
 
+export type TransformerKind =
+  | 'identity'
+  | 'user'
+  | 'user_name'
+  | 'version'
+  | 'component'
+  | 'wiki_to_adf'
+  | 'priority';
+
 export interface TransformerOption {
-  value: 'identity' | 'user' | 'user_name' | 'version' | 'component' | 'wiki_to_adf' | 'priority';
+  value: TransformerKind;
   label: string;
   description: string;
 }

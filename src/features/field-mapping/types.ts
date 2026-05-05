@@ -7,13 +7,14 @@
  * Phase 21 Mapping Editor consumes this; Phase 22 Copy Preview Override Panel reuses it.
  */
 import type { FieldSchemaType } from '@/types/fieldSchema';
+import type { TransformerKind } from './transformerOptions';
 
 export interface FieldMappingRow {
   sourceFieldId: string;
   /** Empty string `""` is the dismissed-suggestion sentinel (CONTEXT.md D-07). */
   targetFieldId: string;
-  /** One of: "identity" | "user" | "version" | "component" | "wiki_to_adf" | "priority". */
-  transformerKind: string;
+  /** One of the TransformerKind literals. */
+  transformerKind: TransformerKind;
   sourceSchema: FieldSchemaType;
   targetSchema: FieldSchemaType;
 }
