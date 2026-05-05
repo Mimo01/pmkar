@@ -232,6 +232,8 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           sourceKey: state.sourceKey,
           sourceBaseUrl,
           targetBaseUrl: cloudBaseUrl,
+          // Non-null asserted above by the `if (!state.targetIssueTypeId)` guard.
+          // The `?? ''` fallback is unreachable dead code kept only for type narrowing.
           targetIssueTypeId: state.targetIssueTypeId ?? '',
           overrideValues: {
             summary: state.targetSummary,
