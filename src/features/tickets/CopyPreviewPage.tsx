@@ -261,7 +261,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
               transformerKind: descRow.transformerKind,
               outcome: 'ok',
               failureReason: null,
-              wasOverridden: overrideValues[descRow.targetFieldId] !== undefined,
+              wasOverridden: useCopyStore.getState().overrideValues[descRow.targetFieldId] !== undefined,
               gapKind: null,
               sourceValue: descHtml,
               targetValue: adf,
@@ -327,6 +327,33 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
           });
           continue;
         }
+        // Array user field (e.g. type=array, items=user): extract first element.
+        if (Array.isArray(fieldVal)) {
+          const firstItem = fieldVal[0] as Record<string, unknown> | null | undefined;
+          const arrayUsername =
+            (firstItem?.name as string | undefined) ??
+            (firstItem?.key as string | undefined) ??
+            null;
+          if (!arrayUsername) {
+            logEntries.push({
+              targetFieldId: row.targetFieldId,
+              sourceFieldId: row.sourceFieldId,
+              transformerKind: row.transformerKind,
+              outcome: 'skipped',
+              failureReason: 'array user field: username not extractable',
+              wasOverridden: false,
+              gapKind: null,
+              sourceValue: fieldVal,
+              targetValue: null,
+            });
+            continue;
+          }
+          const arrayEmail = (firstItem?.emailAddress as string | undefined) ?? null;
+          const arrayEntryIndex = userEntries.length;
+          userEntries.push({ username: arrayUsername, email: arrayEmail });
+          rowsWithEntry.push({ row, entryIndex: arrayEntryIndex });
+          continue;
+        }
         const val = fieldVal as Record<string, unknown>;
         // Single user: { name, emailAddress }
         const username =
@@ -350,14 +377,18 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
               const resolvedUser = resolved[entryIndex] ?? null;
               const sourceVal = sourceFields[row.sourceFieldId];
               if (resolvedUser?.accountId) {
-                setOverrideValue(row.targetFieldId, resolvedUser);
+                // WR-03: guard against overwriting a user-entered override value.
+                if (useCopyStore.getState().overrideValues[row.targetFieldId] === undefined) {
+                  setOverrideValue(row.targetFieldId, resolvedUser);
+                }
                 logEntries.push({
                   targetFieldId: row.targetFieldId,
                   sourceFieldId: row.sourceFieldId,
                   transformerKind: row.transformerKind,
                   outcome: 'ok',
                   failureReason: null,
-                  wasOverridden: overrideValues[row.targetFieldId] !== undefined,
+                  // WR-02: read live state instead of stale closure snapshot.
+                  wasOverridden: useCopyStore.getState().overrideValues[row.targetFieldId] !== undefined,
                   gapKind: null,
                   sourceValue: sourceVal,
                   targetValue: resolvedUser,
