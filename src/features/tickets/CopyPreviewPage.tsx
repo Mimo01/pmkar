@@ -178,6 +178,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // Quick task 260430-0tj — also batches a per-row audit entry describing what
   // the pre-fill did (or didn't) and emits log_preview_transformations once at
   // the end so the user can inspect outcomes from the Audit Log page.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: overrideValues and setOverrideValue intentionally omitted — overrideValues in deps causes an infinite loop (setOverrideValue → overrideValues changes → effect fires again); setOverrideValue is a stable store action reference.
   useEffect(() => {
     if (!sourceTicket || mappingRows.length === 0 || !previewCopyId) return;
     const sourceFields = sourceTicket.fields as Record<string, unknown>;
@@ -245,17 +246,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         console.error('[CopyPreviewPage] log_preview_transformations failed:', err);
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    mappingRows,
-    sourceTicket,
-    previewCopyId,
-    overrideValues, // Pre-fill the override and record an "ok" outcome.
-    setOverrideValue,
-  ]);
-  // Intentionally omit overrideValues and setOverrideValue from deps:
-  // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
-  // setOverrideValue is a stable store action reference and does not need to be in deps.
+  }, [mappingRows, sourceTicket, previewCopyId]);
 
   // ── Schema-loading visual ──────────────────────────────────────────────────
   const cache = useSchemaCacheStore((s) => s.cache);

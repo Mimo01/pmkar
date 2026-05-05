@@ -228,15 +228,30 @@ describe('CopyPreviewModal', () => {
     expect(mockReset).toHaveBeenCalledOnce();
   });
 
-  it('Confirm button invokes copy_ticket_v2 with selected values (COPY-01)', () => {
+  it('Confirm button invokes confirmCopy with connection URLs when issue type is selected (COPY-01)', () => {
+    // WR-02: isCopyDisabled gates on !targetIssueTypeId — must have an issue type set.
+    // Keep targetProjectKey empty so IssueTypeChooser does not render (avoids schemaCacheStore
+    // prewarmedIssueTypes setup in this test file's mock).
+    currentStoreState = buildStoreState({ targetIssueTypeId: 'it-1' });
     render(<CopyPreviewModal />);
 
-    fireEvent.click(screen.getByText(/copy to/i));
+    const copyBtn = screen.getByRole('button', { name: /copy to/i });
+    expect(copyBtn).not.toBeDisabled();
+    fireEvent.click(copyBtn);
 
     expect(mockConfirmCopy).toHaveBeenCalledWith(
       'http://server.example.com',
       'https://cloud.example.com',
     );
+  });
+
+  it('Confirm button is disabled when targetIssueTypeId is null (WR-02)', () => {
+    // Default state has targetIssueTypeId: null — button must be disabled.
+    currentStoreState = buildStoreState({ targetIssueTypeId: null });
+    render(<CopyPreviewModal />);
+
+    const copyBtn = screen.getByRole('button', { name: /copy to/i });
+    expect(copyBtn).toBeDisabled();
   });
 
   it('renders editable summary input prefilled from source', () => {

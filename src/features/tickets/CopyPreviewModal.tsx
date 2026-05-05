@@ -69,31 +69,12 @@ function getProgressPercent(progressStep: string): number {
 }
 
 // ---------------------------------------------------------------------------
-// Tauri user-search wrapper (mirrors CopyPreviewPage.searchUsersForPicker)
-// ---------------------------------------------------------------------------
-
-async function searchUsersForPicker(q: string): Promise<JiraUser[]> {
-  const trimmed = q.trim();
-  if (!trimmed) return [];
-  const at = trimmed.lastIndexOf('@');
-  const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-  if (!domain) return [];
-  try {
-    const users = await invoke<JiraUser[]>('search_jira_users_by_domain', { domain });
-    return Array.isArray(users) ? users : [];
-  } catch (e) {
-    console.error('[CopyPreviewModal] search_jira_users_by_domain failed:', e);
-    return [];
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Transformer kinds that can be prefilled directly from raw source field values.
 // User / version / component require async resolution — they remain as gaps.
 // Description is wiki_to_adf and handled server-side only.
 // ---------------------------------------------------------------------------
 
-const PREFILLABLE_KINDS = new Set(['identity', 'priority', 'user']);
+const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewModal
@@ -124,6 +105,30 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   const sourceBaseUrl = useConnectionStore((s) => s.serverConnection?.baseUrl ?? '');
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
 
+  // ── Tauri user-search wrapper (mirrors CopyPreviewPage.searchUsersForPicker) ──
+  // Defined inside the component so it closes over sourceBaseUrl, which is
+  // required by the search_jira_users_by_domain Rust command.
+  const searchUsersForPicker = useCallback(
+    async (q: string): Promise<JiraUser[]> => {
+      const trimmed = q.trim();
+      if (!trimmed) return [];
+      const at = trimmed.lastIndexOf('@');
+      const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+      if (!domain) return [];
+      try {
+        const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
+          baseUrl: sourceBaseUrl,
+          domain,
+        });
+        return Array.isArray(users) ? users : [];
+      } catch (e) {
+        console.error('[CopyPreviewModal] search_jira_users_by_domain failed:', e);
+        return [];
+      }
+    },
+    [sourceBaseUrl],
+  );
+
   // ── Cloud projects ─────────────────────────────────────────────────────────
   const [cloudProjects, setCloudProjects] = useState<Array<{ key: string; name: string }>>([]);
 
@@ -149,6 +154,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   // Seeds overrideValues for identity/priority transformer rows using raw source
   // field values. Skips user/version/component kinds (require async resolution).
   // Does not overwrite values already set by the user.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: overrideValues and setOverrideValue intentionally omitted — overrideValues in deps causes an infinite loop (setOverrideValue → overrideValues changes → effect fires again); setOverrideValue is a stable store action reference.
   useEffect(() => {
     if (!sourceTicket || mappingRows.length === 0) return;
     const sourceFields = sourceTicket.fields as Record<string, unknown>;
@@ -161,11 +167,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
       if (rawValue === null || rawValue === undefined) continue;
       setOverrideValue(row.targetFieldId, rawValue);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mappingRows, sourceTicket, overrideValues, setOverrideValue]);
-  // Intentionally omit overrideValues and setOverrideValue from deps:
-  // overrideValues would cause an infinite loop (setOverrideValue → overrideValues changes → effect fires again).
-  // setOverrideValue is a stable store action reference and does not need to be in deps.
+  }, [mappingRows, sourceTicket]);
 
   // ── Schema-loading visual ──────────────────────────────────────────────────
   const cache = useSchemaCacheStore((s) => s.cache);
@@ -236,7 +238,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   // Once the user fills in the gap input (writing to overrideValues), the
   // gate opens — the entered value flows to the backend via copyStore.confirmCopy.
   const isGated = unfilledGapFields.length > 0;
-  const isCopyDisabled = phase === 'copying' || isGated;
+  const isCopyDisabled = phase === 'copying' || isGated || !targetIssueTypeId;
 
   const isOpen = phase === 'loading_preview' || phase === 'previewing' || phase === 'copying';
   const renderedDescription = sourceTicket?.renderedFields?.description ?? null;
