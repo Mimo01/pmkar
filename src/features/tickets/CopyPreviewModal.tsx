@@ -249,7 +249,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   };
 
   const handleConfirm = () => {
-    confirmCopy(sourceBaseUrl, cloudBaseUrl);
+    confirmCopy(sourceBaseUrl, cloudBaseUrl, null);
   };
 
   return (

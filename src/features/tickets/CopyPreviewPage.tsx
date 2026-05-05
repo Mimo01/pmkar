@@ -365,7 +365,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   };
 
   const handleConfirm = () => {
-    confirmCopy(sourceBaseUrl, cloudBaseUrl);
+    confirmCopy(sourceBaseUrl, cloudBaseUrl, previewCopyId);
   };
 
   return (
