@@ -183,8 +183,11 @@ async fn copy_ticket_v2_full_pipeline_succeeds() {
 
     // Step F — copy_worklogs (PROJ-1 has worklog entries seeded)
     let wl_steps = copy_worklogs(&ctx).await;
-    // copy_worklogs may return zero steps if the source has no worklogs;
-    // the requirement is that none of the produced steps fail.
+    // PROJ-1 fixture has 1 worklog (timeSpentSeconds: 7200) — must produce >=1 step.
+    assert!(
+        !wl_steps.is_empty(),
+        "PROJ-1 fixture has worklogs — copy_worklogs must produce >=1 step"
+    );
     for s in &wl_steps {
         assert!(
             s.success,
