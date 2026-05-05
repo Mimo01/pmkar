@@ -1,4 +1,102 @@
 
+## [0.4.4]
+
+### Bug Fixes
+
+- WR-04 replace fixed sleep with TCP probe loop in integration test
+- WR-01 WR-02 WR-03 harden user resolution in CopyPreviewPage
+- CR-01 use stored_base_url from keychain in resolve_users_preview
+- gate Copy button on missing issue type; fix mock server assignee; fix test regressions
+- add missing base i18n key audit.fields.group.count.total to en and sk locales
+- add catch blocks to loadMore and loadMoreMapping in AuditLogPage
+- correct misleading failure reason in write_copy_time_audit None gap arm
+- thread previewCopyId through CopyPreviewModal confirmCopy and guard missing targetProjectKey
+- WR-05 document unreachable ?? fallback for targetIssueTypeId after null guard
+- WR-04 skip worklogs with invalid timeSpentSeconds instead of posting zero
+- WR-02 distinguish duplicate column from real errors in ALTER_TRIAGE migration
+- WR-01 propagate real DB errors from get_project_keys via optional()
+- CR-03 add non-empty assertion for worklog steps in integration test
+- CR-02 forward targetPriorityId and selectedLabels to copy_ticket_v2 backend
+- CR-01 respect UTF-8 char boundaries when truncating create failure detail
+- CR-01/CR-02/CR-03/WR-01/WR-02 fix modal user search, dep arrays, PREFILLABLE_KINDS, copy gate
+- WR-05 return null immediately when synonym group matches but has no target field
+- WR-04 replace aria-disabled with disabled on Add Selected button
+- WR-03 introduce TransformerKind type alias; narrow transformerKind from string
+- CR-01 surface load error; WR-01 fix dep array comment; WR-02 remove setLastRefreshed from load
+- WR-04 enable WAL journal mode on FieldMappingDb::open
+- WR-03 wrap log_preview_transformations batch insert in explicit transaction
+- WR-02 replace lock().unwrap() with map_err propagation in main.rs startup
+- CR-02 return sentinel string on hash_field_value serialization failure
+- CR-01 replace cmd /C start with rundll32 on Windows to prevent command injection
+- WR-08 add aria-live and aria-atomic to ProbeStatusBanner for screen readers
+- WR-07 re-fire probe when cloud base URL changes
+- WR-06 return error on non-success HTTP in user domain search pagination
+- WR-05 reload cache immediately after refresh to avoid transient empty state
+- WR-04 normalise source-side cache key to null project/issuetype
+- WR-03 document audit bypass in field-discovery commands with TODO
+- WR-02 guard against silent issue-type list truncation
+- WR-01 advance pagination offset by page_len not max_results
+- WR-09 wire asyncLoading state internally, remove dead loading prop
+- WR-08 correct isEditableSchemaType JSDoc to accurately describe return values
+- WR-07 use index fallback in selectedKeys to prevent empty-key deduplication collisions
+- WR-06 stabilize initialQuery effect by accessing onSearch via ref
+- WR-05 add id to LabelsRenderer free-text input to wire htmlFor label
+- WR-04 add id prop to VirtualizedCombobox trigger to wire htmlFor labels
+- WR-03 tighten isOption type guard to reject arrays and non-option objects
+- WR-02 add request-sequence guard to prevent stale async search results
+- WR-01 replace React.ReactNode with imported ReactNode in VirtualizedCombobox
+- CR-02 add disabled prop to DynamicTargetForm and pass to Renderer
+- CR-01 emit option objects from RadioRenderer and CheckboxRenderer
+- WR-04 replace if/else user dispatch with explicit match on transformer_kind
+- WR-03 emit Person gap for null/missing single user field in dispatch_user
+- WR-02 invert scan_html_profile_links guard — reject i==0 position
+- WR-01 correct off-by-one in scan_mention_patterns loop guard
+- address full-codebase review findings (CR-01 through WR-08)
+- remove wiki_to_adf from PREFILLABLE_KINDS in both copy UIs
+
+### Documentation
+
+- complete phase execution — preview-time resolution of wiki_to_adf and user fields
+- add code review report
+- complete async pre-fill resolution plan — CopyPreviewPage wiki_to_adf and user resolution
+- complete preview-time resolution commands plan
+- plan preview-time resolution of wiki_to_adf and user fields
+- create phase plan — preview-time resolution of wiki_to_adf and user fields
+- add phase verification report
+- add code review report
+- update tracking after wave 2
+- add self-check results to SUMMARY.md
+- complete 'copied' outcome badge + i18n plan summary
+- update tracking after wave 1
+- add plan execution summary
+- create phase plan — copy-time audit loop + UI badge for copied outcome
+- mark all v0.4.0 phase reviews as fixed
+- add full codebase review report (2026-05-04)
+
+### Features
+
+- extend pre-fill effect for async wiki_to_adf and user resolution
+- register resolve_description_to_adf and resolve_users_preview in main.rs
+- implement resolve_description_to_adf and resolve_users_preview Tauri commands
+- add 'copied' outcome badge branch and i18n keys
+- thread previewCopyId through confirmCopy to copy_ticket_v2
+- add copy-time audit loop to copy_ticket_v2
+- configurable field mapping with dynamic renderers
+
+### Miscellaneous
+
+- simplify release.sh — delegate builds to GitHub Actions
+- merge executor worktree (worktree-agent-ac4805eafdfc5f11a)
+- merge executor worktree (worktree-agent-acc80d8b832ae2684)
+- merge executor worktree (worktree-agent-ad9b8af9f7b14dff7)
+- merge executor worktree (worktree-agent-a0e796d6948c7ed3e)
+
+### Testing
+
+- persist human verification items as UAT
+- add failing tests for Phase 25 async pre-fill (PREV-01/02/03/04)
+- add failing tests for resolve_description_to_adf and preview user domain grouping
+- add 'copied' outcome tests to AuditLogPage.fieldGrouping
 ## [0.4.3]
 
 ### Bug Fixes
