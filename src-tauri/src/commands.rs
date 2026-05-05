@@ -137,6 +137,17 @@ pub struct CopyTicketV2Args {
     pub copy_id: Option<String>,
 }
 
+/// Phase 25 — input shape for `resolve_users_preview`.
+/// One entry per source user field (assignee, reporter, custom user fields).
+#[derive(serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviewUserEntry {
+    /// Source Jira username/key (Server v2 `name` field).
+    pub username: String,
+    /// Email address for domain-based Cloud lookup. None if not available.
+    pub email: Option<String>,
+}
+
 #[derive(serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CopyStepResult {
@@ -1176,6 +1187,157 @@ pub async fn search_jira_users_by_domain(
     }
 
     Ok(all_users)
+}
+
+// --- Phase 25: Preview-time resolution commands ---
+
+/// Phase 25 — converts source issue description HTML to ADF at preview-open time.
+///
+/// Takes `renderedFields.description` (already fetched by `fetch_ticket_detail`)
+/// and calls `wiki_to_adf::convert_and_postprocess` with an empty user map.
+/// User mention nodes degrade to plain `@username` text at preview time — this is
+/// acceptable because the description is displayed read-only in the preview modal
+/// and the full resolution (with mention rewriting) happens at copy commit time
+/// via `copy_ticket_v2`.
+#[tauri::command]
+#[allow(clippy::unused_async)] // Tauri requires async fn for commands even when no await is needed
+pub async fn resolve_description_to_adf(html: String) -> Result<serde_json::Value, AppError> {
+    let adf = crate::field_transform::wiki_to_adf::convert_and_postprocess(
+        &html,
+        &HashMap::<String, Option<String>>::new(),
+    );
+    Ok(adf)
+}
+
+/// Phase 25 — resolves source user identifiers to Cloud user objects at preview-open time.
+///
+/// Accepts a list of `{ username, email }` pairs extracted from source ticket user fields.
+/// Groups by email domain (TRAN-06: one HTTP call per unique domain) and issues Cloud
+/// `/rest/api/3/user/search` calls. Returns a parallel `Vec` where index N corresponds
+/// to `users[N]`: resolved users get their full Cloud object; unresolvable users get `null`.
+///
+/// Uses a plain `reqwest::Client` (not the audited client) — preview resolution must not
+/// pollute the HTTP audit log.
+#[tauri::command]
+pub async fn resolve_users_preview(
+    users: Vec<PreviewUserEntry>,
+    cloud_base_url: String,
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<serde_json::Value>, AppError> {
+    if users.is_empty() {
+        return Ok(vec![]);
+    }
+
+    // Retrieve Cloud credentials from OS keychain.
+    let (_, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{cloud_api_token}"))
+    );
+    let trimmed_base = cloud_base_url.trim_end_matches('/').to_string();
+
+    let client = reqwest::Client::new();
+    let resolver = crate::field_transform::user::UserResolver::new(
+        client,
+        cloud_auth,
+        trimmed_base,
+    );
+
+    // Group by email domain — mirrors resolve_batch domain-batching (TRAN-06).
+    // by_domain: domain → Vec<(index, username)>
+    // no_domain: Vec<(index, username)>
+    let mut by_domain: std::collections::HashMap<String, Vec<(usize, String)>> =
+        std::collections::HashMap::new();
+    let mut no_domain: Vec<(usize, String)> = Vec::new();
+
+    for (i, entry) in users.iter().enumerate() {
+        if let Some(email) = &entry.email {
+            if let Some(domain) = email.split('@').nth(1) {
+                if !domain.is_empty() {
+                    by_domain
+                        .entry(domain.to_string())
+                        .or_default()
+                        .push((i, entry.username.clone()));
+                    continue;
+                }
+            }
+        }
+        no_domain.push((i, entry.username.clone()));
+    }
+
+    // Allocate result slots (null = unresolved).
+    let mut results: Vec<serde_json::Value> = vec![serde_json::Value::Null; users.len()];
+
+    // Domain-batched lookups.
+    for (domain, entries_in_domain) in &by_domain {
+        let cloud_users = resolver
+            .fetch_users_by_domain(domain)
+            .await
+            .unwrap_or_default();
+        for (idx, username) in entries_in_domain {
+            let email = users[*idx].email.as_deref();
+            if let Some(matched) = find_best_match(&cloud_users, email, username) {
+                results[*idx] = matched;
+            }
+        }
+    }
+
+    // No-domain fallback: username query per entry.
+    for (idx, username) in &no_domain {
+        let cloud_users = resolver
+            .fetch_users_by_query(username)
+            .await
+            .unwrap_or_default();
+        if let Some(matched) = find_best_match(&cloud_users, None, username) {
+            results[*idx] = matched;
+        }
+    }
+
+    Ok(results)
+}
+
+/// Returns the best-matching Cloud user object from `results` for the given `email` / `username`.
+/// Mirrors the privacy-mode-aware logic in `user.rs::match_user_in_results` but returns the
+/// full user JSON object instead of just the `accountId` string.
+///
+/// 1. Exact email match → return that user object.
+/// 2. Privacy mode (no `emailAddress` in any result) + exactly one result → return it.
+/// 3. Single result whose `displayName` matches username (case-insensitive) → return it.
+/// 4. None.
+fn find_best_match(
+    results: &[serde_json::Value],
+    email: Option<&str>,
+    username: &str,
+) -> Option<serde_json::Value> {
+    if results.is_empty() {
+        return None;
+    }
+    if let Some(em) = email {
+        let exact: Vec<&serde_json::Value> = results
+            .iter()
+            .filter(|u| u.get("emailAddress").and_then(|x| x.as_str()) == Some(em))
+            .collect();
+        if exact.len() == 1 {
+            return Some(exact[0].clone());
+        }
+        let any_email = results
+            .iter()
+            .any(|u| u.get("emailAddress").and_then(|x| x.as_str()).is_some());
+        if !any_email && results.len() == 1 {
+            return Some(results[0].clone());
+        }
+    }
+    if results.len() == 1 {
+        let display = results[0]
+            .get("displayName")
+            .and_then(|x| x.as_str())
+            .unwrap_or("");
+        if display.eq_ignore_ascii_case(username) {
+            return Some(results[0].clone());
+        }
+    }
+    None
 }
 
 // --- Field discovery commands (Phase 17) ---
