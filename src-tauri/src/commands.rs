@@ -1777,7 +1777,7 @@ fn write_copy_time_audit(
                     Some(crate::field_transform::GapVariant::Component(_)) => {
                         ("failed", Some("component"), Some("component not resolved"))
                     }
-                    None => ("skipped", None, Some("source value missing")),
+                    None => ("skipped", None, Some("transformer produced no value")),
                 }
             };
 
