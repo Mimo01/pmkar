@@ -275,6 +275,73 @@ describe('AuditLogPage — Field Transformations grouping (quick task 260430-26i
 });
 
 // ---------------------------------------------------------------------------
+// 'copied' outcome — Phase 24 Plan 02
+// ---------------------------------------------------------------------------
+
+describe("groupByCopyId — 'copied' outcome handling (Phase 24-02)", () => {
+  it("counts 'copied' rows in total but not failed or skipped", async () => {
+    const { groupByCopyId } = await import('../AuditLogPage');
+    const rows: MappingAuditEntry[] = [
+      makeEntry({ id: 10, copyId: 'test-copy-id', fieldId: 'description', outcome: 'copied' }),
+      makeEntry({ id: 11, copyId: 'test-copy-id', fieldId: 'summary', outcome: 'ok' }),
+    ];
+    const groups = groupByCopyId(rows);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].total).toBe(2);
+    expect(groups[0].failed).toBe(0);
+    expect(groups[0].skipped).toBe(0);
+  });
+
+  it("renders 'copied' outcome badge text via i18n key", async () => {
+    // copyId first 8 chars = 'cccccccc'; group header aria-label = 'Copy cccccccc — …'
+    const COPY_UUID = 'cccccccc-dead-beef-feed-000000000001';
+    const copiedEntry = makeEntry({
+      id: 20,
+      copyId: COPY_UUID,
+      fieldId: 'description',
+      outcome: 'copied',
+      sourceValueJson: '"Some wiki markup"',
+      targetValueJson: '{"type":"doc","version":1,"content":[]}',
+    });
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_mapping_audit_log_page') return Promise.resolve([copiedEntry]);
+      if (cmd === 'get_audit_logs_page') return Promise.resolve([]);
+      return Promise.resolve(null);
+    });
+    await openFieldsTab();
+    // Expand the group — aria-label uses shortId = first 8 chars of copyId
+    const groupHeader = await screen.findByRole('button', { name: /cccccccc/i });
+    fireEvent.click(groupHeader);
+    // Badge text resolves to the en.json value "copied" (real i18n loaded in test-setup.ts)
+    await waitFor(() => {
+      expect(screen.getByText('copied')).toBeTruthy();
+    });
+  });
+
+  it("'copied' outcome does not appear in failed or skipped group summary text", async () => {
+    // copyId first 8 chars = 'dddddddd'
+    const COPY_UUID = 'dddddddd-dead-beef-feed-000000000002';
+    const copiedEntry = makeEntry({
+      id: 30,
+      copyId: COPY_UUID,
+      fieldId: 'description',
+      outcome: 'copied',
+    });
+    mockInvoke.mockImplementation((cmd: string) => {
+      if (cmd === 'get_mapping_audit_log_page') return Promise.resolve([copiedEntry]);
+      if (cmd === 'get_audit_logs_page') return Promise.resolve([]);
+      return Promise.resolve(null);
+    });
+    await openFieldsTab();
+    const groupHeader = await screen.findByRole('button', { name: /dddddddd/i });
+    // Header shows total count but not failed or skipped (both are 0)
+    expect(groupHeader.textContent).toMatch(/1 field/i);
+    expect(groupHeader.textContent).not.toMatch(/failed/i);
+    expect(groupHeader.textContent).not.toMatch(/skipped/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Helper unit tests (groupByCopyId, buildGroupCopyText)
 // ---------------------------------------------------------------------------
 

@@ -763,6 +763,8 @@ export function AuditLogPage({ onClose }: AuditLogPageProps) {
                                       'text-[10px] font-mono',
                                       row.outcome === 'ok' &&
                                         'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+                                      row.outcome === 'copied' &&
+                                        'bg-blue-500/15 text-blue-400 border-blue-500/20',
                                       row.outcome === 'failed' &&
                                         'bg-red-500/15 text-red-400 border-red-500/20',
                                       row.outcome === 'skipped' &&
