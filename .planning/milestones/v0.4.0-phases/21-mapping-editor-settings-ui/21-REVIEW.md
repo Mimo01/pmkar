@@ -1,109 +1,186 @@
 ---
 phase: 21-mapping-editor-settings-ui
-reviewed: 2026-04-28T00:00:00Z
+reviewed: 2026-05-04T00:00:00Z
 depth: standard
-files_reviewed: 16
+files_reviewed: 13
 files_reviewed_list:
-  - src/App.tsx
   - src/components/ui/sonner.tsx
-  - src/features/connections/SettingsPage.tsx
-  - src/features/field-mapping/DriftWarning.tsx
-  - src/features/field-mapping/FieldMappingSection.tsx
-  - src/features/field-mapping/MappingRow.tsx
-  - src/features/field-mapping/SuggestionsPanel.tsx
-  - src/features/field-mapping/__tests__/FieldMappingSection.test.tsx
+  - src/features/field-mapping/types.ts
+  - src/features/field-mapping/transformerOptions.ts
+  - src/features/field-mapping/heuristics.ts
+  - src/features/field-mapping/__tests__/heuristics.test.ts
   - src/features/field-mapping/__tests__/MappingRow.test.tsx
   - src/features/field-mapping/__tests__/SuggestionsPanel.test.tsx
-  - src/features/field-mapping/__tests__/heuristics.test.ts
-  - src/features/field-mapping/heuristics.ts
-  - src/features/field-mapping/transformerOptions.ts
-  - src/features/field-mapping/types.ts
+  - src/features/field-mapping/__tests__/FieldMappingSection.test.tsx
+  - src/features/field-mapping/FieldMappingSection.tsx
+  - src/features/connections/SettingsPage.tsx
+  - src/App.tsx
   - src/i18n/locales/en.json
   - src/i18n/locales/sk.json
 findings:
-  critical: 2
+  critical: 1
   warning: 5
   info: 3
-  total: 10
-status: issues_found
+  total: 9
+status: fixed
 ---
 
 # Phase 21: Code Review Report
 
-**Reviewed:** 2026-04-28
+**Reviewed:** 2026-05-04
 **Depth:** standard
-**Files Reviewed:** 16
+**Files Reviewed:** 13
 **Status:** issues_found
 
 ## Summary
 
-The phase 21 implementation introduces the Field Mapping editor inside the Settings page, covering `FieldMappingSection`, `MappingRow`, `SuggestionsPanel`, `DriftWarning`, `heuristics`, `transformerOptions`, the updated `SettingsPage`, and supporting i18n keys for both `en` and `sk`. The architecture — module-scoped Zustand store, two-component header/body split, schema cache integration, and the empty-string sentinel for dismissed suggestions — is well-reasoned and clean.
+This phase covers the mapping editor settings UI: toast plumbing (sonner), field-mapping types, transformer option helpers, name-match heuristics, the FieldMappingSection/FieldMappingSectionHeader components, DriftWarning, MappingRow, SuggestionsPanel, SettingsPage integration, and i18n locale files. The overall architecture is sound: the module-scoped Zustand store pairing FieldMappingSection with FieldMappingSectionHeader, the schema-cache drift detection, the empty-string sentinel for dismissed suggestions, and the heuristic synonym lookup are all well-reasoned.
 
-Two blockers are present: a logic bug that leaves the in-memory Zustand store out of sync with the persisted database when accepting a suggestion, and an accessibility defect where the "Add Selected" button ignores its disabled state. Five warnings cover stale-closure captures in the initial load effect, a render-time Zustand store access in `App.tsx`, missing error feedback on initial load failure, a `'use client'` directive that is meaningless in a Tauri app, and a pattern-safety gap in the synonym lookup. Three informational items cover `window.prompt`, `console.error` left in production paths, and a test coverage gap.
+One blocker remains: initial load failure is swallowed silently with only a `console.error`, leaving users staring at a misleading "No field mappings yet" empty state when a backend error occurred. Five warnings cover a misleading `useEffect` dependency comment that masks unintended re-run behavior, `setLastRefreshed` being called on initial data load (poisoning the "not yet refreshed" UX), a loose `string` type for `transformerKind` that diverges from the `TransformerOption` union, an `aria-disabled`-only button that looks and fires incorrectly when no users are selected, and a synonym-loop fall-through that is a latent correctness risk when synonyms are extended. Three informational items cover `console.error` in production paths, a gap in `getTransformerOptions` test coverage, and a stale inline comment.
 
 ---
 
 ## Critical Issues
 
-### CR-01: Accept-suggestion writes `transformerKind: 'identity'` to Zustand but persists the schema-correct transformer to the database
+### CR-01: Load failure is swallowed silently — no user-visible error feedback
 
-**File:** `src/features/field-mapping/FieldMappingSection.tsx:248-252`
+**File:** `src/features/field-mapping/FieldMappingSection.tsx:208–210`
 
-**Issue:** `SuggestionsPanel.handleAccept` (the click handler) correctly derives the best initial transformer via `getTransformerOptions(s.target.schema)[0]?.value` and persists it with `invoke('set_field_mapping', { row })` before calling `onAccept`. However, `FieldMappingSection.handleAcceptSuggestion` — the `onAccept` callback — constructs a new `FieldMappingRow` that always sets `transformerKind: 'identity'` and stores it in the Zustand store via `updateRow`.
+**Issue:** The `load()` async function inside the mount `useEffect` catches all errors and calls `console.error`, then falls through to `setLoading(false)`. The component then renders the empty-state UI ("No field mappings yet — Defaults are seeded on first discovery"). A user cannot distinguish a genuine empty database from a backend/network failure. Any rows that exist in the database but failed to load are invisible, and the user may start adding duplicate mappings. This is a user-facing correctness failure.
 
-For any target schema where the canonical first transformer is not `identity` (e.g., `user` → first option is `USER`; `priority` → first option is `PRIORITY`; `array` items `user`/`version`/`component` → `USER`/`VERSION`/`COMPONENT`), the in-memory row shown in the UI immediately shows `Identity` while the database holds the correct transformer. If the user then makes any change to the row (e.g., picks a different target field), `MappingRow.handleTargetChange` reads `row.transformerKind` from the stale in-memory row and re-persists `identity`, silently overwriting the correct value.
-
-```tsx
-// FieldMappingSection.tsx — current (WRONG)
-function handleAcceptSuggestion(sourceFieldId: string, target: FieldSchema) {
-  const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
-  const newRow: FieldMappingRow = {
-    sourceFieldId,
-    targetFieldId: target.fieldId,
-    transformerKind: 'identity',              // ← always identity, ignores target schema
-    sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
-    targetSchema: target.schema,
-  };
-  updateRow(newRow);
-}
-
-// Fix: derive the same transformer the panel persisted
-function handleAcceptSuggestion(sourceFieldId: string, target: FieldSchema) {
-  const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
-  const newRow: FieldMappingRow = {
-    sourceFieldId,
-    targetFieldId: target.fieldId,
-    transformerKind: getTransformerOptions(target.schema)[0]?.value ?? 'identity',
-    sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
-    targetSchema: target.schema,
-  };
-  updateRow(newRow);
+```ts
+// Current (WRONG)
+} catch (e) {
+  console.error('Failed to load field mapping:', e);
+} finally {
+  setLoading(false);
 }
 ```
 
-**Fix:** Import `getTransformerOptions` in `FieldMappingSection.tsx` (it is already imported via `MappingRow`; add the import at the top) and mirror the derivation used in `SuggestionsPanel.handleAccept`.
+**Fix:** Track load failure with a state variable and render an explicit error UI:
+
+```tsx
+const [loadError, setLoadError] = useState(false);
+
+// in load():
+} catch (e) {
+  setLoadError(true);
+} finally {
+  setLoading(false);
+}
+
+// in render, before the empty-state check:
+if (loadError) {
+  return (
+    <p className="text-sm text-destructive py-4 text-center">
+      {t('settings.fieldMapping.loadError')}
+    </p>
+  );
+}
+```
+
+Add the missing i18n key to both locale files:
+- `en.json`: `"settings.fieldMapping.loadError": "Failed to load field mappings. Check your connection and try again."`
+- `sk.json`: `"settings.fieldMapping.loadError": "Nepodarilo sa načítať mapovania polí. Skontrolujte pripojenie a skúste znova."`
 
 ---
 
-### CR-02: "Add Selected" button uses `aria-disabled` but not `disabled`, allowing keyboard/click activation when no users are selected
+## Warnings
 
-**File:** `src/features/connections/SettingsPage.tsx:992-999`
+### WR-01: `useEffect` dependency array is misleading — "mount only" comment contradicts actual behavior
 
-**Issue:** The "Add Selected" button in the domain search result panel uses `aria-disabled={selectedAccountIds.size === 0}` but does **not** set the HTML `disabled` attribute. `aria-disabled` is an ARIA hint that must be paired with manual event suppression — the browser does not enforce it. When zero users are selected, clicking the button calls `handleAddDomainResults`, which returns early only because `newEntries.length === 0`, so no incorrect write occurs, but:
+**File:** `src/features/field-mapping/FieldMappingSection.tsx:215–216`
 
-1. The button's visual state via the `disabled:opacity-40 disabled:cursor-not-allowed` CSS classes does **not** apply, because those Tailwind variants respond to the `disabled` attribute, not `aria-disabled`. The button therefore looks enabled even when no users are selected.
-2. Keyboard users can Tab to it and press Enter — they receive no response and no error, violating the principle of least surprise.
+**Issue:** The ESLint suppression comment reads `// mount only — intentional`, but the dependency array is `[loadSchema, preWarm, setLastRefreshed, setLoading, setMappingRows, targetProjectKey]`. The effect will re-fire whenever `targetProjectKey` changes — for example, when the Zustand connection store hydrates asynchronously after mount (which it does, per `App.tsx:68–72`). This means:
+
+1. The effect is not mount-only: it re-runs on any `targetProjectKey` change, calling `setLoading(true)` and resetting `mappingRows`, which discards any in-progress user edits.
+2. The comment misleads future maintainers about the intended lifecycle.
+
+The Zustand setter references (`loadSchema`, `preWarm`, `setLastRefreshed`, `setLoading`, `setMappingRows`) are stable references and do not cause re-runs in practice, but listing them obscures the only value that actually matters: `targetProjectKey`.
+
+**Fix:** Either genuinely restrict to mount-only by reading `targetProjectKey` from the store inside the effect (bypassing React's closure capture), or acknowledge the reactivity and document it accurately:
 
 ```tsx
-// Current (WRONG)
+// Re-runs on mount and when targetProjectKey changes (store hydration or user selection).
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [targetProjectKey]);
+```
+
+And remove the stable setter references from the array — the lint suppression already covers them.
+
+---
+
+### WR-02: `setLastRefreshed(Date.now())` called on initial data load, not on user-initiated schema refresh
+
+**File:** `src/features/field-mapping/FieldMappingSection.tsx:207`
+
+**Issue:** The mount-time `load()` function calls `setLastRefreshed(Date.now())` after successfully loading mapping rows and schemas. This means `FieldMappingSectionHeader` immediately displays "Last refreshed just now" every time the user navigates to the field-mapping section — even before they have ever clicked the Refresh button. The label is semantically tied to schema cache freshness from a user-initiated flush, not to the component hydrating from the database.
+
+**Fix:** Remove the `setLastRefreshed(Date.now())` call from inside `load()` in `FieldMappingSection`. The only correct call site is in `FieldMappingSectionHeader.handleRefresh` (line 126), which already sets it. The initial state `lastRefreshed: null` will then correctly show "Not yet refreshed" until the user explicitly refreshes.
+
+---
+
+### WR-03: `FieldMappingRow.transformerKind` typed as `string` — diverges from the `TransformerOption` value union
+
+**File:** `src/features/field-mapping/types.ts:15–16` / `src/features/field-mapping/transformerOptions.ts:4`
+
+**Issue:** `FieldMappingRow.transformerKind` is declared as `string`. `TransformerOption.value` is a union of seven string literals. At the usage site in `MappingRow.tsx:50`:
+
+```ts
+const currentTransformer: TransformerOption | null =
+  transformerItems.find((o) => o.value === row.transformerKind) ?? null;
+```
+
+This compiles because `string === literal` is valid, but the types are not aligned. When `row.transformerKind` arrives from the Rust backend carrying a value outside the seven known literals (e.g., a newly added transformer), the combobox falls back to `null` silently — the user sees no transformer selected. Additionally, the inline comment on `types.ts:15` lists only six values and omits `user_name`, which is present in the union.
+
+**Fix:** Introduce a shared type alias and reference it from both files:
+
+```ts
+// transformerOptions.ts — add export
+export type TransformerKind =
+  | 'identity'
+  | 'user'
+  | 'user_name'
+  | 'version'
+  | 'component'
+  | 'wiki_to_adf'
+  | 'priority';
+
+// types.ts
+import type { TransformerKind } from './transformerOptions';
+
+export interface FieldMappingRow {
+  // ...
+  /** One of the TransformerKind literals. */
+  transformerKind: TransformerKind;
+}
+```
+
+---
+
+### WR-04: "Add Selected" button uses `aria-disabled` without `disabled` — click handler fires when zero users are selected
+
+**File:** `src/features/connections/SettingsPage.tsx:1000–1008`
+
+**Issue:** The "Add selected" button in the domain search result panel sets `aria-disabled={selectedAccountIds.size === 0}` but not the HTML `disabled` attribute:
+
+```tsx
 <button
   type="button"
   onClick={handleAddDomainResults}
   aria-disabled={selectedAccountIds.size === 0}
   className="... disabled:opacity-40 disabled:cursor-not-allowed"
 >
+```
 
-// Fix: use the native disabled attribute
+`aria-disabled` is a purely semantic ARIA annotation — it does not prevent click events from firing. Consequences:
+1. The `disabled:opacity-40 disabled:cursor-not-allowed` Tailwind variants never apply (they respond to the `disabled` HTML attribute, not `aria-disabled`). The button looks fully enabled when zero users are selected.
+2. Clicking the button when zero users are selected calls `handleAddDomainResults`, which bails out at `if (newEntries.length === 0) return` without error — a silent no-op that appears broken to the user.
+3. Keyboard users pressing Enter on the focused button receive no feedback.
+
+**Fix:**
+
+```tsx
 <button
   type="button"
   onClick={handleAddDomainResults}
@@ -112,148 +189,88 @@ function handleAcceptSuggestion(sourceFieldId: string, target: FieldSchema) {
 >
 ```
 
----
-
-## Warnings
-
-### WR-01: Initial load effect captures stale `targetProjectKey` / `firstIssueTypeId` due to empty dependency array with suppressed lint rule
-
-**File:** `src/features/field-mapping/FieldMappingSection.tsx:187-206`
-
-**Issue:** The `useEffect` that runs the initial load intentionally uses `[]` as its dependency array and suppresses the exhaustive-deps warning with `// eslint-disable-next-line react-hooks/exhaustive-deps`. The async function inside closes over `targetProjectKey` and `firstIssueTypeId`. These values come from `useSchemaArrays()` which subscribes to the connection store, but because the effect only runs on mount, it uses the values that existed at mount time.
-
-If `FieldMappingSection` mounts while the connection store is still hydrating (which is possible — `App.tsx` sets `hydrated = true` before `loadProjectConfig` resolves, per line 68-72 of `App.tsx`), then `targetProjectKey` is `null` at mount and the target schema is never loaded. The `noIssueTypes` guard at line 301 would hide the component, but if the project key arrives after mount, the component stays hidden until the user manually refreshes.
-
-The module-scoped `useMappingEditorStore` survives across navigations (it is module-scoped Zustand), so the missing load is never retried. Users who open Settings > Field Mapping before the project config finishes loading will see "No issue types prewarmed" and have to click Refresh to recover.
-
-**Fix:** Either move the target-schema load out of the mount effect and into a separate effect that depends on `[targetProjectKey, firstIssueTypeId]` (guarded so it only fires when those become non-null), or wait for hydration in `App.tsx` before allowing navigation to Settings.
+The `aria-disabled` attribute can be removed when the native `disabled` attribute is used, as browsers expose it automatically in the accessibility tree.
 
 ---
 
-### WR-02: `App.tsx` reads `useUpdateStore.getState()` directly during render, bypassing React's subscription model
+### WR-05: Synonym-loop fall-through creates latent cross-group match risk when `SYNONYMS` is extended
 
-**File:** `src/App.tsx:122`
+**File:** `src/features/field-mapping/heuristics.ts:41–47`
 
-**Issue:**
-```tsx
-const showUpdateModal =
-  updateStatus === 'available' ||
-  updateStatus === 'downloading' ||
-  updateStatus === 'installing' ||
-  (updateStatus === 'error' && useUpdateStore.getState().updateInfo !== null);
-```
-
-The last condition calls `useUpdateStore.getState()` synchronously during the render function. `getState()` returns a snapshot at call time; it does not cause the component to re-render when `updateInfo` changes. If `updateInfo` changes after the initial render but `updateStatus` stays `'error'`, the `showUpdateModal` computation produces a stale value until the next unrelated re-render. The rest of `updateStatus` is correctly subscribed via `useUpdateStore((s) => s.status)`.
-
-**Fix:** Subscribe `updateInfo` the same way as `status`:
-```tsx
-const updateInfo = useUpdateStore((s) => s.updateInfo);
-const showUpdateModal =
-  updateStatus === 'available' ||
-  updateStatus === 'downloading' ||
-  updateStatus === 'installing' ||
-  (updateStatus === 'error' && updateInfo !== null);
-```
-
----
-
-### WR-03: Initial load failure in `FieldMappingSection` is swallowed silently — no user-visible error feedback
-
-**File:** `src/features/field-mapping/FieldMappingSection.tsx:198-200`
-
-**Issue:** When `invoke('get_field_mapping')` or `loadSchema` throws during the mount effect, the catch block only calls `console.error(...)` and then falls through to `setLoading(false)`. The component renders the empty-state message ("No field mappings yet") even though the failure reason was a network/backend error, not a genuinely empty mapping table. The user sees a misleading UI and no actionable guidance.
-
-```ts
-// Current
-} catch (e) {
-  console.error('Failed to load field mapping:', e);
-} finally {
-  setLoading(false);
-}
-```
-
-**Fix:** Add an error state to `useMappingEditorStore` and render an explicit error UI with a retry action, consistent with how other data-loading components in this codebase handle errors (e.g., `ProjectSelector` renders `t('settings.project.error')` in red).
-
----
-
-### WR-04: Synonym lookup can produce a false positive when the source name matches a synonym key but none of the target fields match any form in that synonym group
-
-**File:** `src/features/field-mapping/heuristics.ts:41-47`
-
-**Issue:** The synonym loop structure is:
-
-```ts
-for (const [canonical, syns] of Object.entries(SYNONYMS)) {
-  const allForms = [canonical, ...syns];
-  if (allForms.includes(lower)) {           // source matches this group
-    const match = targetFields.find((f) => allForms.includes(normalize(f.name)));
-    if (match) return match;
-  }
-}
-```
-
-If the source name is, say, `"body"` (a synonym for `description`), the outer `if` matches the `description` group. The inner `find` then searches target fields for any of `['description', 'desc', 'body', 'details']`. If the only target field named anything in that set is also named `body`, it matches — but so would a field named `description` or `desc` or `details`. This is intentional and correct.
-
-The subtle issue is that the loop does not `break` or `return null` when the source matches a synonym group but no target field matches. It **falls through** to the next loop iteration. This means a source named `"body"` that fails to match any `description`-group target field will then continue scanning subsequent synonym entries — potentially matching the `priority` group if `body` happened to also be listed there. Currently the synonym table has no overlap, so this is a latent risk rather than an active bug, but extending `SYNONYMS` in Phase 22 (as mentioned in the comments) could create silent cross-group matches.
-
-**Fix:** After the inner `if (match) return match;`, add an explicit `break` or a separate `return null` so that a source that belongs to a synonym group never falls through to subsequent groups:
+**Issue:** The synonym lookup loop:
 
 ```ts
 for (const [canonical, syns] of Object.entries(SYNONYMS)) {
   const allForms = [canonical, ...syns];
   if (allForms.includes(lower)) {
     const match = targetFields.find((f) => allForms.includes(normalize(f.name)));
-    return match ?? null; // explicit: either found or done
+    if (match) return match;
+    // NO break/return here — falls through to next synonym group
+  }
+}
+```
+
+When a source name matches a synonym group but no target field matches any form in that group, the loop continues to subsequent groups. If a future Phase 22 extension of `SYNONYMS` introduces a synonym that overlaps between two groups (e.g., a field name shared between two entries), the first matching group that has a target field will win — not the most-specific match. Currently the synonym table has no overlaps, so this is latent, but the code comment explicitly says "Phase 22 may extend this."
+
+**Fix:** Return null immediately when the source belongs to a synonym group but no target match is found — matching a synonym group is exclusive:
+
+```ts
+for (const [canonical, syns] of Object.entries(SYNONYMS)) {
+  const allForms = [canonical, ...syns];
+  if (allForms.includes(lower)) {
+    const match = targetFields.find((f) => allForms.includes(normalize(f.name)));
+    return match ?? null; // found or explicitly not found — do not continue
   }
 }
 ```
 
 ---
 
-### WR-05: `'use client'` directive in `sonner.tsx` is semantically incorrect for a Tauri application
-
-**File:** `src/components/ui/sonner.tsx:1`
-
-**Issue:** The file begins with `'use client';`, a Next.js-specific directive for the React Server Components architecture. This project is a Tauri desktop application — it does not use Next.js or RSC. The directive is a no-op string literal that is not processed by Vite/Rollup, so it causes no runtime error, but it is actively misleading: it signals to any reader that the component must run on the client to distinguish it from server components, which is not the component model in use here.
-
-**Fix:** Remove the `'use client';` line. This is the only file in scope that carries it, suggesting it was cargo-culted from a shadcn/ui Next.js template snippet.
-
----
-
 ## Info
 
-### IN-01: `window.prompt` used for "Add field mapping" input
-
-**File:** `src/features/field-mapping/FieldMappingSection.tsx:271`
-
-**Issue:** `handleAddRow` calls `window.prompt(t('settings.fieldMapping.addRowPrompt'))` to collect the source field ID. The in-code comment acknowledges this as a "minimalist approach" and flags it for a future combobox replacement. While not a correctness bug, `window.prompt` blocks the UI thread, does not respect the app's theme, and is not keyboard-navigable. On some platforms (e.g., macOS Tauri webview), native dialogs may not behave consistently with the app window.
-
-**Fix:** Replace with an inline input or a modal dialog using the existing `VirtualizedCombobox` over `sourceFields`, as the comment itself suggests.
-
----
-
-### IN-02: `console.error` calls left in production code paths
+### IN-01: `console.error` left in production code paths
 
 **Files:**
-- `src/features/field-mapping/FieldMappingSection.tsx:199`
-- `src/features/connections/SettingsPage.tsx:1303, 1307, 1355, 1368`
+- `src/features/field-mapping/FieldMappingSection.tsx:209`
+- `src/features/connections/SettingsPage.tsx:1309, 1313`
 
-**Issue:** Five `console.error` calls are present in production code paths. While useful during development, they leak internal error details into the browser/webview console in production builds and are not surfaced to the user in any meaningful way. Notably, `SettingsPage.tsx:1355` chains `.catch(console.error)` directly, meaning any error object from `get_notification_prefs` is logged without any contextual label.
+**Issue:** Three `console.error` calls remain in production code. The one in `FieldMappingSection.tsx` is the companion to CR-01 (silence on load failure). The two in `SettingsPage.tsx` (inside `handleFrequencyChange` and `PollingSection`) log poll-frequency and notification-pref save failures without surfacing them to the user. The app otherwise surfaces errors through `toast.error` consistently.
 
-**Fix:** Either remove the console calls or replace them with a project-consistent error reporting mechanism. For user-impacting failures (poll frequency, notification prefs), show a toast error consistent with how the field-mapping errors are handled.
-
----
-
-### IN-03: `FieldMappingSection.test.tsx` EDIT-02 suggestion test does not assert suggestion content — only panel presence
-
-**File:** `src/features/field-mapping/__tests__/FieldMappingSection.test.tsx:139-157`
-
-**Issue:** The `[EDIT-02]` test seeds the schema cache with empty source fields (via `seedStores()`), then overrides `invoke('discover_source_fields')` to return two fields. It asserts that `suggestions-panel` is present in the DOM. However, the `schemaCacheStore.loadSchema` call during mount will call `discover_source_fields` and update the cache, but the test does not assert which suggestions were computed or that the correct source-to-target pairings appear in the panel. It is also sensitive to timing: if `loadSchema` resolves after the `waitFor` timeout, the panel will not appear and the test passes vacuously (returns early after the empty mapping rows leave nothing to wait for). A stronger assertion would verify specific source → target text in the panel.
-
-**Fix:** After asserting `suggestions-panel` is present, add assertions for the expected source field IDs and target field names visible in the panel, and ensure the test explicitly waits for the schema load side-effect, not just the panel's presence.
+**Fix:** Once CR-01 is addressed, remove the `console.error` in `FieldMappingSection`. For `SettingsPage.tsx`, replace with `toast.error` for user-impacting failures, consistent with the field-mapping error handling pattern already in place.
 
 ---
 
-_Reviewed: 2026-04-28_
+### IN-02: `getTransformerOptions` has no unit tests despite 11 distinct branches
+
+**File:** `src/features/field-mapping/transformerOptions.ts`
+
+**Issue:** `getTransformerOptions` contains an `isUserSource` guard (2 branches), a `user→string` early-return path, and a `switch` with 9 cases (including a default that returns all options for `{type: 'any'}`). The `heuristics.ts` module has thorough test coverage. `transformerOptions.ts` has none. The `user→string` → `[USER_NAME]` path, the `{type: 'any'}` → all-options path, and the priority/array-items paths are all untested.
+
+**Fix:** Add `transformerOptions.test.ts` covering at minimum:
+- `schema={type:'string'}`, `sourceSchema={type:'user'}` → only `USER_NAME`
+- `schema={type:'string'}`, no sourceSchema → `[IDENTITY, WIKI_TO_ADF]`
+- `schema={type:'user'}` → `[USER, IDENTITY]`
+- `schema={type:'any'}` → all seven options
+- `schema={type:'array', items:'component'}` → `[COMPONENT, IDENTITY]`
+- `schema={type:'priority'}` → `[PRIORITY, IDENTITY]`
+
+---
+
+### IN-03: Stale inline comment on `FieldMappingRow.transformerKind` omits `user_name`
+
+**File:** `src/features/field-mapping/types.ts:15`
+
+**Issue:** The comment reads `"One of: "identity" | "user" | "version" | "component" | "wiki_to_adf" | "priority"."` — six values. The canonical union in `transformerOptions.ts` has seven, including `user_name`. This will mislead any developer reading the type definition.
+
+**Fix:** Update the comment (or, better, remove it in favor of the `TransformerKind` type alias suggested in WR-03):
+
+```ts
+/** One of: "identity" | "user" | "user_name" | "version" | "component" | "wiki_to_adf" | "priority". */
+transformerKind: string;
+```
+
+---
+
+_Reviewed: 2026-05-04_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

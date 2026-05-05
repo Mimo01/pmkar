@@ -9,7 +9,7 @@ skipped: 0
 status: all_fixed
 ---
 
-# Phase 18: Code Review Fix Report
+# Phase 18: Code Review Fix Report — Iteration 1 (2026-04-27)
 
 **Fixed at:** 2026-04-27T21:00:00Z
 **Source review:** .planning/phases/18-v2-v3-translation-layer/18-REVIEW.md
@@ -70,3 +70,48 @@ check (Pitfall F), so no additional gating is needed at the walker level.
 _Fixed: 2026-04-27T21:00:00Z_
 _Fixer: Claude (gsd-code-fixer)_
 _Iteration: 1_
+
+---
+
+# Phase 18: Code Review Fix Report — Iteration 2 (2026-05-04)
+
+**Fixed at:** 2026-05-04T22:00:00Z
+**Source review:** .planning/milestones/v0.4.0-phases/18-v2-v3-translation-layer/18-REVIEW.md
+**Iteration:** 2
+
+**Summary:**
+- Findings in scope: 4 (WR-01, WR-02, WR-03, WR-04; IN-01 skipped per scope)
+- Fixed: 4
+- Skipped: 0
+
+## Fixed Issues
+
+### WR-01: Off-by-one in `scan_mention_patterns`
+
+**Files modified:** `src-tauri/src/field_transform/user.rs`
+**Commit:** `3aab953`
+**Applied fix:** Changed the outer loop guard from `while i + 2 < limit` to `while i + 1 < limit`. This allows the loop to inspect `bytes[i]` and `bytes[i + 1]` when `i == limit - 2`, fixing the case where a `[~username]` pattern whose opening `[` falls at the last two bytes of the scan boundary was silently missed.
+
+### WR-02: `scan_html_profile_links` guard inverted logic
+
+**Files modified:** `src-tauri/src/field_transform/user.rs`
+**Commit:** `ed79bc2`
+**Applied fix:** Changed `let preceding_ok = i == 0 || bytes[i - 1] == b'?' || bytes[i - 1] == b'&'` to `let preceding_ok = i > 0 && (bytes[i - 1] == b'?' || bytes[i - 1] == b'&')`. Removed the `i == 0` special case which was backwards — a string starting with `name=` at position 0 has no preceding query-param delimiter and must be rejected. Added a comment explaining the intent.
+
+### WR-03: Null user field returns no gap in `dispatch_user`
+
+**Files modified:** `src-tauri/src/field_transform/pipeline.rs`
+**Commit:** `796ae71`
+**Applied fix:** Replaced the bare `return` in the `username.is_empty()` branch with a `gaps.push(GapVariant::Person(UnresolvedPerson { ... })); return;` block. This ensures Phase 22 receives a `GapVariant::Person` for null/missing single user fields, enabling the required-field gating UI to prompt the user rather than silently skipping the field. The `source_username` is set to `None` and `source_key`/`source_email` are preserved from the source field. All existing tests pass.
+
+### WR-04: `transformer_kind` unchecked for user-typed fields
+
+**Files modified:** `src-tauri/src/field_transform/pipeline.rs`
+**Commit:** `82e9bc2`
+**Applied fix:** Replaced the `if/else` dispatch with an explicit `match row.transformer_kind.as_str()` that enumerates `"user_name"` → `dispatch_user_name`, `"user" | "auto" | ""` → `dispatch_user`, and an `other` arm that logs the unknown kind via `eprintln!` and falls back to `dispatch_user`. All 18 pipeline tests pass.
+
+---
+
+_Fixed: 2026-05-04T22:00:00Z_
+_Fixer: Claude (gsd-code-fixer)_
+_Iteration: 2_

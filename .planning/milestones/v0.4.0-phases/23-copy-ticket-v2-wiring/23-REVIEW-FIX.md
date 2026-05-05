@@ -1,75 +1,79 @@
 ---
 phase: 23-copy-ticket-v2-wiring
-fixed_at: 2026-04-28T00:00:00Z
-review_path: .planning/phases/23-copy-ticket-v2-wiring/23-REVIEW.md
-iteration: 1
-findings_in_scope: 6
-fixed: 6
-skipped: 0
-status: all_fixed
+fixed_at: 2026-05-05T06:29:54Z
+review_path: .planning/milestones/v0.4.0-phases/23-copy-ticket-v2-wiring/23-REVIEW.md
+iteration: 2
+findings_in_scope: 8
+fixed: 7
+skipped: 1
+status: partial
 ---
 
 # Phase 23: Code Review Fix Report
 
-**Fixed at:** 2026-04-28T00:00:00Z
-**Source review:** .planning/phases/23-copy-ticket-v2-wiring/23-REVIEW.md
-**Iteration:** 1
+**Fixed at:** 2026-05-05T06:29:54Z
+**Source review:** `.planning/milestones/v0.4.0-phases/23-copy-ticket-v2-wiring/23-REVIEW.md`
+**Iteration:** 2
 
 **Summary:**
-- Findings in scope: 6
-- Fixed: 6
-- Skipped: 0
+- Findings in scope: 8 (3 Critical + 5 Warning)
+- Fixed: 7
+- Skipped: 1
 
 ## Fixed Issues
 
-### CR-01: User-edited summary silently dropped in confirmCopy
-
-**Files modified:** `src/features/tickets/copyStore.ts`
-**Commit:** 4a64a4b
-**Applied fix:** In `confirmCopy`, the `overrideValues` passed to `copy_ticket_v2` now spreads `{ summary: state.targetSummary, ...state.overrideValues }` so the user's edited summary is always sent as a base value, with any explicit override in `overrideValues` taking precedence.
-
----
-
-### WR-01: targetIssueTypeId null guard missing in confirmCopy
-
-**Files modified:** `src/features/tickets/copyStore.ts`
-**Commit:** 46ccb84
-**Applied fix:** Added an early-return guard immediately after the `sourceKey`/`cloudMeta` check. If `state.targetIssueTypeId` is null or empty-string falsy, `confirmCopy` transitions directly to the `result` phase with a synthetic failure step (`create_issue: false, detail: 'No target issue type selected.'`) instead of proceeding to the backend invoke.
-
----
-
-### CR-02: Silent worklog failure path — zero CopyStepResult entries on error
-
-**Files modified:** `src-tauri/src/copy_pipeline.rs`
-**Commit:** a9be3df
-**Applied fix:** Replaced the nested `if let Ok` / `if is_success()` structure in `copy_worklogs` with explicit `match` arms. Network error, non-2xx status, and JSON parse failure now each push a `CopyStepResult { step: "worklog:fetch", success: false, detail: Some(...) }` entry and early-return. The per-worklog POST loop error arm also captures `e` for diagnostic detail.
-
----
-
-### WR-02: Err(_) arms discard network error details across pipeline helpers
-
-**Files modified:** `src-tauri/src/copy_pipeline.rs`
-**Commit:** 6e15d68
-**Applied fix:** Changed all `Err(_)` match arms in the pipeline helpers to `Err(e)` and included `{e}` in the `detail` field string: `add_remote_link` (remote link network error), `copy_attachments` (upload network error and download network error), `copy_comments` (comment POST network error), and `copy_subtasks` (sub-task create network error). The existing per-worklog POST `Err` arm was updated in the same pass.
-
----
-
-### WR-03: Dead _audit bindings in four field-discovery commands
+### CR-01: Unicode-unsafe byte slice in `format_create_failure_detail`
 
 **Files modified:** `src-tauri/src/commands.rs`
-**Commit:** 7da8b9c
-**Applied fix:** Removed the `db: State<'_, Arc<Mutex<AuditDb>>>` parameter and the `let _audit = build_audited_client(Arc::clone(db.inner()))` line from all four commands: `discover_source_fields`, `get_target_field_schema_for_issuetype`, `probe_createmeta`, and `pre_warm_target_issue_types`. Tauri injects state by type so removing an unused state parameter from the handler signature is safe and does not affect the IPC call surface.
+**Commit:** 7495d20
+**Applied fix:** Added `is_char_boundary` walk-back loop to both the JSON compact path and the raw text path in `format_create_failure_detail`, ensuring truncation at byte offset 1024 never splits a multi-byte UTF-8 sequence.
 
----
+### CR-02: `targetPriorityId` and `selectedLabels` populated but never forwarded to backend
 
-### WR-04: migrate_triage_check_constraint errors silently discarded
+**Files modified:** `src/features/tickets/copyStore.ts`
+**Commit:** 128d9cf
+**Applied fix:** Applied Option A. In `confirmCopy`, merged `targetPriorityId` (as `{ priority: { id } }`) and `selectedLabels` (as `{ labels }`) into the `overrideValues` payload before invoking `copy_ticket_v2`. Phase 22 renderer overrides spread on top so they take precedence. `targetDescription` was not forwarded — it is not a standard Cloud Jira v3 create field in the current mapping pipeline, and no production component subscribes to the setter.
+
+### CR-03: Integration test worklog assertion missing
+
+**Files modified:** `src-tauri/tests/copy_ticket_v2_integration.rs`
+**Commit:** c87cab2
+**Applied fix:** Added `assert!(!wl_steps.is_empty(), "PROJ-1 fixture has worklogs — copy_worklogs must produce >=1 step")` before the per-step success assertions. The PROJ-1 fixture seeds exactly 1 worklog entry with `timeSpentSeconds: 7200`, confirming the assertion is valid.
+
+### WR-01: `get_project_keys` swallows database errors
 
 **Files modified:** `src-tauri/src/triage_db.rs`
-**Commit:** 8f5ed54
-**Applied fix:** Changed `migrate_triage_check_constraint` signature from `fn(...) -> ()` to `fn(...) -> AppResult<()>`. The inner `let _ = conn.execute_batch(...)` is now `conn.execute_batch(...)?` to propagate errors. Both callers in `open()` and `open_in_memory()` updated from `Self::migrate_triage_check_constraint(&conn)` to `Self::migrate_triage_check_constraint(&conn)?`.
+**Commit:** 4da6a96
+**Applied fix:** Replaced `.ok().unwrap_or((None, None, None, None))` with `use rusqlite::OptionalExtension; ... .optional()?`. The `optional()` method returns `Ok(None)` when no rows match and propagates real errors as `Err(...)`.
+
+### WR-02: `ALTER_TRIAGE_ADD_COPIED_KEY` failure silently discarded
+
+**Files modified:** `src-tauri/src/triage_db.rs`
+**Commit:** 750bd09
+**Applied fix:** Added `ignore_duplicate_column` free function that passes through `Ok(())` and `SQLITE_ERROR` (extended code 1, "duplicate column name") while propagating real errors. Replaced `let _ = conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY)` with `ignore_duplicate_column(...)?` in both `open` and `open_in_memory`.
+
+### WR-04: `copy_worklogs` posts `timeSpentSeconds: 0` for malformed entries
+
+**Files modified:** `src-tauri/src/copy_pipeline.rs`
+**Commit:** dffac4a
+**Applied fix:** Added a `if time_spent_seconds <= 0` guard after extracting `timeSpentSeconds`. Malformed entries now emit a failure `CopyStepResult` with a descriptive message and `continue` past the POST logic.
+
+### WR-05: `confirmCopy` guard makes `targetIssueTypeId ?? ''` unreachable
+
+**Files modified:** `src/features/tickets/copyStore.ts`
+**Commit:** 1d26a30
+**Applied fix:** Added a two-line comment above the `?? ''` fallback explaining that the guard at `if (!state.targetIssueTypeId)` makes this branch unreachable dead code kept only for TypeScript type narrowing.
+
+## Skipped Issues
+
+### WR-03: `open_external_url` on Windows passes URL as third arg to `cmd /C start`
+
+**File:** `src-tauri/src/commands.rs`
+**Reason:** Already fixed — code context differs from review. The current `open_external_url` function at lines 657-663 already uses `rundll32 url.dll,FileProtocolHandler <url>` for Windows (replaced by the Phase 19 CR-01 fix). The `cmd /C start` pattern cited in the finding is not present in the current source. No change required.
+**Original issue:** `cmd /C start <url>` passes the URL as the third positional argument, which opens a new `cmd.exe` window and ignores the URL.
 
 ---
 
-_Fixed: 2026-04-28T00:00:00Z_
+_Fixed: 2026-05-05T06:29:54Z_
 _Fixer: Claude (gsd-code-fixer)_
-_Iteration: 1_
+_Iteration: 2_

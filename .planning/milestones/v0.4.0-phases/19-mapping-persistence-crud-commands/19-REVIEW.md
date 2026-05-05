@@ -1,186 +1,248 @@
 ---
 phase: 19-mapping-persistence-crud-commands
-reviewed: 2026-04-27T00:00:00Z
+reviewed: 2026-05-04T00:00:00Z
 depth: standard
-files_reviewed: 4
+files_reviewed: 3
 files_reviewed_list:
-  - src-tauri/Cargo.toml
-  - src-tauri/src/commands.rs
   - src-tauri/src/field_mapping_db.rs
+  - src-tauri/src/commands.rs
   - src-tauri/src/main.rs
 findings:
-  critical: 0
+  critical: 2
   warning: 4
   info: 2
-  total: 6
-status: issues_found
+  total: 8
+status: fixed
 ---
 
 # Phase 19: Code Review Report
 
-**Reviewed:** 2026-04-27
+**Reviewed:** 2026-05-04T00:00:00Z
 **Depth:** standard
-**Files Reviewed:** 4
+**Files Reviewed:** 3
 **Status:** issues_found
 
 ## Summary
 
-Phase 19 adds three Tauri CRUD commands (`get_field_mapping`, `set_field_mapping`, `delete_field_mapping`) backed by two new SQLite tables (`field_mapping`, `mapping_meta`) in `FieldMappingDb`, plus a seed function that inserts five default mapping rows on first open.
+Phase 19 delivers SQLite-backed field mapping persistence (`field_mapping`, `mapping_meta`, `mapping_audit_log` tables in `field_mapping_db.rs`), three Tauri CRUD commands (`get_field_mapping`, `set_field_mapping`, `delete_field_mapping` in `commands.rs`), and their registration in `main.rs`. The schema design is careful: parameterised SQL throughout, a partial unique index on `target_field_id` to allow multiple dismissed-sentinel rows, a dedup migration to handle pre-existing data, and a seeded set of five defaults. The audit machinery (`insert_mapping_audit`, `log_preview_transformations`) is well-structured.
 
-The three new commands themselves are structurally sound: they follow the established `Arc<Mutex<>>` lock pattern, return correctly-typed `AppError`, and the underlying DB methods use parameterized queries with no injection risk. `Cargo.toml` and `main.rs` changes are minimal and correct.
-
-Four warnings were found. None are in the three new CRUD commands themselves — two are pre-existing issues in `field_discovery.rs` / `commands.rs` that are in scope because those files are listed for review, one is a missing DB-level constraint in the new `field_mapping` table, and one is a transaction-safety gap in the new seed function. Two info items cover dead code and a stale doc comment introduced by this phase.
-
-## Warnings
-
-### WR-01: Audited HTTP client built but discarded — field-discovery commands bypass audit middleware
-
-**File:** `src-tauri/src/commands.rs:1176`, `1197`, `1254`, `1280`
-
-**Issue:** `discover_source_fields`, `get_target_field_schema_for_issuetype`, `probe_createmeta`, and `pre_warm_target_issue_types` each call `build_audited_client(...)` but immediately assign the result to `_audit`, then construct a separate `reqwest::Client::new()` and pass *that* to the field-discovery functions. The `_audit` value is dropped at end-of-scope without being used. The comment on line 1175 says "Arm audit middleware side-effects (request-id seeding) for downstream calls" — this intent is not achieved. All HTTP traffic from these four commands is invisible to the audit log.
-
-```rust
-// Current (broken): _audit is dropped, plain client is used
-let _audit = build_audited_client(Arc::clone(db.inner()));
-let client = reqwest::Client::new();
-field_discovery::get_or_fetch_source_global(mapping_db.inner(), &client, ...).await
-
-// Fix: pass the audited client
-let client = build_audited_client(Arc::clone(db.inner()));
-field_discovery::get_or_fetch_source_global(mapping_db.inner(), &client, ...).await
-```
-
-The `field_discovery` function signatures accept `&Client` (from `reqwest`), but `ClientWithMiddleware` (from `reqwest_middleware`) implements `Deref<Target = Client>` — update the function signatures to accept `&ClientWithMiddleware` or change the parameter type to a trait object. Alternatively, pass the `ClientWithMiddleware` directly after updating `get_or_fetch_source_global` / `get_or_fetch_target_schema` / `fetch_all_createmeta_fields` / `fetch_target_issue_types` to take `&ClientWithMiddleware`.
+Two critical issues were found. The first is a command injection vector on Windows in `open_external_url` that is reachable from the frontend and survives the `http://`/`https://` prefix guard. The second is a silent hash collision in `hash_field_value` that corrupts the audit trail when JSON serialisation fails. Four warnings cover a silently-swallowed HTTP error in user-domain pagination, two `unwrap()` panics in `main.rs` startup, missing WAL mode on `mapping.db`, and a missing transaction boundary over the batch audit insert. Two info items flag absent `transformer_kind` validation and an untested private helper.
 
 ---
 
-### WR-02: No validation of `transformer_kind` in `set_field_mapping` — arbitrary strings accepted
+## Critical Issues
 
-**File:** `src-tauri/src/commands.rs:1344`, `src-tauri/src/field_mapping_db.rs:40`
+### CR-01: Command injection via `cmd /C start <url>` on Windows
 
-**Issue:** The `set_field_mapping` command accepts any `FieldMappingRow` from the frontend and persists it without validating `transformer_kind`. The `field_mapping` table schema has no `CHECK` constraint on that column (the `side` column in `field_schema_cache` correctly has one). When `apply_mapping` in a later phase dispatches on `transformer_kind`, an unknown value will silently produce incorrect behavior — no error will be surfaced because the bad value was persisted without complaint.
+**File:** `src-tauri/src/commands.rs:659-662`
+
+**Issue:** On Windows, `open_external_url` passes the raw URL string as a bare argument to `cmd /C start`. Windows `cmd.exe` tokenises everything after `/C` as a shell command string and honours metacharacters (`&`, `|`, `&&`, `||`, `"`). The `starts_with("http")` guard on line 647 does not prevent a URL like `https://x.com" & calc.exe "` from being constructed by the frontend and passed through. `std::process::Command::args()` does not shell-quote arguments for `cmd /C`; the OS concatenates them with spaces before `cmd` re-parses them as a shell command line. The macOS and Linux paths (`open`/`xdg-open`) do not have this problem because those tools do not invoke a shell.
 
 ```rust
-// Fix option A: add CHECK at the schema level
-const CREATE_FIELD_MAPPING: &str = "
-    CREATE TABLE IF NOT EXISTS field_mapping (
-        ...
-        transformer_kind    TEXT NOT NULL
-            CHECK(transformer_kind IN
-                  ('identity','user','version','component','wiki_to_adf','priority')),
-        ...
-    );
-";
+// VULNERABLE — cmd re-parses the concatenated argument list as shell syntax
+std::process::Command::new("cmd")
+    .args(["/C", "start", &url])   // line 660
+    .spawn()
+```
 
-// Fix option B: validate in set_field_mapping before calling upsert
-const VALID_KINDS: &[&str] = &["identity","user","version","component","wiki_to_adf","priority"];
-pub fn set_field_mapping(row: FieldMappingRow, ...) -> Result<(), AppError> {
-    if !VALID_KINDS.contains(&row.transformer_kind.as_str()) {
-        return Err(AppError::Internal(format!(
-            "unknown transformer_kind: '{}'", row.transformer_kind
-        )));
-    }
-    ...
+**Fix:** Bypass `cmd` on Windows entirely. `rundll32 url.dll,FileProtocolHandler <url>` is the conventional safe alternative; it receives the URL as a single argument without shell re-parsing:
+
+```rust
+#[cfg(target_os = "windows")]
+{
+    std::process::Command::new("rundll32")
+        .args(["url.dll,FileProtocolHandler", &url])
+        .spawn()
+        .map_err(|e| AppError::Internal(format!("Failed to open URL: {e}")))?;
 }
 ```
 
-Note: option A only applies to new databases. If the schema is already deployed without the constraint, a migration step is required. Option B is safer as a defense in the command layer.
+Alternatively, add the `open` crate which handles all platforms correctly.
 
 ---
 
-### WR-03: Source schema hash computed from re-serialized structs, not raw HTTP bytes — violates stated contract
+### CR-02: Silent empty-string hash in `hash_field_value` causes audit collision
 
-**File:** `src-tauri/src/field_discovery.rs:550-554`
+**File:** `src-tauri/src/field_mapping_db.rs:661`
 
-**Issue:** `get_or_fetch_source_global` computes the schema hash by re-serializing the already-parsed `Vec<FieldSchema>` back to JSON:
-
-```rust
-let raw_hash = compute_schema_hash(
-    serde_json::to_string(&fields)
-        .unwrap_or_default()   // <-- silently hashes "" on serialization failure
-        .as_bytes(),
-);
-```
-
-The module-level doc comment on `compute_schema_hash` (`field_mapping_db.rs:344-346`) explicitly states: *"hashing the raw JSON (no canonicalization) so any byte-level drift is detected."* The source hash violates this contract in two ways:
-
-1. The hash input is a canonical re-serialization of Rust structs, not the raw server response. Field ordering, whitespace, and extra JSON keys that did not survive parsing are lost. Byte-level drift will not be detected.
-2. `unwrap_or_default()` on the serialization means a failure produces `compute_schema_hash(b"")` — a well-known constant. Two different serialization failures from different server responses would produce an identical hash, falsely signalling no change.
-
-Compare with `get_or_fetch_target_schema`, which correctly hashes raw response bytes inside `fetch_all_createmeta_fields`.
+**Issue:** `hash_field_value` calls `serde_json::to_string(v).unwrap_or_default()`. If serialisation ever fails, `unwrap_or_default()` returns `""`. The SHA-256 of `""` is the constant digest `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`. Any two distinct field values that both fail serialisation will produce the same hash and appear identical in `mapping_audit_log`. The hash is stored as the authoritative "what was transformed" fingerprint; a collision silently corrupts the audit trail with no error surfaced anywhere in the call chain (the caller in `log_preview_transformations` discards all errors with `let _ =`).
 
 ```rust
-// Fix: capture raw bytes before parsing, consistent with target path
-let bytes = resp.bytes().await
-    .map_err(|_| AppError::Http("v2 /field: read body failed".into()))?;
-let raw_hash = compute_schema_hash(&bytes);
-let value: serde_json::Value = serde_json::from_slice(&bytes)
-    .map_err(|_| AppError::Http("v2 /field: parse failed".into()))?;
-let fields = parse_global_field_list(&value)?;
+// Line 661 — serialisation failure silently hashes the empty string
+let json_str = serde_json::to_string(v).unwrap_or_default();
 ```
 
-This requires refactoring `discover_v2_fields` to return `(Vec<FieldSchema>, String)` like `fetch_all_createmeta_fields` does.
+**Fix:** Return a sentinel value that is obviously invalid rather than a valid-looking but wrong hash:
+
+```rust
+pub fn hash_field_value(v: &serde_json::Value) -> String {
+    match serde_json::to_string(v) {
+        Ok(json_str) => {
+            let mut hasher = Sha256::new();
+            hasher.update(json_str.as_bytes());
+            hex::encode(hasher.finalize())
+        }
+        // Distinct sentinel — never a valid SHA-256 hex string (wrong length + prefix)
+        Err(_) => "HASH_ERROR_SERIALIZATION_FAILED".to_string(),
+    }
+}
+```
 
 ---
 
-### WR-04: `seed_defaults_if_empty` inserts 5 rows outside a transaction — partial seed cannot be corrected
+## Warnings
 
-**File:** `src-tauri/src/field_mapping_db.rs:55-82`
+### WR-01: HTTP error silently swallowed mid-pagination in `search_jira_users_by_domain`
 
-**Issue:** The seed guard (lines 56-63) reads `COUNT(*)` and short-circuits if > 0. The five `INSERT OR IGNORE` statements are then executed one at a time in SQLite autocommit mode. If the process is killed between inserts (e.g., after rows 1-2 are written, before rows 3-5), on next `open()` the `COUNT(*)` check finds 2 rows and skips seeding entirely. The database is left permanently missing the `priority`, `assignee`, and `reporter` defaults.
+**File:** `src-tauri/src/commands.rs:1154-1158`
+
+**Issue:** When a non-2xx response is received mid-pagination (e.g. a 429 rate-limit on page 2), the function `break`s and returns `Ok(partial_results)`. The caller receives no indication that the result is incomplete. Additionally, on line 1158 a JSON parse failure on a successful response is also swallowed via `unwrap_or_default()` — again returning a silently truncated list. Both paths cause the frontend to display an incomplete user-resolution table as if it were the full result.
 
 ```rust
-// Fix: wrap all seed inserts in a single transaction
-fn seed_defaults_if_empty(conn: &Connection) -> AppResult<()> {
-    let count: i64 = conn.query_row(
-        "SELECT COUNT(*) FROM field_mapping", [], |r| r.get(0)
-    )?;
-    if count > 0 {
-        return Ok(());
+if !resp.status().is_success() {
+    break;  // silent partial result — status dropped on the floor
+}
+let page: Vec<serde_json::Value> = resp.json().await.unwrap_or_default(); // parse error also dropped
+```
+
+**Fix:** Propagate errors rather than silently truncating:
+
+```rust
+if !resp.status().is_success() {
+    return Err(AppError::Http(format!(
+        "User domain search returned status {} at offset {start_at}",
+        resp.status().as_u16()
+    )));
+}
+let page: Vec<serde_json::Value> = resp
+    .json()
+    .await
+    .map_err(|e| AppError::Http(format!("Failed to parse user search page: {e}")))?;
+```
+
+---
+
+### WR-02: `unwrap()` on mutex locks in `main.rs` startup can panic the process
+
+**File:** `src-tauri/src/main.rs:156, 160`
+
+**Issue:** Two `.lock().unwrap()` calls in the `setup` closure handle the `TriageDb` mutex and the `poll_tx` mutex. If either mutex is poisoned (possible if another thread panicked while holding it during earlier setup steps), these calls panic and crash the application at launch with no user-facing recovery path. Every other lock acquisition in the codebase uses `.lock().map_err(|_| AppError::Internal(...))` or equivalent; these two are an inconsistency introduced in `main.rs` setup code.
+
+```rust
+// Lines 156, 160 — panic on poison instead of graceful error
+let freq_str = tdb.lock().unwrap().get_poll_frequency()...
+let _ = poll_tx.lock().unwrap().send(initial_freq);
+```
+
+**Fix:** Use the `?` operator with a mapped error to propagate into the `setup` closure's `Box<dyn Error>` return:
+
+```rust
+let freq_str = tdb
+    .lock()
+    .map_err(|_| "TriageDb lock poisoned during startup")?
+    .get_poll_frequency()
+    .unwrap_or_else(|_| "off".to_string());
+poll_tx
+    .lock()
+    .map_err(|_| "poll_tx lock poisoned during startup")?
+    .send(initial_freq)
+    .ok();
+```
+
+---
+
+### WR-03: No transaction boundary in `log_preview_transformations` batch insert
+
+**File:** `src-tauri/src/commands.rs:1780-1802`
+
+**Issue:** `log_preview_transformations` inserts up to 500 audit rows in a `for` loop with each row individually auto-committed by SQLite's default autocommit mode. If the process crashes mid-loop (after row 200 of 500), the `mapping_audit_log` for that `copy_id` is left permanently incomplete. The audit tab would then show a partial picture for that copy event. The "best-effort" comment justifies swallowing per-row insert errors, but it does not justify the absence of atomicity for the batch as a whole. 500 individual auto-commits also have unnecessary I/O overhead.
+
+**Fix:** Wrap the entire loop in an explicit SQLite transaction. Since `conn` is private on `FieldMappingDb`, the cleanest approach is to add a transaction wrapper in `insert_mapping_audit` or expose a batch method:
+
+```rust
+// In FieldMappingDb — add a batch method with a transaction:
+pub fn insert_mapping_audit_batch(&self, rows: &[AuditRowArgs]) -> AppResult<()> {
+    self.conn.execute_batch("BEGIN")?;
+    for row in rows {
+        // individual errors roll back the whole batch
+        self.insert_mapping_audit_inner(row)?;
     }
-    let tx = conn.unchecked_transaction()?;
-    let now = Utc::now().to_rfc3339();
-    let defaults: [(&str, &str, &str); 5] = [ ... ];
-    for (src, tgt, kind) in defaults {
-        tx.execute(
-            "INSERT OR IGNORE INTO field_mapping ... VALUES (?1, ?2, ?3, ?4, ?4)",
-            params![src, tgt, kind, now],
-        )?;
-    }
-    tx.commit()?;
+    self.conn.execute_batch("COMMIT")?;
     Ok(())
 }
 ```
 
-## Info
-
-### IN-01: `mapping_meta` table created but has no read/write methods — dead code
-
-**File:** `src-tauri/src/field_mapping_db.rs:48-53`, `93-94`, `103-104`
-
-**Issue:** The `mapping_meta` table is created in both `open()` and `open_in_memory()`, but `FieldMappingDb` exposes no methods to read from or write to it. No production code path queries this table. The only non-DDL reference is a test assertion that the table exists (`field_mapping_db.rs:513`). This is a stub that was planned for Phase 19 but left unimplemented.
-
-**Fix:** Either add `get_meta`/`set_meta` methods to `FieldMappingDb` if the table is needed now, or defer the table creation to the phase that will actually use it and remove the DDL from this phase.
-
 ---
 
-### IN-02: Module doc comment describes Phase 19 as future work — stale after this phase completes
+### WR-04: `FieldMappingDb` opens without WAL journal mode
 
-**File:** `src-tauri/src/field_mapping_db.rs:1-5`
+**File:** `src-tauri/src/field_mapping_db.rs:269-282`
 
-**Issue:** The module-level doc comment reads: *"Phase 19 will extend this file with `field_mapping` and `mapping_meta` tables; the schema below is stable."* Phase 19 is now complete. The forward-looking language is stale and will mislead future readers.
+**Issue:** Neither `FieldMappingDb::open` nor `open_in_memory` sets `PRAGMA journal_mode=WAL`. Without WAL, SQLite uses the default DELETE journal mode, which serialises all readers and writers. The poll engine background thread and the main Tauri thread both hold references to `Arc<Mutex<FieldMappingDb>>` — but if the Mutex is ever dropped or if a future refactor splits the DB access across threads, concurrent reads during a write will receive `SQLITE_BUSY`. In the existing design the Mutex prevents concurrent access, but WAL mode is still the correct default for application databases (it is standard in the other DB modules in this codebase). Omitting it is an inconsistency that creates risk if the locking model ever changes.
 
-**Fix:**
+**Fix:** Add WAL pragma immediately after `Connection::open`:
+
 ```rust
-//! Phase 17: mapping.db `SQLite` persistence for the field schema cache.
-//!
-//! Mirrors the `snapshot_db.rs` pattern (db-per-concern, `Arc<Mutex<>>`, manual
-//! `CREATE TABLE IF NOT EXISTS` migration). Extended in Phase 19 with
-//! `field_mapping` (user-configurable field mappings) and `mapping_meta` tables.
+pub fn open(path: &std::path::Path) -> AppResult<Self> {
+    let conn = Connection::open(path)?;
+    conn.execute_batch("PRAGMA journal_mode=WAL;")?;
+    // ... existing migration steps
+}
 ```
 
 ---
 
-_Reviewed: 2026-04-27_
+## Info
+
+### IN-01: `set_field_mapping` accepts `transformer_kind` as an unchecked free-form string
+
+**File:** `src-tauri/src/commands.rs:1347-1355`
+
+**Issue:** The `set_field_mapping` command deserialises a `FieldMappingRow` from the frontend and upserts it without validating `transformer_kind` against the known set (`identity`, `wiki_to_adf`, `priority`, `user`, etc.). An unknown value persisted to `field_mapping` will fail silently at copy time when `apply_mapping` dispatches on it. This is inconsistent with `set_triage_state` (lines 1032-1039) which explicitly enumerates valid values and rejects unknown ones. The `field_mapping` table DDL also has no `CHECK` constraint on this column (compare with `field_schema_cache.side` which does).
+
+**Fix:** Add an allow-list check in `set_field_mapping` before calling `upsert_mapping_row`:
+
+```rust
+const VALID_TRANSFORMER_KINDS: &[&str] =
+    &["identity", "wiki_to_adf", "priority", "user", "version", "component"];
+
+pub fn set_field_mapping(row: FieldMappingRow, ...) -> Result<(), AppError> {
+    if !VALID_TRANSFORMER_KINDS.contains(&row.transformer_kind.as_str()) {
+        return Err(AppError::Internal(format!(
+            "Unknown transformer_kind: '{}'. Valid values: {:?}",
+            row.transformer_kind, VALID_TRANSFORMER_KINDS
+        )));
+    }
+    // ... rest unchanged
+}
+```
+
+---
+
+### IN-02: `redact_string_in_value` is a private helper with no unit tests
+
+**File:** `src-tauri/src/commands.rs:1681-1696`
+
+**Issue:** `redact_string_in_value` recursively walks a `serde_json::Value` tree and calls `redact_credential_value` on string leaves. It is private (`fn`, not `pub fn`) and lives in `commands.rs` where the `#[cfg(test)]` block has no coverage for it. The `field_mapping_db.rs` test suite covers `redact_credential_value` thoroughly (lines 1143-1187), but the tree-walking wrapper that is actually called from `log_preview_transformations` is untested. An edge case — such as a `Value::Null` or deeply-nested array — could produce incorrect output without detection.
+
+**Fix:** Move `redact_string_in_value` to `field_mapping_db.rs` where it can be tested alongside `redact_credential_value`, or add targeted tests in `commands.rs`:
+
+```rust
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn redact_string_in_value_recurses_into_object() {
+        use super::*;
+        let v = serde_json::json!({"auth": "Bearer secret", "count": 1});
+        let out = redact_string_in_value(&v);
+        assert_eq!(out["auth"], "[REDACTED]");
+        assert_eq!(out["count"], 1); // non-string passes through
+    }
+}
+```
+
+---
+
+_Reviewed: 2026-05-04T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

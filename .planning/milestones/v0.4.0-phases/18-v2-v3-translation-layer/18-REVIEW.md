@@ -1,6 +1,6 @@
 ---
 phase: 18-v2-v3-translation-layer
-reviewed: 2026-04-27T00:00:00Z
+reviewed: 2026-05-04T00:00:00Z
 depth: standard
 files_reviewed: 8
 files_reviewed_list:
@@ -13,159 +13,144 @@ files_reviewed_list:
   - src-tauri/src/field_transform/identity.rs
   - src-tauri/src/lib.rs
 findings:
-  critical: 1
-  warning: 3
-  info: 2
-  total: 6
-status: issues_found
+  critical: 0
+  warning: 4
+  info: 1
+  total: 5
+status: fixed
 ---
 
 # Phase 18: Code Review Report
 
-**Reviewed:** 2026-04-27
+**Reviewed:** 2026-05-04T00:00:00Z
 **Depth:** standard
 **Files Reviewed:** 8
 **Status:** issues_found
 
 ## Summary
 
-The Phase 18 pipeline implements a two-phase v2→v3 field translation layer. The overall design is sound — the gap/error distinction is correct, the caching pattern is safe, and the user batching (TRAN-06) is correctly implemented for the domain-based path. One correctness bug was found in `wiki_to_adf.rs` that causes a mention to be silently dropped when a text node consists of exactly one `[~username]` pattern with no surrounding text. Three quality warnings relate to: a per-username HTTP call in the no-domain fallback path, overly permissive public fields on resolver structs, and a dead computed variable that creates misleading code. Two info items cover a whitespace artifact in macro placeholders and missing test coverage for the identified edge case.
+This is a re-review of the Phase 18 v2-to-v3 translation pipeline. All findings from the prior review (2026-04-27) were verified against the current source: CR-01 (isolated mention drop), WR-02 (public resolver fields), WR-03 (dead `effective_in_code` variable), and the no-domain TRAN-06 docstring (old WR-01) are all confirmed fixed. One prior info item (macro placeholder whitespace, old IN-01) is still present in the current source.
 
----
-
-## Critical Issues
-
-### CR-01: Single isolated `[~username]` mention is silently dropped, never becomes a mention node
-
-**File:** `src-tauri/src/field_transform/wiki_to_adf.rs:137-144`
-
-**Issue:** `splice_mentions_in_content_array` assumes `replacement.len() == 1` always means "a single plain text node with no mention found." It then tries to extract `replacement[0]["text"]` and rewrite the original node in-place. However, `expand_mentions_in_text` can return a vec of length 1 containing a **mention node** (not a text node) when the entire text is exactly `[~username]` with no prefix or trailing text. In that case `replacement[0].get("text")` returns `None`, the `if let Some(s)` arm is skipped, `i` is incremented, and the original text node `{"type":"text","text":"[~alice]"}` remains in the content array unchanged. The mention is never inserted.
-
-Concrete trace for `text = "[~alice]"`:
-- `expand_mentions_in_text` emits `[mention_node]` (len 1, no prefix, no trailing)
-- `replacement.len() == 1` enters the in-place rewrite branch
-- `replacement[0].get("text")` → `None` (mention nodes have no `text` key)
-- Original node left as-is; `i` incremented
-
-This affects any paragraph in the source issue where the entire paragraph content is a bare mention — for example, a description line consisting solely of `[~jdoe]`. It produces incorrect ADF: the Cloud issue will show the raw wiki text instead of a mention pill.
-
-**Fix:** Change the condition to route the single-node case through the same splice path when the single replacement node is not a text node:
-
-```rust
-// Before
-if replacement.len() == 1 {
-    if let Some(s) = replacement[0].get("text").and_then(|x| x.as_str()) {
-        content[i]["text"] = serde_json::Value::String(s.to_string());
-    }
-    i += 1;
-} else {
-    // splice path ...
-}
-
-// After
-let only_text_node = replacement.len() == 1
-    && replacement[0].get("type").and_then(|t| t.as_str()) == Some("text");
-if only_text_node {
-    if let Some(s) = replacement[0].get("text").and_then(|x| x.as_str()) {
-        content[i]["text"] = serde_json::Value::String(s.to_string());
-    }
-    i += 1;
-} else {
-    // existing splice path (handles 0-length, single mention, multiple nodes)
-    let original_marks = content[i].get("marks").cloned();
-    let mut to_insert: Vec<serde_json::Value> = replacement
-        .into_iter()
-        .map(|mut n| {
-            if n.get("type").and_then(|t| t.as_str()) == Some("text") {
-                if let Some(m) = original_marks.clone() {
-                    n["marks"] = m;
-                }
-            }
-            n
-        })
-        .collect();
-    content.remove(i);
-    let n = to_insert.len();
-    for node in to_insert.drain(..).rev() {
-        content.insert(i, node);
-    }
-    i += n;
-}
-```
+Four new warnings and one carried-forward info item were found. None are crashes, but WR-03 (null user field silently skips gap emission) is a functional correctness bug that causes required-field gating in Phase 22 to silently miss null user fields.
 
 ---
 
 ## Warnings
 
-### WR-01: `no_domain` fallback makes one HTTP call per username, violating TRAN-06 spirit
+### WR-01: Off-by-one in `scan_mention_patterns` — `[~` at the last two bytes of the scan boundary is missed
 
-**File:** `src-tauri/src/field_transform/user.rs:87-93`
+**File:** `src-tauri/src/field_transform/user.rs:225`
 
-**Issue:** The module docstring at lines 3–4 declares: "TRAN-06 invariant: ONE HTTP `/user/search` per unique email domain." The domain-based path (step 4) correctly batches all same-domain users into one HTTP call. However, the `no_domain` fallback (step 5, lines 87–93) calls `fetch_users_by_query(&username)` inside a `for username in no_domain` loop — one HTTP call **per username**. If a description contains five `[~mention]` patterns for users who have no associated email address (description-only mentions are common), five sequential HTTP calls are issued. The existing test at line 604 only exercises one description mention, masking this behavior. The comment on line 87 says "rare; description-only mentions" but descriptions with multiple mentions are not rare.
+**Issue:** The outer loop condition is `while i + 2 < limit`. When `i == limit - 2`, the expression `i + 2 == limit` is not `< limit`, so the loop exits without inspecting `bytes[i]` and `bytes[i + 1]`. A `[~` pattern whose opening bracket falls exactly at position `limit - 2` is never detected.
 
-**Fix:** Group no-domain usernames into a single batch query, or query all in one call and match by `displayName`. A pragmatic short-term fix is to issue a single `/user/search?query=<first_username>` and attempt cross-matching, or document the N-call behavior explicitly and remove the TRAN-06 claim from the module docstring:
+For the default `MAX_DESCRIPTION_SCAN_BYTES = 512 * 1024`, this means a description that is exactly 512 KB and ends with `[~username]` will silently fail to add that username to the pre-scan set. The batch HTTP call is not made for it, `user_map` has no entry, and Phase 2 emits `@username` as plain text in ADF rather than a mention node. No panic; the output is silently wrong.
+
+The identical structural bug exists in `expand_mentions_in_text` in `wiki_to_adf.rs:186` where the bound is `bytes.len()`. There the consequence is that a text node ending exactly with `[~` (and then nothing) is passed through unchanged, which is fine — but any text ending with `[~a]` where the `[` is at position `len - 4` still processes correctly because `len - 4 + 2 = len - 2 < len - 1`. The real miss in `expand_mentions_in_text` is when `[~` falls at position `len - 2` exactly (i.e., the text is literally `[~` with nothing else), which cannot form a valid pattern anyway. The `user.rs` boundary miss is the more practical concern.
+
+**Fix:** Change the outer loop guard to `while i + 1 < limit` — this is the correct condition for safely reading both `bytes[i]` and `bytes[i + 1]`:
 
 ```rust
-// Option A: remove TRAN-06 claim from module docstring, add explicit note:
-//! Note: usernames without an email address (description-only mentions) each
-//! incur a separate HTTP call; TRAN-06 applies only to the domain-based path.
-
-// Option B: batch no-domain users into a single query by name (less accurate but fewer calls):
-let all_names = no_domain.join(" ");
-if !all_names.is_empty() {
-    let users = self.fetch_users_by_query(&all_names).await.unwrap_or_default();
-    for username in &no_domain {
-        let acct = match_user_in_results(&users, None, username);
-        out.insert(username.clone(), acct);
+// user.rs:225 — was: while i + 2 < limit
+while i + 1 < limit {
+    if bytes[i] == b'[' && bytes[i + 1] == b'~' {
+        // inner logic unchanged
     }
+    i += 1;
 }
 ```
 
 ---
 
-### WR-02: Public fields on resolver structs expose mutable credential strings
+### WR-02: `scan_html_profile_links` guard accepts `name=` at position 0 — inverted logic
 
-**File:** `src-tauri/src/field_transform/user.rs:23-25`, `version.rs:15-18`, `component.rs:13-16`
+**File:** `src-tauri/src/field_transform/user.rs:266`
 
-**Issue:** `UserResolver`, `VersionResolver`, and `ComponentResolver` expose `cloud_auth`, `cloud_base_url`, and `cache` as `pub` struct fields. This means any code holding a reference can overwrite the credential string or swap the base URL after construction — for example `resolver.cloud_auth = "Basic ATTACKER".to_string()`. While this is Tauri internal code and not a network-facing API, in-process mutation of auth credentials creates an audit gap: the auth token used during a session could be silently changed by any module that gains access to the resolver instance.
-
-The `cache` field being `pub` also allows callers to inject arbitrary pre-populated cache entries, bypassing HTTP entirely.
-
-**Fix:** Make fields `pub(crate)` or `pub(super)` (sufficient for the test helpers that access them), and expose read-only accessors if needed:
+**Issue:** The stated intent of the `preceding_ok` guard is to accept only URL query parameters (`?name=` or `&name=`) and reject bare HTML attributes (`name=`). The implementation is:
 
 ```rust
-pub struct VersionResolver {
-    pub(crate) client: reqwest::Client,
-    pub(crate) cloud_auth: String,
-    pub(crate) cloud_base_url: String,
-    pub(crate) cache: SessionVersionCache,
+let preceding_ok = i == 0 || bytes[i - 1] == b'?' || bytes[i - 1] == b'&';
+```
+
+When `i == 0`, `preceding_ok` is unconditionally `true`. This is backwards: a string that opens directly with `name=jdoe` has no preceding character at all, yet the guard passes it. In practice, full rendered-HTML descriptions do not start with `name=`, so this is not currently exploitable. However, if this function is ever called with a substring (e.g., an extracted `href` attribute value), the false positive is reachable and would add an incorrect username to the pre-scan set, causing a spurious HTTP call and potentially a false `user_map` entry.
+
+**Fix:** Remove the `i == 0` special case — a bare opening position is not a URL query parameter context:
+
+```rust
+// was:
+let preceding_ok = i == 0 || bytes[i - 1] == b'?' || bytes[i - 1] == b'&';
+// fix:
+let preceding_ok = i > 0 && (bytes[i - 1] == b'?' || bytes[i - 1] == b'&');
+```
+
+---
+
+### WR-03: Null/missing single-user field returns with no gap — Phase 22 required-field gate is bypassed
+
+**File:** `src-tauri/src/field_transform/pipeline.rs:214-219`
+
+**Issue:** In `dispatch_user`, the single-user path detects an empty username and executes a bare `return`:
+
+```rust
+if username.is_empty() {
+    // Field is null/missing — emit a gap so Phase 22 prompts the user.
+    // Only emit if target requires it. Phase 18 doesn't read required-ness;
+    // emit regardless and let Phase 22 filter via target schema.
+    return;   // ← comment says "emit a gap"; code does not
+}
+```
+
+The comment explicitly says "emit a gap" but the code contradicts it. If a source issue has `"assignee": null` and `assignee` is mapped, Phase 22 never receives a `GapVariant::Person` for it. Phase 22 cannot prompt the user to select one before the issue is created. Two failure modes follow:
+
+1. If `assignee` is required on the target project, the Cloud issue creation request will be rejected by Jira with a validation error surfaced as a generic `AppError::Http`, not a user-friendly gap message.
+2. If `assignee` is optional, the issue is silently created without an assignee, which may be the correct behavior — but it bypasses the Phase 22 UI that is designed to let the user confirm this.
+
+**Fix:** Emit the gap as the comment states:
+
+```rust
+if username.is_empty() {
+    gaps.push(GapVariant::Person(UnresolvedPerson {
+        target_field_id: row.target_field_id.clone(),
+        source_username: None,
+        source_key: key,
+        source_email: email,
+    }));
+    return;
 }
 ```
 
 ---
 
-### WR-03: `effective_in_code` is a dead variable — inline-code suppression logic is split confusingly
+### WR-04: `transformer_kind` is unchecked for user-typed fields — unknown values fall through silently to wrong path
 
-**File:** `src-tauri/src/field_transform/wiki_to_adf.rs:80-102`
+**File:** `src-tauri/src/field_transform/pipeline.rs:67-71`
 
-**Issue:** `effective_in_code` is computed at line 80 (`ctx.in_code_context || inline_code`) and then immediately discarded at line 102 (`let _ = effective_in_code`). It is never used in any branch condition. The actual suppression of mention/macro splicing for inline-code text nodes is handled inside `splice_mentions_in_content_array` (lines 120–129), which independently rechecks for the `code` mark on each text node. The `effective_in_code` variable gives the false impression that inline-code suppression is handled at the walker level, which misleads future maintainers into believing the guard is in place at the `walk_adf_node_mut` level when it is not.
-
-This split is not a correctness bug today — the splice function's own check prevents mention injection into inline-code text. However, if a future developer removes the check from `splice_mentions_in_content_array` under the belief that `effective_in_code` covers it, mentions would be injected into inline code.
-
-**Fix:** Remove the dead variable entirely and add a clarifying comment at the splice call site:
+**Issue:** For user-typed source fields, the dispatch logic only special-cases `"user_name"`. Every other value falls through to `dispatch_user` (the accountId-lookup path), including values that are unrecognised:
 
 ```rust
-// Remove lines 80-102 dead variable computation:
-// let inline_code = ...;
-// let effective_in_code = ctx.in_code_context || inline_code;
-// let _ = effective_in_code;
+if row.transformer_kind == "user_name" {
+    dispatch_user_name(row, &src_val, &mut fields);
+} else {
+    // Catches "user", "auto", "" — and also any typo or future kind not yet handled.
+    dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+}
+```
 
-// At the splice call site, add:
-// Note: splice_mentions_in_content_array independently skips text nodes that
-// carry a `code` mark (Pitfall F). No additional gating is needed here.
-if !next_ctx.in_code_context {
-    splice_mentions_in_content_array(content, user_map);
-    splice_macros_in_content_array(content);
+A mapping row with `transformer_kind = "user_name "` (trailing space), or any future kind (e.g., `"user_display"`) added to the database before the pipeline is updated, silently performs a full accountId lookup and writes `{"accountId": "..."}` into a text-typed target field. No error, log, or gap is emitted. The `transformer_kind` string comes from the database (`field_mapping_db`), making this sensitive to schema drift.
+
+**Fix:** Enumerate known kinds explicitly:
+
+```rust
+match row.transformer_kind.as_str() {
+    "user_name" => dispatch_user_name(row, &src_val, &mut fields),
+    "user" | "auto" | "" => dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps),
+    other => {
+        // Unknown kind: log and fall back rather than silently using the wrong path.
+        eprintln!(
+            "field_transform: unknown transformer_kind {:?} for user field {:?}",
+            other, row.source_field_id
+        );
+        dispatch_user(row, &src_val, ctx, &mut fields, &mut gaps);
+    }
 }
 ```
 
@@ -173,52 +158,28 @@ if !next_ctx.in_code_context {
 
 ## Info
 
-### IN-01: Macro placeholder includes surrounding whitespace from trimmed match
+### IN-01: Macro placeholder includes untrimmed surrounding whitespace (carried forward from prior review)
 
-**File:** `src-tauri/src/field_transform/wiki_to_adf.rs:253-263`
+**File:** `src-tauri/src/field_transform/wiki_to_adf.rs:269-275`
 
-**Issue:** `splice_macros_in_content_array` uses `text.trim()` (line 253) to check if the text starts with an unsupported macro, but then uses the untrimmed `original` (line 262) in the placeholder string. A text node with value `" {toc} "` (padded by whitespace) matches (trimmed starts with `{toc}`), but the resulting placeholder is `"[Not converted:  {toc} ]"` with the surrounding spaces included. This may look odd in the rendered issue.
+**Issue:** `splice_macros_in_content_array` uses `text.trim()` at line 261 to match unsupported macro prefixes, but then retrieves the original untrimmed text at line 270 to build the placeholder string. A text node containing `" {toc} "` (with surrounding whitespace) matches because the trimmed form starts with `{toc}`, but the resulting placeholder is `"[Not converted:  {toc} ]"` with the original whitespace preserved inside the brackets.
+
+This was flagged in the prior review (old IN-01) and remains unfixed.
 
 **Fix:** Use the trimmed value in the placeholder:
 
 ```rust
-let original_trimmed = node.get("text").and_then(|x| x.as_str()).unwrap_or("").trim();
-node["text"] = serde_json::Value::String(format!("[Not converted: {original_trimmed}]"));
+let original = node
+    .get("text")
+    .and_then(|x| x.as_str())
+    .unwrap_or("")
+    .trim()         // add .trim() here
+    .to_string();
+node["text"] = serde_json::Value::String(format!("[Not converted: {original}]"));
 ```
 
 ---
 
-### IN-02: Missing test for isolated mention pattern (the CR-01 regression case)
-
-**File:** `src-tauri/src/field_transform/wiki_to_adf.rs` (test section)
-
-**Issue:** All existing mention tests use surrounding text (e.g., `"Hi [~jdoe]"`, `"Hi [~alice] and [~bob]"`). There is no test for a text node whose entire content is a bare `[~username]` — the exact case that triggers the CR-01 bug. After fixing CR-01, a regression test should be added:
-
-```rust
-#[test]
-fn isolated_mention_no_surrounding_text_becomes_mention_node() {
-    let mut m = HashMap::new();
-    m.insert("alice".into(), Some("AID-A".into()));
-    // Synthetic ADF: paragraph containing ONLY "[~alice]" as text content.
-    let mut adf = serde_json::json!({
-        "version": 1, "type": "doc", "content": [
-            { "type": "paragraph", "content": [
-                { "type": "text", "text": "[~alice]" }
-            ]}
-        ]
-    });
-    walk_adf_node_mut(&mut adf, &m, WalkContext::default());
-    let inner = adf["content"][0]["content"].as_array().unwrap();
-    let has_mention = inner.iter().any(|n| n["type"] == "mention" && n["attrs"]["id"] == "AID-A");
-    assert!(has_mention, "isolated mention should be replaced with mention node: {adf:?}");
-    let has_raw_text = inner.iter().any(|n| n["type"] == "text"
-        && n.get("text").and_then(|t| t.as_str()) == Some("[~alice]"));
-    assert!(!has_raw_text, "raw mention text should not remain after conversion");
-}
-```
-
----
-
-_Reviewed: 2026-04-27_
+_Reviewed: 2026-05-04T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
