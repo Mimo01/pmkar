@@ -83,6 +83,24 @@ Plans:
 - [x] 25-01-PLAN.md — Backend: resolve_description_to_adf + resolve_users_preview Tauri commands, Rust unit tests, register in main.rs
 - [x] 25-02-PLAN.md — Frontend: async pre-fill effect, description read-only display, user picker pre-fill, frontend tests
 
+## Phase 26: Batch Ticket Fetching per Watched User
+
+**Goal:** Replace the single combined JQL fetch with per-user batched requests so that following many users never produces a single oversized or slow call that can time out. Each watched user is fetched independently; results are merged before display. Startup load time is improved by streaming results progressively as each batch completes rather than waiting for all users.
+
+**Depends on:** 3
+
+**Success Criteria:**
+1. Fetching tickets for N watched users issues N separate JQL requests, one per user
+2. No single fetch request times out regardless of how many users are watched
+3. App displays tickets as each user's batch arrives (progressive rendering) rather than blocking on all-or-nothing
+4. Total fetch time for a large watch list is within an acceptable threshold (< previous single-call timeout window)
+5. Existing filter, sort, triage, and copy flows work unchanged with the merged result set
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 26-01-PLAN.md — Refactor handleFetch into sequential per-user batch loop with progress counter, partial-failure warning, and i18n keys
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -112,3 +130,4 @@ Plans:
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 24. Audit Log Copy-Time Resolution | hotfix | 2/2 | Complete | 2026-05-05 |
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 2/2 | Complete | 2026-05-05 |
+| 26. Batch Ticket Fetching per Watched User | — | 0/1 | Planned | — |
