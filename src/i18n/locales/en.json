@@ -390,6 +390,8 @@
   "changelog.cicd": "CI/CD",
   "tickets.truncationWarning": "Result set truncated",
   "tickets.truncationWarningHint": "Your query returned more tickets than the maximum supported. Some tickets are not shown — tighten your JQL to narrow the results.",
+  "tickets.fetchProgress": "{{done}}/{{total}} users fetched",
+  "tickets.partialFetchWarning": "Fetch failed for {{count}} user(s)",
   "fieldRenderer.placeholder.select": "Select…",
   "fieldRenderer.placeholder.selectChild": "Select sub-option…",
   "fieldRenderer.placeholder.searchUsers": "Search users…",

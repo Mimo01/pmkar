@@ -22,6 +22,11 @@ const mockInvoke = vi.mocked(invoke);
  * ticket list. The fix wraps the OR'd people clause with `project = "<key>"
  * AND (...)` whenever a source project is configured.
  *
+ * Phase 26 (D-02): `comment ~` and `description ~` clauses have been dropped
+ * from the "mine" batch JQL to eliminate timeout-causing broad text searches.
+ * Project scoping is preserved — the `project = "<key>" AND (...)` wrapper
+ * still applies to the simplified assignee + watchedIssues() clause.
+ *
  * If these tests fail, foreign-project tickets are likely leaking into the
  * source ticket list again.
  */
@@ -98,10 +103,10 @@ describe('TicketListPage — JQL is scoped to the configured source project', ()
 
     // Project clause must be present and scope the people clause.
     expect(jql).toMatch(/^project\s*=\s*"XYZ"\s+AND\s*\(/);
-    // People clauses are still inside the parentheses.
+    // Phase 26 D-02: assignee + watchedIssues() only; comment~/description~ dropped.
     expect(jql).toContain('assignee = "alice"');
-    expect(jql).toContain('comment ~ "alice"');
-    expect(jql).toContain('description ~ "alice"');
+    expect(jql).not.toContain('comment ~ "alice"');
+    expect(jql).not.toContain('description ~ "alice"');
     expect(jql).toContain('watchedIssues()');
     expect(jql).toMatch(/ORDER BY updated DESC$/);
   });
