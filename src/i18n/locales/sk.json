@@ -390,6 +390,8 @@
   "changelog.cicd": "CI/CD",
   "tickets.truncationWarning": "Výsledky boli skrátené",
   "tickets.truncationWarningHint": "Váš dopyt vrátil viac tiketov, než je maximum. Niektoré tikety sa nezobrazujú — upravte JQL, aby ste výsledky zúžili.",
+  "tickets.fetchProgress": "{{done}}/{{total}} načítaných používateľov",
+  "tickets.partialFetchWarning": "Načítanie zlyhalo pre {{count}} používateľa/ov",
   "fieldRenderer.placeholder.select": "Vybrať…",
   "fieldRenderer.placeholder.selectChild": "Vybrať podovoľbu…",
   "fieldRenderer.placeholder.searchUsers": "Hľadať používateľov…",
