@@ -167,6 +167,8 @@ fn v2_user(name: &str, display_name: &str) -> serde_json::Value {
         "jdoe" => Some("jdoe@example.com"),
         "csmith" => Some("csmith@example.com"),
         "bwilson" => Some("bwilson@example.com"),
+        "aliu" => Some("aliu@example.com"),
+        "mramos" => Some("mramos@example.com"),
         _ => None,
     };
     let mut obj = json!({
@@ -192,6 +194,8 @@ fn v3_user(account_id: &str, display_name: &str) -> serde_json::Value {
         "acc-jdoe" => Some("jane.doe@example.com"),
         "acc-csmith" => Some("chris.smith@example.com"),
         "acc-bwilson" => Some("bob.wilson@example.com"),
+        "acc-aliu" => Some("alex.liu@example.com"),
+        "acc-mramos" => Some("maria.ramos@example.com"),
         _ => None,
     };
     let mut obj = json!({
@@ -1776,10 +1780,940 @@ pub fn build_fixtures() -> SharedFixtures {
         json!({ "id": "30002", "name": "Frontend", "description": "Web UI" }),
     ];
 
+    // === Additional issues for richer dev/test coverage (PROJ-17 through PROJ-40) ===
+
+    // PROJ-17: Bug, Open, Critical — assigned to aliu, no comments yet
+    {
+        let key = "PROJ-17";
+        let id = "10017";
+        let summary = "Payment gateway timeout causes silent order failure";
+        let desc_text = "When the payment gateway times out after 30s, the order is marked failed on our side but the charge still goes through on the gateway. Users are charged without receiving confirmation.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"), "priority": priority("Critical", "1"),
+                "assignee": v2_user("aliu", "Alex Liu"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug", "payments"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-15T08:00:00.000+0000", "updated": "2026-04-15T08:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"), "priority": priority("Critical", "1"),
+                "assignee": v3_user("acc-aliu", "Alex Liu"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug", "payments"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-15T08:00:00.000+0000", "updated": "2026-04-15T08:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-18: Task, In Progress, High — assigned to mramos, with comments
+    {
+        let key = "PROJ-18";
+        let id = "10018";
+        let summary = "Implement audit log export to CSV";
+        let desc_text = "Users need to export audit logs for compliance reporting. Add a CSV export button to the audit log view that exports all visible rows with current filters applied.";
+        let comments_v2 = json!([
+            v2_comment("20016", "mramos", "Maria Ramos", "Started implementation. Using csv crate.", "2026-04-16T10:00:00.000+0000"),
+            v2_comment("20017", "aliu", "Alex Liu", "Consider streaming the response for large logs to avoid memory issues.", "2026-04-16T14:30:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20016", "acc-mramos", "Maria Ramos", "Started implementation. Using csv crate.", "2026-04-16T10:00:00.000+0000"),
+            v3_comment("20017", "acc-aliu", "Alex Liu", "Consider streaming the response for large logs to avoid memory issues.", "2026-04-16T14:30:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("In Progress", "3"), "priority": priority("High", "2"),
+                "assignee": v2_user("mramos", "Maria Ramos"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-10T09:00:00.000+0000", "updated": "2026-04-16T14:30:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-mramos", "Maria Ramos"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-10T09:00:00.000+0000", "updated": "2026-04-16T14:30:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-19: Story, Open, Medium — assigned to aliu, Story Points gap
+    {
+        let key = "PROJ-19";
+        let id = "10019";
+        let summary = "Allow users to save custom JQL presets";
+        let desc_text = "Power users repeatedly type the same JQL queries. Add a 'Save as preset' button next to the JQL input that saves the current query to user preferences. Presets appear in a dropdown for quick re-use.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v2_status("Open", "1"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("aliu", "Alex Liu"), "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-12T11:00:00.000+0000", "updated": "2026-04-12T11:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v3_status("Open", "new"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-aliu", "Alex Liu"), "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-12T11:00:00.000+0000", "updated": "2026-04-12T11:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-20: Bug, Resolved, Medium — assigned to csmith, resolved with fix version
+    {
+        let key = "PROJ-20";
+        let id = "10020";
+        let summary = "Ticket list shows stale data after background sync";
+        let desc_text = "After the background sync completes, the ticket list does not refresh automatically. Users see old data until they manually reload. The sync completion event is not wired to the list component.";
+        let comments_v2 = json!([
+            v2_comment("20018", "csmith", "Chris Smith", "Fixed by subscribing to sync_complete event in list component. PR #521 merged.", "2026-04-20T16:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20018", "acc-csmith", "Chris Smith", "Fixed by subscribing to sync_complete event in list component. PR #521 merged.", "2026-04-20T16:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Resolved", "5"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("csmith", "Chris Smith"), "reporter": v2_user("aliu", "Alex Liu"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.1"}],
+                "created": "2026-04-18T09:00:00.000+0000", "updated": "2026-04-20T16:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Resolved", "done"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-csmith", "Chris Smith"), "reporter": v3_user("acc-aliu", "Alex Liu"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.1"}],
+                "created": "2026-04-18T09:00:00.000+0000", "updated": "2026-04-20T16:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-21: Task, Open, Low — assigned to bwilson, minimal fields
+    {
+        let key = "PROJ-21";
+        let id = "10021";
+        let summary = "Update Rust edition to 2024";
+        let desc_text = "Rust 2024 edition is stable. Update Cargo.toml to edition = \"2024\" and address any lints.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"), "priority": priority("Low", "4"),
+                "assignee": v2_user("bwilson", "Bob Wilson"), "reporter": v2_user("bwilson", "Bob Wilson"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["maintenance"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-22T08:00:00.000+0000", "updated": "2026-04-22T08:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"), "priority": priority("Low", "4"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"), "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["maintenance"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-22T08:00:00.000+0000", "updated": "2026-04-22T08:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-22: Bug, In Progress, High — assigned to jdoe, with attachment
+    {
+        let key = "PROJ-22";
+        let id = "10022";
+        let summary = "Copy ticket fails silently when source has inline images in description";
+        let desc_text = "If the source ticket description contains inline images (uploaded to Jira, not external URLs), the copy operation succeeds but the images are missing in the target. No error is surfaced to the user.";
+        let attachment_v2 = json!([{
+            "id": "10103", "filename": "inline-image-repro.png",
+            "size": 98304, "mimeType": "image/png",
+            "content": "http://127.0.0.1:8080/secure/attachment/10103/inline-image-repro.png"
+        }]);
+        let attachment_v3 = json!([{
+            "id": "10103", "filename": "inline-image-repro.png",
+            "size": 98304, "mimeType": "image/png",
+            "content": "http://127.0.0.1:8081/secure/attachment/10103/inline-image-repro.png"
+        }]);
+        let comments_v2 = json!([
+            v2_comment("20019", "jdoe", "Jane Doe", "Confirmed. Inline images use /secure/attachment/ URLs which require auth on source Jira — can't be re-uploaded directly.", "2026-04-23T11:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20019", "acc-jdoe", "Jane Doe", "Confirmed. Inline images use /secure/attachment/ URLs which require auth on source Jira — can't be re-uploaded directly.", "2026-04-23T11:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("In Progress", "3"), "priority": priority("High", "2"),
+                "assignee": v2_user("jdoe", "Jane Doe"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": attachment_v2, "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-23T09:00:00.000+0000", "updated": "2026-04-23T11:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-jdoe", "Jane Doe"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": attachment_v3, "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-23T09:00:00.000+0000", "updated": "2026-04-23T11:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-23: Story, In Progress, High — assigned to mramos, with subtasks
+    {
+        let key = "PROJ-23";
+        let id = "10023";
+        let summary = "Bulk copy: select and copy multiple tickets at once";
+        let desc_text = "Users with many tickets to migrate need a way to select multiple tickets from the list and copy them all in one action. Add checkboxes to the ticket list and a 'Copy selected' button.";
+        let subtasks_v2 = json!([
+            { "key": "PROJ-24", "fields": { "summary": "Add checkbox column to ticket list", "status": { "name": "In Progress", "id": "3" } } },
+            { "key": "PROJ-25", "fields": { "summary": "Implement bulk copy API call", "status": { "name": "Open", "id": "1" } } },
+            { "key": "PROJ-26", "fields": { "summary": "Add progress indicator for bulk copy", "status": { "name": "Open", "id": "1" } } }
+        ]);
+        let subtasks_v3 = json!([
+            { "key": "PROJ-24", "fields": { "summary": "Add checkbox column to ticket list", "status": { "name": "In Progress", "statusCategory": { "key": "indeterminate" } } } },
+            { "key": "PROJ-25", "fields": { "summary": "Implement bulk copy API call", "status": { "name": "Open", "statusCategory": { "key": "new" } } } },
+            { "key": "PROJ-26", "fields": { "summary": "Add progress indicator for bulk copy", "status": { "name": "Open", "statusCategory": { "key": "new" } } } }
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v2_status("In Progress", "3"), "priority": priority("High", "2"),
+                "assignee": v2_user("mramos", "Maria Ramos"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": subtasks_v2,
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}, {"name": "Backend"}], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-25T09:00:00.000+0000", "updated": "2026-04-25T09:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-mramos", "Maria Ramos"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": subtasks_v3,
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}, {"name": "Backend"}], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-25T09:00:00.000+0000", "updated": "2026-04-25T09:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-24: Task, In Progress (subtask of PROJ-23) — assigned to aliu
+    {
+        let key = "PROJ-24";
+        let id = "10024";
+        let summary = "Add checkbox column to ticket list";
+        let desc_text = "Add a checkbox as the first column in the ticket list table. Selected state is stored in component-local state. A 'select all' checkbox in the header row selects/deselects the entire visible page.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("In Progress", "3"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("aliu", "Alex Liu"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-aliu", "Alex Liu"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-25: Task, Open (subtask of PROJ-23) — assigned to bwilson
+    {
+        let key = "PROJ-25";
+        let id = "10025";
+        let summary = "Implement bulk copy API call";
+        let desc_text = "Add a new Tauri command `bulk_copy_tickets(keys: Vec<String>)` that iterates the list and calls the existing copy pipeline for each key. Return per-key results so the UI can show success/failure per ticket.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("bwilson", "Bob Wilson"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-26: Task, Open (subtask of PROJ-23) — assigned to csmith
+    {
+        let key = "PROJ-26";
+        let id = "10026";
+        let summary = "Add progress indicator for bulk copy";
+        let desc_text = "Show a progress bar during bulk copy: 'Copying X of N tickets…'. Update in real-time as each ticket completes. When done, show a summary toast: 'N copied, M failed'.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"), "priority": priority("Low", "4"),
+                "assignee": v2_user("csmith", "Chris Smith"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"), "priority": priority("Low", "4"),
+                "assignee": v3_user("acc-csmith", "Chris Smith"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-25T10:00:00.000+0000", "updated": "2026-04-25T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-27: Bug, Closed, Low — assigned to mramos, no description
+    {
+        let key = "PROJ-27";
+        let id = "10027";
+        let summary = "Tooltip text truncated on small screens";
+        let comments_v2 = json!([
+            v2_comment("20020", "mramos", "Maria Ramos", "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.", "2026-03-15T10:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20020", "acc-mramos", "Maria Ramos", "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.", "2026-03-15T10:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Closed", "6"), "priority": priority("Low", "4"),
+                "assignee": v2_user("mramos", "Maria Ramos"), "reporter": v2_user("aliu", "Alex Liu"),
+                "description": serde_json::Value::Null,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.0"}],
+                "created": "2026-03-10T14:00:00.000+0000", "updated": "2026-03-15T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Closed", "done"), "priority": priority("Low", "4"),
+                "assignee": v3_user("acc-mramos", "Maria Ramos"), "reporter": v3_user("acc-aliu", "Alex Liu"),
+                "description": serde_json::Value::Null,
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.0"}],
+                "created": "2026-03-10T14:00:00.000+0000", "updated": "2026-03-15T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-28: Task, Reopened, High — assigned to aliu, with issue link
+    {
+        let key = "PROJ-28";
+        let id = "10028";
+        let summary = "Fix field mapping not persisted after app restart";
+        let desc_text = "Custom field mappings configured in Settings > Field Mapping are lost after restarting the app. The mappings are written to an in-memory store but not flushed to disk.";
+        let issuelinks_v2 = json!([{
+            "id": "30003",
+            "type": { "name": "Relates", "inward": "relates to", "outward": "relates to" },
+            "outwardIssue": {
+                "key": "PROJ-29",
+                "fields": { "summary": "Field mapping config file format spec", "status": { "name": "Open", "id": "1" } }
+            }
+        }]);
+        let issuelinks_v3 = json!([{
+            "id": "30003",
+            "type": { "name": "Relates", "inward": "relates to", "outward": "relates to" },
+            "outwardIssue": {
+                "key": "PROJ-29",
+                "fields": { "summary": "Field mapping config file format spec", "status": { "name": "Open", "statusCategory": { "key": "new" } } }
+            }
+        }]);
+        let comments_v2 = json!([
+            v2_comment("20021", "aliu", "Alex Liu", "Reproduced after clean install. The write to disk call is missing from the save handler.", "2026-04-28T09:00:00.000+0000"),
+            v2_comment("20022", "jdoe", "Jane Doe", "This was supposedly fixed in PROJ-28 last sprint. Reopening.", "2026-04-29T10:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20021", "acc-aliu", "Alex Liu", "Reproduced after clean install. The write to disk call is missing from the save handler.", "2026-04-28T09:00:00.000+0000"),
+            v3_comment("20022", "acc-jdoe", "Jane Doe", "This was supposedly fixed in PROJ-28 last sprint. Reopening.", "2026-04-29T10:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Reopened", "4"), "priority": priority("High", "2"),
+                "assignee": v2_user("aliu", "Alex Liu"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": issuelinks_v2, "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-27T08:00:00.000+0000", "updated": "2026-04-29T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Reopened", "new"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-aliu", "Alex Liu"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": issuelinks_v3, "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-27T08:00:00.000+0000", "updated": "2026-04-29T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-29: Task, Open, Medium — assigned to bwilson, relates to PROJ-28
+    {
+        let key = "PROJ-29";
+        let id = "10029";
+        let summary = "Field mapping config file format spec";
+        let desc_text = "Define the JSON schema for the field_mappings.json config file. Must be human-editable, support per-project overrides, and be stable across app versions (no breaking changes without migration).";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("bwilson", "Bob Wilson"), "reporter": v2_user("aliu", "Alex Liu"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-27T09:00:00.000+0000", "updated": "2026-04-27T09:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"), "reporter": v3_user("acc-aliu", "Alex Liu"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-27T09:00:00.000+0000", "updated": "2026-04-27T09:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-30: Epic — v0.5.0 planning epic
+    {
+        let key = "PROJ-30";
+        let id = "10030";
+        let summary = "v0.5.0 — Bulk Operations & Collaboration";
+        let desc_text = "Epic tracking all work for the v0.5.0 release. Focus areas: bulk ticket copy, shared field mapping profiles, and comment threading on copied tickets.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10004", "Epic"),
+                "status": v2_status("In Progress", "3"), "priority": priority("High", "2"),
+                "assignee": v2_user("jdoe", "Jane Doe"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-01T08:00:00.000+0000", "updated": "2026-04-01T08:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10004", "Epic"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-jdoe", "Jane Doe"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [], "fixVersions": [{"name": "4.4.0"}],
+                "created": "2026-04-01T08:00:00.000+0000", "updated": "2026-04-01T08:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-31: Bug, Open, Critical — unassigned
+    {
+        let key = "PROJ-31";
+        let id = "10031";
+        let summary = "App crashes on launch when config file is corrupted";
+        let desc_text = "If config.json is malformed (e.g. truncated during a crash mid-write), the app panics on startup with 'expected value at line 1 column 1'. Should show an error dialog and offer to reset config.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"), "priority": priority("Critical", "1"),
+                "assignee": serde_json::Value::Null, "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug", "crash"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-05-01T07:00:00.000+0000", "updated": "2026-05-01T07:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"), "priority": priority("Critical", "1"),
+                "assignee": serde_json::Value::Null, "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug", "crash"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-05-01T07:00:00.000+0000", "updated": "2026-05-01T07:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-32: Task, Resolved, Medium — assigned to csmith
+    {
+        let key = "PROJ-32";
+        let id = "10032";
+        let summary = "Add keyboard shortcut to open ticket detail";
+        let desc_text = "Users want to open a ticket detail view without taking hands off the keyboard. Pressing Enter or Space on a focused row in the ticket list should open the detail panel.";
+        let comments_v2 = json!([
+            v2_comment("20023", "csmith", "Chris Smith", "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.", "2026-04-30T15:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20023", "acc-csmith", "Chris Smith", "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.", "2026-04-30T15:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Resolved", "5"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("csmith", "Chris Smith"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.1"}],
+                "created": "2026-04-25T14:00:00.000+0000", "updated": "2026-04-30T15:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Resolved", "done"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-csmith", "Chris Smith"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [{"name": "4.3.1"}],
+                "created": "2026-04-25T14:00:00.000+0000", "updated": "2026-04-30T15:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-33: Bug, Open, High — assigned to bwilson, multi-comment thread
+    {
+        let key = "PROJ-33";
+        let id = "10033";
+        let summary = "Target Jira project dropdown shows archived projects";
+        let desc_text = "The target project selector in the copy dialog includes projects that have been archived in the target Jira. Attempting to copy to an archived project returns a 400 error from Jira. Filter these out.";
+        let comments_v2 = json!([
+            v2_comment("20024", "bwilson", "Bob Wilson", "The /project endpoint returns all projects regardless of archived status unless explicitly filtered.", "2026-04-29T09:00:00.000+0000"),
+            v2_comment("20025", "aliu", "Alex Liu", "We can add ?status=live to the request. Confirmed this works on the test instance.", "2026-04-29T11:30:00.000+0000"),
+            v2_comment("20026", "bwilson", "Bob Wilson", "Good call. Will also need to handle the case where the stored default project becomes archived — show a warning in that case.", "2026-04-29T14:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20024", "acc-bwilson", "Bob Wilson", "The /project endpoint returns all projects regardless of archived status unless explicitly filtered.", "2026-04-29T09:00:00.000+0000"),
+            v3_comment("20025", "acc-aliu", "Alex Liu", "We can add ?status=live to the request. Confirmed this works on the test instance.", "2026-04-29T11:30:00.000+0000"),
+            v3_comment("20026", "acc-bwilson", "Bob Wilson", "Good call. Will also need to handle the case where the stored default project becomes archived — show a warning in that case.", "2026-04-29T14:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"), "priority": priority("High", "2"),
+                "assignee": v2_user("bwilson", "Bob Wilson"), "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-28T16:00:00.000+0000", "updated": "2026-04-29T14:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"), "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-04-28T16:00:00.000+0000", "updated": "2026-04-29T14:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-34: Story, Open, Medium — assigned to jdoe
+    {
+        let key = "PROJ-34";
+        let id = "10034";
+        let summary = "Show copy history per ticket in detail view";
+        let desc_text = "In the ticket detail panel, show a 'Copy history' section listing each time this ticket was copied: target project, date, who triggered it, and outcome (success/fail). Pull from the audit log.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v2_status("Open", "1"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("jdoe", "Jane Doe"), "reporter": v2_user("mramos", "Maria Ramos"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}, {"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-30T11:00:00.000+0000", "updated": "2026-04-30T11:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v3_status("Open", "new"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-jdoe", "Jane Doe"), "reporter": v3_user("acc-mramos", "Maria Ramos"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}, {"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-30T11:00:00.000+0000", "updated": "2026-04-30T11:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-35: Task, In Progress, Medium — assigned to aliu, worklog
+    {
+        let key = "PROJ-35";
+        let id = "10035";
+        let summary = "Refactor JQL builder to support OR conditions";
+        let desc_text = "The current JQL builder only supports AND conditions. Extend it to support OR grouping so users can query e.g. 'assignee=jdoe OR assignee=csmith'.";
+        let comments_v2 = json!([
+            v2_comment("20027", "aliu", "Alex Liu", "Prototyped a recursive descent parser for JQL expressions. Works for basic AND/OR/NOT.", "2026-05-02T10:00:00.000+0000")
+        ]);
+        let comments_v3 = json!([
+            v3_comment("20027", "acc-aliu", "Alex Liu", "Prototyped a recursive descent parser for JQL expressions. Works for basic AND/OR/NOT.", "2026-05-02T10:00:00.000+0000")
+        ]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("In Progress", "3"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("aliu", "Alex Liu"), "reporter": v2_user("bwilson", "Bob Wilson"),
+                "description": desc_text,
+                "comment": { "comments": comments_v2 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-28T09:00:00.000+0000", "updated": "2026-05-02T10:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40003", "author": {"name":"aliu","displayName":"Alex Liu"}, "comment": "JQL parser prototype", "started": "2026-05-02T09:00:00.000+0000", "timeSpent": "4h", "timeSpentSeconds": 14400 }
+                ]}
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-aliu", "Alex Liu"), "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": comments_v3 }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-04-28T09:00:00.000+0000", "updated": "2026-05-02T10:00:00.000+0000",
+                "worklog": { "worklogs": [
+                    { "id": "40003", "author": {"accountId":"acc-aliu","displayName":"Alex Liu"}, "comment": "JQL parser prototype", "started": "2026-05-02T09:00:00.000+0000", "timeSpent": "4h", "timeSpentSeconds": 14400 }
+                ]}
+            }),
+        });
+    }
+
+    // PROJ-36: Bug, Open, Medium — assigned to mramos, no attachment
+    {
+        let key = "PROJ-36";
+        let id = "10036";
+        let summary = "Settings panel does not scroll on small viewports";
+        let desc_text = "On displays shorter than 768px, the Settings panel content is clipped and there is no scrollbar. The outer container has overflow:hidden inherited from a parent element.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"), "priority": priority("Medium", "3"),
+                "assignee": v2_user("mramos", "Maria Ramos"), "reporter": v2_user("aliu", "Alex Liu"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-05-03T10:00:00.000+0000", "updated": "2026-05-03T10:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"), "priority": priority("Medium", "3"),
+                "assignee": v3_user("acc-mramos", "Maria Ramos"), "reporter": v3_user("acc-aliu", "Alex Liu"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["bug"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-05-03T10:00:00.000+0000", "updated": "2026-05-03T10:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-37: Task, Open, Low — assigned to jdoe, documentation
+    {
+        let key = "PROJ-37";
+        let id = "10037";
+        let summary = "Write user guide for field mapping configuration";
+        let desc_text = "Create a user-facing guide explaining how to configure field mappings: what fields are available, how to create mappings, how to handle unsupported types, and how to export/import mapping profiles.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v2_status("Open", "1"), "priority": priority("Low", "4"),
+                "assignee": v2_user("jdoe", "Jane Doe"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["documentation"],
+                "components": [], "fixVersions": [],
+                "created": "2026-05-04T09:00:00.000+0000", "updated": "2026-05-04T09:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10002", "Task"),
+                "status": v3_status("Open", "new"), "priority": priority("Low", "4"),
+                "assignee": v3_user("acc-jdoe", "Jane Doe"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["documentation"],
+                "components": [], "fixVersions": [],
+                "created": "2026-05-04T09:00:00.000+0000", "updated": "2026-05-04T09:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-38: Bug, In Progress, High — assigned to csmith, links to PROJ-31
+    {
+        let key = "PROJ-38";
+        let id = "10038";
+        let summary = "App window size not restored after relaunch on macOS";
+        let desc_text = "On macOS, after resizing the app window and relaunching, the window opens at the default size instead of the last-used size. Window state (position + size) must be persisted to disk on close.";
+        let issuelinks_v2 = json!([{
+            "id": "30004",
+            "type": { "name": "Relates", "inward": "relates to", "outward": "relates to" },
+            "outwardIssue": {
+                "key": "PROJ-31",
+                "fields": { "summary": "App crashes on launch when config file is corrupted", "status": { "name": "Open", "id": "1" } }
+            }
+        }]);
+        let issuelinks_v3 = json!([{
+            "id": "30004",
+            "type": { "name": "Relates", "inward": "relates to", "outward": "relates to" },
+            "outwardIssue": {
+                "key": "PROJ-31",
+                "fields": { "summary": "App crashes on launch when config file is corrupted", "status": { "name": "Open", "statusCategory": { "key": "new" } } }
+            }
+        }]);
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("In Progress", "3"), "priority": priority("High", "2"),
+                "assignee": v2_user("csmith", "Chris Smith"), "reporter": v2_user("bwilson", "Bob Wilson"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": issuelinks_v2, "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-05-02T08:00:00.000+0000", "updated": "2026-05-02T08:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("In Progress", "indeterminate"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-csmith", "Chris Smith"), "reporter": v3_user("acc-bwilson", "Bob Wilson"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": issuelinks_v3, "labels": ["bug"],
+                "components": [{"name": "Backend"}], "fixVersions": [],
+                "created": "2026-05-02T08:00:00.000+0000", "updated": "2026-05-02T08:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-39: Story, Open, Low — assigned to bwilson
+    {
+        let key = "PROJ-39";
+        let id = "10039";
+        let summary = "Add 'recently copied' quick-access list to home screen";
+        let desc_text = "Show the 5 most recently copied tickets on the home screen so users can quickly re-open or re-copy them without navigating back to the source Jira list.";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v2_status("Open", "1"), "priority": priority("Low", "4"),
+                "assignee": v2_user("bwilson", "Bob Wilson"), "reporter": v2_user("csmith", "Chris Smith"),
+                "description": desc_text,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-05-05T09:00:00.000+0000", "updated": "2026-05-05T09:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10003", "Story"),
+                "status": v3_status("Open", "new"), "priority": priority("Low", "4"),
+                "assignee": v3_user("acc-bwilson", "Bob Wilson"), "reporter": v3_user("acc-csmith", "Chris Smith"),
+                "description": adf_paragraph(desc_text),
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": ["enhancement"],
+                "components": [{"name": "Frontend"}], "fixVersions": [],
+                "created": "2026-05-05T09:00:00.000+0000", "updated": "2026-05-05T09:00:00.000+0000"
+            }),
+        });
+    }
+
+    // PROJ-40: Bug, Open, High — assigned to mramos, no description (edge case)
+    {
+        let key = "PROJ-40";
+        let id = "10040";
+        let summary = "Copy fails for tickets with empty labels array vs null";
+        v2.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v2_status("Open", "1"), "priority": priority("High", "2"),
+                "assignee": v2_user("mramos", "Maria Ramos"), "reporter": v2_user("jdoe", "Jane Doe"),
+                "description": serde_json::Value::Null,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [], "fixVersions": [],
+                "created": "2026-05-06T07:00:00.000+0000", "updated": "2026-05-06T07:00:00.000+0000"
+            }),
+        });
+        v3.insert(key.to_string(), JiraIssue {
+            id: id.to_string(), key: key.to_string(),
+            fields: json!({
+                "summary": summary, "issuetype": issuetype("10001", "Bug"),
+                "status": v3_status("Open", "new"), "priority": priority("High", "2"),
+                "assignee": v3_user("acc-mramos", "Maria Ramos"), "reporter": v3_user("acc-jdoe", "Jane Doe"),
+                "description": serde_json::Value::Null,
+                "comment": { "comments": [] }, "attachment": [], "subtasks": [],
+                "issuelinks": [], "labels": [],
+                "components": [], "fixVersions": [],
+                "created": "2026-05-06T07:00:00.000+0000", "updated": "2026-05-06T07:00:00.000+0000"
+            }),
+        });
+    }
+
     Arc::new(Mutex::new(FixtureState {
         server_v2_issues: v2,
         cloud_v3_issues: v3,
-        next_issue_id: 10017,
+        next_issue_id: 10041,
         v2_fields,
         v3_fields,
         v3_createmeta_issuetypes,
