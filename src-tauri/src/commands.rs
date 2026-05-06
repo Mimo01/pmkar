@@ -1131,7 +1131,7 @@ pub async fn search_jira_users(
     Ok(users)
 }
 
-// --- Source user domain search command ---
+// --- Target user domain search command ---
 
 #[tauri::command]
 pub async fn search_jira_users_by_domain(
@@ -1142,10 +1142,20 @@ pub async fn search_jira_users_by_domain(
 ) -> Result<Vec<serde_json::Value>, AppError> {
     const PAGE_SIZE: usize = 50;
 
-    let pat = get_server_pat(triage_db.inner())?;
+    // Use stored cloud credentials (URL + Basic auth) instead of the frontend-supplied
+    // base_url + Server PAT. Cloud Jira requires accountId on user fields; the v2/Server
+    // API returns name/key objects without accountId which Cloud silently ignores.
+    let (stored_base_url, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{cloud_api_token}"))
+    );
+    let trimmed_url = stored_base_url.trim_end_matches('/').to_string();
+    let _ = base_url; // retained in signature for API compat; not used
+
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
-    let trimmed_url = base_url.trim_end_matches('/');
 
     let clean_domain = domain.trim_start_matches('@');
     let query = format!("@{clean_domain}");
@@ -1156,12 +1166,12 @@ pub async fn search_jira_users_by_domain(
 
     loop {
         let url = format!(
-            "{trimmed_url}/rest/api/2/user/search?username={encoded_query}&maxResults={PAGE_SIZE}&startAt={start_at}"
+            "{trimmed_url}/rest/api/3/user/search?query={encoded_query}&maxResults={PAGE_SIZE}&startAt={start_at}"
         );
 
         let resp = client
             .get(&url)
-            .header("Authorization", format!("Bearer {pat}"))
+            .header("Authorization", &cloud_auth)
             .send()
             .await
             .map_err(|_| AppError::Http("Failed to search users by domain".into()))?;

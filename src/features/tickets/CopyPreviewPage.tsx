@@ -551,7 +551,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       if (!domain) return [];
       try {
         const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
-          baseUrl: sourceBaseUrl,
+          baseUrl: cloudBaseUrl,
           domain,
         });
         return Array.isArray(users) ? users : [];
@@ -560,7 +560,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         return [];
       }
     },
-    [sourceBaseUrl],
+    [cloudBaseUrl],
   );
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────
