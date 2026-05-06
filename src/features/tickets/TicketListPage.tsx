@@ -10,61 +10,41 @@ import { useConnectionStore } from '../connections/connectionStore';
 import { SkeletonCards, TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import { useTicketStore } from './ticketStore';
-import type { FetchTicketsResult, JqlPreset } from './types';
+import type { FetchTicketsResult, JiraTicket, TriageEntry } from './types';
 import { isDoneTicket } from './utils';
 
 // --- Helpers ---
 
 /**
- * Build the JQL string sent to the backend.
+ * Build the "mine" batch JQL — D-02 simplified clause set.
  *
- * Project scoping (debug session: fetched-tasks-wrong-project):
- *   When `sourceProjectKey` is set in the connection store, the built-in
- *   presets (`mine`, `all_watched`) are wrapped with `project = "<key>" AND (...)`.
- *   Without this scope the broadened `mine` clauses (`comment ~ me`,
- *   `description ~ me`, `issueKey in watchedIssues()`) match across every
- *   Jira project the user has touched, leaking foreign-project tickets into
- *   the source list. The legacy `assignee = me` JQL was implicitly project-
- *   correct only because users tend to be assigned tickets in their own
- *   project; that coincidence broke when the preset was redesigned (2dd76f1).
+ * Drops the legacy broad text-match clauses (Phase 26): those clauses
+ * caused the combined query to time out for users with many watched
+ * accounts. The mine batch now includes only direct assignee match plus
+ * the user's explicitly watched issues.
  *
- *   `custom` is intentionally NOT wrapped — the user wrote raw JQL and may
- *   already have a `project = ...` clause (or want a cross-project query).
+ * Project scoping pattern preserved verbatim (debug session:
+ * fetched-tasks-wrong-project).
  */
-function buildJql(
-  preset: JqlPreset,
-  custom: string | null,
-  watchedUsers: { identifier: string }[],
-  currentUser: string,
-  sourceProjectKey: string | null,
-): string {
-  if (preset === 'custom' && custom) return custom;
-
-  const mineClauses = [
-    `assignee = "${currentUser}"`,
-    `comment ~ "${currentUser}"`,
-    `description ~ "${currentUser}"`,
-    `issueKey in watchedIssues()`,
-  ];
-
-  // Build the OR'd people clause first, then optionally wrap with project scope.
-  let peopleClause: string;
-  if (preset === 'all_watched' && watchedUsers.length > 0) {
-    const watchedClauses = watchedUsers.flatMap((u) => [
-      `assignee = "${u.identifier}"`,
-      `comment ~ "${u.identifier}"`,
-      `description ~ "${u.identifier}"`,
-    ]);
-    peopleClause = `${mineClauses.join(' OR ')} OR ${watchedClauses.join(' OR ')}`;
-  } else {
-    // 'mine' and everything else (including legacy 'assigned'/'mentioned' DB values)
-    peopleClause = mineClauses.join(' OR ');
-  }
-
+function buildMineBatchJql(currentUser: string, sourceProjectKey: string | null): string {
+  const clause = `assignee = "${currentUser}" OR issueKey in watchedIssues()`;
   if (sourceProjectKey && sourceProjectKey.length > 0) {
-    return `project = "${sourceProjectKey}" AND (${peopleClause}) ORDER BY updated DESC`;
+    return `project = "${sourceProjectKey}" AND (${clause}) ORDER BY updated DESC`;
   }
-  return `(${peopleClause}) ORDER BY updated DESC`;
+  return `(${clause}) ORDER BY updated DESC`;
+}
+
+/**
+ * Build a per-watched-user batch JQL — D-02 simplified clause set.
+ * One batch per watched user; only assignee match (no comment/description
+ * text search) keeps each request small and timeout-safe.
+ */
+function buildUserBatchJql(identifier: string, sourceProjectKey: string | null): string {
+  const clause = `assignee = "${identifier}"`;
+  if (sourceProjectKey && sourceProjectKey.length > 0) {
+    return `project = "${sourceProjectKey}" AND ${clause} ORDER BY updated DESC`;
+  }
+  return `${clause} ORDER BY updated DESC`;
 }
 
 function getErrorDetail(error: string, t: (key: string) => string): string {
@@ -106,6 +86,10 @@ export function TicketListPage() {
 
   const isLoading = fetchStatus === 'loading';
 
+  const [batchesDone, setBatchesDone] = useState(0);
+  const [batchesTotal, setBatchesTotal] = useState(0);
+  const [failedUserNames, setFailedUserNames] = useState<string[]>([]);
+
   // Re-render every 30s so formatRelativeTime stays fresh
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -116,29 +100,132 @@ export function TicketListPage() {
   const handleFetch = useCallback(async () => {
     const store = useTicketStore.getState();
     store.setFetchStatus('loading');
+
+    // Reset batch progress and prior failure state (Pitfall 3)
+    setFailedUserNames([]);
+    setBatchesDone(0);
+
     try {
       const connState = useConnectionStore.getState();
       const serverConn = connState.serverConnection;
       if (!serverConn) throw new Error('No server connection');
-      const jql = buildJql(
-        store.jqlPreset,
-        store.jqlCustom,
-        store.watchedUsers,
-        serverConn.username,
-        connState.sourceProjectKey,
-      );
-      const result = await invoke<FetchTicketsResult>('fetch_tickets', {
-        baseUrl: serverConn.baseUrl,
-        jql,
-      });
-      store.setTickets(result.issues, result.triageMap, result.total, result.truncated);
+
+      const preset = store.jqlPreset;
+
+      // Fast path: custom JQL — single invoke, no batching (Pitfall 4)
+      if (preset === 'custom' && store.jqlCustom) {
+        const result = await invoke<FetchTicketsResult>('fetch_tickets', {
+          baseUrl: serverConn.baseUrl,
+          jql: store.jqlCustom,
+        });
+        store.setTickets(result.issues, result.triageMap, result.total, result.truncated);
+        const nowCustom = new Date().toISOString();
+        store.setLastFetchedAt(nowCustom);
+        store.setLastCheckedAt(nowCustom);
+
+        // Change-detection loop for custom preset
+        for (const ticket of result.issues) {
+          try {
+            // NOTE: Tauri command `fetch_ticket_detail` takes Rust param `issue_key`,
+            // which Tauri exposes to JS as `issueKey`. Passing the wrong key (e.g.
+            // `ticketKey`) causes a silent IPC rejection swallowed by the catch
+            // below, which previously caused manual-fetch change detection to never
+            // run. See debug session: manual-fetch-misses-changes.
+            const detail = await invoke<unknown>('fetch_ticket_detail', {
+              baseUrl: serverConn.baseUrl,
+              issueKey: ticket.key,
+            });
+            const changes = await invoke<
+              { field: string; oldValue: string | null; newValue: string | null }[]
+            >('check_ticket_changes', {
+              ticketKey: ticket.key,
+              responseJson: JSON.stringify(detail),
+            });
+            if (changes.length > 0) {
+              store.setUnseenChange(
+                ticket.key,
+                changes.map((c) => c.field),
+              );
+            }
+          } catch (err) {
+            console.error(`[manual-fetch] change detection failed for ${ticket.key}:`, err);
+          }
+        }
+
+        invoke<string[]>('get_unseen_change_keys')
+          .then((keys) => {
+            for (const key of keys) {
+              if (!store.unseenChanges[key]) store.setUnseenChange(key, []);
+            }
+          })
+          .catch(() => {});
+
+        invoke('trigger_manual_poll').catch(() => {});
+        return;
+      }
+
+      // Build batch list — mine preset uses only the "mine" batch (Pitfall 5)
+      const batches: { label: string; jql: string }[] = [
+        {
+          label: 'mine',
+          jql: buildMineBatchJql(serverConn.username, connState.sourceProjectKey),
+        },
+        ...(preset === 'all_watched'
+          ? store.watchedUsers.map((u) => ({
+              label: u.displayName,
+              jql: buildUserBatchJql(u.identifier, connState.sourceProjectKey),
+            }))
+          : []),
+      ];
+
+      setBatchesTotal(batches.length);
+
+      const mergedIssues: JiraTicket[] = [];
+      const seenKeys = new Set<string>();
+      const mergedTriageMap: Record<string, TriageEntry> = {};
+      let totalCount = 0;
+      let anyTruncated = false;
+      const localFailedUsers: string[] = [];
+
+      // Sequential loop — D-05 (no concurrent fetch primitives)
+      for (const batch of batches) {
+        try {
+          const result = await invoke<FetchTicketsResult>('fetch_tickets', {
+            baseUrl: serverConn.baseUrl,
+            jql: batch.jql,
+          });
+          // Dedup: first-seen wins (D-07)
+          for (const issue of result.issues) {
+            if (!seenKeys.has(issue.key)) {
+              seenKeys.add(issue.key);
+              mergedIssues.push(issue);
+            }
+          }
+          Object.assign(mergedTriageMap, result.triageMap);
+          totalCount += result.total;
+          if (result.truncated) anyTruncated = true;
+        } catch (err) {
+          // Per-user failure tolerance — D-06
+          console.error(`[manual-fetch] batch '${batch.label}' failed:`, err);
+          localFailedUsers.push(batch.label);
+        }
+        setBatchesDone((n) => n + 1);
+      }
+
+      if (localFailedUsers.length > 0) {
+        setFailedUserNames(localFailedUsers);
+      }
+
+      // Single setTickets call after loop — D-03 (avoids fetchStatus reset mid-loop, Pitfall 1)
+      store.setTickets(mergedIssues, mergedTriageMap, totalCount, anyTruncated);
       const now = new Date().toISOString();
       store.setLastFetchedAt(now);
       store.setLastCheckedAt(now);
 
       // Dual-purpose: run snapshot change detection after successful fetch (D-10, POLL-06)
+      // Change-detection loop over mergedIssues (not individual batch result — Pitfall 2)
       // Also hydrate unseen changes for frontend indicators (Phase 15)
-      for (const ticket of result.issues) {
+      for (const ticket of mergedIssues) {
         try {
           // NOTE: Tauri command `fetch_ticket_detail` takes Rust param `issue_key`,
           // which Tauri exposes to JS as `issueKey`. Passing the wrong key (e.g.
@@ -182,6 +269,9 @@ export function TicketListPage() {
 
       // Reset background poll timer after manual fetch (D-12)
       invoke('trigger_manual_poll').catch(() => {});
+
+      // Reset progress counter after fetch completes (Pitfall 6)
+      setBatchesTotal(0);
     } catch (err) {
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
     }
@@ -316,6 +406,11 @@ export function TicketListPage() {
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
+        {isLoading && batchesTotal > 0 && (
+          <span className="text-xs text-brand-muted" aria-live="polite" data-testid="fetch-progress">
+            {t('tickets.fetchProgress', { done: batchesDone, total: batchesTotal })}
+          </span>
+        )}
         <span className="text-xs text-brand-muted" aria-live="polite">
           {lastCheckedAt || lastFetchedAt
             ? t('tickets.lastChecked', {
@@ -357,6 +452,20 @@ export function TicketListPage() {
         >
           <p className="text-sm text-yellow-400">{t('tickets.truncationWarning')}</p>
           <p className="text-xs text-brand-muted mt-1">{t('tickets.truncationWarningHint')}</p>
+        </div>
+      )}
+
+      {/* Partial-failure warning — one or more per-user batches failed (D-06) */}
+      {failedUserNames.length > 0 && fetchStatus !== 'loading' && (
+        <div
+          className="mx-4 mt-3 rounded-lg border border-yellow-400/30 bg-yellow-400/5 px-4 py-3"
+          role="alert"
+          data-testid="partial-fetch-warning"
+        >
+          <p className="text-sm text-yellow-400">
+            {t('tickets.partialFetchWarning', { count: failedUserNames.length })}
+          </p>
+          <p className="text-xs text-brand-muted mt-1">{failedUserNames.join(', ')}</p>
         </div>
       )}
 

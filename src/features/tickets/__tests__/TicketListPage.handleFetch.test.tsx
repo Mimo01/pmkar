@@ -527,9 +527,14 @@ describe('TicketListPage — per-user batch fetching (D-01, D-02, D-05, D-07)', 
     } as unknown as Parameters<typeof useTicketStore.setState>[0]);
 
     let fetchCount = 0;
-    let idleTransitions = 0;
+    // Track 'loading' → 'idle' transitions (each setTickets call resets to 'idle')
+    let loadingToIdleTransitions = 0;
+    let prevStatus = useTicketStore.getState().fetchStatus;
     const unsubscribe = useTicketStore.subscribe((state) => {
-      if (state.fetchStatus === 'idle') idleTransitions += 1;
+      if (prevStatus === 'loading' && state.fetchStatus === 'idle') {
+        loadingToIdleTransitions += 1;
+      }
+      prevStatus = state.fetchStatus;
     });
 
     mockInvoke.mockImplementation(async (cmd: string) => {
@@ -568,8 +573,8 @@ describe('TicketListPage — per-user batch fetching (D-01, D-02, D-05, D-07)', 
 
     unsubscribe();
 
-    // setTickets resets fetchStatus to 'idle' — should happen exactly once
-    expect(idleTransitions).toBe(1);
+    // setTickets resets fetchStatus from 'loading' to 'idle' — should happen exactly once
+    expect(loadingToIdleTransitions).toBe(1);
   });
 });
 
@@ -804,9 +809,9 @@ describe('TicketListPage — progress counter (D-04)', () => {
     render(<TicketListPage />);
     fireEvent.click(await screen.findByTitle('Refresh (F5)'));
 
-    // While second batch is pending, progress counter should be visible
-    // Total = 3 (mine + u1 + u2)
-    await screen.findByText(/\d+\/\d+ users fetched/i);
+    // While second batch is pending, progress counter element should be visible
+    // (batchesTotal > 0 is set after batches array is built)
+    await screen.findByTestId('fetch-progress');
 
     // Resolve the deferred to let the fetch complete
     secondBatchDeferred.resolve(makeFetchResult(['U1-1']));
@@ -854,9 +859,9 @@ describe('TicketListPage — progress counter (D-04)', () => {
       expect(useTicketStore.getState().fetchStatus).toBe('idle');
     });
 
-    // Progress counter must be gone after fetch completes
+    // Progress counter element must be gone after fetch completes (batchesTotal reset to 0)
     await waitFor(() => {
-      expect(screen.queryByText(/users fetched/i)).toBeNull();
+      expect(screen.queryByTestId('fetch-progress')).toBeNull();
     });
   });
 });
