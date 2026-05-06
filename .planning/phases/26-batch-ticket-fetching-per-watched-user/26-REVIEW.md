@@ -1,6 +1,7 @@
 ---
 phase: 26-batch-ticket-fetching-per-watched-user
 reviewed: 2026-05-06T00:00:00Z
+fixed: 2026-05-06T00:00:00Z
 depth: standard
 files_reviewed: 5
 files_reviewed_list:
@@ -14,7 +15,7 @@ findings:
   warning: 3
   info: 2
   total: 5
-status: issues_found
+status: fixed
 ---
 
 # Phase 26: Code Review Report
@@ -158,6 +159,18 @@ for (const [key, entry] of Object.entries(result.triageMap)) {
 
 ---
 
+---
+
+## Fix Notes (2026-05-06)
+
+All 5 findings fixed. Additionally fixed a pre-existing test failure in `CopyPreviewPage.tsx`:
+`searchUsersForPicker` was passing `cloudBaseUrl` to `search_jira_users_by_domain` instead of
+`sourceBaseUrl`. The Rust command ignores the URL (uses stored credentials), but the fix restores
+the original intent documented in the code comment and makes the test pass.
+
+All 822 JS tests pass. All 218 Rust unit tests + integration tests pass.
+
 _Reviewed: 2026-05-06_
+_Fixed: 2026-05-06_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

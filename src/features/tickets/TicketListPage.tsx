@@ -201,7 +201,11 @@ export function TicketListPage() {
               mergedIssues.push(issue);
             }
           }
-          Object.assign(mergedTriageMap, result.triageMap);
+          for (const [key, entry] of Object.entries(result.triageMap)) {
+            if (!(key in mergedTriageMap)) {
+              mergedTriageMap[key] = entry;
+            }
+          }
           totalCount += result.total;
           if (result.truncated) anyTruncated = true;
         } catch (err) {
@@ -212,6 +216,17 @@ export function TicketListPage() {
         setBatchesDone((n) => n + 1);
       }
 
+      // WR-01: if every batch failed, preserve existing tickets and show an error banner.
+      // Do not set failedUserNames here — only the error state is appropriate.
+      if (localFailedUsers.length === batches.length) {
+        store.setFetchStatus(
+          'error',
+          `All ${batches.length} batch(es) failed. Check your connection.`,
+        );
+        return;
+      }
+
+      // Partial failure: only some batches failed — show the per-user warning.
       if (localFailedUsers.length > 0) {
         setFailedUserNames(localFailedUsers);
       }
@@ -320,8 +335,9 @@ export function TicketListPage() {
         const store = useTicketStore.getState();
         store.setLastCheckedAt(event.payload.checkedAt);
 
-        // If changes detected, silently re-fetch ticket list (D-16)
-        if (event.payload.changedKeys.length > 0) {
+        // If changes detected, silently re-fetch ticket list (D-16).
+        // Guard with !isLoading to avoid launching a second concurrent fetch (WR-03).
+        if (event.payload.changedKeys.length > 0 && !isLoading) {
           handleFetch();
         }
       },
@@ -329,7 +345,7 @@ export function TicketListPage() {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, [handleFetch]);
+  }, [handleFetch, isLoading]);
 
   function handleSelectTicket(key: string) {
     const store = useTicketStore.getState();
@@ -465,7 +481,11 @@ export function TicketListPage() {
           <p className="text-sm text-yellow-400">
             {t('tickets.partialFetchWarning', { count: failedUserNames.length })}
           </p>
-          <p className="text-xs text-brand-muted mt-1">{failedUserNames.join(', ')}</p>
+          <p className="text-xs text-brand-muted mt-1">
+            {failedUserNames
+              .map((n) => (n === 'mine' ? t('settings.preset.mine') : n))
+              .join(', ')}
+          </p>
         </div>
       )}
 
