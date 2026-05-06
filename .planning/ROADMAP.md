@@ -99,7 +99,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
-- [ ] 26-01-PLAN.md — Refactor handleFetch into sequential per-user batch loop with progress counter, partial-failure warning, and i18n keys
+- [x] 26-01-PLAN.md — Refactor handleFetch into sequential per-user batch loop with progress counter, partial-failure warning, and i18n keys
 
 ## Progress
 
@@ -130,4 +130,4 @@ Plans:
 | 23. copy_ticket_v2 Wiring + Pipeline Refactor + Audit Hooks | v0.4.0 | 4/4 | Complete | 2026-04-28 |
 | 24. Audit Log Copy-Time Resolution | hotfix | 2/2 | Complete | 2026-05-05 |
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 2/2 | Complete | 2026-05-05 |
-| 26. Batch Ticket Fetching per Watched User | — | 0/1 | Planned | — |
+| 26. Batch Ticket Fetching per Watched User | — | 1/1 | Complete | 2026-05-06 |
