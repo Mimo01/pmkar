@@ -77,6 +77,15 @@ function getProgressPercent(progressStep: string): number {
 const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
 // ---------------------------------------------------------------------------
+// Fields that have their own bespoke store property and dedicated UI input.
+// These must NEVER be seeded into overrideValues by the D-PREFILL loop,
+// because confirmCopy merges overrideValues last and would overwrite the
+// user-edited store value (e.g. targetSummary) with the original source value.
+// ---------------------------------------------------------------------------
+
+const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary']);
+
+// ---------------------------------------------------------------------------
 // CopyPreviewModal
 // ---------------------------------------------------------------------------
 
@@ -154,6 +163,10 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   // Seeds overrideValues for identity/priority transformer rows using raw source
   // field values. Skips user/version/component kinds (require async resolution).
   // Does not overwrite values already set by the user.
+  // Does not seed fields that have a bespoke store property (e.g. summary →
+  // targetSummary) — those are emitted explicitly in confirmCopy after the
+  // overrideValues spread, so seeding them here would cause the original source
+  // value to overwrite the user's edits.
   // biome-ignore lint/correctness/useExhaustiveDependencies: overrideValues and setOverrideValue intentionally omitted — overrideValues in deps causes an infinite loop (setOverrideValue → overrideValues changes → effect fires again); setOverrideValue is a stable store action reference.
   useEffect(() => {
     if (!sourceTicket || mappingRows.length === 0) return;
@@ -161,6 +174,8 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
     for (const row of mappingRows) {
       if (!row.targetFieldId) continue;
       if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
+      // Skip fields managed by their own dedicated store property and UI input.
+      if (PREFILL_EXCLUDED_TARGET_FIELDS.has(row.targetFieldId)) continue;
       // Do not overwrite values already set by the user.
       if (overrideValues[row.targetFieldId] !== undefined) continue;
       const rawValue = sourceFields[row.sourceFieldId];

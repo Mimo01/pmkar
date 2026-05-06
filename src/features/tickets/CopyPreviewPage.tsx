@@ -83,6 +83,16 @@ function getProgressPercent(progressStep: string): number {
 const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
 // ---------------------------------------------------------------------------
+// Fields that have their own bespoke store property and dedicated UI input.
+// These must NEVER be seeded into overrideValues by the D-PREFILL loop,
+// because confirmCopy emits them after the overrideValues spread and they
+// would overwrite the user-edited store value (e.g. targetSummary) with the
+// original source value.
+// ---------------------------------------------------------------------------
+
+const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary']);
+
+// ---------------------------------------------------------------------------
 // CopyPreviewPage
 // ---------------------------------------------------------------------------
 
@@ -176,6 +186,10 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   // field values. Phase 25: also invokes resolve_description_to_adf for wiki_to_adf
   // rows and resolve_users_preview for user-kind rows.
   // Does not overwrite values already set by the user.
+  // Does not seed fields that have a bespoke store property (e.g. summary →
+  // targetSummary) — those are emitted explicitly in confirmCopy after the
+  // overrideValues spread, so seeding them here would cause the original source
+  // value to overwrite the user's edits.
   // Quick task 260430-0tj — also batches a per-row audit entry describing what
   // the pre-fill did (or didn't) and emits log_preview_transformations once at
   // the end so the user can inspect outcomes from the Audit Log page.
@@ -204,6 +218,24 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
       for (const row of mappingRows) {
         if (!row.targetFieldId) continue;
         if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
+        // Skip fields that have a dedicated store property and UI input (e.g.
+        // summary → targetSummary). Seeding overrideValues for these would
+        // cause confirmCopy to overwrite the user's edited value with the
+        // original source value.
+        if (PREFILL_EXCLUDED_TARGET_FIELDS.has(row.targetFieldId)) {
+          logEntries.push({
+            targetFieldId: row.targetFieldId,
+            sourceFieldId: row.sourceFieldId,
+            transformerKind: row.transformerKind,
+            outcome: 'skipped',
+            failureReason: 'field has dedicated store property — managed outside overrideValues',
+            wasOverridden: false,
+            gapKind: null,
+            sourceValue: sourceFields[row.sourceFieldId] ?? null,
+            targetValue: null,
+          });
+          continue;
+        }
         const rawValue = (sourceFields[row.sourceFieldId] ?? null) as unknown;
         const userAlreadyHasValue = overrideValues[row.targetFieldId] !== undefined;
 

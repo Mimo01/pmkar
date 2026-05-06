@@ -240,13 +240,15 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           // The `?? ''` fallback is unreachable dead code kept only for type narrowing.
           targetIssueTypeId: state.targetIssueTypeId ?? '',
           overrideValues: {
-            summary: state.targetSummary,
-            // Forward prefilled fields from startPreview so they reach the backend.
-            // Phase 22 overrideValues (renderer-level overrides) take precedence over
-            // these defaults via the spread order below.
+            // overrideValues spread first so that the bespoke store fields (summary,
+            // priority, labels) always win over any stale prefill that may have landed
+            // in overrideValues[summary] via the D-PREFILL effect.
+            ...state.overrideValues,
+            // Bespoke fields have dedicated UI inputs and dedicated store properties.
+            // They must override any prefilled overrideValues entry for the same key.
             ...(state.targetPriorityId ? { priority: { id: state.targetPriorityId } } : {}),
             ...(state.selectedLabels.length ? { labels: state.selectedLabels } : {}),
-            ...state.overrideValues,
+            summary: state.targetSummary,
           },
           // Phase 24 — thread preview UUID so copy-time and preview-time audit
           // rows share the same copy_id group in the Field Transformations tab.

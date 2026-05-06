@@ -433,8 +433,11 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     ).entries;
     const byField = Object.fromEntries(entries.map((e) => [e.targetFieldId, e]));
 
-    // identity with present source → ok (pre-filled)
-    expect(byField.summary?.outcome).toBe('ok');
+    // summary has a dedicated store property (targetSummary) and must NOT be seeded
+    // into overrideValues — the D-PREFILL loop logs it as skipped to prevent the
+    // original source value from overwriting the user's edited summary at confirmCopy time.
+    expect(byField.summary?.outcome).toBe('skipped');
+    expect(byField.summary?.failureReason).toMatch(/dedicated store property/);
     // priority transformer is prefillable; source priority object present → ok
     expect(byField.priority?.outcome).toBe('ok');
     // Phase 25: user transformer rows go through async resolve_users_preview path;
