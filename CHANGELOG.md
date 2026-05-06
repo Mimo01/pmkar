@@ -1,17 +1,42 @@
 
 ## [0.4.5]
 
-### Added
+### Bug Fixes
 
-- Batch ticket fetching per watched user — parallel fetch across all watched users with per-user error isolation
+- apply code review findings for batch ticket fetching
+- remove stale 'mentioned' clause from mine preset description
+- copy preview summary edit ignored on confirm
+- user gap picker returns Cloud users with accountId
 
-### Fixed
+### Documentation
 
-- WR-01 prevent all-batches-failure from clearing existing tickets in state
-- WR-02 translate mine batch label in per-user error warning
-- WR-03 guard poll-complete listener with isLoading check to prevent stale events
-- Remove stale 'mentioned' clause from mine JQL preset description
+- add CHANGELOG entries for v0.4.5
+- add resolved debug sessions and phase-25 review fix notes
+- complete phase execution
+- complete phase execution
+- add code review report
+- complete batch ticket fetching plan
+- create phase plan
+- research batch ticket fetching phase
+- record phase 26 context session
+- capture phase context
 
+### Features
+
+- add i18n keys for progress counter and partial-failure warning
+- refactor handleFetch to sequential per-user batch loop (TDD GREEN)
+
+### Miscellaneous
+
+- merge executor worktree (worktree-agent-aebcc590d7f333dfc)
+
+### Testing
+
+- add failing tests for per-user batch fetching (TDD RED)
+
+### Rescue
+
+- persist 26-01-SUMMARY.md from worktree before merge
 ## [0.4.4]
 
 ### Bug Fixes
