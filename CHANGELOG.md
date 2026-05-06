@@ -1,4 +1,17 @@
 
+## [0.4.5]
+
+### Added
+
+- Batch ticket fetching per watched user — parallel fetch across all watched users with per-user error isolation
+
+### Fixed
+
+- WR-01 prevent all-batches-failure from clearing existing tickets in state
+- WR-02 translate mine batch label in per-user error warning
+- WR-03 guard poll-complete listener with isLoading check to prevent stale events
+- Remove stale 'mentioned' clause from mine JQL preset description
+
 ## [0.4.4]
 
 ### Bug Fixes
