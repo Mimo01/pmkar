@@ -319,28 +319,18 @@ export function TicketListPage() {
     }
   }, []);
 
-  // Hydrate triage map and fetch config on mount, then auto-refetch if previously fetched
+  // Hydrate triage map and fetch config on mount
   useEffect(() => {
-    Promise.all([
-      invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
-        .then((map) => useTicketStore.getState().hydrateTriageMap(map))
-        .catch(() => {}),
-      invoke<import('./types').FetchConfig>('get_fetch_config')
-        .then((config) => {
-          useTicketStore.getState().hydrateFetchConfig(config);
-          return config;
-        })
-        .catch(() => null),
-      invoke<string[]>('get_unseen_change_keys')
-        .then((keys) => useTicketStore.getState().hydrateUnseenChanges(keys))
-        .catch(() => {}),
-    ]).then(([, config]) => {
-      // Auto-refetch if user has previously fetched (tickets are in-memory only)
-      if (config?.lastFetchedAt) {
-        handleFetch();
-      }
-    });
-  }, [handleFetch]);
+    invoke<Record<string, import('./types').TriageEntry>>('get_triage_state')
+      .then((map) => useTicketStore.getState().hydrateTriageMap(map))
+      .catch(() => {});
+    invoke<import('./types').FetchConfig>('get_fetch_config')
+      .then((config) => useTicketStore.getState().hydrateFetchConfig(config))
+      .catch(() => {});
+    invoke<string[]>('get_unseen_change_keys')
+      .then((keys) => useTicketStore.getState().hydrateUnseenChanges(keys))
+      .catch(() => {});
+  }, []);
 
   // F5 manual poll shortcut (D-11)
   useEffect(() => {
