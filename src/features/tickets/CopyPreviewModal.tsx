@@ -385,7 +385,6 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                     description={sourceTicket.fields.description}
                     renderedHtml={renderedDescription ?? undefined}
                     baseUrl={sourceBaseUrl}
-                fieldNames={sourceTicket.names}
                   />
                 </div>
               </div>
