@@ -11,9 +11,7 @@ import { useConnectionStore } from '@/features/connections/connectionStore';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
-import { findNameMatchSuggestion } from './heuristics';
 import { MappingRow } from './MappingRow';
-import { type Suggestion, SuggestionsPanel } from './SuggestionsPanel';
 import type { FieldMappingRow } from './types';
 
 // ─── Module-scoped Zustand store ──────────────────────────────────────────────
@@ -165,9 +163,8 @@ export function FieldMappingSectionHeader() {
 // ─── FieldMappingSection ──────────────────────────────────────────────────────
 
 /**
- * Body content: suggestions panel + column headers + mapping table + add row button.
- * Orchestrates data loading (get_field_mapping + source/target schema), drift detection,
- * and heuristic suggestions via useMemo.
+ * Body content: column headers + mapping table + add row button.
+ * Orchestrates data loading (get_field_mapping + source/target schema) and drift detection.
  */
 export function FieldMappingSection() {
   const { t } = useTranslation();
@@ -230,27 +227,6 @@ export function FieldMappingSection() {
     );
   }, [mappingRows, targetFields, firstIssueTypeId]);
 
-  // ── Heuristic suggestions (EDIT-02) ───────────────────────────────────────
-  // Source fields that have NO mapping row (including no dismissed sentinel) with a
-  // heuristic name-match against target fields.
-  const suggestions = useMemo<Suggestion[]>(() => {
-    const mappedSourceIds = new Set(mappingRows.map((r) => r.sourceFieldId));
-    const out: Suggestion[] = [];
-    for (const sf of sourceFields) {
-      if (mappedSourceIds.has(sf.fieldId)) continue;
-      const target = findNameMatchSuggestion(sf.fieldId, sf.name, targetFields);
-      if (target) {
-        out.push({
-          sourceFieldId: sf.fieldId,
-          sourceName: sf.name,
-          sourceSchema: sf.schema,
-          target,
-        });
-      }
-    }
-    return out;
-  }, [mappingRows, sourceFields, targetFields]);
-
   // ── Used target field IDs (DEDUP-01) ──────────────────────────────────────
   // Set of all target_field_ids currently in use. Excludes empty sentinel ('')
   // so the "no target selected" state does not block any real target selection.
@@ -262,43 +238,6 @@ export function FieldMappingSection() {
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
-
-  async function handleAcceptSuggestion(
-    sourceFieldId: string,
-    target: import('@/types/fieldSchema').FieldSchema,
-  ) {
-    const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
-    const newRow: FieldMappingRow = {
-      sourceFieldId,
-      targetFieldId: target.fieldId,
-      transformerKind: 'identity',
-      sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
-      targetSchema: target.schema,
-    };
-    try {
-      await invoke('set_field_mapping', { row: newRow });
-      updateRow(newRow);
-    } catch {
-      toast.error(t('settings.fieldMapping.saveError'));
-    }
-  }
-
-  async function handleDismissSuggestion(sourceFieldId: string) {
-    const sf = sourceFields.find((f) => f.fieldId === sourceFieldId);
-    const dismissedRow: FieldMappingRow = {
-      sourceFieldId,
-      targetFieldId: '',
-      transformerKind: 'identity',
-      sourceSchema: sf?.schema ?? ({ type: 'any' } as FieldSchemaType),
-      targetSchema: { type: 'any' } as FieldSchemaType,
-    };
-    try {
-      await invoke('set_field_mapping', { row: dismissedRow });
-      updateRow(dismissedRow);
-    } catch {
-      toast.error(t('settings.fieldMapping.saveError'));
-    }
-  }
 
   function handleAddRow() {
     setPendingAdd(true);
@@ -343,13 +282,6 @@ export function FieldMappingSection() {
 
   return (
     <div>
-      {/* Suggestions panel (above table) */}
-      <SuggestionsPanel
-        suggestions={suggestions}
-        onAccept={handleAcceptSuggestion}
-        onDismiss={handleDismissSuggestion}
-      />
-
       {/* Table column headers */}
       <div className="grid grid-cols-[35fr_35fr_20fr_10fr] gap-3 pb-2 mb-2 border-b border-brand-border text-[11px] font-semibold text-brand-muted uppercase tracking-wider">
         <span>{t('settings.fieldMapping.colSource')}</span>

@@ -140,35 +140,6 @@ describe('FieldMappingSection — load + render', () => {
     expect(screen.queryByTestId('drift-warning-severity')).toBeNull();
   });
 
-  it('[EDIT-02] SuggestionsPanel receives suggestions for unmapped source fields', async () => {
-    const sourceFields = [
-      {
-        fieldId: 'labels',
-        name: 'Labels',
-        required: false,
-        schema: { type: 'array', items: 'string' } as const,
-      },
-      {
-        fieldId: 'priority',
-        name: 'Priority',
-        required: false,
-        schema: { type: 'priority' } as const,
-      },
-    ];
-    // Return no mapping rows so everything is unmapped; return source fields from discover
-    mockInvoke.mockImplementation(async (cmd: string) => {
-      if (cmd === 'get_field_mapping') return [];
-      if (cmd === 'discover_source_fields') return sourceFields;
-      if (cmd === 'get_target_field_schema_for_issuetype') return [targetLabels, targetPriority];
-      if (cmd === 'refresh_field_schema_cache') return undefined;
-      return undefined;
-    });
-    renderWithI18n(<FieldMappingSection />);
-    await waitFor(() => {
-      // Both source fields match target fields by name — suggestions panel should render
-      expect(screen.getByTestId('suggestions-panel')).toBeInTheDocument();
-    });
-  });
 });
 
 describe('FieldMappingSectionHeader — refresh', () => {
