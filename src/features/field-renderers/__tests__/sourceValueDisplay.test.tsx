@@ -441,6 +441,20 @@ describe('renderSourceFieldValue', () => {
     expect(isNoiseValue('x', '2|something')).toBe(false); // no trailing colon
   });
 
+  it('Test 24c — isNoiseValue: Java toString leak is noise', () => {
+    expect(
+      isNoiseValue(
+        'customfield_10000',
+        '{summaryBean=com.atlassian.jira.plugin.devstatus.rest.SummaryBean@7e045dcb[summary={}]}',
+      ),
+    ).toBe(true);
+  });
+
+  it('Test 24d — isNoiseValue: normal strings with @ are not mistaken for Java toString', () => {
+    expect(isNoiseValue('x', 'user@example.com')).toBe(false);
+    expect(isNoiseValue('x', 'Something@work')).toBe(false); // no hex+[ suffix
+  });
+
   // -------------------------------------------------------------------------
   // Test 25: votes and watches system fields
   // -------------------------------------------------------------------------

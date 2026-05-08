@@ -46,6 +46,8 @@ export function isNoiseValue(fieldId: string, value: unknown): boolean {
   if (fieldId === 'workratio' && value === -1) return true;
   // LexoRank (Jira internal drag-drop ordering value, e.g. "2|i1dhzo:") — not user-readable
   if (typeof value === 'string' && /^\d+\|[a-z0-9]+:$/.test(value)) return true;
+  // Java toString leak (e.g. "com.atlassian.SomeClass@abc123[...]") — not user-readable
+  if (typeof value === 'string' && /[A-Za-z][A-Za-z0-9$._]*@[0-9a-f]{4,}\[/.test(value)) return true;
   // all-zero progress sentinel
   if (
     (fieldId === 'progress' || fieldId === 'aggregateprogress') &&
