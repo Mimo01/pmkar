@@ -1929,6 +1929,7 @@ pub fn build_fixtures() -> SharedFixtures {
     let fixv_schema = json!({ "type": "array",    "items": "version", "system": "fixVersions" });
     let comp_schema = json!({ "type": "array",    "items": "component", "system": "components" });
     let desc_schema_v2 = json!({ "type": "string",   "system": "description" });
+    let desc_schema_v3 = json!({ "type": "doc",      "system": "description" });
     let duedate_schema = json!({ "type": "date",     "system": "duedate" });
     let environment_schema = json!({ "type": "string", "system": "environment" });
 
@@ -1987,7 +1988,7 @@ pub fn build_fixtures() -> SharedFixtures {
             "description",
             "Description",
             false,
-            desc_schema_v2.clone(),
+            desc_schema_v3.clone(),
             None,
         ),
         createmeta_field(
@@ -2037,7 +2038,7 @@ pub fn build_fixtures() -> SharedFixtures {
             "description",
             "Description",
             false,
-            desc_schema_v2.clone(),
+            desc_schema_v3.clone(),
             None,
         ),
         createmeta_field(
@@ -2066,7 +2067,7 @@ pub fn build_fixtures() -> SharedFixtures {
             "description",
             "Description",
             false,
-            desc_schema_v2.clone(),
+            desc_schema_v3.clone(),
             None,
         ),
         createmeta_field(
