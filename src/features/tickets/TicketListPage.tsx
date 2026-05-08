@@ -88,6 +88,14 @@ export function TicketListPage() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Synchronous guard: prevents concurrent handleFetch invocations regardless of React
+  // state batching. store.setTickets() transitions fetchStatus→'idle' before handleFetch
+  // finishes its post-fetch change-detection loop; without this ref, a poll-complete event
+  // or a StrictMode double-effect firing in that window would launch a second fetch and
+  // cause batchesDone to count twice (e.g. 16 out of 8). See debug session:
+  // tickets-loader-double-count.
+  const fetchInFlightRef = useRef(false);
+
   const [batchesDone, setBatchesDone] = useState(0);
   const [batchesTotal, setBatchesTotal] = useState(0);
   const [failedUserNames, setFailedUserNames] = useState<string[]>([]);
@@ -106,6 +114,12 @@ export function TicketListPage() {
   }, [fetchStatus]);
 
   const handleFetch = useCallback(async () => {
+    // Concurrency guard: drop duplicate calls that arrive while a fetch is already running.
+    // isLoading (React state) cannot be used here — it lags behind the actual async execution
+    // because store.setTickets() sets fetchStatus:'idle' before the post-fetch loop finishes.
+    if (fetchInFlightRef.current) return;
+    fetchInFlightRef.current = true;
+
     const store = useTicketStore.getState();
     store.setFetchStatus('loading');
 
@@ -297,6 +311,11 @@ export function TicketListPage() {
       setBatchesTotal(0);
     } catch (err) {
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
+    } finally {
+      // Always release the in-flight lock so subsequent fetches (user-initiated or poll-triggered)
+      // can proceed once the current one fully completes — including the post-fetch change
+      // detection loop above.
+      fetchInFlightRef.current = false;
     }
   }, []);
 
