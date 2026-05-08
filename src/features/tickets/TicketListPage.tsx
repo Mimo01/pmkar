@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -86,6 +86,8 @@ export function TicketListPage() {
 
   const isLoading = fetchStatus === 'loading';
 
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const [batchesDone, setBatchesDone] = useState(0);
   const [batchesTotal, setBatchesTotal] = useState(0);
   const [failedUserNames, setFailedUserNames] = useState<string[]>([]);
@@ -96,6 +98,12 @@ export function TicketListPage() {
     const id = setInterval(() => setTick((n) => n + 1), 30_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (fetchStatus !== 'loading' && scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [fetchStatus]);
 
   const handleFetch = useCallback(async () => {
     const store = useTicketStore.getState();
@@ -512,8 +520,8 @@ export function TicketListPage() {
       )}
 
       {/* Card list */}
-      {hasTickets && (
-        <div className="flex-1 overflow-y-auto">
+      {hasTickets && !isLoading && (
+        <div className="flex-1 overflow-y-auto" ref={scrollRef}>
           {sortedCandidates.map((ticket) => (
             <TicketCard
               key={ticket.key}
