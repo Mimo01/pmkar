@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { CommentsTab } from '../tabs/CommentsTab';
 import type { JiraComment } from '../types';
@@ -51,5 +52,33 @@ describe('CommentsTab', () => {
     render(<CommentsTab comments={[makeComment()]} />);
     // Should render some form of relative time text (e.g. "2 minutes ago")
     expect(screen.getByText(/minute|second|hour|day/i)).toBeInTheDocument();
+  });
+
+  it('renders comments newest first by default', () => {
+    const comments = [
+      makeComment({ id: '1', body: 'Older comment', created: '2024-01-01T10:00:00.000Z' }),
+      makeComment({ id: '2', body: 'Newer comment', created: '2024-06-01T10:00:00.000Z' }),
+    ];
+    render(<CommentsTab comments={comments} />);
+    const items = screen.getAllByText(/comment/i);
+    // "Newer comment" should appear before "Older comment" in the DOM
+    expect(items[0].textContent).toMatch(/Newer comment/);
+  });
+
+  it('toggles to oldest first when sort button clicked', async () => {
+    const user = userEvent.setup();
+    const comments = [
+      makeComment({ id: '1', body: 'Older comment', created: '2024-01-01T10:00:00.000Z' }),
+      makeComment({ id: '2', body: 'Newer comment', created: '2024-06-01T10:00:00.000Z' }),
+    ];
+    render(<CommentsTab comments={comments} />);
+    await user.click(screen.getByRole('button', { name: /toggle comment sort/i }));
+    const items = screen.getAllByText(/comment/i);
+    expect(items[0].textContent).toMatch(/Older comment/);
+  });
+
+  it('does not render sort toggle when there are no comments', () => {
+    render(<CommentsTab comments={[]} />);
+    expect(screen.queryByRole('button', { name: /toggle comment sort/i })).not.toBeInTheDocument();
   });
 });
