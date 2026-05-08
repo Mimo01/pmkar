@@ -421,6 +421,7 @@ export function TicketListPage() {
   const hasFetched = lastFetchedAt !== null;
   const hasTickets = sortedCandidates.length > 0;
   const showEmptyState = hasFetched && !hasTickets && fetchStatus === 'idle';
+  const showPreFetchState = !hasFetched && !isLoading && fetchStatus !== 'error';
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -520,11 +521,19 @@ export function TicketListPage() {
       {/* Loading skeleton */}
       {isLoading && <SkeletonCards count={3} />}
 
+      {/* Pre-fetch state: user has not fetched yet */}
+      {showPreFetchState && (
+        <div className="flex flex-col items-center justify-center flex-1 py-16">
+          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.prefetch.heading')}</p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.prefetch.body')}</p>
+        </div>
+      )}
+
       {/* Empty state */}
       {showEmptyState && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.heading')}</p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.body')}</p>
+          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.noresults.heading')}</p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.noresults.body')}</p>
         </div>
       )}
 
