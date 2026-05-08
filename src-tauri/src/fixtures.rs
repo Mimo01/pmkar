@@ -412,7 +412,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "created": "2026-02-28T10:00:00.000+0000", "updated": "2026-02-28T10:00:00.000+0000",
                 "worklog": { "worklogs": [
                     { "id": "40001", "author": {"name":"jdoe","displayName":"Jane Doe"}, "comment": "Investigated session config", "started": "2026-01-15T10:00:00.000+0000", "timeSpent": "2h", "timeSpentSeconds": 7200 }
-                ]}
+                ]},
+                "lastViewed": "2026-05-08T09:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-15",
+                "environment": null,
+                "watches": { "watchCount": 3, "isWatching": false },
+                "votes": { "votes": 2, "hasVoted": false },
+                "progress": { "progress": 7200, "total": 14400 },
+                "timeoriginalestimate": 14400,
+                "aggregatetimeoriginalestimate": 14400,
+                "timetracking": { "originalEstimate": "4h", "remainingEstimate": "2h", "timeSpent": "2h", "originalEstimateSeconds": 14400, "remainingEstimateSeconds": 7200, "timeSpentSeconds": 7200 }
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -436,7 +446,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "created": "2026-02-28T10:00:00.000+0000", "updated": "2026-02-28T10:00:00.000+0000",
                 "worklog": { "worklogs": [
                     { "id": "40001", "author": {"accountId":"acc-jdoe","displayName":"Jane Doe"}, "comment": "Investigated session config", "started": "2026-01-15T10:00:00.000+0000", "timeSpent": "2h", "timeSpentSeconds": 7200 }
-                ]}
+                ]},
+                "lastViewed": "2026-05-08T09:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-15",
+                "environment": null,
+                "watches": { "watchCount": 3, "isWatching": false },
+                "votes": { "votes": 2, "hasVoted": false },
+                "progress": { "progress": 7200, "total": 14400 },
+                "timeoriginalestimate": 14400,
+                "aggregatetimeoriginalestimate": 14400,
+                "timetracking": { "originalEstimate": "4h", "remainingEstimate": "2h", "timeSpent": "2h", "originalEstimateSeconds": 14400, "remainingEstimateSeconds": 7200, "timeSpentSeconds": 7200 }
             }),
         });
     }
@@ -539,7 +559,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "created": "2026-02-27T09:00:00.000+0000", "updated": "2026-02-27T09:00:00.000+0000",
                 "worklog": { "worklogs": [
                     { "id": "40002", "author": {"name":"bwilson","displayName":"Bob Wilson"}, "comment": "Profiled connection pool under load", "started": "2026-02-01T09:00:00.000+0000", "timeSpent": "3h", "timeSpentSeconds": 10800 }
-                ]}
+                ]},
+                "lastViewed": "2026-05-07T15:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-10",
+                "environment": "Production",
+                "watches": { "watchCount": 5, "isWatching": false },
+                "votes": { "votes": 4, "hasVoted": false },
+                "progress": { "progress": 10800, "total": 21600 },
+                "timeoriginalestimate": 21600,
+                "aggregatetimeoriginalestimate": 21600,
+                "timetracking": { "originalEstimate": "6h", "remainingEstimate": "3h", "timeSpent": "3h", "originalEstimateSeconds": 21600, "remainingEstimateSeconds": 10800, "timeSpentSeconds": 10800 }
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -563,7 +593,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "created": "2026-02-27T09:00:00.000+0000", "updated": "2026-02-27T09:00:00.000+0000",
                 "worklog": { "worklogs": [
                     { "id": "40002", "author": {"accountId":"acc-bwilson","displayName":"Bob Wilson"}, "comment": "Profiled connection pool under load", "started": "2026-02-01T09:00:00.000+0000", "timeSpent": "3h", "timeSpentSeconds": 10800 }
-                ]}
+                ]},
+                "lastViewed": "2026-05-07T15:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-10",
+                "environment": "Production",
+                "watches": { "watchCount": 5, "isWatching": false },
+                "votes": { "votes": 4, "hasVoted": false },
+                "progress": { "progress": 10800, "total": 21600 },
+                "timeoriginalestimate": 21600,
+                "aggregatetimeoriginalestimate": 21600,
+                "timetracking": { "originalEstimate": "6h", "remainingEstimate": "3h", "timeSpent": "3h", "originalEstimateSeconds": 21600, "remainingEstimateSeconds": 10800, "timeSpentSeconds": 10800 }
             }),
         });
     }
@@ -618,7 +658,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["bug"],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [{"name": "4.3.0"}],
-                    "created": "2026-02-26T08:00:00.000+0000", "updated": "2026-02-26T08:00:00.000+0000"
+                    "created": "2026-02-26T08:00:00.000+0000", "updated": "2026-02-26T08:00:00.000+0000",
+                    "lastViewed": "2026-05-07T14:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": "Production",
+                    "watches": { "watchCount": 4, "isWatching": false },
+                    "votes": { "votes": 3, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -642,7 +692,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["bug"],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [{"name": "4.3.0"}],
-                    "created": "2026-02-26T08:00:00.000+0000", "updated": "2026-02-26T08:00:00.000+0000"
+                    "created": "2026-02-26T08:00:00.000+0000", "updated": "2026-02-26T08:00:00.000+0000",
+                    "lastViewed": "2026-05-07T14:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": "Production",
+                    "watches": { "watchCount": 4, "isWatching": false },
+                    "votes": { "votes": 3, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -705,7 +765,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [{"name": "4.2.1"}],
-                    "created": "2026-01-20T16:00:00.000+0000", "updated": "2026-01-20T16:00:00.000+0000"
+                    "created": "2026-01-20T16:00:00.000+0000", "updated": "2026-01-20T16:00:00.000+0000",
+                    "lastViewed": "2026-02-01T10:00:00.000+0000",
+                    "resolutiondate": "2026-01-20T16:00:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 3600, "total": 3600 },
+                    "timeoriginalestimate": 3600,
+                    "aggregatetimeoriginalestimate": 3600,
+                    "timetracking": { "originalEstimate": "1h", "remainingEstimate": "0h", "timeSpent": "1h", "originalEstimateSeconds": 3600, "remainingEstimateSeconds": 0, "timeSpentSeconds": 3600 }
                 }),
             },
         );
@@ -729,7 +799,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [{"name": "4.2.1"}],
-                    "created": "2026-01-20T16:00:00.000+0000", "updated": "2026-01-20T16:00:00.000+0000"
+                    "created": "2026-01-20T16:00:00.000+0000", "updated": "2026-01-20T16:00:00.000+0000",
+                    "lastViewed": "2026-02-01T10:00:00.000+0000",
+                    "resolutiondate": "2026-01-20T16:00:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 3600, "total": 3600 },
+                    "timeoriginalestimate": 3600,
+                    "aggregatetimeoriginalestimate": 3600,
+                    "timetracking": { "originalEstimate": "1h", "remainingEstimate": "0h", "timeSpent": "1h", "originalEstimateSeconds": 3600, "remainingEstimateSeconds": 0, "timeSpentSeconds": 3600 }
                 }),
             },
         );
@@ -777,7 +857,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [{"name": "4.2.1"}],
-                    "created": "2026-01-02T10:00:00.000+0000", "updated": "2026-01-02T10:00:00.000+0000"
+                    "created": "2026-01-02T10:00:00.000+0000", "updated": "2026-01-02T10:00:00.000+0000",
+                    "lastViewed": "2026-01-10T10:00:00.000+0000",
+                    "resolutiondate": "2026-01-02T10:00:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 1800, "total": 1800 },
+                    "timeoriginalestimate": 1800,
+                    "aggregatetimeoriginalestimate": 1800,
+                    "timetracking": { "originalEstimate": "30m", "remainingEstimate": "0m", "timeSpent": "30m", "originalEstimateSeconds": 1800, "remainingEstimateSeconds": 0, "timeSpentSeconds": 1800 }
                 }),
             },
         );
@@ -801,7 +891,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [{"name": "4.2.1"}],
-                    "created": "2026-01-02T10:00:00.000+0000", "updated": "2026-01-02T10:00:00.000+0000"
+                    "created": "2026-01-02T10:00:00.000+0000", "updated": "2026-01-02T10:00:00.000+0000",
+                    "lastViewed": "2026-01-10T10:00:00.000+0000",
+                    "resolutiondate": "2026-01-02T10:00:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 1800, "total": 1800 },
+                    "timeoriginalestimate": 1800,
+                    "aggregatetimeoriginalestimate": 1800,
+                    "timetracking": { "originalEstimate": "30m", "remainingEstimate": "0m", "timeSpent": "30m", "originalEstimateSeconds": 1800, "remainingEstimateSeconds": 0, "timeSpentSeconds": 1800 }
                 }),
             },
         );
@@ -882,7 +982,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["bug"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-15T17:00:00.000+0000", "updated": "2026-02-15T17:00:00.000+0000"
+                    "created": "2026-02-15T17:00:00.000+0000", "updated": "2026-02-15T17:00:00.000+0000",
+                    "lastViewed": "2026-05-01T10:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": "2026-05-20",
+                    "environment": "Production",
+                    "watches": { "watchCount": 3, "isWatching": false },
+                    "votes": { "votes": 2, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -906,7 +1016,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["bug"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-15T17:00:00.000+0000", "updated": "2026-02-15T17:00:00.000+0000"
+                    "created": "2026-02-15T17:00:00.000+0000", "updated": "2026-02-15T17:00:00.000+0000",
+                    "lastViewed": "2026-05-01T10:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": "2026-05-20",
+                    "environment": "Production",
+                    "watches": { "watchCount": 3, "isWatching": false },
+                    "votes": { "votes": 2, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -954,7 +1074,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": [],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [],
-                    "created": "2026-01-16T09:00:00.000+0000", "updated": "2026-01-16T09:00:00.000+0000"
+                    "created": "2026-01-16T09:00:00.000+0000", "updated": "2026-01-16T09:00:00.000+0000",
+                    "lastViewed": "2026-05-08T08:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 3600, "total": 7200 },
+                    "timeoriginalestimate": 7200,
+                    "aggregatetimeoriginalestimate": 7200,
+                    "timetracking": { "originalEstimate": "2h", "remainingEstimate": "1h", "timeSpent": "1h", "originalEstimateSeconds": 7200, "remainingEstimateSeconds": 3600, "timeSpentSeconds": 3600 }
                 }),
             },
         );
@@ -978,7 +1108,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": [],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [],
-                    "created": "2026-01-16T09:00:00.000+0000", "updated": "2026-01-16T09:00:00.000+0000"
+                    "created": "2026-01-16T09:00:00.000+0000", "updated": "2026-01-16T09:00:00.000+0000",
+                    "lastViewed": "2026-05-08T08:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 3600, "total": 7200 },
+                    "timeoriginalestimate": 7200,
+                    "aggregatetimeoriginalestimate": 7200,
+                    "timetracking": { "originalEstimate": "2h", "remainingEstimate": "1h", "timeSpent": "1h", "originalEstimateSeconds": 7200, "remainingEstimateSeconds": 3600, "timeSpentSeconds": 3600 }
                 }),
             },
         );
@@ -1011,7 +1151,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [],
-                    "created": "2026-01-15T08:00:00.000+0000", "updated": "2026-01-15T08:00:00.000+0000"
+                    "created": "2026-01-15T08:00:00.000+0000", "updated": "2026-01-15T08:00:00.000+0000",
+                    "lastViewed": "2026-05-08T07:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1035,7 +1185,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [],
-                    "created": "2026-01-15T08:00:00.000+0000", "updated": "2026-01-15T08:00:00.000+0000"
+                    "created": "2026-01-15T08:00:00.000+0000", "updated": "2026-01-15T08:00:00.000+0000",
+                    "lastViewed": "2026-05-08T07:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1092,7 +1252,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-25T10:00:00.000+0000", "updated": "2026-02-25T10:00:00.000+0000"
+                    "created": "2026-02-25T10:00:00.000+0000", "updated": "2026-02-25T10:00:00.000+0000",
+                    "lastViewed": "2026-05-06T12:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": "2026-06-30",
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 1, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1116,7 +1286,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-25T10:00:00.000+0000", "updated": "2026-02-25T10:00:00.000+0000"
+                    "created": "2026-02-25T10:00:00.000+0000", "updated": "2026-02-25T10:00:00.000+0000",
+                    "lastViewed": "2026-05-06T12:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": "2026-06-30",
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 1, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1182,7 +1362,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [],
-                    "created": "2026-02-23T09:30:00.000+0000", "updated": "2026-02-23T09:30:00.000+0000"
+                    "created": "2026-02-23T09:30:00.000+0000", "updated": "2026-02-23T09:30:00.000+0000",
+                    "lastViewed": "2026-05-05T14:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 5400, "total": 10800 },
+                    "timeoriginalestimate": 10800,
+                    "aggregatetimeoriginalestimate": 10800,
+                    "timetracking": { "originalEstimate": "3h", "remainingEstimate": "1h30m", "timeSpent": "1h30m", "originalEstimateSeconds": 10800, "remainingEstimateSeconds": 5400, "timeSpentSeconds": 5400 }
                 }),
             },
         );
@@ -1206,7 +1396,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Backend"}],
                     "fixVersions": [],
-                    "created": "2026-02-23T09:30:00.000+0000", "updated": "2026-02-23T09:30:00.000+0000"
+                    "created": "2026-02-23T09:30:00.000+0000", "updated": "2026-02-23T09:30:00.000+0000",
+                    "lastViewed": "2026-05-05T14:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 5400, "total": 10800 },
+                    "timeoriginalestimate": 10800,
+                    "aggregatetimeoriginalestimate": 10800,
+                    "timetracking": { "originalEstimate": "3h", "remainingEstimate": "1h30m", "timeSpent": "1h30m", "originalEstimateSeconds": 10800, "remainingEstimateSeconds": 5400, "timeSpentSeconds": 5400 }
                 }),
             },
         );
@@ -1239,7 +1439,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-20T08:00:00.000+0000", "updated": "2026-02-20T08:00:00.000+0000"
+                    "created": "2026-02-20T08:00:00.000+0000", "updated": "2026-02-20T08:00:00.000+0000",
+                    "lastViewed": "2026-05-04T09:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1263,7 +1473,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["enhancement"],
                     "components": [{"name": "Frontend"}],
                     "fixVersions": [],
-                    "created": "2026-02-20T08:00:00.000+0000", "updated": "2026-02-20T08:00:00.000+0000"
+                    "created": "2026-02-20T08:00:00.000+0000", "updated": "2026-02-20T08:00:00.000+0000",
+                    "lastViewed": "2026-05-04T09:00:00.000+0000",
+                    "resolutiondate": null,
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 1, "isWatching": false },
+                    "votes": { "votes": 0, "hasVoted": false },
+                    "progress": { "progress": 0, "total": 0 },
+                    "timeoriginalestimate": null,
+                    "aggregatetimeoriginalestimate": null,
+                    "timetracking": {}
                 }),
             },
         );
@@ -1329,7 +1549,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [],
-                    "created": "2026-01-29T16:30:00.000+0000", "updated": "2026-01-29T16:30:00.000+0000"
+                    "created": "2026-01-29T16:30:00.000+0000", "updated": "2026-01-29T16:30:00.000+0000",
+                    "lastViewed": "2026-02-10T12:00:00.000+0000",
+                    "resolutiondate": "2026-01-29T16:30:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 1, "hasVoted": false },
+                    "progress": { "progress": 7200, "total": 7200 },
+                    "timeoriginalestimate": 7200,
+                    "aggregatetimeoriginalestimate": 7200,
+                    "timetracking": { "originalEstimate": "2h", "remainingEstimate": "0h", "timeSpent": "2h", "originalEstimateSeconds": 7200, "remainingEstimateSeconds": 0, "timeSpentSeconds": 7200 }
                 }),
             },
         );
@@ -1353,7 +1583,17 @@ pub fn build_fixtures() -> SharedFixtures {
                     "labels": ["maintenance"],
                     "components": [],
                     "fixVersions": [],
-                    "created": "2026-01-29T16:30:00.000+0000", "updated": "2026-01-29T16:30:00.000+0000"
+                    "created": "2026-01-29T16:30:00.000+0000", "updated": "2026-01-29T16:30:00.000+0000",
+                    "lastViewed": "2026-02-10T12:00:00.000+0000",
+                    "resolutiondate": "2026-01-29T16:30:00.000+0000",
+                    "duedate": null,
+                    "environment": null,
+                    "watches": { "watchCount": 2, "isWatching": false },
+                    "votes": { "votes": 1, "hasVoted": false },
+                    "progress": { "progress": 7200, "total": 7200 },
+                    "timeoriginalestimate": 7200,
+                    "aggregatetimeoriginalestimate": 7200,
+                    "timetracking": { "originalEstimate": "2h", "remainingEstimate": "0h", "timeSpent": "2h", "originalEstimateSeconds": 7200, "remainingEstimateSeconds": 0, "timeSpentSeconds": 7200 }
                 }),
             },
         );
@@ -1384,7 +1624,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["maintenance"],
                 "components": [{"name": "Backend"}],
                 "fixVersions": [],
-                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000"
+                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000",
+                "lastViewed": "2026-05-07T11:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-04-01",
+                "environment": null,
+                "watches": { "watchCount": 2, "isWatching": false },
+                "votes": { "votes": 0, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -1405,7 +1655,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["maintenance"],
                 "components": [{"name": "Backend"}],
                 "fixVersions": [],
-                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000"
+                "created": "2026-03-01T09:00:00.000+0000", "updated": "2026-03-01T09:00:00.000+0000",
+                "lastViewed": "2026-05-07T11:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-04-01",
+                "environment": null,
+                "watches": { "watchCount": 2, "isWatching": false },
+                "votes": { "votes": 0, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
     }
@@ -1435,7 +1695,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["enhancement"],
                 "components": [{"name": "Frontend"}],
                 "fixVersions": [],
-                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000"
+                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000",
+                "lastViewed": "2026-05-08T10:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": null,
+                "environment": null,
+                "watches": { "watchCount": 2, "isWatching": false },
+                "votes": { "votes": 1, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
         // v3: privacy-mode assignee — no emailAddress returned by cloud (PERS-04)
@@ -1457,7 +1727,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["enhancement"],
                 "components": [{"name": "Frontend"}],
                 "fixVersions": [],
-                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000"
+                "created": "2026-03-05T10:00:00.000+0000", "updated": "2026-03-05T10:00:00.000+0000",
+                "lastViewed": "2026-05-08T10:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": null,
+                "environment": null,
+                "watches": { "watchCount": 2, "isWatching": false },
+                "votes": { "votes": 1, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
     }
@@ -1487,7 +1767,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": [],
                 "components": [],
                 "fixVersions": [],
-                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000"
+                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000",
+                "lastViewed": "2026-05-06T16:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-06-30",
+                "environment": null,
+                "watches": { "watchCount": 4, "isWatching": false },
+                "votes": { "votes": 2, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
         v3.insert(key.to_string(), JiraIssue {
@@ -1508,7 +1798,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": [],
                 "components": [],
                 "fixVersions": [],
-                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000"
+                "created": "2026-03-10T08:00:00.000+0000", "updated": "2026-03-10T08:00:00.000+0000",
+                "lastViewed": "2026-05-06T16:00:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-06-30",
+                "environment": null,
+                "watches": { "watchCount": 4, "isWatching": false },
+                "votes": { "votes": 2, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
     }
@@ -1538,7 +1838,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["bug"],
                 "components": [{"name": "Backend"}],
                 "fixVersions": [],
-                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000"
+                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000",
+                "lastViewed": "2026-05-08T09:30:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-12",
+                "environment": "Production",
+                "watches": { "watchCount": 6, "isWatching": false },
+                "votes": { "votes": 3, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
         // v3: privacy-mode assignee — cloud returns no emailAddress (PERS-04)
@@ -1560,7 +1870,17 @@ pub fn build_fixtures() -> SharedFixtures {
                 "labels": ["bug"],
                 "components": [{"name": "Backend"}],
                 "fixVersions": [],
-                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000"
+                "created": "2026-04-01T11:00:00.000+0000", "updated": "2026-04-01T11:00:00.000+0000",
+                "lastViewed": "2026-05-08T09:30:00.000+0000",
+                "resolutiondate": null,
+                "duedate": "2026-05-12",
+                "environment": "Production",
+                "watches": { "watchCount": 6, "isWatching": false },
+                "votes": { "votes": 3, "hasVoted": false },
+                "progress": { "progress": 0, "total": 0 },
+                "timeoriginalestimate": null,
+                "aggregatetimeoriginalestimate": null,
+                "timetracking": {}
             }),
         });
     }
