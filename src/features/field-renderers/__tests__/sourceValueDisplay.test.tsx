@@ -400,4 +400,44 @@ describe('renderSourceFieldValue', () => {
     expect(container.textContent).toBe('Frontend, Backend');
     expect(container.querySelector('code')).toBeNull();
   });
+
+  // -------------------------------------------------------------------------
+  // Test 23: HTML string stripping
+  // -------------------------------------------------------------------------
+
+  it('Test 23a — string: HTML tags are stripped before rendering', () => {
+    const container = renderNode({ type: 'string' }, '<p><span>OnTime</span></p>')!;
+    expect(container.textContent).toBe('OnTime');
+  });
+
+  it('Test 23b — string: <style> block is removed entirely (not text-dumped)', () => {
+    const html = "<style type='text/css'>#field { color: red; }</style><p>Content</p>";
+    const container = renderNode({ type: 'string' }, html)!;
+    expect(container.textContent).toBe('Content');
+    expect(container.textContent).not.toContain('color');
+  });
+
+  it('Test 23c — string: HTML-only value with no text returns null', () => {
+    expect(renderSourceFieldValue({ type: 'string' }, "<style>body{}</style>")).toBeNull();
+  });
+
+  it('Test 23d — any: HTML string is stripped in any-type fallback', () => {
+    const container = renderNode({ type: 'any' }, '<p><strong>Active</strong></p>')!;
+    expect(container.textContent).toBe('Active');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 24: LexoRank noise detection
+  // -------------------------------------------------------------------------
+
+  it('Test 24 — isNoiseValue: LexoRank string is noise', () => {
+    expect(isNoiseValue('customfield_10105', '2|i1dhzo:')).toBe(true);
+    expect(isNoiseValue('customfield_10119', '0|i000a7:')).toBe(true);
+  });
+
+  it('Test 24b — isNoiseValue: normal strings are not mistaken for LexoRank', () => {
+    expect(isNoiseValue('x', 'hello')).toBe(false);
+    expect(isNoiseValue('x', '2|something')).toBe(false); // no trailing colon
+  });
 });

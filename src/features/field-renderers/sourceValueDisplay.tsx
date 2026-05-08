@@ -44,6 +44,8 @@ export function isNoiseValue(fieldId: string, value: unknown): boolean {
   }
   // workratio:-1 sentinel
   if (fieldId === 'workratio' && value === -1) return true;
+  // LexoRank (Jira internal drag-drop ordering value, e.g. "2|i1dhzo:") — not user-readable
+  if (typeof value === 'string' && /^\d+\|[a-z0-9]+:$/.test(value)) return true;
   // all-zero progress sentinel
   if (
     (fieldId === 'progress' || fieldId === 'aggregateprogress') &&
@@ -60,6 +62,20 @@ export function isNoiseValue(fieldId: string, value: unknown): boolean {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Strips HTML from a string value. Removes <style>/<script> blocks entirely
+ * (including their inner text), then strips remaining tags. Returns empty string
+ * if nothing meaningful remains.
+ */
+function stripHtml(s: string): string {
+  return s
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function extractOption(v: unknown): string {
   if (v === null || v === undefined) return '';
@@ -143,7 +159,10 @@ export function renderSourceFieldValue(
         const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
         return <span>{truncated}</span>;
       }
-      return <span>{value}</span>;
+      const display = stripHtml(value);
+      if (!display) return null;
+      const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
+      return <span>{truncated}</span>;
     }
 
     // ── number ───────────────────────────────────────────────────────────────
@@ -336,9 +355,11 @@ export function renderSourceFieldValue(
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
       }
-      // Plain string or number → render directly (avoids confusing JSON quoting)
+      // Plain string — strip HTML before rendering
       if (typeof value === 'string') {
-        const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
+        const display = stripHtml(value);
+        if (!display) return null;
+        const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
         return <span>{truncated}</span>;
       }
       if (typeof value === 'number') {
