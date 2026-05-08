@@ -336,13 +336,67 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
           (r.sourceSchema?.type === 'array' && r.sourceSchema?.items === 'user'),
       );
 
+      // user_name transformer: extract displayName directly from source — no Cloud lookup needed.
+      const userNameRows = userRows.filter((r) => r.transformerKind === 'user_name');
+      const cloudUserRows = userRows.filter((r) => r.transformerKind !== 'user_name');
+
+      for (const row of userNameRows) {
+        const fieldVal = sourceFields[row.sourceFieldId];
+        const sourceVal = fieldVal ?? null;
+        if (!fieldVal || typeof fieldVal !== 'object' || Array.isArray(fieldVal)) {
+          logEntries.push({
+            targetFieldId: row.targetFieldId,
+            sourceFieldId: row.sourceFieldId,
+            transformerKind: row.transformerKind,
+            outcome: 'skipped',
+            failureReason: 'source user field missing or not an object',
+            wasOverridden: false,
+            gapKind: null,
+            sourceValue: sourceVal,
+            targetValue: null,
+          });
+          continue;
+        }
+        const val = fieldVal as Record<string, unknown>;
+        const displayName =
+          (val.displayName as string | undefined) ?? (val.name as string | undefined) ?? null;
+        if (!displayName) {
+          logEntries.push({
+            targetFieldId: row.targetFieldId,
+            sourceFieldId: row.sourceFieldId,
+            transformerKind: row.transformerKind,
+            outcome: 'skipped',
+            failureReason: 'source user: displayName and name both missing',
+            wasOverridden: false,
+            gapKind: null,
+            sourceValue: sourceVal,
+            targetValue: null,
+          });
+          continue;
+        }
+        if (useCopyStore.getState().overrideValues[row.targetFieldId] === undefined) {
+          setOverrideValue(row.targetFieldId, displayName);
+        }
+        logEntries.push({
+          targetFieldId: row.targetFieldId,
+          sourceFieldId: row.sourceFieldId,
+          transformerKind: row.transformerKind,
+          outcome: 'ok',
+          failureReason: null,
+          wasOverridden: useCopyStore.getState().overrideValues[row.targetFieldId] !== undefined,
+          gapKind: null,
+          sourceValue: sourceVal,
+          targetValue: displayName,
+        });
+      }
+
       // Build the user entries list from source ticket fields.
       // Each entry: { username: string, email: string | null }
       type UserEntry = { username: string; email: string | null };
       const userEntries: UserEntry[] = [];
-      const rowsWithEntry: Array<{ row: (typeof userRows)[0]; entryIndex: number }> = [];
+      const rowsWithEntry: Array<{ row: (typeof cloudUserRows)[0]; entryIndex: number }> = [];
 
-      for (const row of userRows) {
+      for (const row of cloudUserRows) {
         const fieldVal = sourceFields[row.sourceFieldId];
         if (!fieldVal || typeof fieldVal !== 'object') {
           // Source user field is missing or not an object — log as skipped before continuing.
