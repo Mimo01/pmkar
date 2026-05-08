@@ -440,4 +440,48 @@ describe('renderSourceFieldValue', () => {
     expect(isNoiseValue('x', 'hello')).toBe(false);
     expect(isNoiseValue('x', '2|something')).toBe(false); // no trailing colon
   });
+
+  // -------------------------------------------------------------------------
+  // Test 25: votes and watches system fields
+  // -------------------------------------------------------------------------
+
+  it('Test 25a — any + fieldId=votes: zero votes returns null', () => {
+    expect(
+      renderSourceFieldValue(
+        { type: 'any' },
+        { self: 'https://x', votes: 0, hasVoted: false },
+        { fieldId: 'votes' },
+      ),
+    ).toBeNull();
+  });
+
+  it('Test 25b — any + fieldId=votes: non-zero renders count', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { self: 'https://x', votes: 5, hasVoted: false },
+      { fieldId: 'votes' },
+    )!;
+    expect(container.textContent).toBe('5');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 25c — any + fieldId=watches: zero watchCount returns null', () => {
+    expect(
+      renderSourceFieldValue(
+        { type: 'any' },
+        { self: 'https://x', watchCount: 0, isWatching: false },
+        { fieldId: 'watches' },
+      ),
+    ).toBeNull();
+  });
+
+  it('Test 25d — any + fieldId=watches: non-zero renders count', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { self: 'https://x', watchCount: 3, isWatching: true },
+      { fieldId: 'watches' },
+    )!;
+    expect(container.textContent).toBe('3');
+    expect(container.querySelector('code')).toBeNull();
+  });
 });

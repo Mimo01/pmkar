@@ -351,6 +351,18 @@ export function renderSourceFieldValue(
       if (fieldId === 'resolution' && isObjectWithName(value)) {
         return <span>{value.name}</span>;
       }
+      if (fieldId === 'votes' && typeof value === 'object' && value !== null) {
+        const v = value as Record<string, unknown>;
+        if (typeof v.votes === 'number') {
+          return v.votes === 0 ? null : <span>{v.votes}</span>;
+        }
+      }
+      if (fieldId === 'watches' && typeof value === 'object' && value !== null) {
+        const v = value as Record<string, unknown>;
+        if (typeof v.watchCount === 'number') {
+          return v.watchCount === 0 ? null : <span>{v.watchCount}</span>;
+        }
+      }
       // Shape-based: status object enriched with statusCategory (no fieldId match needed)
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
