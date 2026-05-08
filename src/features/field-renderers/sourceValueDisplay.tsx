@@ -8,6 +8,7 @@
  * instead of editable form controls — intentionally a parallel surface.
  */
 
+import DOMPurify from 'dompurify';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PriorityIcon } from '@/features/tickets/PriorityIcon';
@@ -44,6 +45,8 @@ export function isNoiseValue(fieldId: string, value: unknown): boolean {
   }
   // workratio:-1 sentinel
   if (fieldId === 'workratio' && value === -1) return true;
+  // LexoRank strings (e.g. "2|i1dhzo:") — internal ordering key, meaningless to users
+  if (typeof value === 'string' && /^\d+\|[0-9a-z]+:$/i.test(value)) return true;
   // all-zero progress sentinel
   if (
     (fieldId === 'progress' || fieldId === 'aggregateprogress') &&
@@ -73,6 +76,24 @@ function stripHtml(s: string): string {
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Returns true when the string looks like a Java object toString representation,
+ * e.g. "com.atlassian.jira.plugin.devstatus.rest.SummaryBean@5e7b9eaa[summary={...}]".
+ * These values are not user-readable and should be shown as a placeholder.
+ */
+function isJavaToString(s: string): boolean {
+  return /[A-Za-z][A-Za-z0-9$._]*@[0-9a-f]{4,}\[/.test(s);
+}
+
+function formatSeconds(s: number): string {
+  if (s === 0) return '0h';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
 }
 
 function extractOption(v: unknown): string {
@@ -127,6 +148,82 @@ function RawTag() {
 }
 
 // ---------------------------------------------------------------------------
+// renderHtmlContent — renders a string value that contains HTML markup.
+// Strips <style>/<script> via DOMPurify and renders the remaining structure
+// (tables, links, etc.) as sanitized HTML. Used for ScriptRunner widget
+// fields like Linked Projects and Linked Risks.
+// ---------------------------------------------------------------------------
+
+function renderHtmlContent(html: string): ReactNode {
+  const sanitized = DOMPurify.sanitize(html, {
+    FORBID_TAGS: ['style', 'script'],
+    // Strip inline styles — Jira HTML is designed for light backgrounds and
+    // hardcoded colors would clash with or be invisible on our dark theme.
+    FORBID_ATTR: ['style'],
+  });
+  // ScriptRunner fields often return an empty <table> shell populated by Jira JS at
+  // page load — the raw API value has no cell text. Fall back to a label rather
+  // than rendering an invisible empty table.
+  const text = stripHtml(sanitized);
+  if (!text) {
+    return <span className="text-xs italic text-brand-muted">[Dynamic content — view in Jira]</span>;
+  }
+  return (
+    <div
+      className="overflow-x-auto text-sm text-brand-text-secondary [&_*]:text-brand-text-secondary [&_a]:text-blue-400 [&_a]:hover:underline [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-brand-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-brand-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:font-medium"
+      dangerouslySetInnerHTML={{ __html: sanitized }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
+// renderJavaToString — renders a Java toString value in a human-readable way.
+// Strips class names and hex addresses, then extracts simple key=value pairs.
+// Used for the Development / devstatus field which returns a SummaryBean
+// toString representation.
+// ---------------------------------------------------------------------------
+
+function renderJavaToString(s: string): ReactNode {
+  const noClasses = s.replace(/[A-Za-z][A-Za-z0-9$._]*@[0-9a-f]{4,}/g, '');
+  const pairs: Array<[string, string]> = [];
+  const seen = new Set<string>();
+  // Match key='quoted', key=digits, or key=ALL_CAPS
+  const re =
+    /\b([a-zA-Z][a-zA-Z0-9_]*)=('([^']*)'|(\d+(?:\.\d+)?)(?!\d)|([A-Z][A-Z_]{1,}))/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(noClasses)) !== null) {
+    const key = m[1];
+    const val = m[3] ?? m[4] ?? m[5];
+    // Skip empty values (prevents trailing separator) and zero counts (noise)
+    if (key && val !== undefined && val !== '' && val !== '0' && !seen.has(key)) {
+      seen.add(key);
+      pairs.push([key, val]);
+    }
+  }
+  const display =
+    pairs.length > 0
+      ? pairs.map(([k, v]) => `${k}: ${v}`).join(' · ')
+      : 'No activity';
+  const truncated = display.length > 200 ? `${display.slice(0, 200)}…` : display;
+  return <span className="text-xs text-brand-muted">{truncated}</span>;
+}
+
+// ---------------------------------------------------------------------------
+// renderStringValue — shared helper for rendering a plain string field value.
+// ---------------------------------------------------------------------------
+
+function renderStringValue(value: string): ReactNode {
+  if (isJavaToString(value)) {
+    return renderJavaToString(value);
+  }
+  if (/<[a-zA-Z]/.test(value)) {
+    return renderHtmlContent(value);
+  }
+  const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
+  return <span>{truncated}</span>;
+}
+
+// ---------------------------------------------------------------------------
 // renderSourceFieldValue
 // ---------------------------------------------------------------------------
 
@@ -157,9 +254,7 @@ export function renderSourceFieldValue(
         const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
         return <span>{truncated}</span>;
       }
-      const display = stripHtml(value) || value;
-      const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
-      return <span>{truncated}</span>;
+      return renderStringValue(value);
     }
 
     // ── number ───────────────────────────────────────────────────────────────
@@ -254,7 +349,12 @@ export function renderSourceFieldValue(
 
     // ── array ────────────────────────────────────────────────────────────────
     case 'array': {
-      if (!Array.isArray(value) || value.length === 0) return null;
+      if (!Array.isArray(value)) {
+        // Schema says array but value is a string (e.g. ScriptRunner fields that
+        // return HTML instead of a structured array).
+        return typeof value === 'string' && value.trim() ? renderStringValue(value) : null;
+      }
+      if (value.length === 0) return null;
       switch (schema.items) {
         case 'string': {
           const labels = (value as unknown[]).filter((v) => typeof v === 'string') as string[];
@@ -360,15 +460,23 @@ export function renderSourceFieldValue(
           return <span>{v.watchCount === 1 ? '1 watcher' : `${v.watchCount} watchers`}</span>;
         }
       }
+      if (
+        (fieldId === 'progress' || fieldId === 'aggregateprogress') &&
+        typeof value === 'object' &&
+        value !== null
+      ) {
+        const p = value as Record<string, unknown>;
+        if (typeof p.progress === 'number' && typeof p.total === 'number') {
+          return <span>{formatSeconds(p.progress)} / {formatSeconds(p.total)}</span>;
+        }
+      }
       // Shape-based: status object enriched with statusCategory (no fieldId match needed)
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
       }
-      // Plain string — strip HTML if present; fall back to original if nothing remains
+      // Plain string — strip HTML, detect Java toString, or render as text
       if (typeof value === 'string') {
-        const display = stripHtml(value) || value;
-        const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
-        return <span>{truncated}</span>;
+        return renderStringValue(value);
       }
       if (typeof value === 'number') {
         return <span>{String(value)}</span>;

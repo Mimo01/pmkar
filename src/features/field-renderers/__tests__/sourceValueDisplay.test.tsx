@@ -417,9 +417,13 @@ describe('renderSourceFieldValue', () => {
     expect(container.textContent).not.toContain('color');
   });
 
-  it('Test 23c — string: HTML-only value with no text falls back to original truncated', () => {
-    const node = renderSourceFieldValue({ type: 'string' }, '<style>body{color:red}</style>');
-    expect(node).not.toBeNull();
+  it('Test 23c — string: HTML-only value (no extractable text) shows placeholder, not raw HTML', () => {
+    const container = renderNode({ type: 'string' }, '<style>body{color:red}</style>')!;
+    // Should show a placeholder — not raw HTML with style tags
+    expect(container.textContent).not.toContain('<style>');
+    expect(container.textContent).not.toContain('color:red');
+    // Placeholder is visible (not null)
+    expect(container.textContent!.length).toBeGreaterThan(0);
   });
 
   it('Test 23d — any: HTML string is stripped in any-type fallback', () => {
@@ -432,11 +436,11 @@ describe('renderSourceFieldValue', () => {
   // Test 24: LexoRank noise detection
   // -------------------------------------------------------------------------
 
-  it('Test 24 — isNoiseValue: LexoRank string is NOT noise (shown as-is)', () => {
-    expect(isNoiseValue('customfield_10105', '2|i1dhzo:')).toBe(false);
+  it('Test 24 — isNoiseValue: LexoRank string is noise (internal ordering key)', () => {
+    expect(isNoiseValue('customfield_10105', '2|i1dhzo:')).toBe(true);
   });
 
-  it('Test 24b — isNoiseValue: Java toString string is NOT noise (shown truncated)', () => {
+  it('Test 24b — isNoiseValue: Java toString string is NOT noise (field is shown)', () => {
     expect(
       isNoiseValue(
         'customfield_10000',
@@ -496,5 +500,58 @@ describe('renderSourceFieldValue', () => {
     )!;
     expect(container.textContent).toBe('1 watcher');
     expect(container.querySelector('code')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 26: Java toString detection — renders placeholder, not raw text
+  // These are Jira plugin fields (e.g. Development/devstatus) that return a
+  // Java object toString representation instead of a structured value.
+  // -------------------------------------------------------------------------
+
+  it('Test 26a — string: Java toString value renders placeholder instead of raw text', () => {
+    const javaToString =
+      '{summaryBean=com.atlassian.jira.plugin.devstatus.rest.SummaryBean@5e7b9eaa[summary={pullrequest=...}]}';
+    const container = renderNode({ type: 'string' }, javaToString)!;
+    // Should NOT contain the raw Java class name or hex address
+    expect(container.textContent).not.toContain('SummaryBean@');
+    expect(container.textContent).not.toContain('5e7b9eaa');
+    // Should show a human-readable placeholder
+    expect(container.textContent!.length).toBeGreaterThan(0);
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 26b — any: Java toString value in any-type fallback renders placeholder', () => {
+    const javaToString =
+      'com.atlassian.jira.plugin.devstatus.rest.SummaryBean@5e7b9eaa[summary={}]';
+    const container = renderNode({ type: 'any' }, javaToString)!;
+    expect(container.textContent).not.toContain('SummaryBean@');
+    expect(container.textContent).not.toContain('5e7b9eaa');
+    expect(container.textContent!.length).toBeGreaterThan(0);
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------------
+  // Test 27: HTML-only any-type string renders placeholder, not raw HTML
+  // These are ScriptRunner widget fields (e.g. Linked Projects, Linked Risks)
+  // that return only <style> + <table> HTML with no extractable plain text.
+  // -------------------------------------------------------------------------
+
+  it('Test 27a — any: HTML-only string (style-only, no text) shows placeholder, not raw HTML', () => {
+    const htmlOnly =
+      "<style type='text/css'>#scriptField,#scriptField*{border-bottom:1px solid #c1c7d0;}</style>";
+    const container = renderNode({ type: 'any' }, htmlOnly)!;
+    expect(container.textContent).not.toContain('<style');
+    expect(container.textContent).not.toContain('border-bottom');
+    expect(container.textContent!.length).toBeGreaterThan(0);
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 27b — string: ScriptRunner HTML-only field shows placeholder', () => {
+    const htmlOnly =
+      "<style type='text/css'>#scriptField{border-collapse:collapse;}</style>";
+    const container = renderNode({ type: 'string' }, htmlOnly)!;
+    expect(container.textContent).not.toContain('<style');
+    expect(container.textContent).not.toContain('border-collapse');
+    expect(container.textContent!.length).toBeGreaterThan(0);
   });
 });

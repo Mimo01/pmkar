@@ -32,6 +32,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
       <AllFieldsSection
         fields={detail.fields as unknown as Record<string, unknown>}
         skip={OVERVIEW_BESPOKE_FIELDS}
+        skipLabels={['last comment']}
         baseUrl={baseUrl}
         fieldNames={detail.names}
       />

@@ -22,6 +22,8 @@ interface AllFieldsSectionProps {
   compact?: boolean;
   /** List of fieldIds to skip (bespoke layouts handle these separately). */
   skip?: string[];
+  /** List of display labels to skip (case-insensitive). For custom fields whose ID is unknown. */
+  skipLabels?: string[];
   /** Optional baseUrl passthrough for renderers that need it. */
   baseUrl?: string;
   /**
@@ -92,6 +94,7 @@ export function AllFieldsSection({
   fields,
   compact = false,
   skip,
+  skipLabels,
   baseUrl,
   fieldNames,
 }: AllFieldsSectionProps) {
@@ -148,6 +151,9 @@ export function AllFieldsSection({
       fieldSchema?.name ??
       (fieldNames && fieldNames[fieldId]) ??
       prettifyKey(fieldId);
+
+    // Apply label-based skip (case-insensitive)
+    if (skipLabels?.some((l) => l.toLowerCase() === resolvedName.toLowerCase())) continue;
 
     // Synthesize a schema entry if not found (unknown field → treat as 'any')
     const effectiveSchema: FieldSchema = fieldSchema ?? {
