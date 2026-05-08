@@ -24,6 +24,12 @@ interface AllFieldsSectionProps {
   skip?: string[];
   /** Optional baseUrl passthrough for renderers that need it. */
   baseUrl?: string;
+  /**
+   * Optional field ID → display name map from JiraTicketDetail.names (expand=names).
+   * Used as a fallback for custom fields absent from the global schema cache
+   * (e.g. stale cache, fields added after last discovery).
+   */
+  fieldNames?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -31,7 +37,8 @@ interface AllFieldsSectionProps {
 // ---------------------------------------------------------------------------
 
 /**
- * Converts a Jira fieldId to a human-readable label when no schema entry is found.
+ * Converts a Jira fieldId to a human-readable label when no schema entry is found
+ * and no inline name is available.
  *   'customfield_10001' → 'Custom field 10001'
  *   'fixVersions'       → 'fix versions'
  *   'aggregateprogress' → 'aggregate progress'
@@ -86,6 +93,7 @@ export function AllFieldsSection({
   compact = false,
   skip,
   baseUrl,
+  fieldNames,
 }: AllFieldsSectionProps) {
   const cache = useSchemaCacheStore((s) => s.cache);
   const loadSchema = useSchemaCacheStore((s) => s.loadSchema);
@@ -131,10 +139,20 @@ export function AllFieldsSection({
     const value = fields[fieldId];
     const fieldSchema = schemaMap.get(fieldId) ?? null;
 
+    // Resolve a display name for the field.
+    // Priority order:
+    //   1. Schema cache entry (most authoritative — carries type info too)
+    //   2. Inline names map from expand=names (per-ticket, catches stale-cache gaps)
+    //   3. prettifyKey fallback
+    const resolvedName =
+      fieldSchema?.name ??
+      (fieldNames && fieldNames[fieldId]) ??
+      prettifyKey(fieldId);
+
     // Synthesize a schema entry if not found (unknown field → treat as 'any')
     const effectiveSchema: FieldSchema = fieldSchema ?? {
       fieldId,
-      name: prettifyKey(fieldId),
+      name: resolvedName,
       required: false,
       schema: { type: 'any' },
     };
@@ -144,7 +162,7 @@ export function AllFieldsSection({
 
     rows.push({
       fieldId,
-      label: effectiveSchema.name,
+      label: resolvedName,
       schema: fieldSchema,
       node,
     });

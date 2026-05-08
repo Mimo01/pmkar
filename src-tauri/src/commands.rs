@@ -855,7 +855,7 @@ pub async fn fetch_ticket_detail(
     let trimmed_url = base_url.trim_end_matches('/');
 
     let url = format!(
-        "{trimmed_url}/rest/api/2/issue/{issue_key}?expand=renderedFields,changelog&fields=*all"
+        "{trimmed_url}/rest/api/2/issue/{issue_key}?expand=renderedFields,changelog,names&fields=*all"
     );
 
     let resp = client

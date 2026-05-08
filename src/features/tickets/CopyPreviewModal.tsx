@@ -325,6 +325,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                 compact
                 skip={COPY_SOURCE_BESPOKE_FIELDS}
                 baseUrl={sourceBaseUrl}
+                fieldNames={sourceTicket.names}
               />
 
               {/* Side-effect banners: describe what the copy pipeline will do */}
@@ -384,6 +385,7 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
                     description={sourceTicket.fields.description}
                     renderedHtml={renderedDescription ?? undefined}
                     baseUrl={sourceBaseUrl}
+                fieldNames={sourceTicket.names}
                   />
                 </div>
               </div>

@@ -243,6 +243,20 @@ mod v2 {
                     });
                 }
 
+                // Support expand=names — build fieldId -> displayName map from global field list
+                if expand.contains("names") {
+                    let names_map: serde_json::Map<String, serde_json::Value> = state
+                        .v2_fields
+                        .iter()
+                        .filter_map(|f| {
+                            let id = f.get("id").and_then(|v| v.as_str())?;
+                            let name = f.get("name").and_then(|v| v.as_str())?;
+                            Some((id.to_string(), serde_json::Value::String(name.to_string())))
+                        })
+                        .collect();
+                    body["names"] = serde_json::Value::Object(names_map);
+                }
+
                 (StatusCode::OK, Json(body)).into_response()
             }
             None => StatusCode::NOT_FOUND.into_response(),

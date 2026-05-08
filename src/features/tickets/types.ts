@@ -138,6 +138,12 @@ export interface JiraTicketDetail {
   changelog?: {
     histories: ChangelogEntry[];
   };
+  /**
+   * Field ID → display name map from expand=names (Jira v2 only).
+   * Used as a fallback in AllFieldsSection for custom fields that are absent
+   * from the global /field schema cache (e.g. stale cache, new fields).
+   */
+  names?: Record<string, string>;
 }
 
 export interface WatchedUser {

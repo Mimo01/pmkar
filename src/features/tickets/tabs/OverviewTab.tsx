@@ -33,6 +33,7 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
         fields={detail.fields as unknown as Record<string, unknown>}
         skip={OVERVIEW_BESPOKE_FIELDS}
         baseUrl={baseUrl}
+        fieldNames={detail.names}
       />
 
       {/* Description */}
