@@ -29,9 +29,9 @@ import { isDoneTicket } from './utils';
 function buildMineBatchJql(currentUser: string, sourceProjectKey: string | null): string {
   const clause = `assignee = "${currentUser}" OR issueKey in watchedIssues()`;
   if (sourceProjectKey && sourceProjectKey.length > 0) {
-    return `project = "${sourceProjectKey}" AND (${clause}) ORDER BY updated DESC`;
+    return `project = "${sourceProjectKey}" AND (${clause}) AND statusCategory != Done ORDER BY updated DESC`;
   }
-  return `(${clause}) ORDER BY updated DESC`;
+  return `(${clause}) AND statusCategory != Done ORDER BY updated DESC`;
 }
 
 /**
@@ -42,9 +42,9 @@ function buildMineBatchJql(currentUser: string, sourceProjectKey: string | null)
 function buildUserBatchJql(identifier: string, sourceProjectKey: string | null): string {
   const clause = `assignee = "${identifier}"`;
   if (sourceProjectKey && sourceProjectKey.length > 0) {
-    return `project = "${sourceProjectKey}" AND ${clause} ORDER BY updated DESC`;
+    return `project = "${sourceProjectKey}" AND ${clause} AND statusCategory != Done ORDER BY updated DESC`;
   }
-  return `${clause} ORDER BY updated DESC`;
+  return `${clause} AND statusCategory != Done ORDER BY updated DESC`;
 }
 
 function getErrorDetail(error: string, t: (key: string) => string): string {
