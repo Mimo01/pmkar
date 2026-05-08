@@ -327,10 +327,11 @@ None yet.
 | 260508-s7u | Enhance loading screen — fix skeleton + stale tickets showing simultaneously | 2026-05-08 | f4a789f | Needs Review | [260508-s7u-i-want-to-enhance-the-loading-screen-whe](./quick/260508-s7u-i-want-to-enhance-the-loading-screen-whe/) |
 | 260508-naf | Remove auto-fetch on homescreen open — fetch only on button click or autofetch trigger | 2026-05-08 | 21c32f3 | Complete | [260508-naf-no-auto-fetch-on-homescreen-open](./quick/260508-naf-no-auto-fetch-on-homescreen-open/) |
 | 260508-tdf | Enhance ticket detail field display — better custom field labels and value rendering | 2026-05-08 | 028283b | Complete | [20260508-ticket-detail-field-display](./quick/20260508-ticket-detail-field-display/) |
+| 260508-a54 | Sort comments newest-first with toggle in ticket detail | 2026-05-08 | daa47a4 | | [260508-a54-in-ticket-detail-comments-tab-order-them](./quick/260508-a54-in-ticket-detail-comments-tab-order-them/) |
 
 ## Session Continuity
 
-Last activity: 2026-05-08 - Completed quick task 260508-naf: Remove auto-fetch on homescreen open
+Last activity: 2026-05-08 - Completed quick task 260508-a54: Sort comments newest-first with toggle in ticket detail
 Last session: 2026-05-06T10:58:34.732Z
 Stopped at: Phase 26 context gathered
 Resume file: .planning/phases/26-batch-ticket-fetching-per-watched-user/26-CONTEXT.md
