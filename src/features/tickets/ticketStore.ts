@@ -57,6 +57,12 @@ interface TicketState {
   setWatchedUsers: (users: WatchedUser[]) => void;
   hydrateFetchConfig: (config: FetchConfig) => void;
 
+  // Session-local flag: true once the first successful fetch completes in the current app session.
+  // Stored in the Zustand store (not React state) so it survives component unmount/remount on navigation.
+  // Must NOT be persisted or hydrated.
+  hasFetchedThisSession: boolean;
+  setHasFetchedThisSession: (v: boolean) => void;
+
   // Unseen changes tracking (Phase 15)
   unseenChanges: Record<string, string[]>; // key -> changed field names (empty array = no tooltip data yet)
 
@@ -84,6 +90,8 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   jqlPreset: 'all_watched',
   jqlCustom: null,
   watchedUsers: [],
+
+  hasFetchedThisSession: false,
 
   unseenChanges: {},
 
@@ -138,6 +146,8 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       watchedUsers: Array.isArray(config.watchedUsers) ? config.watchedUsers : [],
       lastFetchedAt: config.lastFetchedAt ?? null,
     }),
+
+  setHasFetchedThisSession: (v) => set({ hasFetchedThisSession: v }),
 
   // Unseen changes actions
   hydrateUnseenChanges: (keys) =>

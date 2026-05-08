@@ -99,7 +99,7 @@ export function TicketListPage() {
   const [batchesDone, setBatchesDone] = useState(0);
   const [batchesTotal, setBatchesTotal] = useState(0);
   const [failedUserNames, setFailedUserNames] = useState<string[]>([]);
-  const [hasFetchedThisSession, setHasFetchedThisSession] = useState(false);
+  const hasFetchedThisSession = useTicketStore((s) => s.hasFetchedThisSession);
 
   // Re-render every 30s so formatRelativeTime stays fresh
   const [, setTick] = useState(0);
@@ -145,7 +145,7 @@ export function TicketListPage() {
         const nowCustom = new Date().toISOString();
         store.setLastFetchedAt(nowCustom);
         store.setLastCheckedAt(nowCustom);
-        setHasFetchedThisSession(true);
+        useTicketStore.getState().setHasFetchedThisSession(true);
 
         // Change-detection loop for custom preset
         for (const ticket of result.issues) {
@@ -260,7 +260,7 @@ export function TicketListPage() {
       const now = new Date().toISOString();
       store.setLastFetchedAt(now);
       store.setLastCheckedAt(now);
-      setHasFetchedThisSession(true);
+      useTicketStore.getState().setHasFetchedThisSession(true);
 
       // Dual-purpose: run snapshot change detection after successful fetch (D-10, POLL-06)
       // Change-detection loop over mergedIssues (not individual batch result — Pitfall 2)
