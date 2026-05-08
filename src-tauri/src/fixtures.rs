@@ -1929,6 +1929,8 @@ pub fn build_fixtures() -> SharedFixtures {
     let fixv_schema = json!({ "type": "array",    "items": "version", "system": "fixVersions" });
     let comp_schema = json!({ "type": "array",    "items": "component", "system": "components" });
     let desc_schema_v2 = json!({ "type": "string",   "system": "description" });
+    let duedate_schema = json!({ "type": "date",     "system": "duedate" });
+    let environment_schema = json!({ "type": "string", "system": "environment" });
 
     // Global field list — v2
     let v2_fields = vec![
@@ -1951,6 +1953,8 @@ pub fn build_fixtures() -> SharedFixtures {
             dept_schema.clone(),
         ),
         global_field("customfield_10006", "Severity", true, sev_schema.clone()),
+        global_field("duedate", "Due Date", false, duedate_schema.clone()),
+        global_field("environment", "Environment", false, environment_schema.clone()),
     ];
 
     // Global field list — v3 (same logical fields; divergences enforced at createmeta level)
@@ -2022,6 +2026,8 @@ pub fn build_fixtures() -> SharedFixtures {
             dept_schema.clone(),
             Some(dept_allowed.clone()),
         ),
+        createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
+        createmeta_field("environment", "Environment", false, environment_schema.clone(), None),
     ];
 
     // Task — only summary required
@@ -2049,6 +2055,8 @@ pub fn build_fixtures() -> SharedFixtures {
             sprint_schema.clone(),
             None,
         ),
+        createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
+        createmeta_field("environment", "Environment", false, environment_schema.clone(), None),
     ];
 
     // Story — Story Points required
@@ -2082,6 +2090,8 @@ pub fn build_fixtures() -> SharedFixtures {
             team_schema.clone(),
             Some(team_allowed),
         ),
+        createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
+        createmeta_field("environment", "Environment", false, environment_schema, None),
     ];
 
     let mut v3_createmeta_fields: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
