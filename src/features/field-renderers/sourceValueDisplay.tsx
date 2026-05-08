@@ -347,10 +347,16 @@ export function renderSourceFieldValue(
       if (typeof value === 'boolean') {
         return <span>{value ? 'Yes' : 'No'}</span>;
       }
-      // Arrays of objects with name (custom multi-select cf, components, etc.)
+      // Arrays of objects with name or value (custom multi-select cf, components, etc.)
       if (Array.isArray(value)) {
         const labels = value
-          .map((v) => (isObjectWithName(v) ? v.name : typeof v === 'string' ? v : null))
+          .map((v) => {
+            if (isObjectWithName(v)) return v.name;
+            if (typeof v === 'string') return v;
+            const obj = v as Record<string, unknown>;
+            if (typeof obj.value === 'string' && obj.value) return obj.value;
+            return null;
+          })
           .filter((s): s is string => typeof s === 'string' && s.length > 0);
         if (labels.length > 0) {
           return <span>{labels.join(', ')}</span>;
@@ -360,6 +366,13 @@ export function renderSourceFieldValue(
       // and any unmapped object whose primary identity is its name)
       if (isObjectWithName(value)) {
         return <span>{value.name}</span>;
+      }
+      // Object with `value` string property (Jira option/select custom fields without `name`)
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        const obj = value as Record<string, unknown>;
+        if (typeof obj.value === 'string' && obj.value) {
+          return <span>{obj.value}</span>;
+        }
       }
       // JSON fallback for shapes we genuinely can't read
       const json = JSON.stringify(value);

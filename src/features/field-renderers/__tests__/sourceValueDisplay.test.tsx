@@ -372,4 +372,32 @@ describe('renderSourceFieldValue', () => {
     const container = renderNode({ type: 'any' }, { foo: 'bar', baz: 1 })!;
     expect(container.querySelector('code')).not.toBeNull();
   });
+
+  // -------------------------------------------------------------------------
+  // Test 22: object with `value` string property
+  // -------------------------------------------------------------------------
+
+  it('Test 22a — any: object with `value` string renders the value text', () => {
+    const container = renderNode({ type: 'any' }, { id: '10', value: 'Medium' })!;
+    expect(container.textContent).toBe('Medium');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 22b — any: array of {value} objects renders comma-joined values', () => {
+    const container = renderNode(
+      { type: 'any' },
+      [{ id: '1', value: 'Alpha' }, { id: '2', value: 'Beta' }],
+    )!;
+    expect(container.textContent).toBe('Alpha, Beta');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 22c — any: array mixing {name} and {value} objects renders all labels', () => {
+    const container = renderNode(
+      { type: 'any' },
+      [{ name: 'Frontend' }, { value: 'Backend' }],
+    )!;
+    expect(container.textContent).toBe('Frontend, Backend');
+    expect(container.querySelector('code')).toBeNull();
+  });
 });

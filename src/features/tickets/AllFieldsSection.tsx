@@ -32,11 +32,13 @@ interface AllFieldsSectionProps {
 
 /**
  * Converts a Jira fieldId to a human-readable label when no schema entry is found.
- *   'customfield_10001' → 'customfield 10001'
+ *   'customfield_10001' → 'Custom field 10001'
  *   'fixVersions'       → 'fix versions'
  *   'aggregateprogress' → 'aggregate progress'
  */
 function prettifyKey(k: string): string {
+  const m = k.match(/^customfield_(\d+)$/);
+  if (m) return `Custom field ${m[1]}`;
   return k
     .replace(/([A-Z])/g, ' $1')
     .replace(/_/g, ' ')

@@ -326,6 +326,7 @@ None yet.
 | 260506-fju | Add way more data to dev server so I can more easily test things | 2026-05-06 | 4a383fc | | [260506-fju-add-way-more-data-to-dev-server-so-i-can](./quick/260506-fju-add-way-more-data-to-dev-server-so-i-can/) |
 | 260508-s7u | Enhance loading screen — fix skeleton + stale tickets showing simultaneously | 2026-05-08 | f4a789f | Needs Review | [260508-s7u-i-want-to-enhance-the-loading-screen-whe](./quick/260508-s7u-i-want-to-enhance-the-loading-screen-whe/) |
 | 260508-naf | Remove auto-fetch on homescreen open — fetch only on button click or autofetch trigger | 2026-05-08 | 21c32f3 | Complete | [260508-naf-no-auto-fetch-on-homescreen-open](./quick/260508-naf-no-auto-fetch-on-homescreen-open/) |
+| 260508-tdf | Enhance ticket detail field display — better custom field labels and value rendering | 2026-05-08 | TBD | | [20260508-ticket-detail-field-display](./quick/20260508-ticket-detail-field-display/) |
 
 ## Session Continuity
 

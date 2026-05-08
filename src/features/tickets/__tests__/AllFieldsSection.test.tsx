@@ -85,7 +85,7 @@ describe('AllFieldsSection', () => {
     // Should not crash; string fields should render as plain text
     expect(screen.getByText('some value')).toBeInTheDocument();
     // prettified label for unknown field (no schema during loading)
-    expect(screen.getByText('customfield 10001')).toBeInTheDocument();
+    expect(screen.getByText('Custom field 10001')).toBeInTheDocument();
   });
 
   // ── Test 2: success state ───────────────────────────────────────────────────
@@ -165,7 +165,7 @@ describe('AllFieldsSection', () => {
     render(<AllFieldsSection fields={{ customfield_10999: 'mystery value' }} />);
 
     // Label: prettified key
-    expect(screen.getByText('customfield 10999')).toBeInTheDocument();
+    expect(screen.getByText('Custom field 10999')).toBeInTheDocument();
     // Value: string value rendered as JSON/raw or as text
     expect(screen.getByText('mystery value')).toBeInTheDocument();
   });
