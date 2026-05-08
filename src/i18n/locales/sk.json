@@ -35,7 +35,7 @@
   "settings.watchedUsers.domainSearch.addSelected": "Pridať označené",
   "settings.watchedUsers.domainSearch.noResults": "Žiadni používatelia pre @{{domain}}",
   "settings.watchedUsers.domainSearch.invalidFormat": "Zadajte platnú doménu (napr. acme.com)",
-  "settings.watchedUsers.domainSearch.privacyWarning.title": "E-mailové adresy sú skryté nastaveniami vášho Jira Cloud.",
+  "settings.watchedUsers.domainSearch.privacyWarning.title": "E-mailové adresy môžu byť skryté nastaveniami administrátora Jira.",
   "settings.watchedUsers.domainSearch.privacyWarning.body": "Požiadajte administrátora Jira o vypnutie obmedzení viditeľnosti e-mailov, alebo pridajte používateľov jednotlivo vyššie.",
   "settings.watchedUsers.domainSearch.error": "Nepodarilo sa vyhľadať používateľov. Skontrolujte pripojenie a skúste znova.",
   "settings.appearance": "Vzhľad",

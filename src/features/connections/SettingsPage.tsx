@@ -458,7 +458,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
       });
       if (users.length === 0) {
         setDomainSearchState('empty');
-        setShowPrivacyWarning(!!cloudConn);
+        setShowPrivacyWarning(!!serverConn);
       } else {
         setDomainResults(users);
         const newSelected = new Set<string>();

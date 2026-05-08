@@ -35,7 +35,7 @@
   "settings.watchedUsers.domainSearch.addSelected": "Add selected",
   "settings.watchedUsers.domainSearch.noResults": "No users found for @{{domain}}",
   "settings.watchedUsers.domainSearch.invalidFormat": "Enter a valid domain (e.g. acme.com)",
-  "settings.watchedUsers.domainSearch.privacyWarning.title": "Email addresses are hidden by your Jira Cloud settings.",
+  "settings.watchedUsers.domainSearch.privacyWarning.title": "Email addresses may be hidden by your Jira admin settings.",
   "settings.watchedUsers.domainSearch.privacyWarning.body": "Ask your Jira admin to disable email visibility restrictions, or add users individually above.",
   "settings.watchedUsers.domainSearch.error": "Could not search users. Check your connection and try again.",
   "settings.appearance": "Appearance",
