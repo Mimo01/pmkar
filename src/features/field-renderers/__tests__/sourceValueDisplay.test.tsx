@@ -417,8 +417,9 @@ describe('renderSourceFieldValue', () => {
     expect(container.textContent).not.toContain('color');
   });
 
-  it('Test 23c — string: HTML-only value with no text returns null', () => {
-    expect(renderSourceFieldValue({ type: 'string' }, "<style>body{}</style>")).toBeNull();
+  it('Test 23c — string: HTML-only value with no text falls back to original truncated', () => {
+    const node = renderSourceFieldValue({ type: 'string' }, '<style>body{color:red}</style>');
+    expect(node).not.toBeNull();
   });
 
   it('Test 23d — any: HTML string is stripped in any-type fallback', () => {
@@ -431,71 +432,69 @@ describe('renderSourceFieldValue', () => {
   // Test 24: LexoRank noise detection
   // -------------------------------------------------------------------------
 
-  it('Test 24 — isNoiseValue: LexoRank string is noise', () => {
-    expect(isNoiseValue('customfield_10105', '2|i1dhzo:')).toBe(true);
-    expect(isNoiseValue('customfield_10119', '0|i000a7:')).toBe(true);
+  it('Test 24 — isNoiseValue: LexoRank string is NOT noise (shown as-is)', () => {
+    expect(isNoiseValue('customfield_10105', '2|i1dhzo:')).toBe(false);
   });
 
-  it('Test 24b — isNoiseValue: normal strings are not mistaken for LexoRank', () => {
-    expect(isNoiseValue('x', 'hello')).toBe(false);
-    expect(isNoiseValue('x', '2|something')).toBe(false); // no trailing colon
-  });
-
-  it('Test 24c — isNoiseValue: Java toString leak is noise', () => {
+  it('Test 24b — isNoiseValue: Java toString string is NOT noise (shown truncated)', () => {
     expect(
       isNoiseValue(
         'customfield_10000',
-        '{summaryBean=com.atlassian.jira.plugin.devstatus.rest.SummaryBean@7e045dcb[summary={}]}',
+        '{summaryBean=com.atlassian.SomeClass@7e045dcb[summary={}]}',
       ),
-    ).toBe(true);
-  });
-
-  it('Test 24d — isNoiseValue: normal strings with @ are not mistaken for Java toString', () => {
-    expect(isNoiseValue('x', 'user@example.com')).toBe(false);
-    expect(isNoiseValue('x', 'Something@work')).toBe(false); // no hex+[ suffix
+    ).toBe(false);
   });
 
   // -------------------------------------------------------------------------
   // Test 25: votes and watches system fields
   // -------------------------------------------------------------------------
 
-  it('Test 25a — any + fieldId=votes: zero votes returns null', () => {
-    expect(
-      renderSourceFieldValue(
-        { type: 'any' },
-        { self: 'https://x', votes: 0, hasVoted: false },
-        { fieldId: 'votes' },
-      ),
-    ).toBeNull();
+  it('Test 25a — any + fieldId=votes: zero renders "0 votes"', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { self: 'https://x', votes: 0, hasVoted: false },
+      { fieldId: 'votes' },
+    )!;
+    expect(container.textContent).toBe('0 votes');
+    expect(container.querySelector('code')).toBeNull();
   });
 
-  it('Test 25b — any + fieldId=votes: non-zero renders count', () => {
+  it('Test 25b — any + fieldId=votes: 1 renders "1 vote" (singular)', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { self: 'https://x', votes: 1, hasVoted: true },
+      { fieldId: 'votes' },
+    )!;
+    expect(container.textContent).toBe('1 vote');
+    expect(container.querySelector('code')).toBeNull();
+  });
+
+  it('Test 25b2 — any + fieldId=votes: 5 renders "5 votes"', () => {
     const container = renderNode(
       { type: 'any' },
       { self: 'https://x', votes: 5, hasVoted: false },
       { fieldId: 'votes' },
     )!;
-    expect(container.textContent).toBe('5');
+    expect(container.textContent).toBe('5 votes');
+  });
+
+  it('Test 25c — any + fieldId=watches: zero renders "0 watchers"', () => {
+    const container = renderNode(
+      { type: 'any' },
+      { self: 'https://x', watchCount: 0, isWatching: false },
+      { fieldId: 'watches' },
+    )!;
+    expect(container.textContent).toBe('0 watchers');
     expect(container.querySelector('code')).toBeNull();
   });
 
-  it('Test 25c — any + fieldId=watches: zero watchCount returns null', () => {
-    expect(
-      renderSourceFieldValue(
-        { type: 'any' },
-        { self: 'https://x', watchCount: 0, isWatching: false },
-        { fieldId: 'watches' },
-      ),
-    ).toBeNull();
-  });
-
-  it('Test 25d — any + fieldId=watches: non-zero renders count', () => {
+  it('Test 25d — any + fieldId=watches: 1 renders "1 watcher" (singular)', () => {
     const container = renderNode(
       { type: 'any' },
-      { self: 'https://x', watchCount: 3, isWatching: true },
+      { self: 'https://x', watchCount: 1, isWatching: true },
       { fieldId: 'watches' },
     )!;
-    expect(container.textContent).toBe('3');
+    expect(container.textContent).toBe('1 watcher');
     expect(container.querySelector('code')).toBeNull();
   });
 });

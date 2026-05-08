@@ -44,10 +44,6 @@ export function isNoiseValue(fieldId: string, value: unknown): boolean {
   }
   // workratio:-1 sentinel
   if (fieldId === 'workratio' && value === -1) return true;
-  // LexoRank (Jira internal drag-drop ordering value, e.g. "2|i1dhzo:") — not user-readable
-  if (typeof value === 'string' && /^\d+\|[a-z0-9]+:$/.test(value)) return true;
-  // Java toString leak (e.g. "com.atlassian.SomeClass@abc123[...]") — not user-readable
-  if (typeof value === 'string' && /[A-Za-z][A-Za-z0-9$._]*@[0-9a-f]{4,}\[/.test(value)) return true;
   // all-zero progress sentinel
   if (
     (fieldId === 'progress' || fieldId === 'aggregateprogress') &&
@@ -161,8 +157,7 @@ export function renderSourceFieldValue(
         const truncated = value.length > 240 ? `${value.slice(0, 240)}…` : value;
         return <span>{truncated}</span>;
       }
-      const display = stripHtml(value);
-      if (!display) return null;
+      const display = stripHtml(value) || value;
       const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
       return <span>{truncated}</span>;
     }
@@ -356,23 +351,22 @@ export function renderSourceFieldValue(
       if (fieldId === 'votes' && typeof value === 'object' && value !== null) {
         const v = value as Record<string, unknown>;
         if (typeof v.votes === 'number') {
-          return v.votes === 0 ? null : <span>{v.votes}</span>;
+          return <span>{v.votes === 1 ? '1 vote' : `${v.votes} votes`}</span>;
         }
       }
       if (fieldId === 'watches' && typeof value === 'object' && value !== null) {
         const v = value as Record<string, unknown>;
         if (typeof v.watchCount === 'number') {
-          return v.watchCount === 0 ? null : <span>{v.watchCount}</span>;
+          return <span>{v.watchCount === 1 ? '1 watcher' : `${v.watchCount} watchers`}</span>;
         }
       }
       // Shape-based: status object enriched with statusCategory (no fieldId match needed)
       if (isStatusShape(value)) {
         return <StatusBadge status={value.name} />;
       }
-      // Plain string — strip HTML before rendering
+      // Plain string — strip HTML if present; fall back to original if nothing remains
       if (typeof value === 'string') {
-        const display = stripHtml(value);
-        if (!display) return null;
+        const display = stripHtml(value) || value;
         const truncated = display.length > 240 ? `${display.slice(0, 240)}…` : display;
         return <span>{truncated}</span>;
       }
