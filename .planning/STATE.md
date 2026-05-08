@@ -325,11 +325,11 @@ None yet.
 | 260506-cml | Release next minor version 0.4.5 | 2026-05-06 | 1e763db | | [260506-cml-release-next-minor-version-0-4-5](./quick/260506-cml-release-next-minor-version-0-4-5/) |
 | 260506-fju | Add way more data to dev server so I can more easily test things | 2026-05-06 | 4a383fc | | [260506-fju-add-way-more-data-to-dev-server-so-i-can](./quick/260506-fju-add-way-more-data-to-dev-server-so-i-can/) |
 | 260508-s7u | Enhance loading screen — fix skeleton + stale tickets showing simultaneously | 2026-05-08 | f4a789f | Needs Review | [260508-s7u-i-want-to-enhance-the-loading-screen-whe](./quick/260508-s7u-i-want-to-enhance-the-loading-screen-whe/) |
-| 260508-naf | Remove auto-fetch on homescreen open — fetch only on button click or autofetch trigger | 2026-05-08 | — | Complete | [260508-naf-no-auto-fetch-on-homescreen-open](./quick/260508-naf-no-auto-fetch-on-homescreen-open/) |
+| 260508-naf | Remove auto-fetch on homescreen open — fetch only on button click or autofetch trigger | 2026-05-08 | 21c32f3 | Complete | [260508-naf-no-auto-fetch-on-homescreen-open](./quick/260508-naf-no-auto-fetch-on-homescreen-open/) |
 
 ## Session Continuity
 
-Last activity: 2026-05-08 - Completed quick task 260508-s7u: Enhance loading screen — fix skeleton + stale tickets showing simultaneously
+Last activity: 2026-05-08 - Completed quick task 260508-naf: Remove auto-fetch on homescreen open
 Last session: 2026-05-06T10:58:34.732Z
 Stopped at: Phase 26 context gathered
 Resume file: .planning/phases/26-batch-ticket-fetching-per-watched-user/26-CONTEXT.md
