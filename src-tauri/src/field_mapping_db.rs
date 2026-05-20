@@ -154,6 +154,21 @@ fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
     Ok(())
 }
 
+/// Migration: add `static_value TEXT` (nullable, no DEFAULT) to the `field_mapping`
+/// table for existing databases created before Phase 27. Idempotent — uses the same
+/// PRAGMA table_info guard as `migrate_mapping_audit_log_columns`. Existing rows get
+/// NULL which round-trips to `Option<String>::None` on read.
+fn migrate_static_value_column(conn: &Connection) -> AppResult<()> {
+    let existing: Vec<String> = conn
+        .prepare("PRAGMA table_info(field_mapping)")?
+        .query_map([], |r| r.get::<_, String>(1))?
+        .collect::<Result<Vec<_>, _>>()?;
+    if !existing.iter().any(|c| c == "static_value") {
+        conn.execute_batch("ALTER TABLE field_mapping ADD COLUMN static_value TEXT;")?;
+    }
+    Ok(())
+}
+
 /// DTO for a row from `mapping_audit_log`. Serializes to camelCase for the
 /// frontend. Quick task 260430-0tj. Quick task 260430-26i adds the optional
 /// `source_value_json` / `target_value_json` fields — legacy rows return None.
@@ -278,6 +293,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         migrate_mapping_audit_log_columns(&conn)?;
+        migrate_static_value_column(&conn)?;
         update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
@@ -294,6 +310,7 @@ impl FieldMappingDb {
         conn.execute_batch(CREATE_MAPPING_META)?;
         conn.execute_batch(CREATE_MAPPING_AUDIT_LOG)?;
         migrate_mapping_audit_log_columns(&conn)?;
+        migrate_static_value_column(&conn)?;
         update_null_schema_defaults(&conn)?;
         seed_defaults_if_empty(&conn)?;
         Ok(Self { conn })
@@ -457,13 +474,15 @@ impl FieldMappingDb {
         self.conn.execute(
             "INSERT INTO field_mapping
                  (source_field_id, target_field_id, transformer_kind,
-                  source_schema_json, target_schema_json, created_at, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
+                  source_schema_json, target_schema_json, static_value,
+                  created_at, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
              ON CONFLICT(source_field_id) DO UPDATE SET
                  target_field_id     = excluded.target_field_id,
                  transformer_kind    = excluded.transformer_kind,
                  source_schema_json  = excluded.source_schema_json,
                  target_schema_json  = excluded.target_schema_json,
+                 static_value        = excluded.static_value,
                  updated_at          = excluded.updated_at",
             params![
                 row.source_field_id,
@@ -471,6 +490,7 @@ impl FieldMappingDb {
                 row.transformer_kind,
                 source_schema_json,
                 target_schema_json,
+                row.static_value,
                 now,
             ],
         )?;
@@ -484,7 +504,7 @@ impl FieldMappingDb {
     pub fn get_all_mapping_rows(&self) -> AppResult<Vec<FieldMappingRow>> {
         let mut stmt = self.conn.prepare(
             "SELECT source_field_id, target_field_id, transformer_kind,
-                    source_schema_json, target_schema_json
+                    source_schema_json, target_schema_json, static_value
              FROM field_mapping
              ORDER BY id ASC",
         )?;
@@ -494,17 +514,19 @@ impl FieldMappingDb {
             let transformer_kind: String = row.get(2)?;
             let source_schema_json: Option<String> = row.get(3)?;
             let target_schema_json: Option<String> = row.get(4)?;
+            let static_value: Option<String> = row.get(5)?;
             Ok((
                 source_field_id,
                 target_field_id,
                 transformer_kind,
                 source_schema_json,
                 target_schema_json,
+                static_value,
             ))
         })?;
         let mut out: Vec<FieldMappingRow> = Vec::new();
         for r in rows {
-            let (source_field_id, target_field_id, transformer_kind, src_json, tgt_json) = r?;
+            let (source_field_id, target_field_id, transformer_kind, src_json, tgt_json, static_value) = r?;
             let source_schema = match src_json {
                 Some(s) => serde_json::from_str(&s).map_err(|e| {
                     crate::error::AppError::Internal(format!(
@@ -527,7 +549,7 @@ impl FieldMappingDb {
                 transformer_kind,
                 source_schema,
                 target_schema,
-                static_value: None, // placeholder — Task 2 will wire the real column
+                static_value,
             });
         }
         Ok(out)
@@ -1294,8 +1316,9 @@ mod tests {
         )
         .expect("insert null-schema row");
 
-        // Run the migration
-        update_null_schema_defaults(&conn).expect("migration");
+        // Run the migrations (static_value column added by Phase 27 migration)
+        migrate_static_value_column(&conn).expect("static_value migration");
+        update_null_schema_defaults(&conn).expect("null schema migration");
 
         // Wrap in FieldMappingDb for get_all_mapping_rows
         let db = FieldMappingDb { conn };
