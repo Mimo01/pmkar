@@ -427,6 +427,7 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
           outcome: string;
           failureReason: string | null;
           transformerKind: string;
+          targetValue?: unknown;
         }>;
       }
     ).entries;

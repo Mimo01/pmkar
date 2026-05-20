@@ -82,6 +82,28 @@ function getProgressPercent(progressStep: string): number {
 
 const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
+// Phase 27 — mirrors Rust pipeline static branch dispatch (pipeline.rs apply_mapping).
+function parseStaticValueForOverride(
+  val: string,
+  schema: import('@/types/fieldSchema').FieldSchemaType,
+): unknown {
+  if (schema.type === 'array') {
+    const parts = val
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return schema.items === 'option' ? parts.map((id) => ({ id })) : parts;
+  }
+  if (schema.type === 'option' || schema.type === 'option-with-child') {
+    try {
+      return JSON.parse(val) as unknown;
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}
+
 // ---------------------------------------------------------------------------
 // Fields that have their own bespoke store property and dedicated UI input.
 // These must NEVER be seeded into overrideValues by the D-PREFILL loop,
@@ -213,6 +235,30 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         targetValue: unknown;
       };
       const logEntries: LogEntry[] = [];
+
+      // ── 0. Static rows — seed overrideValues from stored staticValue ──────────
+      for (const row of mappingRows) {
+        if (row.transformerKind !== 'static' || !row.targetFieldId) continue;
+        if (row.staticValue != null && overrideValues[row.targetFieldId] === undefined) {
+          setOverrideValue(
+            row.targetFieldId,
+            parseStaticValueForOverride(row.staticValue, row.targetSchema),
+          );
+        }
+        logEntries.push({
+          targetFieldId: row.targetFieldId,
+          sourceFieldId: row.sourceFieldId,
+          transformerKind: row.transformerKind,
+          outcome: row.staticValue != null ? 'ok' : 'skipped',
+          failureReason: row.staticValue != null ? null : 'static value not configured',
+          wasOverridden: false,
+          gapKind: null,
+          sourceValue: null,
+          targetValue: row.staticValue != null
+            ? parseStaticValueForOverride(row.staticValue, row.targetSchema)
+            : null,
+        });
+      }
 
       // ── 1. Identity / priority rows (synchronous — unchanged) ──────────────
       for (const row of mappingRows) {
@@ -547,6 +593,7 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
           if (!row.targetFieldId) continue;
           if (PREFILLABLE_KINDS.has(row.transformerKind)) continue;
           if (row.transformerKind === 'wiki_to_adf') continue;
+          if (row.transformerKind === 'static') continue; // Phase 27: handled in step 0 above
           if (userRows.some((r) => r.targetFieldId === row.targetFieldId)) continue;
           const rawValue = sourceFields[row.sourceFieldId] ?? null;
           logEntries.push({

@@ -76,6 +76,29 @@ function getProgressPercent(progressStep: string): number {
 
 const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 
+// Phase 27 — parse a stored staticValue into the JS shape the Jira API expects,
+// mirroring the Rust pipeline dispatch in pipeline.rs (apply_mapping static branch).
+function parseStaticValueForOverride(
+  val: string,
+  schema: import('@/types/fieldSchema').FieldSchemaType,
+): unknown {
+  if (schema.type === 'array') {
+    const parts = val
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return schema.items === 'option' ? parts.map((id) => ({ id })) : parts;
+  }
+  if (schema.type === 'option' || schema.type === 'option-with-child') {
+    try {
+      return JSON.parse(val) as unknown;
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}
+
 // ---------------------------------------------------------------------------
 // Fields that have their own bespoke store property and dedicated UI input.
 // These must NEVER be seeded into overrideValues by the D-PREFILL loop,
@@ -168,6 +191,17 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
     const sourceFields = sourceTicket.fields as Record<string, unknown>;
     for (const row of mappingRows) {
       if (!row.targetFieldId) continue;
+      // Phase 27 — static rows: seed overrideValues from the stored staticValue,
+      // parsed into the correct Jira write-shape so the copy modal can show the value.
+      if (row.transformerKind === 'static') {
+        if (row.staticValue != null && overrideValues[row.targetFieldId] === undefined) {
+          setOverrideValue(
+            row.targetFieldId,
+            parseStaticValueForOverride(row.staticValue, row.targetSchema),
+          );
+        }
+        continue;
+      }
       if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
       // Skip fields managed by their own dedicated store property and UI input.
       // Exception: priority is seeded here using the Cloud-matched value from
