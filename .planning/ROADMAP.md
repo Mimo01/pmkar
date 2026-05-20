@@ -141,12 +141,12 @@ Plans:
 **Goal:** Extend the field mapping editor with a 'static' transformer kind so target-only Jira Cloud fields receive a configured constant value on every copy, regardless of any source field.
 **Requirements**: STATIC-DB-01, STATIC-DB-02, STATIC-PIPE-01, STATIC-PIPE-02, STATIC-UI-01, STATIC-UI-02, STATIC-UI-03, STATIC-UI-04, STATIC-I18N-01
 **Depends on:** Phase 26
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 27-01-PLAN.md — Wave 0 test scaffolding for DB, pipeline, and UI components (RED tests for all STATIC-* requirements)
+- [x] 27-01-PLAN.md — Wave 0 test scaffolding for DB, pipeline, and UI components (RED tests for all STATIC-* requirements)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
