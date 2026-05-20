@@ -1,7 +1,8 @@
 ---
 phase: 27
 slug: add-static-value-mapping-to-configurable-field-mapping
-status: draft
+status: approved
+reviewed_at: 2026-05-20T00:00:00Z
 shadcn_initialized: true
 preset: "style=default, baseColor=neutral, cssVariables=true"
 created: 2026-05-20
@@ -57,7 +58,7 @@ Source: `FieldMappingSection.tsx` + `MappingRow.tsx` — existing grid and row d
 | Body / field name | 14px (text-sm) | 400 (regular) | 1.5 |
 | Field ID sub-label | 11px (text-[11px]) | 400 (regular) | 1.4 |
 | Column headers | 11px (text-[11px]) | 600 (semibold) | 1.0 |
-| "Static" badge label | 11px (text-[11px]) | 500 (medium) | 1.0 |
+| "Static" badge label | 11px (text-[11px]) | 600 (semibold) | 1.0 |
 
 Source: `MappingRow.tsx` line ~101–107 (source name + field ID sub-label), `FieldMappingSection.tsx` line ~286 (column header).
 
@@ -123,7 +124,7 @@ Note: The column headers in `FieldMappingSection` show "Source / Target / Transf
 └─────────────────────┴─────────────────────┴──────────────────┴───┘
 ```
 
-- Col 1 (source): `<span>` with "Static" badge — `inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium text-brand bg-brand/10 border border-brand/30`
+- Col 1 (source): `<span>` with "Static" badge — `inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold text-brand bg-brand/10 border border-brand/30`
 - Col 2 (target): `VirtualizedCombobox` — identical to normal MappingRow target combobox
 - Col 3 (value): smart widget — see "Smart Value Widget" section below
 - Col 4 (delete): `<button>` — identical to normal MappingRow delete button (`h-9 w-9 rounded hover:bg-brand-surface-hover text-brand-muted hover:text-destructive`)
@@ -259,11 +260,11 @@ No third-party registries. No new components added via `npx shadcn add`. All wid
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (non-blocking — focal point implied by badge styling)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved
