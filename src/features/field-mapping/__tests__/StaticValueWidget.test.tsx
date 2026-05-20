@@ -144,7 +144,7 @@ describe('StaticValueWidget — issuetype branch (M42)', () => {
     fieldId: 'issuetype',
     name: 'Issue Type',
     required: true,
-    schema: { type: 'issuetype' },
+    schema: { type: 'issuetype' as const },
   };
 
   it('renders issuetype combobox when schema.type is issuetype', () => {

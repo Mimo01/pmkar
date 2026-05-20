@@ -215,19 +215,38 @@ export function FieldMappingSection() {
     // references that never change identity, so listing them does not cause extra re-runs.
   }, [targetProjectKey, loadSchema, preWarm, setLoading, setMappingRows]);
 
+  // ── Synthetic issuetype field for StaticMappingRow target list (M42) ─────
+  // Regular MappingRow does NOT expose issuetype as a target (scope: static-only per D-03).
+  // This memo appends the synthetic FieldSchema only when targetFields has loaded and
+  // issuetype is not already present (defensive dedup).
+  const targetFieldsForStatic = useMemo<typeof targetFields>(() => {
+    if (targetFields.length === 0) return targetFields;
+    if (targetFields.some((f) => f.fieldId === 'issuetype')) return targetFields;
+    return [
+      ...targetFields,
+      {
+        fieldId: 'issuetype',
+        name: t('settings.fieldMapping.issuetypeFieldName'),
+        required: true,
+        schema: { type: 'issuetype' as const },
+      },
+    ];
+  }, [targetFields, t]);
+
   // ── Drift detection (MAP-05) ───────────────────────────────────────────────
   // Rows whose non-empty targetFieldId is NOT present in the target schema cache are drifted.
   // Rows with targetFieldId='' (dismissed sentinel) are explicitly NOT flagged.
   // Guard: skip drift check when target schema hasn't loaded (avoids false positives).
+  // Use targetFieldsForStatic for drift check so a static issuetype mapping is not flagged as drifted.
   const driftedSourceFieldIds = useMemo(() => {
     if (!firstIssueTypeId) return new Set<string>();
-    const targetIds = new Set(targetFields.map((f) => f.fieldId));
+    const targetIds = new Set(targetFieldsForStatic.map((f) => f.fieldId));
     return new Set(
       mappingRows
         .filter((r) => r.targetFieldId !== '' && !targetIds.has(r.targetFieldId))
         .map((r) => r.sourceFieldId),
     );
-  }, [mappingRows, targetFields, firstIssueTypeId]);
+  }, [mappingRows, targetFieldsForStatic, firstIssueTypeId]);
 
   // ── Used target field IDs (DEDUP-01) ──────────────────────────────────────
   // Set of all target_field_ids currently in use. Excludes empty sentinel ('')
@@ -325,7 +344,7 @@ export function FieldMappingSection() {
               <StaticMappingRow
                 key={row.sourceFieldId}
                 row={row}
-                targetFields={targetFields}
+                targetFields={targetFieldsForStatic}
                 usedTargetFieldIds={usedTargetFieldIds}
                 onRowUpdate={updateRow}
                 onRowDelete={deleteRow}
@@ -391,7 +410,7 @@ export function FieldMappingSection() {
                 targetSchema: { type: 'any' },
                 staticValue: undefined,
               }}
-              targetFields={targetFields}
+              targetFields={targetFieldsForStatic}
               usedTargetFieldIds={usedTargetFieldIds}
               onRowUpdate={(persisted) => {
                 updateRow(persisted);
