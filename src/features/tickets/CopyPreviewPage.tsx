@@ -94,7 +94,12 @@ function parseStaticValueForOverride(
       .filter(Boolean);
     return schema.items === 'option' ? parts.map((id) => ({ id })) : parts;
   }
-  if (schema.type === 'option' || schema.type === 'option-with-child') {
+  if (
+    schema.type === 'option' ||
+    schema.type === 'option-with-child' ||
+    schema.type === 'issuetype' ||
+    schema.type === 'priority'
+  ) {
     try {
       return JSON.parse(val) as unknown;
     } catch {

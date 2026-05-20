@@ -133,12 +133,12 @@ pub async fn apply_mapping(
             continue;
         }
 
-        // Priority — intentionally excluded from apply_mapping output.
-        // Source priority IDs (e.g. Jira Server "3") are namespace-local and have no
-        // meaning on Cloud Jira. Priority is always resolved client-side via
-        // startPreview (name-matched from fetch_cloud_meta.availablePriorities) and
-        // emitted as an override_values entry in confirmCopy. Forwarding the source ID
-        // here would cause Cloud Jira to silently ignore the field and set it to null.
+        // Dynamic priority rows: routed via client-side override_values, not resolved here.
+        // Source priority IDs (e.g. Server "3") are namespace-local; name-matching requires
+        // availablePriorities from fetch_cloud_meta, available only client-side. The frontend
+        // seeds override_values with the matched Cloud priority ID.
+        // Static priority rows bypass this guard — they exit via `continue` in the static
+        // branch above before reaching this point.
         if is_priority_row(&row.target_schema) {
             continue;
         }
@@ -575,11 +575,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn apply_mapping_priority_excluded_from_output() {
-        // Priority fields are intentionally excluded from apply_mapping output.
-        // Source priority IDs (e.g. Server "3") are namespace-local and invalid on
-        // Cloud Jira. Priority is always managed client-side via targetPriorityId and
-        // emitted as an override_values entry in confirmCopy.
+    async fn apply_mapping_priority_routed_via_override_values() {
+        // Dynamic priority rows are intentionally routed via the client-side override_values path,
+        // not resolved in apply_mapping output. Source priority IDs (e.g. Server "3") are
+        // namespace-local and meaningless on Cloud Jira; name-matching requires availablePriorities
+        // from fetch_cloud_meta, which is only available client-side. The client sets the correct
+        // Cloud priority ID in override_values; static priority rows bypass this guard and are
+        // processed by the static branch above.
         let issue = json!({"fields":{"priority":{"id":"3","name":"Medium","self":"http://x/3"}}});
         let mapping = vec![row("priority", "priority", FieldSchemaType::Priority)];
         let (u, v, c) = make_resolvers();
@@ -589,7 +591,7 @@ mod tests {
         let out = apply_mapping(&issue, &mapping, &ctx)
             .await
             .expect("apply_mapping ok");
-        // priority must NOT appear in resolved.fields — it is managed via override_values
+        // Dynamic priority must NOT appear in resolved.fields — routed via override_values client-side
         assert!(
             !out.fields.contains_key("priority"),
             "priority must not appear in apply_mapping output (managed via override_values)"

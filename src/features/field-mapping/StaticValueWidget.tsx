@@ -3,6 +3,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '@/features/connections/connectionStore';
+import { useCopyStore } from '@/features/tickets/copyStore';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import { useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema, IssueTypeRef } from '@/types/fieldSchema';
@@ -23,11 +24,15 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
   const schema = field.schema;
 
   // ── Issuetype — stores {id, name} JSON; populated from schemaCacheStore (M42) ──
-  // Must be called unconditionally (Rules of Hooks).
+  // ── Priority — stores {id, name} JSON; populated from useCopyStore.cloudMeta ──
+  // All hooks must be called unconditionally (Rules of Hooks).
   const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
   const issueTypes = useSchemaCacheStore(
     (s) => s.prewarmedIssueTypes[targetProjectKey ?? ''] ?? [],
   ) as IssueTypeRef[];
+  // Use null fallback (not []) to avoid creating a new array reference on every render
+  // when cloudMeta is null — a new [] each render would cause an infinite Zustand loop.
+  const availablePriorities = useCopyStore((s) => s.cloudMeta?.availablePriorities ?? null);
 
   // ── Option / single-select — stores pre-serialized JSON write-shape per RESEARCH.md ──
   if (schema.type === 'option' || schema.type === 'option-with-child') {
@@ -137,8 +142,8 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
     );
   }
 
-  // ── User or priority — disabled placeholder (not supported) ──
-  if (schema.type === 'user' || schema.type === 'priority') {
+  // ── User — disabled placeholder (not supported) ──
+  if (schema.type === 'user') {
     return (
       <input
         type="text"
@@ -147,6 +152,41 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
         disabled
         aria-label={`${field.name} static value`}
       />
+    );
+  }
+
+  // ── Priority — searchable dropdown of Cloud priorities from useCopyStore ──
+  // availablePriorities is populated when a copy preview is started (cloudMeta).
+  if (schema.type === 'priority') {
+    const priorities = availablePriorities ?? [];
+    if (priorities.length === 0) {
+      return (
+        <span className="text-muted-foreground text-sm">
+          {t('settings.fieldMapping.staticPriorityEmpty')}
+        </span>
+      );
+    }
+    let selectedPriority: { id: string; name: string } | null = null;
+    if (value) {
+      try {
+        const parsed = JSON.parse(value) as { id?: string };
+        selectedPriority = parsed.id ? (priorities.find((p) => p.id === parsed.id) ?? null) : null;
+      } catch {
+        selectedPriority = null;
+      }
+    }
+    return (
+      <div className="[&_button]:min-h-9">
+        <VirtualizedCombobox<{ id: string; name: string }>
+          items={priorities}
+          value={selectedPriority}
+          onChange={(p) => onChange(JSON.stringify({ id: p.id, name: p.name }))}
+          displayLabel={(p) => p.name}
+          filterFn={(p, q) => p.name.toLowerCase().includes(q.toLowerCase())}
+          placeholder={t('settings.fieldMapping.staticPriorityPlaceholder')}
+          ariaLabel={`${field.name} static value`}
+        />
+      </div>
     );
   }
 

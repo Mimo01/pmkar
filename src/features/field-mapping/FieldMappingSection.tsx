@@ -215,22 +215,35 @@ export function FieldMappingSection() {
     // references that never change identity, so listing them does not cause extra re-runs.
   }, [targetProjectKey, loadSchema, preWarm, setLoading, setMappingRows]);
 
-  // ── Synthetic issuetype field for StaticMappingRow target list (M42) ─────
-  // Regular MappingRow does NOT expose issuetype as a target (scope: static-only per D-03).
-  // This memo appends the synthetic FieldSchema only when targetFields has loaded and
-  // issuetype is not already present (defensive dedup).
+  // ── Synthetic fields for StaticMappingRow target list ────────────────────
+  // issuetype and priority are not returned by createmeta (or may be excluded) but are
+  // valid static-only targets. Appended only when not already present (defensive dedup).
   const targetFieldsForStatic = useMemo<typeof targetFields>(() => {
     if (targetFields.length === 0) return targetFields;
-    if (targetFields.some((f) => f.fieldId === 'issuetype')) return targetFields;
-    return [
-      ...targetFields,
-      {
-        fieldId: 'issuetype',
-        name: t('settings.fieldMapping.issuetypeFieldName'),
-        required: true,
-        schema: { type: 'issuetype' as const },
-      },
-    ];
+    let result = targetFields;
+    if (!result.some((f) => f.fieldId === 'issuetype')) {
+      result = [
+        ...result,
+        {
+          fieldId: 'issuetype',
+          name: t('settings.fieldMapping.issuetypeFieldName'),
+          required: true,
+          schema: { type: 'issuetype' as const },
+        },
+      ];
+    }
+    if (!result.some((f) => f.fieldId === 'priority')) {
+      result = [
+        ...result,
+        {
+          fieldId: 'priority',
+          name: t('settings.fieldMapping.priorityFieldName'),
+          required: false,
+          schema: { type: 'priority' as const },
+        },
+      ];
+    }
+    return result;
   }, [targetFields, t]);
 
   // ── Drift detection (MAP-05) ───────────────────────────────────────────────
