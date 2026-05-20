@@ -165,8 +165,8 @@ src-tauri/src/
 └── field_mapping_db.rs         # modified: migration + upsert + get updated
 
 src/i18n/locales/
-├── en.json                     # modified: 10 new keys
-└── sk.json                     # modified: 10 new keys (SK translations)
+├── en.json                     # modified: 11 new keys
+└── sk.json                     # modified: 11 new keys (SK translations)
 ```
 
 ### Pattern 1: DB Migration for New Nullable Column
@@ -208,14 +208,16 @@ for row in mapping {
     if row.transformer_kind == "static" {
         if let Some(ref val) = row.static_value {
             // Parse stored JSON string as a serde_json::Value for the fields map.
-            // Static values are stored as JSON so the pipeline emits the right shape
-            // (e.g. {"id":"10001"} for option fields, not just the raw string).
+            // Static values are stored as pre-serialized JSON write-shape by the UI
+            // (per ## Open Questions (RESOLVED)) so the pipeline emits the right shape
+            // verbatim (e.g. {"id":"10001"} for option fields, "literal" for strings).
             match serde_json::from_str::<Value>(val) {
                 Ok(parsed) => {
                     fields.insert(row.target_field_id.clone(), parsed);
                 }
                 Err(_) => {
                     // Fall back: emit as a plain string if not valid JSON
+                    // (defensive — legacy or hand-edited DB rows)
                     fields.insert(row.target_field_id.clone(), Value::String(val.clone()));
                 }
             }
@@ -227,9 +229,14 @@ for row in mapping {
     // ... existing branches follow unchanged
 ```
 
-**Important note on static_value storage format:** The UI stores the raw user-typed string. The pipeline must emit the correct Jira Cloud write-shape. For `option` / `option-with-child`, the write shape is `{"id": "10001"}` or `{"value": "label"}`. Research from `identity.rs` shows Jira Cloud v3 single-select expects `{"id": "..."}`. The simplest approach: store the option `id` as a plain string in `static_value`; the pipeline wraps it: `json!({"id": val})`. For labels (array of string): store comma-separated, split+trim in pipeline to `["label1","label2"]`.
+**Storage format (RESOLVED — see ## Open Questions (RESOLVED) below):** The UI stores the pre-serialized Jira Cloud v3 write-shape as a JSON string. The pipeline is a pure pass-through — it parses the stored JSON with `serde_json::from_str` and emits the parsed Value directly. No per-type dispatch in the pipeline. Concretely:
 
-**Alternative approach (simpler per-type dispatch):** Rather than having the pipeline parse the storage format, the UI can store the value already in its Jira write-shape as JSON, and the pipeline just parses and emits it. This is cleaner but requires the UI to serialize the write-shape. Given the CONTEXT.md decision to store `static_value TEXT`, either approach works — but storing as pre-serialized JSON is the safest because the pipeline becomes a simple pass-through. **Use the JSON approach.** [ASSUMED]
+- **Option / option-with-child:** UI stores `JSON.stringify({ id: opt.id })` → pipeline emits `{"id":"10001"}` to Jira.
+- **String / number / date / datetime:** UI stores the raw text. The pipeline's `from_str` fails on non-JSON input and falls through to `Value::String(val.clone())`, which emits a JSON string literal — correct shape for Jira text/number fields. (Alternatively, the UI may store `JSON.stringify(text)` — both produce the same Jira payload.)
+- **Array (labels, etc.):** UI stores comma-separated text. The pipeline's `from_str` falls through to `Value::String`; Jira accepts a comma-string for labels via its own coercion. Future work may split-and-serialize in the UI for full array shape.
+- **User / priority:** Disabled in the UI (D-04 exclusion). No storage shape needed.
+
+This decision keeps the pipeline a one-liner and pushes per-schema shape responsibility to the widget that knows the field's type.
 
 ### Pattern 3: StaticMappingRow Component
 
@@ -311,7 +318,7 @@ export function StaticMappingRow({ row, targetFields, usedTargetFieldIds, onRowU
 
 ### Pattern 5: Smart Value Widget Dispatch
 
-**What:** Inline component that selects its input type from `FieldSchemaType`.
+**What:** Inline component that selects its input type from `FieldSchemaType` and emits the storage form (pre-serialized JSON write-shape for option types) via its `onChange` callback.
 
 **Dispatch table (from UI-SPEC.md):**
 ```typescript
@@ -319,10 +326,16 @@ export function StaticMappingRow({ row, targetFields, usedTargetFieldIds, onRowU
 function StaticValueWidget({ field, value, onChange }) {
   const schema = field.schema;
 
-  // Option / single-select
+  // Option / single-select — STORES pre-serialized Jira write-shape
   if (schema.type === 'option' || schema.type === 'option-with-child') {
     const options = field.allowedValues ?? [];
-    return <VirtualizedCombobox items={options} ... />;
+    return (
+      <VirtualizedCombobox
+        items={options}
+        // ...
+        onChange={(opt) => onChange(JSON.stringify({ id: opt.id }))}
+      />
+    );
   }
 
   // Array of option (multi-select) — use comma-separated text per UI-SPEC note
@@ -350,6 +363,8 @@ function StaticValueWidget({ field, value, onChange }) {
 - **Nullable source_field_id migration:** D-02 explicitly chose the sentinel approach. Do not change the column to be nullable — that would require a schema migration and affects the UNIQUE constraint logic.
 - **5th column in the grid:** UI-SPEC is explicit that the transformer column is repurposed as the value column for static rows. Do not add a 5th `grid-cols` entry.
 - **Calling `source_issue.pointer()` for static rows:** The pipeline `"static"` branch must `continue` immediately after emitting the value, before the source pointer lookup that all other branches do.
+- **Storing the bare option id (e.g. `"10001"`) for option fields:** Per ## Open Questions (RESOLVED), the UI MUST store `JSON.stringify({ id: opt.id })`. Storing the bare id would cause `serde_json::from_str` to fall through to `Value::String("10001")`, producing a `"10001"` payload that Jira Cloud v3 rejects for option fields (which require `{"id":"10001"}`).
+- **Per-type dispatch in the pipeline:** The pipeline is intentionally schema-agnostic — it parses the stored JSON and emits it. Adding per-FieldSchemaType branches in `apply_mapping` would duplicate UI knowledge into the backend and break the pass-through contract.
 - **Duplicate-target check breakage:** The existing duplicate guard in `apply_mapping` uses `seen_targets.insert(row.target_field_id)`. Static rows have real target field IDs, so they participate in this check correctly. No change needed — but verify the test covers a static row + normal row targeting the same field.
 - **Drifted-row detection false positive:** `driftedSourceFieldIds` in `FieldMappingSection` uses `r.sourceFieldId` as the drift key. Since static rows have `sourceFieldId = "__static__{targetFieldId}"`, drift detection compares the target field ID against the target schema. Static rows will correctly appear as "drifted" if their target field disappears from the schema — no special case needed, but this should be verified.
 
@@ -416,7 +431,7 @@ This is a feature addition phase, not a rename/refactor. No runtime state invent
 
 **Why it happens:** Forgetting the second locale file.
 
-**How to avoid:** Add all 10 new keys to both `src/i18n/locales/en.json` and `src/i18n/locales/sk.json` in the same task/commit. SK values must be proper Slovak translations (with diacritics), not placeholders.
+**How to avoid:** Add all 11 new keys to both `src/i18n/locales/en.json` and `src/i18n/locales/sk.json` in the same task/commit. SK values must be proper Slovak translations (with diacritics), not placeholders.
 
 ### Pitfall 6: Static row included in duplicate-target guard race
 
@@ -425,6 +440,14 @@ This is a feature addition phase, not a rename/refactor. No runtime state invent
 **Why it happens:** The combobox filter for the static row's target picker must respect `usedTargetFieldIds` the same way `MappingRow` does.
 
 **How to avoid:** Pass `usedTargetFieldIds` to `StaticMappingRow` and filter the target combobox identically.
+
+### Pitfall 7: Bare option id stored instead of write-shape
+
+**What goes wrong:** The StaticValueWidget option branch calls `onChange(opt.id)` instead of `onChange(JSON.stringify({ id: opt.id }))`. The pipeline parses `"10001"` as a JSON string scalar (or falls through to `Value::String("10001")`), and Jira Cloud v3 rejects the field write because option fields require an object shape `{"id":"10001"}`.
+
+**Why it happens:** The option's `id` looks like a natural identifier to store, and the pipeline's `from_str` fallback masks the bug for text fields, hiding the misuse for option fields until a real copy is attempted.
+
+**How to avoid:** The UI MUST store the pre-serialized Jira write-shape via `JSON.stringify({ id: opt.id })`. See ## Open Questions (RESOLVED) below — this is now the authoritative decision. Acceptance criteria in Plan 27-04 Task 1 enforce a `grep` gate against the bare-id storage pattern.
 
 ---
 
@@ -514,7 +537,8 @@ export interface FieldMappingRow {
   transformerKind: TransformerKind;
   sourceSchema: FieldSchemaType;
   targetSchema: FieldSchemaType;
-  staticValue?: string;  // NEW — Phase 27 (undefined for non-static rows)
+  staticValue?: string;  // NEW — Phase 27. Stored as a JSON-encoded string;
+                         // for option fields the UI emits JSON.stringify({ id: opt.id }).
 }
 ```
 
@@ -567,17 +591,24 @@ export function staticSentinelId(targetFieldId: string): string {
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | Static value should be stored as pre-serialized JSON write-shape (not raw user string) for the pipeline to emit it correctly | Architecture Patterns — Pattern 2 | If stored as raw string, the pipeline's `serde_json::from_str` fallback emits a plain string — this is correct for text fields but wrong for option fields (which need `{"id": "..."}` shape). Option field handling must be verified during implementation. |
+| A1 | Static value should be stored as pre-serialized JSON write-shape (not raw user string) for the pipeline to emit it correctly | Architecture Patterns — Pattern 2 | **RESOLVED** in ## Open Questions (RESOLVED) below. The UI stores the pre-serialized Jira Cloud v3 write-shape (e.g. `JSON.stringify({ id: opt.id })` for option fields); the pipeline is a pure pass-through. Plan 27-04 Task 1 acceptance criteria enforce this with a positive grep gate (`JSON.stringify({ id: opt.id })` present) and a negative grep gate (bare `onChange(opt.id)` absent). |
 | A2 | `FieldSchemaType::Any` used as `source_schema` for static rows will not trigger `is_user_field()` or other source-schema guards in the pipeline | Common Pitfalls — Pitfall 1 | Verified by reading `is_user_field` in user.rs: it checks `source_schema` type variants; `Any` is not `User` or `Array{items:"user"}`. Safe. [VERIFIED: codebase grep] |
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Write-shape for option fields in static value storage**
+1. **Write-shape for option fields in static value storage — RESOLVED**
    - What we know: Jira Cloud v3 single-select option write shape is `{"id": "option_id"}` (verified in `identity.rs` and pipeline tests).
-   - What's unclear: The UI stores the user's selection from `allowed_values` (which contains objects like `{"id":"10001","value":"Blocker"}`). Should `staticValue` store just the id string, just the name, or the full JSON write shape?
-   - Recommendation: Store the option `id` as a plain string; the pipeline wraps it as `{"id": val}` for option fields. For array-of-option (comma-separated text), store `"id1,id2"` and split+wrap each. This keeps the stored value human-readable in the DB and avoids nested JSON escaping.
+   - What was unclear: The UI stores the user's selection from `allowed_values` (which contains objects like `{"id":"10001","value":"Blocker"}`). Should `staticValue` store just the id string, just the name, or the full JSON write shape?
+   - **Resolved (2026-05-20, planner revision):** Store pre-serialized JSON write-shape in the UI (e.g., `JSON.stringify({ id: opt.id })` for option fields). The pipeline is a pure pass-through — it parses the stored JSON and emits the value directly. No per-type dispatch in the pipeline.
+   - **Rationale:** A bare `opt.id` string (e.g. `"10001"`) would parse via `serde_json::from_str` as a JSON string scalar, producing a `"10001"` payload that Jira Cloud v3 rejects for option fields (which require an object shape `{"id":"10001"}`). Storing the write-shape in the UI keeps the pipeline schema-agnostic and pushes per-type shape responsibility to the widget that already knows the field's `FieldSchemaType`.
+   - **Per-type storage shapes (authoritative):**
+     - `option` / `option-with-child` → `JSON.stringify({ id: opt.id })` → emits `{"id":"10001"}`
+     - `string` / `number` / `date` / `datetime` → raw text → pipeline `from_str` fallback emits `Value::String(text)` → Jira accepts as text/number/date scalar
+     - `array` (labels, etc.) → comma-separated text → same fallback path (future work may split-and-serialize in the UI for full array shape)
+     - `user` / `priority` → disabled in the UI (D-04 exclusion); no storage shape needed
+   - **Enforcement:** Plan 27-04 Task 1 acceptance_criteria includes a positive grep gate (`JSON\.stringify\(\s*\{\s*id\s*:\s*opt\.id` present) and a negative grep gate (bare `onChange(opt.id)` absent). Pitfall 7 in this document captures the failure mode if the resolution is ignored.
 
 ---
 
@@ -610,7 +641,7 @@ No external dependencies required for this phase. All tooling (Rust, Cargo, Node
 | STATIC-UI-02 | Selecting a target field shows the correct smart value widget type | unit (React) | `npx vitest run src/features/field-mapping/__tests__/StaticValueWidget` | ❌ Wave 0 |
 | STATIC-UI-03 | Value change calls `invoke('set_field_mapping')` and shows saved indicator | unit (React) | `npx vitest run src/features/field-mapping/__tests__/StaticMappingRow` | ❌ Wave 0 |
 | STATIC-UI-04 | Delete button calls `invoke('delete_field_mapping', { sourceFieldId: '__static__...' })` | unit (React) | `npx vitest run src/features/field-mapping/__tests__/StaticMappingRow` | ❌ Wave 0 |
-| STATIC-I18N-01 | All 10 new i18n keys present in `en.json` and `sk.json` | unit (integration) | `npx vitest run src/i18n/__tests__/translations` | ✅ (existing translations test — extend) |
+| STATIC-I18N-01 | All 11 new i18n keys present in `en.json` and `sk.json` | unit (integration) | `npx vitest run src/i18n/__tests__/translations` | ✅ (existing translations test — extend) |
 
 ### Sampling Rate
 
@@ -671,4 +702,5 @@ This phase writes user-configured static field values to a local SQLite database
 - UI contract: HIGH — UI-SPEC.md is approved and was read in full
 
 **Research date:** 2026-05-20
+**Open Questions resolved:** 2026-05-20 (planner revision — see Open Questions (RESOLVED) section)
 **Valid until:** 2026-06-20 (stable internal codebase; no external dependency drift risk)
