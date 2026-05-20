@@ -1,4 +1,66 @@
 
+## [0.4.8]
+
+### Bug Fixes
+
+- eagerly fetch priorities for static mapping in settings
+- seed IssueTypeChooser from static issuetype mapping in startPreview
+- store option {id,value} in static mapping; polish static label UI
+- prefill static values in copy modal and fix preview log outcome
+- revise plans based on checker feedback
+
+### Documentation
+
+- pre-dispatch plan for release version 0.4.8
+- pre-dispatch plan for static issuetype mapping
+- complete plan 27-04 — human verify passed, phase 27 done
+- partial SUMMARY — Tasks 1-3 complete, paused at Task 4 human-verify checkpoint
+- update tracking after wave 2
+- complete TypeScript types and i18n foundation plan
+- complete Rust backend for static value mapping plan
+- update tracking after wave 1
+- complete Wave 0 test scaffolding plan
+- create phase plan
+- research phase — static value mapping
+- UI design contract for static value mapping phase
+- UI design contract for static value mapping phase
+- record phase 27 context session
+- capture phase context
+
+### Features
+
+- add static priority mapping + document pipeline routing
+- merge_create_fields helper — static issuetype wins over IssueTypeChooser (D-01)
+- add issuetype branch to StaticValueWidget + synthetic field in FieldMappingSection + i18n
+- wire FieldMappingSection — Add static value button, pending row, row discrimination
+- create StaticMappingRow — static row component with auto-save and delete
+- create StaticValueWidget — smart per-schema-type value input
+- add 11 new i18n keys for static value mapping (EN + SK)
+- extend FieldMappingRow and TransformerKind with static support
+- add static transformer branch to apply_mapping with target-schema dispatch
+- add static_value DB column migration and upsert/get round-trip
+- extend FieldMappingRow struct with static_value field
+
+### Miscellaneous
+
+- merge quick task worktree (worktree-agent-ad03469766201a120)
+- merge executor worktree (worktree-agent-aeed1eeb99f6d8916)
+- merge executor worktree (worktree-agent-ae76977b32c7c09fb)
+- merge executor worktree (worktree-agent-a4dbc606b0a9ba232)
+- update Cargo.lock after dependency resolution
+- merge quick task worktree (worktree-agent-aef0bcb4daf2b3efd)
+
+### Testing
+
+- add failing tests for merge_create_fields (static issuetype wins)
+- add failing tests for issuetype branch in StaticValueWidget
+- complete UAT — 6 passed, 1 skipped, 0 issues
+- add Wave 0 failing React tests for StaticMappingRow and StaticValueWidget
+- add Wave 0 failing Rust tests for static value mapping
+
+### Wip
+
+- phase-27 paused at 27-04 task 4 (human-verify checkpoint)
 ## [0.4.7]
 
 ### Bug Fixes
@@ -12,6 +74,7 @@
 
 ### Miscellaneous
 
+- bump version to 0.4.7
 - set 7-day retention on release artifacts
 ## [0.4.6]
 
