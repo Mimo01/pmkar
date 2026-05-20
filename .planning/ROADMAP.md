@@ -66,6 +66,7 @@ Full details: [milestones/v0.4.0-ROADMAP.md](milestones/v0.4.0-ROADMAP.md)
 **Plans:** 2 plans
 
 Plans:
+
 - [x] 24-01-PLAN.md — Backend: add copy_id to CopyTicketV2Args, copy-time audit loop in copy_ticket_v2, thread previewCopyId through copyStore
 - [x] 24-02-PLAN.md — Frontend: 'copied' outcome badge (blue), i18n keys in EN+SK, fieldGrouping tests
 
@@ -80,6 +81,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
+
 - [x] 25-01-PLAN.md — Backend: resolve_description_to_adf + resolve_users_preview Tauri commands, Rust unit tests, register in main.rs
 - [x] 25-02-PLAN.md — Frontend: async pre-fill effect, description read-only display, user picker pre-fill, frontend tests
 
@@ -90,6 +92,7 @@ Plans:
 **Depends on:** 3
 
 **Success Criteria:**
+
 1. Fetching tickets for N watched users issues N separate JQL requests, one per user
 2. No single fetch request times out regardless of how many users are watched
 3. App displays tickets as each user's batch arrives (progressive rendering) rather than blocking on all-or-nothing
@@ -99,6 +102,7 @@ Plans:
 **Plans:** 1 plan
 
 Plans:
+
 - [x] 26-01-PLAN.md — Refactor handleFetch into sequential per-user batch loop with progress counter, partial-failure warning, and i18n keys
 
 ## Progress
@@ -131,3 +135,24 @@ Plans:
 | 24. Audit Log Copy-Time Resolution | hotfix | 2/2 | Complete | 2026-05-05 |
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | hotfix | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | — | 1/1 | Complete | 2026-05-06 |
+
+### Phase 27: Add static value mapping to configurable field mapping
+
+**Goal:** Extend the field mapping editor with a 'static' transformer kind so target-only Jira Cloud fields receive a configured constant value on every copy, regardless of any source field.
+**Requirements**: STATIC-DB-01, STATIC-DB-02, STATIC-PIPE-01, STATIC-PIPE-02, STATIC-UI-01, STATIC-UI-02, STATIC-UI-03, STATIC-UI-04, STATIC-I18N-01
+**Depends on:** Phase 26
+**Plans:** 4 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 27-01-PLAN.md — Wave 0 test scaffolding for DB, pipeline, and UI components (RED tests for all STATIC-* requirements)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 27-02-PLAN.md — Backend: FieldMappingRow.static_value, DB migration + round-trip, apply_mapping static branch
+- [ ] 27-03-PLAN.md — TS foundation: FieldMappingRow.staticValue, TransformerKind 'static', 11 new EN+SK i18n keys
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 27-04-PLAN.md — UI: StaticMappingRow + StaticValueWidget + FieldMappingSection wiring (with human-verify checkpoint)

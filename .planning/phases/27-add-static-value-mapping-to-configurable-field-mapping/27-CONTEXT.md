@@ -26,7 +26,7 @@ Extend the Settings → Copying → Field Mapping editor to support a new "stati
 - **D-06:** **Smart widget per field type** — the value input adapts to the target field schema:
   - `string`, `number`, `date`, `datetime` → text input
   - `option` (SingleSelect), `option-with-child` → single dropdown from `allowed_values` (pulled from `field_schema_cache`)
-  - `array` of `option` (MultiSelect) → multi-select dropdown from `allowed_values`
+  - `array` of `option` (MultiSelect) → comma-separated text input; pipeline splits + trims to produce `[{"id":"val"},...]` JSON array. Multi-select dropdown from `allowed_values` is **deferred** to a follow-up phase.
   - `array` of `string` (Labels) → comma-separated text input; pipeline splits + trims to produce a JSON string array
   - User fields (`user`, `array` of `user`) → **excluded from Phase 27**
   - Priority → **excluded from Phase 27** (already has dedicated override mechanism in copy preview panel)

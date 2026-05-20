@@ -52,7 +52,7 @@ Phase 27 extends the existing field mapping system with a new "static" transform
 
 The phase is self-contained: all extension points are identified in the CONTEXT.md canonical refs, all relevant patterns already exist in the codebase, and no new external packages are needed. The main implementation risk is pipeline dispatch ordering — the `"static"` branch must be checked before the existing `is_user_field`, `is_array_of`, `is_priority_row`, and identity fallback branches so it is never accidentally shadowed. The DB migration follows the established `migrate_mapping_audit_log_columns` PRAGMA-gate pattern.
 
-The UI layer introduces a new component (`StaticMappingRow`) alongside the existing `MappingRow`. The smart value widget inside it selects its input type from the target field's `FieldSchemaType`: text input for scalar types, `VirtualizedCombobox` for option/option-with-child, comma-separated text for arrays. All strings must be added to `src/i18n/locales/en.json` and `src/i18n/locales/sk.json` before the component ships.
+The UI layer introduces a new component (`StaticMappingRow`) alongside the existing `MappingRow`. The smart value widget inside it selects its input type from the target field's `FieldSchemaType`: text input for scalar types, `VirtualizedCombobox` for single-select option/option-with-child (UI pre-serializes the `{"id":"..."}` write-shape), comma-separated text input for arrays (UI stores raw text — the pipeline splits and shapes per target items-type per D-06 amended). All strings must be added to `src/i18n/locales/en.json` and `src/i18n/locales/sk.json` before the component ships.
 
 **Primary recommendation:** Implement in four sequenced layers — DB migration → Rust struct/pipeline → TypeScript types/commands → UI component — to keep each layer testable independently before the next depends on it.
 
@@ -207,20 +207,42 @@ for row in mapping {
     // NEW: static transformer — emit stored value directly, skip source lookup
     if row.transformer_kind == "static" {
         if let Some(ref val) = row.static_value {
-            // Parse stored JSON string as a serde_json::Value for the fields map.
-            // Static values are stored as pre-serialized JSON write-shape by the UI
-            // (per ## Open Questions (RESOLVED)) so the pipeline emits the right shape
-            // verbatim (e.g. {"id":"10001"} for option fields, "literal" for strings).
-            match serde_json::from_str::<Value>(val) {
-                Ok(parsed) => {
-                    fields.insert(row.target_field_id.clone(), parsed);
+            // Dispatch on row.target_schema (see ## Open Questions (RESOLVED) for the
+            // self-consistent storage→write-shape contract):
+            //   - Array<option>: split + trim + filter-non-empty → [{"id":"val"},...]
+            //   - Array<string/...>: split + trim + filter-non-empty → ["val",...]
+            //   - Option / OptionWithChild (single-select): UI pre-serializes
+            //     JSON.stringify({"id":"..."}); pipeline parses and passes through
+            //   - Everything else: serde_json::from_str fallback → Value::String
+            let emitted = match &row.target_schema {
+                FieldSchemaType::Array { items, .. } if items == "option" => {
+                    let parts: Vec<Value> = val
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                        .map(|s| json!({ "id": s }))
+                        .collect();
+                    Value::Array(parts)
                 }
-                Err(_) => {
-                    // Fall back: emit as a plain string if not valid JSON
-                    // (defensive — legacy or hand-edited DB rows)
-                    fields.insert(row.target_field_id.clone(), Value::String(val.clone()));
+                FieldSchemaType::Array { .. } => {
+                    let parts: Vec<Value> = val
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                        .map(|s| Value::String(s.to_string()))
+                        .collect();
+                    Value::Array(parts)
                 }
-            }
+                FieldSchemaType::Option_ { .. } | FieldSchemaType::OptionWithChild { .. } => {
+                    serde_json::from_str::<Value>(val)
+                        .unwrap_or_else(|_| Value::String(val.clone()))
+                }
+                _ => {
+                    serde_json::from_str::<Value>(val)
+                        .unwrap_or_else(|_| Value::String(val.clone()))
+                }
+            };
+            fields.insert(row.target_field_id.clone(), emitted);
         }
         // static_value is None → row is pending (no target yet) → skip silently
         continue;
@@ -229,14 +251,15 @@ for row in mapping {
     // ... existing branches follow unchanged
 ```
 
-**Storage format (RESOLVED — see ## Open Questions (RESOLVED) below):** The UI stores the pre-serialized Jira Cloud v3 write-shape as a JSON string. The pipeline is a pure pass-through — it parses the stored JSON with `serde_json::from_str` and emits the parsed Value directly. No per-type dispatch in the pipeline. Concretely:
+**Storage format (RESOLVED — see ## Open Questions (RESOLVED) below) — split contract:** Single-select option fields use a *pre-serialized JSON pass-through* shape; array fields use *raw comma-separated text with pipeline splitting*. The pipeline dispatches on `row.target_schema` to choose between these two strategies. Concretely:
 
-- **Option / option-with-child:** UI stores `JSON.stringify({ id: opt.id })` → pipeline emits `{"id":"10001"}` to Jira.
-- **String / number / date / datetime:** UI stores the raw text. The pipeline's `from_str` fails on non-JSON input and falls through to `Value::String(val.clone())`, which emits a JSON string literal — correct shape for Jira text/number fields. (Alternatively, the UI may store `JSON.stringify(text)` — both produce the same Jira payload.)
-- **Array (labels, etc.):** UI stores comma-separated text. The pipeline's `from_str` falls through to `Value::String`; Jira accepts a comma-string for labels via its own coercion. Future work may split-and-serialize in the UI for full array shape.
-- **User / priority:** Disabled in the UI (D-04 exclusion). No storage shape needed.
+- **Option / option-with-child (single-select):** UI stores `JSON.stringify({ id: opt.id })`. Pipeline parses with `serde_json::from_str` and passes the parsed `{"id":"10001"}` Value through. (D-06)
+- **Array of option (MultiSelect):** UI stores raw comma-separated text (e.g. `"10001, 10002"`). Pipeline splits on `,`, trims, filters empty, and maps each id to `json!({"id": id})` → emits `[{"id":"10001"},{"id":"10002"}]`. (D-06 amended)
+- **Array of string (Labels) / array of other non-user items:** UI stores raw comma-separated text (e.g. `"bug, regression"`). Pipeline splits on `,`, trims, filters empty, and maps each part to `Value::String` → emits `["bug","regression"]`. (D-06 amended)
+- **String / number / date / datetime / any:** UI stores raw text. Pipeline's `serde_json::from_str` either parses the text as JSON (handles pre-serialized inputs) or falls back to `Value::String(text)` — correct shape for Jira text/number/date scalars.
+- **User / priority:** Disabled in the UI (D-06 exclusion). No storage shape needed.
 
-This decision keeps the pipeline a one-liner and pushes per-schema shape responsibility to the widget that knows the field's type.
+The pipeline owns the array-splitting logic because (a) the UI cannot trivially round-trip a JSON-array-shaped string through a single comma-separated text input field, and (b) Jira's write-shape for array-of-option (`[{"id":"..."}]`) is structurally distinct from array-of-string (`["..."]`) — only the pipeline (with access to `row.target_schema`) knows which shape to construct.
 
 ### Pattern 3: StaticMappingRow Component
 
@@ -364,7 +387,7 @@ function StaticValueWidget({ field, value, onChange }) {
 - **5th column in the grid:** UI-SPEC is explicit that the transformer column is repurposed as the value column for static rows. Do not add a 5th `grid-cols` entry.
 - **Calling `source_issue.pointer()` for static rows:** The pipeline `"static"` branch must `continue` immediately after emitting the value, before the source pointer lookup that all other branches do.
 - **Storing the bare option id (e.g. `"10001"`) for option fields:** Per ## Open Questions (RESOLVED), the UI MUST store `JSON.stringify({ id: opt.id })`. Storing the bare id would cause `serde_json::from_str` to fall through to `Value::String("10001")`, producing a `"10001"` payload that Jira Cloud v3 rejects for option fields (which require `{"id":"10001"}`).
-- **Per-type dispatch in the pipeline:** The pipeline is intentionally schema-agnostic — it parses the stored JSON and emits it. Adding per-FieldSchemaType branches in `apply_mapping` would duplicate UI knowledge into the backend and break the pass-through contract.
+- **UI-side array splitting / serialization:** The UI must NOT call `.split(',')`, `JSON.stringify([...])`, or otherwise pre-shape array values. Per D-06 amended, array static_values are stored as raw comma-separated text and the Rust pipeline (Plan 27-02 Task 3) splits them into the correct JSON array shape based on `row.target_schema` (`[{"id":"..."}]` for array-of-option, `["..."]` for array-of-string). UI-side splitting would break round-trip rendering (the text input cannot reconstruct an array JSON string back into a comma-separated form) and would force the UI to know per-items-type write shapes that already belong to the backend.
 - **Duplicate-target check breakage:** The existing duplicate guard in `apply_mapping` uses `seen_targets.insert(row.target_field_id)`. Static rows have real target field IDs, so they participate in this check correctly. No change needed — but verify the test covers a static row + normal row targeting the same field.
 - **Drifted-row detection false positive:** `driftedSourceFieldIds` in `FieldMappingSection` uses `r.sourceFieldId` as the drift key. Since static rows have `sourceFieldId = "__static__{targetFieldId}"`, drift detection compares the target field ID against the target schema. Static rows will correctly appear as "drifted" if their target field disappears from the schema — no special case needed, but this should be verified.
 
@@ -441,13 +464,19 @@ This is a feature addition phase, not a rename/refactor. No runtime state invent
 
 **How to avoid:** Pass `usedTargetFieldIds` to `StaticMappingRow` and filter the target combobox identically.
 
-### Pitfall 7: Bare option id stored instead of write-shape
+### Pitfall 7: Wrong write-shape for option / array-of-option fields
 
-**What goes wrong:** The StaticValueWidget option branch calls `onChange(opt.id)` instead of `onChange(JSON.stringify({ id: opt.id }))`. The pipeline parses `"10001"` as a JSON string scalar (or falls through to `Value::String("10001")`), and Jira Cloud v3 rejects the field write because option fields require an object shape `{"id":"10001"}`.
+**What goes wrong:** Two distinct failure modes, both producing Jira Cloud v3 rejection:
 
-**Why it happens:** The option's `id` looks like a natural identifier to store, and the pipeline's `from_str` fallback masks the bug for text fields, hiding the misuse for option fields until a real copy is attempted.
+1. *Single-select option:* The StaticValueWidget option branch calls `onChange(opt.id)` instead of `onChange(JSON.stringify({ id: opt.id }))`. The pipeline's single-option arm parses `"10001"` as a JSON string scalar (or falls through to `Value::String("10001")`), and Jira Cloud v3 rejects the field write because single-select option fields require an object shape `{"id":"10001"}`.
 
-**How to avoid:** The UI MUST store the pre-serialized Jira write-shape via `JSON.stringify({ id: opt.id })`. See ## Open Questions (RESOLVED) below — this is now the authoritative decision. Acceptance criteria in Plan 27-04 Task 1 enforce a `grep` gate against the bare-id storage pattern.
+2. *Array-of-option:* The UI tries to "help" by either (a) calling `JSON.stringify([{id:"10001"}])` (pre-serializing a JSON array), or (b) calling `.split(',')` on user input and storing a JSON array string. The pipeline's array-of-option arm then sees a single string like `'[{"id":"10001"}]'`, tries to split it on `,`, trims `[{"id":"10001"}]` (no commas), wraps it as `[{"id":"[{\"id\":\"10001\"}]"}]` — completely wrong shape. The UI must store the RAW user text exactly as typed (e.g. `"10001, 10002"`) so the pipeline can split it correctly.
+
+**Why it happens:** For (1), the option's `id` looks like a natural identifier to store; the pipeline's `from_str` fallback masks the bug for text fields, hiding the misuse for option fields until a real copy is attempted. For (2), well-meaning UI authors try to "make it easier" for the backend by pre-shaping the value — but D-06 amended explicitly assigns array splitting to the pipeline.
+
+**How to avoid:**
+- **Single-option:** UI MUST store `JSON.stringify({ id: opt.id })`. Acceptance criteria in Plan 27-04 Task 1 enforce a positive grep gate (`JSON.stringify({ id: opt.id })` present) and a negative grep gate (bare `onChange(opt.id)` absent).
+- **Array branches:** UI MUST store the raw input string via `onChange(e.target.value)` — no `.split(',')`, no `JSON.stringify(...)`. Plan 27-04 Task 1 acceptance criteria enforce a positive grep gate (`onChange(e.target.value)` present in the array branch) and a negative gate against array-branch `.split(',')` / `JSON.stringify`. The Rust pipeline (Plan 27-02 Task 3) performs the split + shape construction.
 
 ---
 
@@ -537,8 +566,10 @@ export interface FieldMappingRow {
   transformerKind: TransformerKind;
   sourceSchema: FieldSchemaType;
   targetSchema: FieldSchemaType;
-  staticValue?: string;  // NEW — Phase 27. Stored as a JSON-encoded string;
-                         // for option fields the UI emits JSON.stringify({ id: opt.id }).
+  staticValue?: string;  // NEW — Phase 27. Storage form depends on target schema (D-06 amended):
+                         // - single-select option: pre-serialized JSON {"id":"..."} (UI emits JSON.stringify({ id: opt.id }))
+                         // - array-of-option / array-of-string: raw comma-separated text (pipeline splits at copy time)
+                         // - scalar (string/number/date/datetime): raw text (pipeline from_str fallback → Value::String)
 }
 ```
 
@@ -591,24 +622,31 @@ export function staticSentinelId(targetFieldId: string): string {
 
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
-| A1 | Static value should be stored as pre-serialized JSON write-shape (not raw user string) for the pipeline to emit it correctly | Architecture Patterns — Pattern 2 | **RESOLVED** in ## Open Questions (RESOLVED) below. The UI stores the pre-serialized Jira Cloud v3 write-shape (e.g. `JSON.stringify({ id: opt.id })` for option fields); the pipeline is a pure pass-through. Plan 27-04 Task 1 acceptance criteria enforce this with a positive grep gate (`JSON.stringify({ id: opt.id })` present) and a negative grep gate (bare `onChange(opt.id)` absent). |
+| A1 | Storage form for static_value depends on target schema, and the pipeline must dispatch on `row.target_schema` to construct the correct Jira write-shape | Architecture Patterns — Pattern 2 | **RESOLVED** in ## Open Questions (RESOLVED) below. Split contract: single-select option stores pre-serialized JSON (`JSON.stringify({ id: opt.id })`) and the pipeline passes through; array-of-option and array-of-string store raw comma-separated text and the pipeline splits + shapes per `row.target_schema` (`[{"id":"..."}]` or `["..."]`). Plan 27-02 Task 3 implements pipeline dispatch; Plan 27-04 Task 1 enforces UI storage via positive and negative grep gates. |
 | A2 | `FieldSchemaType::Any` used as `source_schema` for static rows will not trigger `is_user_field()` or other source-schema guards in the pipeline | Common Pitfalls — Pitfall 1 | Verified by reading `is_user_field` in user.rs: it checks `source_schema` type variants; `Any` is not `User` or `Array{items:"user"}`. Safe. [VERIFIED: codebase grep] |
 
 ---
 
 ## Open Questions (RESOLVED)
 
-1. **Write-shape for option fields in static value storage — RESOLVED**
-   - What we know: Jira Cloud v3 single-select option write shape is `{"id": "option_id"}` (verified in `identity.rs` and pipeline tests).
-   - What was unclear: The UI stores the user's selection from `allowed_values` (which contains objects like `{"id":"10001","value":"Blocker"}`). Should `staticValue` store just the id string, just the name, or the full JSON write shape?
-   - **Resolved (2026-05-20, planner revision):** Store pre-serialized JSON write-shape in the UI (e.g., `JSON.stringify({ id: opt.id })` for option fields). The pipeline is a pure pass-through — it parses the stored JSON and emits the value directly. No per-type dispatch in the pipeline.
-   - **Rationale:** A bare `opt.id` string (e.g. `"10001"`) would parse via `serde_json::from_str` as a JSON string scalar, producing a `"10001"` payload that Jira Cloud v3 rejects for option fields (which require an object shape `{"id":"10001"}`). Storing the write-shape in the UI keeps the pipeline schema-agnostic and pushes per-type shape responsibility to the widget that already knows the field's `FieldSchemaType`.
+1. **Write-shape for static_value storage — RESOLVED (split contract)**
+   - What we know: Jira Cloud v3 write shapes — single-select option requires `{"id": "option_id"}`; array-of-option (MultiSelect) requires `[{"id":"id1"},{"id":"id2"}]`; array-of-string (Labels) requires `["val1","val2"]`; text/number/date/datetime accept raw scalar.
+   - What was unclear: How should the UI store `staticValue` so the pipeline can emit the correct Jira write-shape for each target schema, given that staticValue is a single TEXT column in SQLite and must round-trip through a single edit widget per row?
+   - **Resolved (2026-05-20, planner revision, amended by D-06):** The contract is split between UI and pipeline based on target schema. This is self-consistent and assigns each responsibility to the layer best equipped for it:
+     - **UI pre-serializes** the single-select option write-shape because single-select uses a structured combobox that already exposes `opt.id`. The pipeline parses and passes through.
+     - **Pipeline splits + shapes** array values because (a) the array text input cannot round-trip a JSON-array string through a comma-separated form, and (b) only the pipeline knows `row.target_schema.items` to choose between `[{"id":...}]` (option) and `["..."]` (string).
+   - **Rationale:** A bare `opt.id` string (e.g. `"10001"`) for single-select options would parse via `serde_json::from_str` as a JSON string scalar, producing a `"10001"` payload that Jira Cloud v3 rejects (single-select requires an object shape `{"id":"10001"}`). Conversely, pre-serializing array shapes in the UI would force the UI to know per-items-type write shapes (which already live in the backend) and would break round-trip rendering — once stored as a JSON array string, the comma-separated text input cannot reconstruct the original user-facing form.
    - **Per-type storage shapes (authoritative):**
-     - `option` / `option-with-child` → `JSON.stringify({ id: opt.id })` → emits `{"id":"10001"}`
-     - `string` / `number` / `date` / `datetime` → raw text → pipeline `from_str` fallback emits `Value::String(text)` → Jira accepts as text/number/date scalar
-     - `array` (labels, etc.) → comma-separated text → same fallback path (future work may split-and-serialize in the UI for full array shape)
-     - `user` / `priority` → disabled in the UI (D-04 exclusion); no storage shape needed
-   - **Enforcement:** Plan 27-04 Task 1 acceptance_criteria includes a positive grep gate (`JSON\.stringify\(\s*\{\s*id\s*:\s*opt\.id` present) and a negative grep gate (bare `onChange(opt.id)` absent). Pitfall 7 in this document captures the failure mode if the resolution is ignored.
+     - `option` / `option-with-child` (single-select) → UI stores `JSON.stringify({ id: opt.id })` → pipeline `serde_json::from_str` passes the parsed `{"id":"10001"}` Value through → emits `{"id":"10001"}` to Jira.
+     - `array` of `option` (MultiSelect) → UI stores raw comma-separated text like `"10001, 10002"` → pipeline splits on `,`, trims, filters empty, maps each id to `json!({"id": id})` → emits `[{"id":"10001"},{"id":"10002"}]` to Jira.
+     - `array` of `string` (Labels) / array of any other non-user items → UI stores raw comma-separated text like `"bug, regression"` → pipeline splits on `,`, trims, filters empty, maps each part to `Value::String` → emits `["bug","regression"]` to Jira.
+     - `string` / `number` / `date` / `datetime` / `any` → UI stores raw text → pipeline `serde_json::from_str` either parses as JSON (for pre-serialized inputs) or falls back to `Value::String(text)` → Jira accepts as text/number/date scalar.
+     - `user` / `priority` / `array` of `user` → disabled in the UI (D-06 exclusion); no storage shape needed.
+   - **Enforcement:**
+     - *Single-option write-shape:* Plan 27-04 Task 1 acceptance_criteria includes a positive grep gate (`JSON\.stringify\(\s*\{\s*id\s*:\s*opt\.id` present in the single-option branch) and a negative grep gate (bare `onChange(opt.id)` absent).
+     - *Array raw-storage:* Plan 27-04 Task 1 acceptance_criteria includes a positive grep gate (`onChange(e.target.value)` present in the array branch) and a negative gate against array-branch `.split(',')` / `JSON.stringify` usage.
+     - *Pipeline array splitting:* Plan 27-02 Task 3 acceptance_criteria includes grep gates for `FieldSchemaType::Array { items` dispatch and `items == "option"` detection, plus two new tests (`apply_mapping_static_array_of_option_splits_comma_separated_input` and `apply_mapping_static_array_of_string_splits_comma_separated_input`).
+     - Pitfall 7 in this document captures the failure modes if any half of the contract is violated.
 
 ---
 
@@ -702,5 +740,5 @@ This phase writes user-configured static field values to a local SQLite database
 - UI contract: HIGH — UI-SPEC.md is approved and was read in full
 
 **Research date:** 2026-05-20
-**Open Questions resolved:** 2026-05-20 (planner revision — see Open Questions (RESOLVED) section)
+**Open Questions resolved:** 2026-05-20 (planner revision — see Open Questions (RESOLVED) section; amended 2026-05-20 to reflect D-06 split contract: single-option pre-serialized in UI, array splitting in pipeline)
 **Valid until:** 2026-06-20 (stable internal codebase; no external dependency drift risk)
