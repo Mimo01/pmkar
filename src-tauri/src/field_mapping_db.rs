@@ -527,6 +527,7 @@ impl FieldMappingDb {
                 transformer_kind,
                 source_schema,
                 target_schema,
+                static_value: None, // placeholder — Task 2 will wire the real column
             });
         }
         Ok(out)
@@ -959,6 +960,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: FieldSchemaType::Any,
             target_schema: FieldSchemaType::Any,
+            static_value: None,
         };
         db.upsert_mapping_row(&row).expect("upsert");
         let rows = db.get_all_mapping_rows().expect("get");
@@ -979,6 +981,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: FieldSchemaType::Any,
             target_schema: FieldSchemaType::Any,
+            static_value: None,
         };
         db.upsert_mapping_row(&custom).expect("upsert custom");
         let rows = db.get_all_mapping_rows().expect("get");
@@ -1019,6 +1022,7 @@ mod tests {
                 transformer_kind: "identity".into(),
                 source_schema: FieldSchemaType::Any,
                 target_schema: FieldSchemaType::Any,
+                static_value: None,
             };
             db.upsert_mapping_row(&custom).expect("upsert");
             let rows = db.get_all_mapping_rows().expect("get");
@@ -1323,6 +1327,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         let row_b = FieldMappingRow {
             source_field_id: "src_b".into(),
@@ -1330,6 +1335,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         db.upsert_mapping_row(&row_a).expect("first insert ok");
         let err = db
@@ -1364,6 +1370,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         // Three dismissed rows with targetFieldId='' — all must succeed.
         db.upsert_mapping_row(&make_dismissed("src_a"))
@@ -1687,8 +1694,7 @@ mod tests {
             transformer_kind: "static".into(),
             source_schema: FieldSchemaType::Any,
             target_schema: FieldSchemaType::Any,
-            // TODO Plan 02: static_value field added to FieldMappingRow struct
-            // static_value: Some("hello".into()),
+            static_value: Some("hello".into()),
         };
         db.upsert_mapping_row(&row).expect("upsert");
         let rows = db.get_all_mapping_rows().expect("get");
@@ -1698,8 +1704,7 @@ mod tests {
             .find(|r| r.source_field_id == "__static__customfield_10050")
             .expect("static row must exist after upsert");
         assert_eq!(static_row.transformer_kind, "static");
-        // TODO Plan 02: uncomment once static_value field exists on FieldMappingRow
-        // assert_eq!(static_row.static_value, Some("hello".into()));
+        assert_eq!(static_row.static_value, Some("hello".into()));
     }
 
     /// After fixing multiple dismissals, a real mapping can still be added for a
@@ -1715,6 +1720,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         let row_dismissed_b = FieldMappingRow {
             source_field_id: "custom_b".into(),
@@ -1722,6 +1728,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         db.upsert_mapping_row(&row_dismissed_a).expect("dismiss a");
         db.upsert_mapping_row(&row_dismissed_b).expect("dismiss b");
@@ -1732,6 +1739,7 @@ mod tests {
             transformer_kind: "identity".into(),
             source_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
             target_schema: serde_json::from_str("{\"type\":\"any\"}").unwrap(),
+            static_value: None,
         };
         db.upsert_mapping_row(&row_real)
             .expect("real mapping for mandatory field must succeed");

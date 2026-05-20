@@ -383,6 +383,7 @@ mod tests {
             transformer_kind: "auto".into(),
             source_schema: schema.clone(),
             target_schema: schema,
+            static_value: None,
         }
     }
 
@@ -399,6 +400,7 @@ mod tests {
             transformer_kind: kind.into(),
             source_schema: src_schema,
             target_schema: dst_schema,
+            static_value: None,
         }
     }
 

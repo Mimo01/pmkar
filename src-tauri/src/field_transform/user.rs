@@ -572,6 +572,7 @@ mod tests {
                 custom: None,
                 custom_id: None,
             },
+            static_value: None,
         }
     }
 

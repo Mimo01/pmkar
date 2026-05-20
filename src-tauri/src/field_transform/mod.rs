@@ -137,9 +137,13 @@ pub struct TransformContext<'a> {
 pub struct FieldMappingRow {
     pub source_field_id: String,
     pub target_field_id: String,
-    pub transformer_kind: String, // "identity" | "user" | "version" | "component" | "wiki_to_adf"
+    pub transformer_kind: String, // "identity" | "user" | "user_name" | "version" | "component" | "wiki_to_adf" | "priority" | "static"
     pub source_schema: crate::field_discovery::FieldSchemaType,
     pub target_schema: crate::field_discovery::FieldSchemaType,
+    /// Phase 27: constant value emitted to the target field when transformer_kind == "static".
+    /// Absent for non-static rows (wire name: `staticValue`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub static_value: Option<String>,
 }
 
 // Stub session caches — Plans 02 (version/component) populate these fully.
