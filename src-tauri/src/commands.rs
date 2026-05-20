@@ -2582,4 +2582,37 @@ mod tests {
         assert_eq!(no_domain.len(), 1);
         assert_eq!(no_domain[0].1, "carol");
     }
+
+    // ── merge_create_fields tests (M42, D-01) ─────────────────────────────────
+    // Static issuetype mapping wins over per-copy IssueTypeChooser value.
+
+    #[test]
+    fn static_issuetype_wins() {
+        // When resolved.fields already has issuetype (from a static mapping),
+        // merge_create_fields must NOT overwrite it with args_issue_type_id.
+        let mut fields = serde_json::Map::new();
+        fields.insert(
+            "issuetype".to_string(),
+            serde_json::json!({ "id": "10001", "name": "Bug" }),
+        );
+        merge_create_fields(&mut fields, "PROJ", "99999");
+        assert_eq!(
+            fields["issuetype"]["id"].as_str().unwrap(),
+            "10001",
+            "static mapped issuetype must not be overwritten by args id"
+        );
+    }
+
+    #[test]
+    fn fallback_uses_args_id() {
+        // When resolved.fields has no issuetype, merge_create_fields falls back
+        // to args_issue_type_id (existing behavior preserved).
+        let mut fields = serde_json::Map::new();
+        merge_create_fields(&mut fields, "PROJ", "99999");
+        assert_eq!(
+            fields["issuetype"]["id"].as_str().unwrap(),
+            "99999",
+            "fallback must use args issue type id"
+        );
+    }
 }
