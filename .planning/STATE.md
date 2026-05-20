@@ -337,10 +337,11 @@ None yet.
 | 260509-r46 | Release version 0.4.6 | 2026-05-09 | 520df21 | Complete | [260509-r46-release-v0-4-6](./quick/260509-r46-release-v0-4-6/) |
 | 260520-fje | Release version 0.4.7 | 2026-05-20 | da0edad | Complete | [260520-fje-release-version-0-4-7](./quick/260520-fje-release-version-0-4-7/) |
 | 260520-m42 | Add static value support for issuetype field in mapping | 2026-05-20 | 0330821 | Approved | [260520-m42-i-want-to-be-able-to-in-my-mapping-set-s](./quick/260520-m42-i-want-to-be-able-to-in-my-mapping-set-s/) |
+| 260520-p66 | release version 0.4.8 | 2026-05-20 | c4d9cb4 | | [260520-p66-release-version-0-4-8](./quick/260520-p66-release-version-0-4-8/) |
 
 ## Session Continuity
 
-Last activity: 2026-05-20 - Approved quick task 260520-m42: static issuetype mapping + IssueTypeChooser pre-fill fix
+Last activity: 2026-05-20 - Completed quick task 260520-p66: release version 0.4.8
 Last session: 2026-05-20T13:14:16.931Z
 Stopped at: context exhaustion at 75% (2026-05-20)
 Resume file: None
