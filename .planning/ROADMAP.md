@@ -141,7 +141,7 @@ Plans:
 **Goal:** Extend the field mapping editor with a 'static' transformer kind so target-only Jira Cloud fields receive a configured constant value on every copy, regardless of any source field.
 **Requirements**: STATIC-DB-01, STATIC-DB-02, STATIC-PIPE-01, STATIC-PIPE-02, STATIC-UI-01, STATIC-UI-02, STATIC-UI-03, STATIC-UI-04, STATIC-I18N-01
 **Depends on:** Phase 26
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 **Wave 1**
@@ -150,8 +150,8 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 27-02-PLAN.md — Backend: FieldMappingRow.static_value, DB migration + round-trip, apply_mapping static branch
-- [ ] 27-03-PLAN.md — TS foundation: FieldMappingRow.staticValue, TransformerKind 'static', 11 new EN+SK i18n keys
+- [x] 27-02-PLAN.md — Backend: FieldMappingRow.static_value, DB migration + round-trip, apply_mapping static branch
+- [x] 27-03-PLAN.md — TS foundation: FieldMappingRow.staticValue, TransformerKind 'static', 11 new EN+SK i18n keys
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
