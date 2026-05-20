@@ -170,7 +170,22 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
       if (!row.targetFieldId) continue;
       if (!PREFILLABLE_KINDS.has(row.transformerKind)) continue;
       // Skip fields managed by their own dedicated store property and UI input.
-      if (PREFILL_EXCLUDED_TARGET_FIELDS.has(row.targetFieldId)) continue;
+      // Exception: priority is seeded here using the Cloud-matched value from
+      // targetPriorityId (set by startPreview) so the priority select shows the
+      // correct prefilled value. Only fires when the user has a priority mapping row.
+      if (PREFILL_EXCLUDED_TARGET_FIELDS.has(row.targetFieldId)) {
+        if (row.targetFieldId === 'priority') {
+          const { targetPriorityId } = useCopyStore.getState();
+          const cloudPriority =
+            targetPriorityId && cloudMeta
+              ? (cloudMeta.availablePriorities.find((p) => p.id === targetPriorityId) ?? null)
+              : null;
+          if (cloudPriority && overrideValues['priority'] === undefined) {
+            setOverrideValue('priority', cloudPriority);
+          }
+        }
+        continue;
+      }
       // Do not overwrite values already set by the user.
       if (overrideValues[row.targetFieldId] !== undefined) continue;
       const rawValue = sourceFields[row.sourceFieldId];

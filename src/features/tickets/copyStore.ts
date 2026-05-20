@@ -240,13 +240,11 @@ export const useCopyStore = create<CopyState>((set, get) => ({
           // The `?? ''` fallback is unreachable dead code kept only for type narrowing.
           targetIssueTypeId: state.targetIssueTypeId ?? '',
           overrideValues: {
-            // overrideValues spread first so that the bespoke store fields (summary,
-            // priority, labels) always win over any stale prefill that may have landed
-            // in overrideValues[summary] via the D-PREFILL effect.
+            // overrideValues contains priority (seeded by startPreview), labels, summary,
+            // and any user edits from the dynamic form. summary and labels are always
+            // overwritten here so their dedicated store fields win over any stale
+            // overrideValues entry for the same key from D-PREFILL.
             ...state.overrideValues,
-            // Bespoke fields have dedicated UI inputs and dedicated store properties.
-            // They must override any prefilled overrideValues entry for the same key.
-            ...(state.targetPriorityId ? { priority: { id: state.targetPriorityId } } : {}),
             ...(state.selectedLabels.length ? { labels: state.selectedLabels } : {}),
             summary: state.targetSummary,
           },

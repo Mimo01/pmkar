@@ -223,17 +223,48 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
         // cause confirmCopy to overwrite the user's edited value with the
         // original source value.
         if (PREFILL_EXCLUDED_TARGET_FIELDS.has(row.targetFieldId)) {
-          logEntries.push({
-            targetFieldId: row.targetFieldId,
-            sourceFieldId: row.sourceFieldId,
-            transformerKind: row.transformerKind,
-            outcome: 'skipped',
-            failureReason: 'field has dedicated store property — managed outside overrideValues',
-            wasOverridden: false,
-            gapKind: null,
-            sourceValue: sourceFields[row.sourceFieldId] ?? null,
-            targetValue: null,
-          });
+          // Priority: seed overrideValues with the Cloud-matched priority (full object
+          // with name so PriorityRenderer can display it) only if not already set.
+          // Uses targetPriorityId set by startPreview via name-matching from cloudMeta.
+          // Runs here (inside the mapping row loop) so it only fires when the user has
+          // actually configured a priority mapping row.
+          if (row.targetFieldId === 'priority') {
+            const { targetPriorityId } = useCopyStore.getState();
+            const cloudPriority =
+              targetPriorityId && cloudMeta
+                ? (cloudMeta.availablePriorities.find((p) => p.id === targetPriorityId) ?? null)
+                : null;
+            if (cloudPriority && overrideValues['priority'] === undefined) {
+              setOverrideValue('priority', cloudPriority);
+            }
+            const seededValue = cloudPriority ?? null;
+            logEntries.push({
+              targetFieldId: row.targetFieldId,
+              sourceFieldId: row.sourceFieldId,
+              transformerKind: row.transformerKind,
+              outcome: seededValue !== null ? 'ok' : 'skipped',
+              failureReason:
+                seededValue !== null
+                  ? null
+                  : 'field has dedicated store property — managed outside overrideValues',
+              wasOverridden: false,
+              gapKind: null,
+              sourceValue: sourceFields[row.sourceFieldId] ?? null,
+              targetValue: seededValue,
+            });
+          } else {
+            logEntries.push({
+              targetFieldId: row.targetFieldId,
+              sourceFieldId: row.sourceFieldId,
+              transformerKind: row.transformerKind,
+              outcome: 'skipped',
+              failureReason: 'field has dedicated store property — managed outside overrideValues',
+              wasOverridden: false,
+              gapKind: null,
+              sourceValue: sourceFields[row.sourceFieldId] ?? null,
+              targetValue: null,
+            });
+          }
           continue;
         }
         const rawValue = (sourceFields[row.sourceFieldId] ?? null) as unknown;

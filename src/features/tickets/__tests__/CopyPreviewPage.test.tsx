@@ -437,11 +437,11 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     // original source value from overwriting the user's edited summary at confirmCopy time.
     expect(byField.summary?.outcome).toBe('skipped');
     expect(byField.summary?.failureReason).toMatch(/dedicated store property/);
-    // priority has a bespoke store property (targetPriorityId) resolved by name via
-    // fetch_cloud_meta and must NOT be seeded into overrideValues by D-PREFILL
-    // (same exclusion as summary) — the loop logs it as skipped.
-    expect(byField.priority?.outcome).toBe('skipped');
-    expect(byField.priority?.failureReason).toMatch(/dedicated store property/);
+    // priority: D-PREFILL seeds overrideValues with the Cloud-matched priority object
+    // (from cloudMeta.availablePriorities matched by targetPriorityId) and logs outcome=ok.
+    expect(byField.priority?.outcome).toBe('ok');
+    expect(byField.priority?.failureReason).toBeNull();
+    expect(byField.priority?.targetValue).toEqual({ id: 'p1', name: 'Medium' });
     // Phase 25: user transformer rows go through async resolve_users_preview path;
     // the mock sourceTicket assignee has no 'name' field, so no log entry is emitted
     // (the row silently skips username extraction). The async path fires but returns null.

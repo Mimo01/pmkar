@@ -91,6 +91,16 @@ pub async fn apply_mapping(
             continue;
         }
 
+        // Priority — intentionally excluded from apply_mapping output.
+        // Source priority IDs (e.g. Jira Server "3") are namespace-local and have no
+        // meaning on Cloud Jira. Priority is always resolved client-side via
+        // startPreview (name-matched from fetch_cloud_meta.availablePriorities) and
+        // emitted as an override_values entry in confirmCopy. Forwarding the source ID
+        // here would cause Cloud Jira to silently ignore the field and set it to null.
+        if is_priority_row(&row.target_schema) {
+            continue;
+        }
+
         // Everything else → identity (write-shape stripping per Pitfall 4 lives there).
         let v = identity::transform_identity(&src_val, &row.target_schema);
         if !v.is_null() {
@@ -108,6 +118,10 @@ fn is_description_row(s: &FieldSchemaType) -> bool {
 
 fn is_array_of(s: &FieldSchemaType, item_kind: &str) -> bool {
     matches!(s, FieldSchemaType::Array { items, .. } if items == item_kind)
+}
+
+fn is_priority_row(s: &FieldSchemaType) -> bool {
+    matches!(s, FieldSchemaType::Priority)
 }
 
 /// Extracts the display name (or username fallback) from a source user field and
@@ -517,7 +531,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn apply_mapping_priority_strips_to_id_write_shape() {
+    async fn apply_mapping_priority_excluded_from_output() {
+        // Priority fields are intentionally excluded from apply_mapping output.
+        // Source priority IDs (e.g. Server "3") are namespace-local and invalid on
+        // Cloud Jira. Priority is always managed client-side via targetPriorityId and
+        // emitted as an override_values entry in confirmCopy.
         let issue = json!({"fields":{"priority":{"id":"3","name":"Medium","self":"http://x/3"}}});
         let mapping = vec![row("priority", "priority", FieldSchemaType::Priority)];
         let (u, v, c) = make_resolvers();
@@ -527,7 +545,8 @@ mod tests {
         let out = apply_mapping(&issue, &mapping, &ctx)
             .await
             .expect("apply_mapping ok");
-        assert_eq!(out.fields.get("priority"), Some(&json!({"id":"3"})));
+        // priority must NOT appear in resolved.fields — it is managed via override_values
+        assert!(!out.fields.contains_key("priority"), "priority must not appear in apply_mapping output (managed via override_values)");
     }
 
     // ── Integration tests against a spawned axum mock ───────────────────────
@@ -818,8 +837,8 @@ mod tests {
         );
         // 7. components — API resolves.
         assert_eq!(out.fields.get("components"), Some(&json!([{"id":"30001"}])));
-        // 8. priority — strip to {id}.
-        assert_eq!(out.fields.get("priority"), Some(&json!({"id":"3"})));
+        // 8. priority — excluded from apply_mapping output (managed via override_values).
+        assert!(!out.fields.contains_key("priority"), "priority must not appear in apply_mapping output (managed via override_values)");
 
         // ── Gap assertions ───────────────────────────────────────────────────
         assert_eq!(
