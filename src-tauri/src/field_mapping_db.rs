@@ -526,7 +526,14 @@ impl FieldMappingDb {
         })?;
         let mut out: Vec<FieldMappingRow> = Vec::new();
         for r in rows {
-            let (source_field_id, target_field_id, transformer_kind, src_json, tgt_json, static_value) = r?;
+            let (
+                source_field_id,
+                target_field_id,
+                transformer_kind,
+                src_json,
+                tgt_json,
+                static_value,
+            ) = r?;
             let source_schema = match src_json {
                 Some(s) => serde_json::from_str(&s).map_err(|e| {
                     crate::error::AppError::Internal(format!(

@@ -1,8 +1,11 @@
 // Phase 27 — smart static value widget. Dispatch table in 27-UI-SPEC.md. Single-option stores pre-serialized JSON write-shape (pipeline passes through); array types store raw comma-separated text (pipeline splits per 27-CONTEXT.md D-06).
+// M42 — added issuetype branch: stores {id, name} JSON; populated from schemaCacheStore.prewarmedIssueTypes.
 
 import { useTranslation } from 'react-i18next';
+import { useConnectionStore } from '@/features/connections/connectionStore';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
-import type { FieldSchema } from '@/types/fieldSchema';
+import { useSchemaCacheStore } from '@/stores/schemaCacheStore';
+import type { FieldSchema, IssueTypeRef } from '@/types/fieldSchema';
 
 export interface StaticValueWidgetProps {
   field: FieldSchema;
@@ -18,6 +21,13 @@ interface AllowedValueItem {
 export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetProps) {
   const { t } = useTranslation();
   const schema = field.schema;
+
+  // ── Issuetype — stores {id, name} JSON; populated from schemaCacheStore (M42) ──
+  // Must be called unconditionally (Rules of Hooks).
+  const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
+  const issueTypes = useSchemaCacheStore(
+    (s) => s.prewarmedIssueTypes[targetProjectKey ?? ''] ?? [],
+  ) as IssueTypeRef[];
 
   // ── Option / single-select — stores pre-serialized JSON write-shape per RESEARCH.md ──
   if (schema.type === 'option' || schema.type === 'option-with-child') {
@@ -47,6 +57,42 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
           displayLabel={(o) => o.value}
           filterFn={(o, q) => o.value.toLowerCase().includes(q.toLowerCase())}
           placeholder={t('settings.fieldMapping.staticOptionPlaceholder')}
+          ariaLabel={`${field.name} static value`}
+        />
+      </div>
+    );
+  }
+
+  // ── Issuetype — searchable dropdown of target project's issue types (M42) ──
+  if (schema.type === 'issuetype') {
+    if (issueTypes.length === 0) {
+      return (
+        <span className="text-muted-foreground text-sm">
+          {t('settings.fieldMapping.staticIssuetypeEmpty')}
+        </span>
+      );
+    }
+
+    // Parse existing stored value (JSON string: {"id":"10001","name":"Bug"}) to find selected item.
+    let selectedItem: IssueTypeRef | null = null;
+    if (value) {
+      try {
+        const parsed = JSON.parse(value) as { id?: string };
+        selectedItem = parsed.id ? (issueTypes.find((it) => it.id === parsed.id) ?? null) : null;
+      } catch {
+        selectedItem = null;
+      }
+    }
+
+    return (
+      <div className="[&_button]:min-h-9">
+        <VirtualizedCombobox<IssueTypeRef>
+          items={issueTypes}
+          value={selectedItem}
+          onChange={(it) => onChange(JSON.stringify({ id: it.id, name: it.name }))}
+          displayLabel={(it) => it.name}
+          filterFn={(it, q) => it.name.toLowerCase().includes(q.toLowerCase())}
+          placeholder={t('settings.fieldMapping.staticIssuetypePlaceholder')}
           ariaLabel={`${field.name} static value`}
         />
       </div>

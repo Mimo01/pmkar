@@ -125,13 +125,8 @@ async fn test_v3_createmeta_issuetypes_returns_three() {
 async fn test_fetch_target_issue_types_deserializes_mock_response() {
     start_servers_once();
     let client = reqwest::Client::new();
-    let result = fetch_target_issue_types(
-        &client,
-        "http://127.0.0.1:8081",
-        auth_header(),
-        "MYPROJ",
-    )
-    .await;
+    let result =
+        fetch_target_issue_types(&client, "http://127.0.0.1:8081", auth_header(), "MYPROJ").await;
     assert!(
         result.is_ok(),
         "fetch_target_issue_types should succeed against mock: {:?}",

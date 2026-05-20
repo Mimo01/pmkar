@@ -1206,8 +1206,12 @@ pub async fn search_cloud_users_by_query(
     );
     let trimmed_base = stored_base_url.trim_end_matches('/').to_string();
     let client = reqwest::Client::new();
-    let resolver = crate::field_transform::user::UserResolver::new(client, cloud_auth, trimmed_base);
-    Ok(resolver.fetch_users_by_query(&query).await.unwrap_or_default())
+    let resolver =
+        crate::field_transform::user::UserResolver::new(client, cloud_auth, trimmed_base);
+    Ok(resolver
+        .fetch_users_by_query(&query)
+        .await
+        .unwrap_or_default())
 }
 
 // --- Phase 25: Preview-time resolution commands ---
@@ -1262,11 +1266,8 @@ pub async fn resolve_users_preview(
     let _ = cloud_base_url; // parameter retained in signature for API compat; not used
 
     let client = reqwest::Client::new();
-    let resolver = crate::field_transform::user::UserResolver::new(
-        client,
-        cloud_auth,
-        trimmed_base,
-    );
+    let resolver =
+        crate::field_transform::user::UserResolver::new(client, cloud_auth, trimmed_base);
 
     // Group by email domain — mirrors resolve_batch domain-batching (TRAN-06).
     // by_domain: domain → Vec<(index, username)>
@@ -1741,27 +1742,33 @@ pub async fn copy_ticket_v2(
     // Best-effort: transaction and per-row errors are swallowed so an audit
     // hiccup never blocks the copy operation.
     {
-        let copy_id = args.copy_id.clone().unwrap_or_else(|| {
-            uuid::Uuid::new_v4().to_string()
-        });
+        let copy_id = args
+            .copy_id
+            .clone()
+            .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
         let mdb = mapping_db
             .lock()
             .map_err(|_| AppError::Internal("FieldMappingDb lock poisoned".into()))?;
-        write_copy_time_audit(&mdb, &copy_id, &mapping_rows, &source_body, &resolved, &args.override_values);
+        write_copy_time_audit(
+            &mdb,
+            &copy_id,
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &args.override_values,
+        );
     }
 
     // ── Phase 6 — Create issue in Cloud ──────────────────────────────────────
     // Per CUTV-04 + D-04: project key from settings, issue type from args.
     // The summary/priority/assignee/etc come entirely from resolved.fields +
     // overrides (D-03 — no named field params).
+    // M42: static issuetype mapping wins — use merge_create_fields (D-01).
     let mut create_fields = resolved.fields.clone();
-    create_fields.insert(
-        "project".to_string(),
-        serde_json::json!({ "key": target_project_key }),
-    );
-    create_fields.insert(
-        "issuetype".to_string(),
-        serde_json::json!({ "id": args.target_issue_type_id }),
+    merge_create_fields(
+        &mut create_fields,
+        &target_project_key,
+        &args.target_issue_type_id,
     );
     let create_body = serde_json::json!({ "fields": create_fields });
 
@@ -1990,6 +1997,27 @@ fn write_copy_time_audit(
         );
     }
     let _ = mdb.commit_transaction();
+}
+
+/// M42 D-01 — static issuetype mapping wins over per-copy `IssueTypeChooser` value.
+///
+/// Merges `target_project_key` and `target_issue_type_id` into `create_fields`.
+/// The `project` field is always set (projects are not mappable as static targets).
+/// The `issuetype` field uses `.entry().or_insert_with(...)` so a value already
+/// present from a static mapping (via `apply_mapping`) is NOT overwritten.
+fn merge_create_fields(
+    create_fields: &mut serde_json::Map<String, serde_json::Value>,
+    target_project_key: &str,
+    target_issue_type_id: &str,
+) {
+    create_fields.insert(
+        "project".to_string(),
+        serde_json::json!({ "key": target_project_key }),
+    );
+    // static issuetype mapping wins over per-copy chooser (D-01, M42)
+    create_fields
+        .entry("issuetype".to_string())
+        .or_insert_with(|| serde_json::json!({ "id": target_issue_type_id }));
 }
 
 /// Phase 23 D-07 — apply credential redaction to any string values inside a
@@ -2364,11 +2392,7 @@ mod tests {
     // Each test constructs an in-memory FieldMappingDb, calls write_copy_time_audit
     // directly, then reads back the rows to assert outcomes.
 
-    fn make_row(
-        src: &str,
-        tgt: &str,
-        kind: &str,
-    ) -> crate::field_transform::FieldMappingRow {
+    fn make_row(src: &str, tgt: &str, kind: &str) -> crate::field_transform::FieldMappingRow {
         crate::field_transform::FieldMappingRow {
             source_field_id: src.to_string(),
             target_field_id: tgt.to_string(),
@@ -2389,8 +2413,8 @@ mod tests {
 
     #[test]
     fn copy_time_audit_loop_writes_copied_for_resolved_field() {
-        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
-            .expect("open in-memory db");
+        let mdb =
+            crate::field_mapping_db::FieldMappingDb::open_in_memory().expect("open in-memory db");
         let mapping_rows = vec![make_row("description", "description", "wiki_to_adf")];
         let source_body = serde_json::json!({ "fields": { "description": "some wiki text" } });
         let mut resolved = crate::field_transform::ResolvedFields::default();
@@ -2399,27 +2423,47 @@ mod tests {
             .insert("description".to_string(), serde_json::json!("ADF content"));
         let overrides = serde_json::Map::new();
 
-        write_copy_time_audit(&mdb, "test-uuid-1234", &mapping_rows, &source_body, &resolved, &overrides);
+        write_copy_time_audit(
+            &mdb,
+            "test-uuid-1234",
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &overrides,
+        );
 
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert_eq!(rows.len(), 1, "expected one row, got {}", rows.len());
         assert_eq!(rows[0].outcome, "copied");
         assert_eq!(rows[0].field_id, "description");
-        assert!(!rows[0].source_value_hash.is_empty(), "source hash non-empty");
-        assert!(!rows[0].target_value_hash.is_empty(), "target hash non-empty");
+        assert!(
+            !rows[0].source_value_hash.is_empty(),
+            "source hash non-empty"
+        );
+        assert!(
+            !rows[0].target_value_hash.is_empty(),
+            "target hash non-empty"
+        );
     }
 
     #[test]
     fn copy_time_audit_loop_writes_skipped_for_null_source() {
-        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
-            .expect("open in-memory db");
+        let mdb =
+            crate::field_mapping_db::FieldMappingDb::open_in_memory().expect("open in-memory db");
         let mapping_rows = vec![make_row("customfield_99", "customfield_99", "identity")];
         // source_body has no customfield_99
         let source_body = serde_json::json!({ "fields": {} });
         let resolved = crate::field_transform::ResolvedFields::default();
         let overrides = serde_json::Map::new();
 
-        write_copy_time_audit(&mdb, "skip-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+        write_copy_time_audit(
+            &mdb,
+            "skip-uuid",
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &overrides,
+        );
 
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert_eq!(rows.len(), 1);
@@ -2432,12 +2476,11 @@ mod tests {
 
     #[test]
     fn copy_time_audit_loop_writes_failed_for_gap() {
-        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
-            .expect("open in-memory db");
+        let mdb =
+            crate::field_mapping_db::FieldMappingDb::open_in_memory().expect("open in-memory db");
         let mapping_rows = vec![make_row("assignee", "assignee", "user")];
         // Source has an assignee, but it couldn't be resolved (gap)
-        let source_body =
-            serde_json::json!({ "fields": { "assignee": { "name": "jdoe" } } });
+        let source_body = serde_json::json!({ "fields": { "assignee": { "name": "jdoe" } } });
         let mut resolved = crate::field_transform::ResolvedFields::default();
         resolved
             .gaps
@@ -2451,7 +2494,14 @@ mod tests {
             ));
         let overrides = serde_json::Map::new();
 
-        write_copy_time_audit(&mdb, "fail-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+        write_copy_time_audit(
+            &mdb,
+            "fail-uuid",
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &overrides,
+        );
 
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert_eq!(rows.len(), 1);
@@ -2461,8 +2511,8 @@ mod tests {
 
     #[test]
     fn copy_time_audit_loop_uses_copy_id() {
-        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
-            .expect("open in-memory db");
+        let mdb =
+            crate::field_mapping_db::FieldMappingDb::open_in_memory().expect("open in-memory db");
         let mapping_rows = vec![make_row("summary", "summary", "identity")];
         let source_body = serde_json::json!({ "fields": { "summary": "Bug title" } });
         let mut resolved = crate::field_transform::ResolvedFields::default();
@@ -2471,7 +2521,14 @@ mod tests {
             .insert("summary".to_string(), serde_json::json!("Bug title"));
         let overrides = serde_json::Map::new();
 
-        write_copy_time_audit(&mdb, "test-uuid-1234", &mapping_rows, &source_body, &resolved, &overrides);
+        write_copy_time_audit(
+            &mdb,
+            "test-uuid-1234",
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &overrides,
+        );
 
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert!(!rows.is_empty());
@@ -2482,15 +2539,22 @@ mod tests {
 
     #[test]
     fn copy_time_audit_loop_skips_empty_target_field_id() {
-        let mdb = crate::field_mapping_db::FieldMappingDb::open_in_memory()
-            .expect("open in-memory db");
+        let mdb =
+            crate::field_mapping_db::FieldMappingDb::open_in_memory().expect("open in-memory db");
         // Row with empty target_field_id (dismissed suggestion)
         let mapping_rows = vec![make_row("description", "", "identity")];
         let source_body = serde_json::json!({ "fields": { "description": "text" } });
         let resolved = crate::field_transform::ResolvedFields::default();
         let overrides = serde_json::Map::new();
 
-        write_copy_time_audit(&mdb, "skip-empty-uuid", &mapping_rows, &source_body, &resolved, &overrides);
+        write_copy_time_audit(
+            &mdb,
+            "skip-empty-uuid",
+            &mapping_rows,
+            &source_body,
+            &resolved,
+            &overrides,
+        );
 
         let rows = mdb.get_mapping_audit_log_page(0, 10).expect("read rows");
         assert_eq!(rows.len(), 0, "no rows written for empty target_field_id");
@@ -2536,9 +2600,15 @@ mod tests {
     #[test]
     fn preview_user_domain_grouping_two_same_domain() {
         // Verify that two users with the same email domain land in a single domain bucket.
-        let entries = vec![
-            PreviewUserEntry { username: "alice".into(), email: Some("alice@acme.com".into()) },
-            PreviewUserEntry { username: "bob".into(), email: Some("bob@acme.com".into()) },
+        let entries = [
+            PreviewUserEntry {
+                username: "alice".into(),
+                email: Some("alice@acme.com".into()),
+            },
+            PreviewUserEntry {
+                username: "bob".into(),
+                email: Some("bob@acme.com".into()),
+            },
         ];
         let mut by_domain: std::collections::HashMap<String, Vec<(usize, String)>> =
             std::collections::HashMap::new();
@@ -2547,23 +2617,31 @@ mod tests {
             if let Some(email) = &entry.email {
                 if let Some(domain) = email.split('@').nth(1) {
                     if !domain.is_empty() {
-                        by_domain.entry(domain.to_string()).or_default().push((i, entry.username.clone()));
+                        by_domain
+                            .entry(domain.to_string())
+                            .or_default()
+                            .push((i, entry.username.clone()));
                         continue;
                     }
                 }
             }
             no_domain.push((i, entry.username.clone()));
         }
-        assert_eq!(by_domain.len(), 1, "both users should share one domain bucket");
+        assert_eq!(
+            by_domain.len(),
+            1,
+            "both users should share one domain bucket"
+        );
         assert_eq!(by_domain["acme.com"].len(), 2);
         assert!(no_domain.is_empty());
     }
 
     #[test]
     fn preview_user_domain_grouping_no_email_goes_to_no_domain() {
-        let entries = vec![
-            PreviewUserEntry { username: "carol".into(), email: None },
-        ];
+        let entries = [PreviewUserEntry {
+            username: "carol".into(),
+            email: None,
+        }];
         let mut by_domain: std::collections::HashMap<String, Vec<(usize, String)>> =
             std::collections::HashMap::new();
         let mut no_domain: Vec<(usize, String)> = Vec::new();
@@ -2571,7 +2649,10 @@ mod tests {
             if let Some(email) = &entry.email {
                 if let Some(domain) = email.split('@').nth(1) {
                     if !domain.is_empty() {
-                        by_domain.entry(domain.to_string()).or_default().push((i, entry.username.clone()));
+                        by_domain
+                            .entry(domain.to_string())
+                            .or_default()
+                            .push((i, entry.username.clone()));
                         continue;
                     }
                 }
@@ -2581,5 +2662,38 @@ mod tests {
         assert!(by_domain.is_empty());
         assert_eq!(no_domain.len(), 1);
         assert_eq!(no_domain[0].1, "carol");
+    }
+
+    // ── merge_create_fields tests (M42, D-01) ─────────────────────────────────
+    // Static issuetype mapping wins over per-copy IssueTypeChooser value.
+
+    #[test]
+    fn static_issuetype_wins() {
+        // When resolved.fields already has issuetype (from a static mapping),
+        // merge_create_fields must NOT overwrite it with args_issue_type_id.
+        let mut fields = serde_json::Map::new();
+        fields.insert(
+            "issuetype".to_string(),
+            serde_json::json!({ "id": "10001", "name": "Bug" }),
+        );
+        merge_create_fields(&mut fields, "PROJ", "99999");
+        assert_eq!(
+            fields["issuetype"]["id"].as_str().unwrap(),
+            "10001",
+            "static mapped issuetype must not be overwritten by args id"
+        );
+    }
+
+    #[test]
+    fn fallback_uses_args_id() {
+        // When resolved.fields has no issuetype, merge_create_fields falls back
+        // to args_issue_type_id (existing behavior preserved).
+        let mut fields = serde_json::Map::new();
+        merge_create_fields(&mut fields, "PROJ", "99999");
+        assert_eq!(
+            fields["issuetype"]["id"].as_str().unwrap(),
+            "99999",
+            "fallback must use args issue type id"
+        );
     }
 }
