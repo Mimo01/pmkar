@@ -218,6 +218,7 @@ fn main() {
             commands::set_fetch_config,
             commands::search_jira_users,
             commands::search_jira_users_by_domain,
+            commands::search_cloud_users_by_query,
             commands::set_connection_meta,
             commands::get_all_connection_meta,
             commands::fetch_cloud_meta,

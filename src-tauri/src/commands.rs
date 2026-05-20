@@ -1193,6 +1193,23 @@ pub async fn search_jira_users_by_domain(
     Ok(all_users)
 }
 
+#[tauri::command]
+pub async fn search_cloud_users_by_query(
+    query: String,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Vec<serde_json::Value>, AppError> {
+    let (stored_base_url, cloud_email, cloud_api_token) = get_cloud_credentials(triage_db.inner())?;
+    let cloud_auth = format!(
+        "Basic {}",
+        base64::engine::general_purpose::STANDARD
+            .encode(format!("{cloud_email}:{cloud_api_token}"))
+    );
+    let trimmed_base = stored_base_url.trim_end_matches('/').to_string();
+    let client = reqwest::Client::new();
+    let resolver = crate::field_transform::user::UserResolver::new(client, cloud_auth, trimmed_base);
+    Ok(resolver.fetch_users_by_query(&query).await.unwrap_or_default())
+}
+
 // --- Phase 25: Preview-time resolution commands ---
 
 /// Phase 25 — converts source issue description HTML to ADF at preview-open time.

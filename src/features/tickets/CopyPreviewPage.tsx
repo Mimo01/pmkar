@@ -90,7 +90,7 @@ const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 // original source value.
 // ---------------------------------------------------------------------------
 
-const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary']);
+const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary', 'priority']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewPage
@@ -619,34 +619,22 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   }, [reset, onOpenSettingsSection]);
 
   // ── Tauri user-search wrapper (D-17, PERS-03, T-22-15) ───────────────────
-  // Defined inside the component so it closes over sourceBaseUrl, which is
-  // required by the search_jira_users_by_domain Rust command. The module-level
-  // version was missing this argument, causing the "missing required key baseUrl"
-  // runtime error.
   const searchUsersForPicker = useCallback(
     async (q: string): Promise<JiraUser[]> => {
       const trimmed = q.trim();
       if (!trimmed) return [];
-      // The backend command expects a domain. If the query contains '@', extract
-      // the domain after the last '@'. Otherwise pass the query as-is — Cloud's
-      // domain search returns an empty array for unmatched domains rather than
-      // failing, so name-only searches gracefully fall through to "no results"
-      // without crashing the UI.
       const at = trimmed.lastIndexOf('@');
-      const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-      if (!domain) return [];
+      const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+      if (!query) return [];
       try {
-        const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
-          baseUrl: sourceBaseUrl,
-          domain,
-        });
+        const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
         return Array.isArray(users) ? users : [];
       } catch (e) {
-        console.error('[CopyPreviewPage] search_jira_users_by_domain failed:', e);
+        console.error('[CopyPreviewPage] search_cloud_users_by_query failed:', e);
         return [];
       }
     },
-    [sourceBaseUrl],
+    [],
   );
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────

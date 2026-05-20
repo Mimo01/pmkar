@@ -83,7 +83,7 @@ const PREFILLABLE_KINDS = new Set(['identity', 'priority']);
 // user-edited store value (e.g. targetSummary) with the original source value.
 // ---------------------------------------------------------------------------
 
-const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary']);
+const PREFILL_EXCLUDED_TARGET_FIELDS = new Set(['summary', 'priority']);
 
 // ---------------------------------------------------------------------------
 // CopyPreviewModal
@@ -115,27 +115,22 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
 
   // ── Tauri user-search wrapper (mirrors CopyPreviewPage.searchUsersForPicker) ──
-  // Defined inside the component so it closes over sourceBaseUrl, which is
-  // required by the search_jira_users_by_domain Rust command.
   const searchUsersForPicker = useCallback(
     async (q: string): Promise<JiraUser[]> => {
       const trimmed = q.trim();
       if (!trimmed) return [];
       const at = trimmed.lastIndexOf('@');
-      const domain = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-      if (!domain) return [];
+      const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+      if (!query) return [];
       try {
-        const users = await invoke<JiraUser[]>('search_jira_users_by_domain', {
-          baseUrl: sourceBaseUrl,
-          domain,
-        });
+        const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
         return Array.isArray(users) ? users : [];
       } catch (e) {
-        console.error('[CopyPreviewModal] search_jira_users_by_domain failed:', e);
+        console.error('[CopyPreviewModal] search_cloud_users_by_query failed:', e);
         return [];
       }
     },
-    [sourceBaseUrl],
+    [],
   );
 
   // ── Cloud projects ─────────────────────────────────────────────────────────

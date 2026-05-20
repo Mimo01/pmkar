@@ -212,7 +212,7 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     mockInvoke.mockImplementation(async (cmd: string) => {
       if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
       if (cmd === 'get_field_mapping') return [];
-      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'search_cloud_users_by_query') return [];
       return null;
     });
   });
@@ -363,16 +363,15 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
 
   // ── User search wiring (PERS-03, T-22-15) ─────────────────────────────────
 
-  it('searchUsersForPicker invokes search_jira_users_by_domain with extracted domain', async () => {
+  it('searchUsersForPicker invokes search_cloud_users_by_query with extracted domain', async () => {
     render(<CopyPreviewPage />);
     await waitFor(() => expect(capturedFormProps.searchCallbacks).toBeDefined());
     const onSearchUsers = (
       capturedFormProps as { searchCallbacks: { onSearchUsers: (q: string) => Promise<unknown> } }
     ).searchCallbacks.onSearchUsers;
     await onSearchUsers('alice@acme.com');
-    expect(mockInvoke).toHaveBeenCalledWith('search_jira_users_by_domain', {
-      baseUrl: 'http://server.example.com',
-      domain: 'acme.com',
+    expect(mockInvoke).toHaveBeenCalledWith('search_cloud_users_by_query', {
+      query: 'acme.com',
     });
   });
 
@@ -403,7 +402,7 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
           { sourceFieldId: 'missing_src', targetFieldId: 'orphan', transformerKind: 'identity' },
         ];
       }
-      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'search_cloud_users_by_query') return [];
       return null;
     });
 
@@ -438,8 +437,11 @@ describe('CopyPreviewPage — Phase 22 integration', () => {
     // original source value from overwriting the user's edited summary at confirmCopy time.
     expect(byField.summary?.outcome).toBe('skipped');
     expect(byField.summary?.failureReason).toMatch(/dedicated store property/);
-    // priority transformer is prefillable; source priority object present → ok
-    expect(byField.priority?.outcome).toBe('ok');
+    // priority has a bespoke store property (targetPriorityId) resolved by name via
+    // fetch_cloud_meta and must NOT be seeded into overrideValues by D-PREFILL
+    // (same exclusion as summary) — the loop logs it as skipped.
+    expect(byField.priority?.outcome).toBe('skipped');
+    expect(byField.priority?.failureReason).toMatch(/dedicated store property/);
     // Phase 25: user transformer rows go through async resolve_users_preview path;
     // the mock sourceTicket assignee has no 'name' field, so no log entry is emitted
     // (the row silently skips username extraction). The async path fires but returns null.
@@ -515,7 +517,7 @@ describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
     mockInvoke.mockImplementation(async (cmd: string) => {
       if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
       if (cmd === 'get_field_mapping') return [];
-      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'search_cloud_users_by_query') return [];
       if (cmd === 'log_preview_transformations') return null;
       if (cmd === 'resolve_description_to_adf')
         return { version: 1, type: 'doc', content: [] };
@@ -537,7 +539,7 @@ describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
     mockInvoke.mockImplementation(async (cmd: string) => {
       if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
       if (cmd === 'get_field_mapping') return [wikiRow];
-      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'search_cloud_users_by_query') return [];
       if (cmd === 'log_preview_transformations') return null;
       if (cmd === 'resolve_description_to_adf') return { version: 1, type: 'doc', content: [] };
       return null;
@@ -586,7 +588,7 @@ describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
     mockInvoke.mockImplementation(async (cmd: string) => {
       if (cmd === 'fetch_cloud_projects') return [{ key: 'PROJ', name: 'Project' }];
       if (cmd === 'get_field_mapping') return [userRow];
-      if (cmd === 'search_jira_users_by_domain') return [];
+      if (cmd === 'search_cloud_users_by_query') return [];
       if (cmd === 'log_preview_transformations') return null;
       if (cmd === 'resolve_users_preview')
         return [{ accountId: 'acc-1', displayName: 'Alice', emailAddress: 'alice@acme.com' }];
