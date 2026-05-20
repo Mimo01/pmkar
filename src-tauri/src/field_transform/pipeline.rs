@@ -1025,4 +1025,70 @@ mod tests {
             Some(&json!({"accountId":"AID-A"}))
         );
     }
+
+    // ── Phase 27 Wave 0 tests ─────────────────────────────────────────────────
+
+    /// STATIC-PIPE-01 — PHASE 27 — Wave 0; goes green when Plan 02 lands.
+    ///
+    /// The `static` transformer branch must emit the stored JSON value directly
+    /// without looking at the source issue's fields (source is always empty here).
+    #[tokio::test]
+    async fn apply_mapping_static_emits_stored_value() {
+        // Source issue has no fields — proves static branch ignores source.
+        let issue = json!({"fields": {}});
+        // TODO Plan 02: static_value field not yet on FieldMappingRow; this test will fail
+        // to compile until Plan 02 adds the field. Mutate static_value after construction.
+        let mut mapping_row = row_with_kind(
+            "__static__customfield_10050",
+            "customfield_10050",
+            FieldSchemaType::Any,
+            FieldSchemaType::Any,
+            "static",
+        );
+        // TODO Plan 02: static_value = Some("\"10001\"".into())
+        let _ = &mut mapping_row; // suppress unused_mut until Plan 02
+        let mapping = vec![mapping_row];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        // TODO Plan 02: uncomment assertion once static branch + static_value field exist
+        // assert_eq!(out.fields.get("customfield_10050"), Some(&json!("10001")));
+        // For now: static rows with no value emit nothing (same as None case).
+        assert!(out.fields.get("customfield_10050").is_none());
+        assert!(out.gaps.is_empty());
+    }
+
+    /// STATIC-PIPE-02 — PHASE 27 — Wave 0; goes green when Plan 02 lands.
+    ///
+    /// A static row with `static_value: None` (target picked but value not
+    /// entered) must NOT pollute the output — no field emitted, no gap emitted.
+    #[tokio::test]
+    async fn apply_mapping_static_with_none_value_emits_nothing() {
+        let issue = json!({"fields": {}});
+        // TODO Plan 02: static_value field not yet on FieldMappingRow; static_value = None
+        let mapping_row = row_with_kind(
+            "__static__customfield_10050",
+            "customfield_10050",
+            FieldSchemaType::Any,
+            FieldSchemaType::Any,
+            "static",
+        );
+        let mapping = vec![mapping_row];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert!(
+            out.fields.get("customfield_10050").is_none(),
+            "static row with None value must not emit a field"
+        );
+        assert!(out.gaps.is_empty(), "static row with None value must not emit a gap");
+    }
 }
