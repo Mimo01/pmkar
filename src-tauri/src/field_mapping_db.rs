@@ -1650,6 +1650,58 @@ mod tests {
         assert_eq!(page[0].target_value_json.as_deref(), Some("\"tgt\""));
     }
 
+    // ── Phase 27 Wave 0 tests ─────────────────────────────────────────────────
+
+    /// STATIC-DB-01 — PHASE 27 — Wave 0; goes green when Plan 02 adds migrate_static_value_column.
+    ///
+    /// Verifies that opening a FieldMappingDb causes the migration to add
+    /// a `static_value` column to the `field_mapping` table.
+    #[test]
+    fn static_value_column_added_by_migration() {
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let col_names: Vec<String> = db
+            .conn
+            .prepare("PRAGMA table_info(field_mapping)")
+            .expect("prepare PRAGMA")
+            .query_map([], |r| r.get::<_, String>(1))
+            .expect("query_map")
+            .map(|r| r.expect("row"))
+            .collect();
+        assert!(
+            col_names.contains(&"static_value".to_string()),
+            "static_value column must exist after migration; found columns: {col_names:?}"
+        );
+    }
+
+    /// STATIC-DB-02 — PHASE 27 — Wave 0; goes green when Plan 02 adds static_value field to FieldMappingRow.
+    ///
+    /// Round-trips a static-value row through upsert + get and confirms the
+    /// `static_value` column is persisted correctly.
+    #[test]
+    fn upsert_mapping_row_round_trips_static_value() {
+        use crate::field_transform::FieldMappingRow;
+        let db = FieldMappingDb::open_in_memory().expect("open in memory");
+        let row = FieldMappingRow {
+            source_field_id: "__static__customfield_10050".into(),
+            target_field_id: "customfield_10050".into(),
+            transformer_kind: "static".into(),
+            source_schema: FieldSchemaType::Any,
+            target_schema: FieldSchemaType::Any,
+            // TODO Plan 02: static_value field added to FieldMappingRow struct
+            // static_value: Some("hello".into()),
+        };
+        db.upsert_mapping_row(&row).expect("upsert");
+        let rows = db.get_all_mapping_rows().expect("get");
+        // There will be 5 seeded default rows + 1 new row.
+        let static_row = rows
+            .iter()
+            .find(|r| r.source_field_id == "__static__customfield_10050")
+            .expect("static row must exist after upsert");
+        assert_eq!(static_row.transformer_kind, "static");
+        // TODO Plan 02: uncomment once static_value field exists on FieldMappingRow
+        // assert_eq!(static_row.static_value, Some("hello".into()));
+    }
+
     /// After fixing multiple dismissals, a real mapping can still be added for a
     /// mandatory target field that was previously blocked.
     #[test]
