@@ -156,7 +156,7 @@ fn migrate_mapping_audit_log_columns(conn: &Connection) -> AppResult<()> {
 
 /// Migration: add `static_value TEXT` (nullable, no DEFAULT) to the `field_mapping`
 /// table for existing databases created before Phase 27. Idempotent — uses the same
-/// PRAGMA table_info guard as `migrate_mapping_audit_log_columns`. Existing rows get
+/// `PRAGMA table_info` guard as `migrate_mapping_audit_log_columns`. Existing rows get
 /// NULL which round-trips to `Option<String>::None` on read.
 fn migrate_static_value_column(conn: &Connection) -> AppResult<()> {
     let existing: Vec<String> = conn

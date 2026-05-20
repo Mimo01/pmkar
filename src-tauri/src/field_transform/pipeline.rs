@@ -44,6 +44,48 @@ pub async fn apply_mapping(
     }
 
     for row in mapping {
+        // Phase 27: static branch — MUST be checked before source_issue.pointer() so
+        // the synthetic sentinel sourceFieldId (__static__<target>) is never used as a
+        // JSON pointer path. Dispatch on row.target_schema to produce the correct Jira
+        // Cloud v3 write-shape per D-06 (amended):
+        //   - Array<option>: split comma-separated text → [{"id":"..."},...]
+        //   - Array<other>:  split comma-separated text → ["...","..."]
+        //   - Option / OptionWithChild: UI pre-serializes {"id":"..."} → parse and pass through
+        //   - Everything else: parse JSON or fall back to Value::String
+        if row.transformer_kind == "static" {
+            if let Some(ref val) = row.static_value {
+                let emitted = match &row.target_schema {
+                    FieldSchemaType::Array { items, .. } if items == "option" => {
+                        let parts: Vec<Value> = val
+                            .split(',')
+                            .map(str::trim)
+                            .filter(|s| !s.is_empty())
+                            .map(|s| json!({ "id": s }))
+                            .collect();
+                        Value::Array(parts)
+                    }
+                    FieldSchemaType::Array { .. } => {
+                        let parts: Vec<Value> = val
+                            .split(',')
+                            .map(str::trim)
+                            .filter(|s| !s.is_empty())
+                            .map(|s| Value::String(s.to_string()))
+                            .collect();
+                        Value::Array(parts)
+                    }
+                    FieldSchemaType::Option_ { .. } | FieldSchemaType::OptionWithChild { .. } => {
+                        serde_json::from_str::<Value>(val)
+                            .unwrap_or_else(|_| Value::String(val.clone()))
+                    }
+                    _ => serde_json::from_str::<Value>(val)
+                        .unwrap_or_else(|_| Value::String(val.clone())),
+                };
+                fields.insert(row.target_field_id.clone(), emitted);
+            }
+            // static_value is None → pending row (target picked, value not yet entered) → skip silently
+            continue;
+        }
+
         let path = format!("/fields/{}", row.source_field_id);
         let src_val = source_issue.pointer(&path).cloned().unwrap_or(Value::Null);
 
@@ -1038,8 +1080,6 @@ mod tests {
     async fn apply_mapping_static_emits_stored_value() {
         // Source issue has no fields — proves static branch ignores source.
         let issue = json!({"fields": {}});
-        // TODO Plan 02: static_value field not yet on FieldMappingRow; this test will fail
-        // to compile until Plan 02 adds the field. Mutate static_value after construction.
         let mut mapping_row = row_with_kind(
             "__static__customfield_10050",
             "customfield_10050",
@@ -1047,8 +1087,7 @@ mod tests {
             FieldSchemaType::Any,
             "static",
         );
-        // TODO Plan 02: static_value = Some("\"10001\"".into())
-        let _ = &mut mapping_row; // suppress unused_mut until Plan 02
+        mapping_row.static_value = Some("\"10001\"".into());
         let mapping = vec![mapping_row];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
@@ -1057,10 +1096,8 @@ mod tests {
         let out = apply_mapping(&issue, &mapping, &ctx)
             .await
             .expect("apply_mapping ok");
-        // TODO Plan 02: uncomment assertion once static branch + static_value field exist
-        // assert_eq!(out.fields.get("customfield_10050"), Some(&json!("10001")));
-        // For now: static rows with no value emit nothing (same as None case).
-        assert!(out.fields.get("customfield_10050").is_none());
+        // JSON-parseable string: "\"10001\"" parses to Value::String("10001")
+        assert_eq!(out.fields.get("customfield_10050"), Some(&json!("10001")));
         assert!(out.gaps.is_empty());
     }
 
@@ -1071,7 +1108,6 @@ mod tests {
     #[tokio::test]
     async fn apply_mapping_static_with_none_value_emits_nothing() {
         let issue = json!({"fields": {}});
-        // TODO Plan 02: static_value field not yet on FieldMappingRow; static_value = None
         let mapping_row = row_with_kind(
             "__static__customfield_10050",
             "customfield_10050",
@@ -1079,6 +1115,7 @@ mod tests {
             FieldSchemaType::Any,
             "static",
         );
+        // static_value is None (default from row_with_kind)
         let mapping = vec![mapping_row];
         let (u, v, c) = make_resolvers();
         let map = HashMap::new();
@@ -1092,5 +1129,98 @@ mod tests {
             "static row with None value must not emit a field"
         );
         assert!(out.gaps.is_empty(), "static row with None value must not emit a gap");
+    }
+
+    /// STATIC-PIPE-03 — PHASE 27 — Array-of-option splitting.
+    ///
+    /// Comma-separated static_value against an Array<option> target produces
+    /// the correct Jira Cloud v3 write-shape: [{"id":"10001"},{"id":"10002"},...].
+    #[tokio::test]
+    async fn apply_mapping_static_array_of_option_splits_comma_separated_input() {
+        let issue = json!({"fields": {}});
+        let mut mapping_row = row_with_kind(
+            "__static__customfield_10060",
+            "customfield_10060",
+            FieldSchemaType::Any,
+            FieldSchemaType::Array {
+                items: "option".into(),
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+            "static",
+        );
+        mapping_row.static_value = Some("10001, 10002, 10003".into());
+        let mapping = vec![mapping_row];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert_eq!(
+            out.fields.get("customfield_10060"),
+            Some(&json!([{"id":"10001"},{"id":"10002"},{"id":"10003"}])),
+            "array-of-option: should split and produce id-objects"
+        );
+        // Trailing commas and surrounding whitespace are handled correctly.
+        let mut mapping_row2 = row_with_kind(
+            "__static__customfield_10061",
+            "customfield_10061",
+            FieldSchemaType::Any,
+            FieldSchemaType::Array {
+                items: "option".into(),
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+            "static",
+        );
+        mapping_row2.static_value = Some("10001,,10002".into());
+        let mapping2 = vec![mapping_row2];
+        let out2 = apply_mapping(&issue, &mapping2, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert_eq!(
+            out2.fields.get("customfield_10061"),
+            Some(&json!([{"id":"10001"},{"id":"10002"}])),
+            "empty parts from double-comma must be dropped"
+        );
+    }
+
+    /// STATIC-PIPE-04 — PHASE 27 — Array-of-string splitting.
+    ///
+    /// Comma-separated static_value against an Array<string> target (Labels) produces
+    /// the correct Jira Cloud v3 write-shape: ["bug","regression"].
+    #[tokio::test]
+    async fn apply_mapping_static_array_of_string_splits_comma_separated_input() {
+        let issue = json!({"fields": {}});
+        let mut mapping_row = row_with_kind(
+            "__static__labels",
+            "labels",
+            FieldSchemaType::Any,
+            FieldSchemaType::Array {
+                items: "string".into(),
+                system: None,
+                custom: None,
+                custom_id: None,
+            },
+            "static",
+        );
+        mapping_row.static_value = Some("bug, regression".into());
+        let mapping = vec![mapping_row];
+        let (u, v, c) = make_resolvers();
+        let map = HashMap::new();
+        let client = reqwest::Client::new();
+        let ctx = ctx_with_map(&client, &u, &v, &c, &map, "MYPROJ", "http://127.0.0.1:1");
+        let out = apply_mapping(&issue, &mapping, &ctx)
+            .await
+            .expect("apply_mapping ok");
+        assert_eq!(
+            out.fields.get("labels"),
+            Some(&json!(["bug","regression"])),
+            "array-of-string: should split on comma and produce string array"
+        );
     }
 }
