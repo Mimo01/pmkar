@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v0.4.0
-milestone_name: milestone
+milestone_name: Configurable Field Mapping
 status: Phase complete
-stopped_at: context exhaustion at 75% (2026-05-20)
-last_updated: "2026-05-20T09:09:34.775Z"
-last_activity: "2026-05-09 - Completed quick task 260509-r46: Release version 0.4.6"
+stopped_at: Phase 27 context gathered
+last_updated: "2026-05-20T09:45:28.434Z"
+last_activity: "2026-05-20 - Completed quick task 260520-fje: Release version 0.4.7"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
   total_plans: 5
   completed_plans: 5
-  percent: 100
+  percent: 75
 ---
 
 # Project State
@@ -247,6 +247,7 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - Phase 11 added: Add deployment, auto-updates, and release management
 - v0.4.0 milestone added (2026-04-27): Configurable Field Mapping (Phases 17-23) — replaces hardcoded copy logic with discovery + persistence + renderer registry + transform pipeline + cutover
 - Phase 26 added: Batch Ticket Fetching per Watched User
+- Phase 27 added: Add static value mapping to configurable field mapping
 
 ### Pending Todos
 
@@ -337,6 +338,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-05-20 - Completed quick task 260520-fje: Release version 0.4.7
-Last session: 2026-05-20T09:09:34.771Z
-Stopped at: context exhaustion at 75% (2026-05-20)
-Resume file: None
+Last session: 2026-05-20T09:45:28.424Z
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-add-static-value-mapping-to-configurable-field-mapping/27-CONTEXT.md
