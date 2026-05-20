@@ -139,7 +139,6 @@ describe('FieldMappingSection — load + render', () => {
     await waitFor(() => expect(screen.getByText('severity')).toBeInTheDocument());
     expect(screen.queryByTestId('drift-warning-severity')).toBeNull();
   });
-
 });
 
 describe('FieldMappingSectionHeader — refresh', () => {

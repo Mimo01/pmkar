@@ -7,8 +7,8 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
 import type { FieldSchema } from '../../../types/fieldSchema';
-import type { FieldMappingRow } from '../types';
 import { StaticMappingRow } from '../StaticMappingRow';
+import type { FieldMappingRow } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
@@ -100,8 +100,9 @@ describe('StaticMappingRow', () => {
     );
     // Badge uses i18n key settings.fieldMapping.staticBadge → "Static"
     expect(screen.getByText('Static')).toBeInTheDocument();
-    // Target combobox rendered (mocked as <select>)
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    // Target combobox rendered (mocked as <select>). The row may render multiple comboboxes
+    // (target combobox + value widget combobox if a target is selected), so use getAllByRole.
+    expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(1);
   });
 
   it('persists value changes via set_field_mapping', async () => {
@@ -125,7 +126,9 @@ describe('StaticMappingRow', () => {
         'set_field_mapping',
         expect.objectContaining({
           row: expect.objectContaining({
-            staticValue: '10002',
+            // StaticValueWidget stores pre-serialized JSON write-shape for option fields
+            // (27-CONTEXT.md D-06 / 27-RESEARCH.md Open Questions RESOLVED)
+            staticValue: JSON.stringify({ id: '10002' }),
             transformerKind: 'static',
           }),
         }),
@@ -146,8 +149,9 @@ describe('StaticMappingRow', () => {
       />,
     );
     // Delete button aria-label uses i18n key settings.fieldMapping.deleteStaticAriaLabel
+    // EN value: "Remove static mapping for {{field}}"
     const deleteBtn = screen.getByRole('button', {
-      name: /Delete static mapping for Priority Level/i,
+      name: /Remove static mapping for Priority Level/i,
     });
     fireEvent.click(deleteBtn);
     await waitFor(() =>
