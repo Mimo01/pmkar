@@ -7,8 +7,8 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
 import type { FieldSchema } from '../../../types/fieldSchema';
-import type { FieldMappingRow } from '../types';
 import { StaticMappingRow } from '../StaticMappingRow';
+import type { FieldMappingRow } from '../types';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), success: vi.fn() } }));

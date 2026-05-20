@@ -12,6 +12,7 @@ import { VirtualizedCombobox } from '@/features/field-renderers/components/Virtu
 import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema, FieldSchemaType } from '@/types/fieldSchema';
 import { MappingRow } from './MappingRow';
+import { StaticMappingRow } from './StaticMappingRow';
 import type { FieldMappingRow } from './types';
 
 // ─── Module-scoped Zustand store ──────────────────────────────────────────────
@@ -180,6 +181,7 @@ export function FieldMappingSection() {
   const { sourceFields, targetFields, targetProjectKey, firstIssueTypeId } = useSchemaArrays();
 
   const [pendingAdd, setPendingAdd] = useState(false);
+  const [pendingStaticAdd, setPendingStaticAdd] = useState(false);
   const [loadError, setLoadError] = useState(false);
 
   // ── Initial load (mount only) ──────────────────────────────────────────────
@@ -243,6 +245,10 @@ export function FieldMappingSection() {
     setPendingAdd(true);
   }
 
+  function handleAddStaticRow() {
+    setPendingStaticAdd(true);
+  }
+
   async function handleSelectNewSource(sf: FieldSchema) {
     const newRow: FieldMappingRow = {
       sourceFieldId: sf.fieldId,
@@ -303,7 +309,7 @@ export function FieldMappingSection() {
       </div>
 
       {/* Mapping rows or empty state */}
-      {mappingRows.length === 0 && !pendingAdd ? (
+      {mappingRows.length === 0 && !pendingAdd && !pendingStaticAdd ? (
         <div className="py-8 text-center">
           <p className="text-sm text-brand-text font-medium">
             {t('settings.fieldMapping.emptyHeading')}
@@ -314,18 +320,29 @@ export function FieldMappingSection() {
         </div>
       ) : (
         <div>
-          {mappingRows.map((row) => (
-            <MappingRow
-              key={row.sourceFieldId}
-              row={row}
-              sourceName={sourceFields.find((f) => f.fieldId === row.sourceFieldId)?.name}
-              targetFields={targetFields}
-              usedTargetFieldIds={usedTargetFieldIds}
-              isDrifted={driftedSourceFieldIds.has(row.sourceFieldId)}
-              onRowUpdate={updateRow}
-              onRowDelete={deleteRow}
-            />
-          ))}
+          {mappingRows.map((row) =>
+            row.sourceFieldId.startsWith('__static__') ? (
+              <StaticMappingRow
+                key={row.sourceFieldId}
+                row={row}
+                targetFields={targetFields}
+                usedTargetFieldIds={usedTargetFieldIds}
+                onRowUpdate={updateRow}
+                onRowDelete={deleteRow}
+              />
+            ) : (
+              <MappingRow
+                key={row.sourceFieldId}
+                row={row}
+                sourceName={sourceFields.find((f) => f.fieldId === row.sourceFieldId)?.name}
+                targetFields={targetFields}
+                usedTargetFieldIds={usedTargetFieldIds}
+                isDrifted={driftedSourceFieldIds.has(row.sourceFieldId)}
+                onRowUpdate={updateRow}
+                onRowDelete={deleteRow}
+              />
+            ),
+          )}
 
           {/* Inline pending row: source-field combobox for new mapping */}
           {pendingAdd && (
@@ -361,6 +378,30 @@ export function FieldMappingSection() {
               </button>
             </div>
           )}
+
+          {/* Inline pending static row: target-field combobox for new static mapping */}
+          {pendingStaticAdd && (
+            <StaticMappingRow
+              key="__pending_static__"
+              row={{
+                sourceFieldId: '__static__',
+                targetFieldId: '',
+                transformerKind: 'static',
+                sourceSchema: { type: 'any' },
+                targetSchema: { type: 'any' },
+                staticValue: undefined,
+              }}
+              targetFields={targetFields}
+              usedTargetFieldIds={usedTargetFieldIds}
+              onRowUpdate={(persisted) => {
+                updateRow(persisted);
+                setPendingStaticAdd(false);
+              }}
+              onRowDelete={() => {
+                setPendingStaticAdd(false);
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -375,6 +416,20 @@ export function FieldMappingSection() {
       >
         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
         <span>{t('settings.fieldMapping.addRow')}</span>
+      </Button>
+
+      {/* Add static value button */}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={handleAddStaticRow}
+        disabled={pendingStaticAdd || pendingAdd}
+        className="w-full justify-start text-brand-muted hover:text-brand-text gap-1.5"
+        aria-label="Add static value mapping"
+      >
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>{t('settings.fieldMapping.addStaticRow')}</span>
       </Button>
     </div>
   );

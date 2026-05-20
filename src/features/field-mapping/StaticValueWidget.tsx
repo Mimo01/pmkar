@@ -35,7 +35,8 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
         selectedId = null;
       }
     }
-    const selectedItem = selectedId !== null ? (items.find((i) => i.id === selectedId) ?? null) : null;
+    const selectedItem =
+      selectedId !== null ? (items.find((i) => i.id === selectedId) ?? null) : null;
 
     return (
       <div className="[&_button]:min-h-9">

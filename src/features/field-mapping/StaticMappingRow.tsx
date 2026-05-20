@@ -5,11 +5,11 @@ import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
 import type { FieldSchema } from '@/types/fieldSchema';
-import type { FieldMappingRow } from './types';
 import { StaticValueWidget } from './StaticValueWidget';
+import type { FieldMappingRow } from './types';
 
 export interface StaticMappingRowProps {
   row: FieldMappingRow;
@@ -81,6 +81,7 @@ export function StaticMappingRow({
         <Tooltip>
           <TooltipTrigger asChild>
             <span
+              role="img"
               className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold text-brand bg-brand/10 border border-brand/30 cursor-default"
               aria-label="Static mapping — no source field"
             >
