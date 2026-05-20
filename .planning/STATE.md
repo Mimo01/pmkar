@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: milestone
 status: Phase complete
-stopped_at: context exhaustion at 75% (2026-05-20)
-last_updated: "2026-05-20T13:14:16.934Z"
+stopped_at: Phase 27 all plans verified and complete (2026-05-20)
+last_updated: "2026-05-20T15:44:00.000Z"
 last_activity: 2026-05-20
 progress:
   total_phases: 4
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-04-29)
 
 ## Current Position
 
-Phase: 27 (add-static-value-mapping-to-configurable-field-mapping) — EXECUTING
-Plan: 1 of 4
+Phase: 27 (add-static-value-mapping-to-configurable-field-mapping) — COMPLETE
+Plan: 4 of 4 — all plans verified
 Milestone v0.4.0 COMPLETE — archived 2026-04-29.
 Post-milestone hotfixes complete: Phase 24 (audit log copy-time resolution), Phase 25 (preview-time wiki_to_adf + user resolution), and Phase 26 (batch ticket fetching per watched user) — all shipped 2026-05-06.
 Security note: CR-01 (SSRF in resolve_users_preview) open — address with /gsd-code-review 25 --fix.

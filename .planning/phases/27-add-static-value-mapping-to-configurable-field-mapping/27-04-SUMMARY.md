@@ -3,7 +3,7 @@ phase: 27-add-static-value-mapping-to-configurable-field-mapping
 plan: "04"
 subsystem: field-mapping/ui
 tags: [typescript, react, ui, wave-3, static-mapping, field-mapping]
-status: awaiting-human-verify
+status: complete
 
 requires:
   - phase: 27-add-static-value-mapping-to-configurable-field-mapping
@@ -29,7 +29,7 @@ affects:
 tech-stack:
   added: []
   patterns:
-    - "Pre-serialized JSON write-shape storage for option fields: onChange(JSON.stringify({ id: opt.id }))"
+    - "Pre-serialized JSON write-shape storage for option fields: onChange(JSON.stringify({ id: opt.id, value: opt.value })) — value included so SingleSelectRenderer.optLabel can display label without allowedValues lookup"
     - "Raw comma-separated text storage for array fields: pipeline splits at copy time"
     - "Row discrimination via sourceFieldId.startsWith('__static__') in render map"
     - "Auto-save pattern with 1500ms Saved flash (matches MappingRow)"
@@ -55,9 +55,9 @@ metrics:
   completed: 2026-05-20T12:51:24Z
 ---
 
-# Phase 27 Plan 04: Static Value UI Components Summary (Partial — Awaiting Human Verify)
+# Phase 27 Plan 04: Static Value UI Components Summary
 
-**StaticValueWidget, StaticMappingRow, and FieldMappingSection wiring shipped; all 4 Wave 0 React tests green. Paused at Task 4 human-verify checkpoint for end-to-end UI and DB verification.**
+**StaticValueWidget, StaticMappingRow, and FieldMappingSection wiring shipped. Human verification passed. Post-checkpoint fixes: option fields now store {id,value} so copy modal shows label not ID; static label restyled to match combobox buttons; renamed "Static" → "Static value".**
 
 ## Performance
 
@@ -154,9 +154,18 @@ metrics:
 - **Files modified:** `src/features/field-mapping/StaticMappingRow.tsx`, `src/features/field-mapping/__tests__/StaticMappingRow.test.tsx`
 - **Commit:** `0cd9fed`
 
-## Awaiting Human Verify
+## Human Verify — PASSED (2026-05-20)
 
-Task 4 is a `checkpoint:human-verify` requiring the user to verify the smart widget dispatch end-to-end in the live app with real Tauri IPC and field_schema_cache data. Automated tests cannot cover this scenario (per 27-VALIDATION.md).
+Task 4 human verify passed. Two bugs found and fixed during verification:
+
+**Fix 1: Option fields showed ID instead of label in copy modal** (`5d22c31`)
+- `StaticValueWidget` stored `{id}` only; `SingleSelectRenderer.optLabel` falls back to `id` when `value` absent
+- Fix: store `{id, value}` — `optLabel` now returns the label string directly
+
+**Fix 2: Static label didn't match combobox buttons visually** (`5d22c31`)
+- Badge was a small colored chip; other row cells are full-width outline buttons
+- Fix: replaced with `div` styled to match (`border-input bg-background min-h-9 px-3 text-sm text-muted-foreground`)
+- Also renamed "Static" → "Static value" (EN + SK)
 
 ## Known Stubs
 
