@@ -43,7 +43,7 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
         <VirtualizedCombobox<AllowedValueItem>
           items={items}
           value={selectedItem}
-          onChange={(opt) => onChange(JSON.stringify({ id: opt.id }))}
+          onChange={(opt) => onChange(JSON.stringify({ id: opt.id, value: opt.value }))}
           displayLabel={(o) => o.value}
           filterFn={(o, q) => o.value.toLowerCase().includes(q.toLowerCase())}
           placeholder={t('settings.fieldMapping.staticOptionPlaceholder')}

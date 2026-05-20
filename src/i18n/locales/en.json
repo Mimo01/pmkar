@@ -437,7 +437,7 @@
   "settings.fieldMapping.allMapped": "All source fields are mapped",
   "settings.fieldMapping.noIssueTypes": "No issue types prewarmed — open a ticket detail to populate the field list.",
   "settings.fieldMapping.addStaticRow": "Add static value",
-  "settings.fieldMapping.staticBadge": "Static",
+  "settings.fieldMapping.staticBadge": "Static value",
   "settings.fieldMapping.staticBadgeTooltip": "This field is always set to a fixed value, regardless of the source ticket.",
   "settings.fieldMapping.staticTargetPlaceholder": "Pick a target field",
   "settings.fieldMapping.staticValuePlaceholder": "Enter value",

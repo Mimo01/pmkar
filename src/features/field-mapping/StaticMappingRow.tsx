@@ -76,17 +76,16 @@ export function StaticMappingRow({
 
   return (
     <div className="grid grid-cols-[35fr_35fr_20fr_10fr] gap-3 items-center min-h-[40px] py-2 border-b border-brand-border last:border-0">
-      {/* Col 1: Static badge */}
+      {/* Col 1: Static label — styled to match the outline combobox buttons in other rows */}
       <TooltipProvider delayDuration={300}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span
-              role="img"
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold text-brand bg-brand/10 border border-brand/30 cursor-default"
+            <div
+              className="inline-flex w-full items-center min-h-9 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground cursor-default select-none"
               aria-label="Static mapping — no source field"
             >
               {t('settings.fieldMapping.staticBadge')}
-            </span>
+            </div>
           </TooltipTrigger>
           <TooltipContent>{t('settings.fieldMapping.staticBadgeTooltip')}</TooltipContent>
         </Tooltip>

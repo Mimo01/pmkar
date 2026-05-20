@@ -437,7 +437,7 @@
   "settings.fieldMapping.allMapped": "Všetky zdrojové polia sú namapované",
   "settings.fieldMapping.noIssueTypes": "Žiadne typy úloh nie sú predzaťažené — otvorte detail tikety pre načítanie zoznamu polí.",
   "settings.fieldMapping.addStaticRow": "Pridať statickú hodnotu",
-  "settings.fieldMapping.staticBadge": "Statická",
+  "settings.fieldMapping.staticBadge": "Statická hodnota",
   "settings.fieldMapping.staticBadgeTooltip": "Toto pole je vždy nastavené na pevnú hodnotu bez ohľadu na zdrojový tiket.",
   "settings.fieldMapping.staticTargetPlaceholder": "Vyberte cieľové pole",
   "settings.fieldMapping.staticValuePlaceholder": "Zadajte hodnotu",

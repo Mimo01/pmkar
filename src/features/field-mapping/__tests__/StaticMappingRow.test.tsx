@@ -98,8 +98,8 @@ describe('StaticMappingRow', () => {
         onRowDelete={vi.fn()}
       />,
     );
-    // Badge uses i18n key settings.fieldMapping.staticBadge → "Static"
-    expect(screen.getByText('Static')).toBeInTheDocument();
+    // Badge uses i18n key settings.fieldMapping.staticBadge → "Static value"
+    expect(screen.getByText('Static value')).toBeInTheDocument();
     // Target combobox rendered (mocked as <select>). The row may render multiple comboboxes
     // (target combobox + value widget combobox if a target is selected), so use getAllByRole.
     expect(screen.getAllByRole('combobox').length).toBeGreaterThanOrEqual(1);
@@ -128,7 +128,7 @@ describe('StaticMappingRow', () => {
           row: expect.objectContaining({
             // StaticValueWidget stores pre-serialized JSON write-shape for option fields
             // (27-CONTEXT.md D-06 / 27-RESEARCH.md Open Questions RESOLVED)
-            staticValue: JSON.stringify({ id: '10002' }),
+            staticValue: JSON.stringify({ id: '10002', value: 'High' }),
             transformerKind: 'static',
           }),
         }),
