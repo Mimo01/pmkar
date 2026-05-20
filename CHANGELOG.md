@@ -1,4 +1,67 @@
 
+## [0.4.7]
+
+### Bug Fixes
+
+- correctly map priority field when copying to Cloud Jira
+- search target Cloud Jira users instead of source server users
+
+### Documentation
+
+- pre-dispatch plan for release version 0.4.7
+
+### Miscellaneous
+
+- set 7-day retention on release artifacts
+## [0.4.6]
+
+### Bug Fixes
+
+- remove invalid fieldNames prop from DescriptionRenderer
+- persist hasFetchedThisSession in Zustand store to survive navigation
+- exclude done tickets from preset JQL queries
+- use session-local flag for pre-fetch vs no-results empty state
+- use doc type for v3 description in createmeta
+- resolve user_name mappings from source displayName, skip Cloud lookup
+- improve field rendering on ticket detail — HTML, Java toString, progress, noise
+- resolve custom field display names via expand=names fallback
+- show all fields — remove suppression, improve votes/watches/HTML rendering
+- suppress Java toString leaks in field values (e.g. devstatus field)
+- handle votes and watches system fields in any-type renderer
+- strip HTML from custom field values and suppress LexoRank noise
+- remove auto-fetch on homescreen open
+- prevent double-count in ticket loader progress by adding fetchInFlightRef concurrency guard
+- mutual exclusion between skeleton and stale ticket list on re-fetch
+- user domain search always queried Jira Cloud instead of Server
+
+### Documentation
+
+- pre-dispatch plan for homescreen empty state text clarity
+- pre-dispatch plan for Remove suggestions from mapping settings
+- pre-dispatch plan for loading screen enhancement fix
+
+### Features
+
+- add pre-fetch and no-results i18n strings to sk.json and en.json
+- add pre-fetch empty state to TicketListPage
+- add duedate and environment to field list and createmeta
+- add standard Jira fields to all mock issues
+- remove suggestion translation keys from en.json and sk.json
+- remove suggestions wiring from FieldMappingSection
+- delete SuggestionsPanel, heuristics, and their tests
+- sort comments newest-first with toggle
+- improve ticket detail field display for unknown custom fields
+- expand mock fixtures from 16 to 40 issues with 2 new test users
+
+### Miscellaneous
+
+- bump version to 0.4.6
+- update STATE.md for quick task 260508-tdf
+- update STATE.md for quick task 260508-naf
+
+### Testing
+
+- add failing tests for comment sort toggle
 ## [0.4.5]
 
 ### Bug Fixes
