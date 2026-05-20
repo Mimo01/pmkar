@@ -10,15 +10,24 @@ export interface SchemaCacheEntry {
   error?: string;
 }
 
+interface CloudMetaPriority {
+  id: string;
+  name: string;
+}
+
 interface SchemaCacheState {
   cache: Record<string, SchemaCacheEntry>;
   prewarmedIssueTypes: Record<string, IssueTypeRef[]>;
+  /** Priorities fetched from fetch_cloud_meta for use in StaticValueWidget without needing a copy preview. */
+  prewarmedPriorities: CloudMetaPriority[] | null;
   loadSchema: (
     side: FieldSide,
     projectKey: string | null,
     issuetypeId: string | null,
   ) => Promise<void>;
   preWarm: (projectKey: string) => Promise<void>;
+  /** Eagerly fetch Cloud priorities so StaticValueWidget can show them in Settings without a copy preview. */
+  fetchPriorities: () => Promise<void>;
   refresh: (
     side: FieldSide,
     projectKey: string | null,
@@ -40,6 +49,7 @@ export function schemaCacheKey(
 export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
   cache: {},
   prewarmedIssueTypes: {},
+  prewarmedPriorities: null,
 
   loadSchema: async (side, projectKey, issuetypeId) => {
     // Source schema is global — project/issuetype are irrelevant.
@@ -87,6 +97,19 @@ export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
     }
   },
 
+  fetchPriorities: async () => {
+    // Skip if already loaded — avoid redundant network calls.
+    if (get().prewarmedPriorities !== null) return;
+    try {
+      const meta = await invoke<{ availablePriorities: CloudMetaPriority[] }>('fetch_cloud_meta');
+      const list = Array.isArray(meta?.availablePriorities) ? meta.availablePriorities : [];
+      set({ prewarmedPriorities: list });
+    } catch {
+      // Silent fail — StaticValueWidget will fall back to copyStore.cloudMeta if available.
+      set({ prewarmedPriorities: [] });
+    }
+  },
+
   refresh: async (side, projectKey, issuetypeId) => {
     const key = schemaCacheKey(side, projectKey, issuetypeId);
     const next = { ...get().cache };
@@ -102,5 +125,5 @@ export const useSchemaCacheStore = create<SchemaCacheState>((set, get) => ({
     await get().loadSchema(side, projectKey, issuetypeId);
   },
 
-  clearCache: () => set({ cache: {}, prewarmedIssueTypes: {} }),
+  clearCache: () => set({ cache: {}, prewarmedIssueTypes: {}, prewarmedPriorities: null }),
 }));

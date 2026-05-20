@@ -1,5 +1,6 @@
 // Phase 27 — smart static value widget. Dispatch table in 27-UI-SPEC.md. Single-option stores pre-serialized JSON write-shape (pipeline passes through); array types store raw comma-separated text (pipeline splits per 27-CONTEXT.md D-06).
 // M42 — added issuetype branch: stores {id, name} JSON; populated from schemaCacheStore.prewarmedIssueTypes.
+// M43 — priority branch: reads from schemaCacheStore.prewarmedPriorities (eagerly loaded at FieldMappingSection mount) with copyStore.cloudMeta as fallback for when a copy preview is active.
 
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '@/features/connections/connectionStore';
@@ -24,15 +25,21 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
   const schema = field.schema;
 
   // ── Issuetype — stores {id, name} JSON; populated from schemaCacheStore (M42) ──
-  // ── Priority — stores {id, name} JSON; populated from useCopyStore.cloudMeta ──
+  // ── Priority — stores {id, name} JSON; populated from schemaCacheStore.prewarmedPriorities (M43) ──
   // All hooks must be called unconditionally (Rules of Hooks).
   const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
   const issueTypes = useSchemaCacheStore(
     (s) => s.prewarmedIssueTypes[targetProjectKey ?? ''] ?? [],
   ) as IssueTypeRef[];
-  // Use null fallback (not []) to avoid creating a new array reference on every render
-  // when cloudMeta is null — a new [] each render would cause an infinite Zustand loop.
-  const availablePriorities = useCopyStore((s) => s.cloudMeta?.availablePriorities ?? null);
+  // prewarmedPriorities: eagerly fetched by FieldMappingSection on mount via fetchPriorities().
+  // Use null fallback (not []) to distinguish "not yet loaded" from "loaded but empty".
+  const prewarmedPriorities = useSchemaCacheStore((s) => s.prewarmedPriorities);
+  // copyStore.cloudMeta is populated when a copy preview is active — use as secondary source.
+  // null fallback avoids creating a new array reference on every render (infinite Zustand loop).
+  const copyStorePriorities = useCopyStore((s) => s.cloudMeta?.availablePriorities ?? null);
+
+  // Merge: prefer prewarmedPriorities when available, fall back to copyStore during active preview.
+  const availablePriorities = prewarmedPriorities ?? copyStorePriorities;
 
   // ── Option / single-select — stores pre-serialized JSON write-shape per RESEARCH.md ──
   if (schema.type === 'option' || schema.type === 'option-with-child') {
@@ -155,8 +162,9 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
     );
   }
 
-  // ── Priority — searchable dropdown of Cloud priorities from useCopyStore ──
-  // availablePriorities is populated when a copy preview is started (cloudMeta).
+  // ── Priority — searchable dropdown of Cloud priorities ──
+  // Populated from schemaCacheStore.prewarmedPriorities (fetched at FieldMappingSection mount)
+  // with copyStore.cloudMeta as fallback when a copy preview is active.
   if (schema.type === 'priority') {
     const priorities = availablePriorities ?? [];
     if (priorities.length === 0) {

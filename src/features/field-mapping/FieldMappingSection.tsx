@@ -178,6 +178,7 @@ export function FieldMappingSection() {
 
   const loadSchema = useSchemaCacheStore((s) => s.loadSchema);
   const preWarm = useSchemaCacheStore((s) => s.preWarm);
+  const fetchPriorities = useSchemaCacheStore((s) => s.fetchPriorities);
   const { sourceFields, targetFields, targetProjectKey, firstIssueTypeId } = useSchemaArrays();
 
   const [pendingAdd, setPendingAdd] = useState(false);
@@ -203,6 +204,10 @@ export function FieldMappingSection() {
             await loadSchema('target', targetProjectKey, issueTypeId);
           }
         }
+        // Eagerly load Cloud priorities so StaticValueWidget can show the priority dropdown
+        // without requiring the user to run a copy preview first.
+        // fetchPriorities() is a no-op if priorities are already cached.
+        await fetchPriorities();
       } catch {
         setLoadError(true);
       } finally {
@@ -211,9 +216,9 @@ export function FieldMappingSection() {
     }
     void load();
     // Re-runs on mount and when targetProjectKey changes (store hydration or user selection).
-    // Stable Zustand setter refs (loadSchema, preWarm, setLoading, setMappingRows) are stable
-    // references that never change identity, so listing them does not cause extra re-runs.
-  }, [targetProjectKey, loadSchema, preWarm, setLoading, setMappingRows]);
+    // Stable Zustand setter refs (loadSchema, preWarm, fetchPriorities, setLoading, setMappingRows)
+    // are stable references that never change identity, so listing them does not cause extra re-runs.
+  }, [targetProjectKey, loadSchema, preWarm, fetchPriorities, setLoading, setMappingRows]);
 
   // ── Synthetic fields for StaticMappingRow target list ────────────────────
   // issuetype and priority are not returned by createmeta (or may be excluded) but are
