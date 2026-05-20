@@ -1955,7 +1955,12 @@ pub fn build_fixtures() -> SharedFixtures {
         ),
         global_field("customfield_10006", "Severity", true, sev_schema.clone()),
         global_field("duedate", "Due Date", false, duedate_schema.clone()),
-        global_field("environment", "Environment", false, environment_schema.clone()),
+        global_field(
+            "environment",
+            "Environment",
+            false,
+            environment_schema.clone(),
+        ),
     ];
 
     // Global field list — v3 (same logical fields; divergences enforced at createmeta level)
@@ -2028,7 +2033,13 @@ pub fn build_fixtures() -> SharedFixtures {
             Some(dept_allowed.clone()),
         ),
         createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
-        createmeta_field("environment", "Environment", false, environment_schema.clone(), None),
+        createmeta_field(
+            "environment",
+            "Environment",
+            false,
+            environment_schema.clone(),
+            None,
+        ),
     ];
 
     // Task — only summary required
@@ -2057,7 +2068,13 @@ pub fn build_fixtures() -> SharedFixtures {
             None,
         ),
         createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
-        createmeta_field("environment", "Environment", false, environment_schema.clone(), None),
+        createmeta_field(
+            "environment",
+            "Environment",
+            false,
+            environment_schema.clone(),
+            None,
+        ),
     ];
 
     // Story — Story Points required
@@ -2092,7 +2109,13 @@ pub fn build_fixtures() -> SharedFixtures {
             Some(team_allowed),
         ),
         createmeta_field("duedate", "Due Date", false, duedate_schema.clone(), None),
-        createmeta_field("environment", "Environment", false, environment_schema, None),
+        createmeta_field(
+            "environment",
+            "Environment",
+            false,
+            environment_schema,
+            None,
+        ),
     ];
 
     let mut v3_createmeta_fields: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
@@ -2154,12 +2177,36 @@ pub fn build_fixtures() -> SharedFixtures {
         let summary = "Implement audit log export to CSV";
         let desc_text = "Users need to export audit logs for compliance reporting. Add a CSV export button to the audit log view that exports all visible rows with current filters applied.";
         let comments_v2 = json!([
-            v2_comment("20016", "mramos", "Maria Ramos", "Started implementation. Using csv crate.", "2026-04-16T10:00:00.000+0000"),
-            v2_comment("20017", "aliu", "Alex Liu", "Consider streaming the response for large logs to avoid memory issues.", "2026-04-16T14:30:00.000+0000")
+            v2_comment(
+                "20016",
+                "mramos",
+                "Maria Ramos",
+                "Started implementation. Using csv crate.",
+                "2026-04-16T10:00:00.000+0000"
+            ),
+            v2_comment(
+                "20017",
+                "aliu",
+                "Alex Liu",
+                "Consider streaming the response for large logs to avoid memory issues.",
+                "2026-04-16T14:30:00.000+0000"
+            )
         ]);
         let comments_v3 = json!([
-            v3_comment("20016", "acc-mramos", "Maria Ramos", "Started implementation. Using csv crate.", "2026-04-16T10:00:00.000+0000"),
-            v3_comment("20017", "acc-aliu", "Alex Liu", "Consider streaming the response for large logs to avoid memory issues.", "2026-04-16T14:30:00.000+0000")
+            v3_comment(
+                "20016",
+                "acc-mramos",
+                "Maria Ramos",
+                "Started implementation. Using csv crate.",
+                "2026-04-16T10:00:00.000+0000"
+            ),
+            v3_comment(
+                "20017",
+                "acc-aliu",
+                "Alex Liu",
+                "Consider streaming the response for large logs to avoid memory issues.",
+                "2026-04-16T14:30:00.000+0000"
+            )
         ]);
         v2.insert(key.to_string(), JiraIssue {
             id: id.to_string(), key: key.to_string(),
@@ -2229,12 +2276,20 @@ pub fn build_fixtures() -> SharedFixtures {
         let id = "10020";
         let summary = "Ticket list shows stale data after background sync";
         let desc_text = "After the background sync completes, the ticket list does not refresh automatically. Users see old data until they manually reload. The sync completion event is not wired to the list component.";
-        let comments_v2 = json!([
-            v2_comment("20018", "csmith", "Chris Smith", "Fixed by subscribing to sync_complete event in list component. PR #521 merged.", "2026-04-20T16:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20018", "acc-csmith", "Chris Smith", "Fixed by subscribing to sync_complete event in list component. PR #521 merged.", "2026-04-20T16:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20018",
+            "csmith",
+            "Chris Smith",
+            "Fixed by subscribing to sync_complete event in list component. PR #521 merged.",
+            "2026-04-20T16:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20018",
+            "acc-csmith",
+            "Chris Smith",
+            "Fixed by subscribing to sync_complete event in list component. PR #521 merged.",
+            "2026-04-20T16:00:00.000+0000"
+        )]);
         v2.insert(key.to_string(), JiraIssue {
             id: id.to_string(), key: key.to_string(),
             fields: json!({
@@ -2498,12 +2553,20 @@ pub fn build_fixtures() -> SharedFixtures {
         let key = "PROJ-27";
         let id = "10027";
         let summary = "Tooltip text truncated on small screens";
-        let comments_v2 = json!([
-            v2_comment("20020", "mramos", "Maria Ramos", "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.", "2026-03-15T10:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20020", "acc-mramos", "Maria Ramos", "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.", "2026-03-15T10:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20020",
+            "mramos",
+            "Maria Ramos",
+            "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.",
+            "2026-03-15T10:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20020",
+            "acc-mramos",
+            "Maria Ramos",
+            "Fixed tooltip max-width to use rem units. Deployed in 4.3.0.",
+            "2026-03-15T10:00:00.000+0000"
+        )]);
         v2.insert(key.to_string(), JiraIssue {
             id: id.to_string(), key: key.to_string(),
             fields: json!({
@@ -2698,12 +2761,20 @@ pub fn build_fixtures() -> SharedFixtures {
         let id = "10032";
         let summary = "Add keyboard shortcut to open ticket detail";
         let desc_text = "Users want to open a ticket detail view without taking hands off the keyboard. Pressing Enter or Space on a focused row in the ticket list should open the detail panel.";
-        let comments_v2 = json!([
-            v2_comment("20023", "csmith", "Chris Smith", "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.", "2026-04-30T15:00:00.000+0000")
-        ]);
-        let comments_v3 = json!([
-            v3_comment("20023", "acc-csmith", "Chris Smith", "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.", "2026-04-30T15:00:00.000+0000")
-        ]);
+        let comments_v2 = json!([v2_comment(
+            "20023",
+            "csmith",
+            "Chris Smith",
+            "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.",
+            "2026-04-30T15:00:00.000+0000"
+        )]);
+        let comments_v3 = json!([v3_comment(
+            "20023",
+            "acc-csmith",
+            "Chris Smith",
+            "Implemented. Enter opens detail, Escape closes it. Accessible via keyboard tabbing.",
+            "2026-04-30T15:00:00.000+0000"
+        )]);
         v2.insert(key.to_string(), JiraIssue {
             id: id.to_string(), key: key.to_string(),
             fields: json!({

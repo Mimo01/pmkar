@@ -590,7 +590,10 @@ mod tests {
             .await
             .expect("apply_mapping ok");
         // priority must NOT appear in resolved.fields — it is managed via override_values
-        assert!(!out.fields.contains_key("priority"), "priority must not appear in apply_mapping output (managed via override_values)");
+        assert!(
+            !out.fields.contains_key("priority"),
+            "priority must not appear in apply_mapping output (managed via override_values)"
+        );
     }
 
     // ── Integration tests against a spawned axum mock ───────────────────────
@@ -882,7 +885,10 @@ mod tests {
         // 7. components — API resolves.
         assert_eq!(out.fields.get("components"), Some(&json!([{"id":"30001"}])));
         // 8. priority — excluded from apply_mapping output (managed via override_values).
-        assert!(!out.fields.contains_key("priority"), "priority must not appear in apply_mapping output (managed via override_values)");
+        assert!(
+            !out.fields.contains_key("priority"),
+            "priority must not appear in apply_mapping output (managed via override_values)"
+        );
 
         // ── Gap assertions ───────────────────────────────────────────────────
         assert_eq!(
@@ -1128,7 +1134,10 @@ mod tests {
             out.fields.get("customfield_10050").is_none(),
             "static row with None value must not emit a field"
         );
-        assert!(out.gaps.is_empty(), "static row with None value must not emit a gap");
+        assert!(
+            out.gaps.is_empty(),
+            "static row with None value must not emit a gap"
+        );
     }
 
     /// STATIC-PIPE-03 — PHASE 27 — Array-of-option splitting.
@@ -1219,7 +1228,7 @@ mod tests {
             .expect("apply_mapping ok");
         assert_eq!(
             out.fields.get("labels"),
-            Some(&json!(["bug","regression"])),
+            Some(&json!(["bug", "regression"])),
             "array-of-string: should split on comma and produce string array"
         );
     }
