@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema } from '@/types/fieldSchema';
 import { useConnectionStore } from '../connections/connectionStore';
+import type { FieldMappingRow } from '../field-mapping/types';
 import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
 
 interface CopyState {
@@ -144,7 +145,28 @@ export const useCopyStore = create<CopyState>((set, get) => ({
             const matched = sourceTypeName
               ? prewarmed.find((it) => it.name.toLowerCase() === sourceTypeName.toLowerCase())
               : null;
-            const defaultTypeId = matched?.id ?? prewarmed[0]?.id ?? null;
+            let resolvedTypeId = matched?.id ?? prewarmed[0]?.id ?? null;
+
+            // Static issuetype mapping wins over the auto-matched default (M42).
+            // If a static mapping exists for issuetype, use its stored id so the
+            // IssueTypeChooser and schema load both reflect what will actually be created.
+            try {
+              const mappingRows = await invoke<FieldMappingRow[]>('get_field_mapping');
+              const staticRow = mappingRows.find(
+                (r) =>
+                  r.transformerKind === 'static' &&
+                  r.targetFieldId === 'issuetype' &&
+                  r.staticValue,
+              );
+              if (staticRow?.staticValue) {
+                const parsed = JSON.parse(staticRow.staticValue) as { id?: string };
+                if (parsed.id) resolvedTypeId = parsed.id;
+              }
+            } catch {
+              // non-fatal — fall back to auto-matched default
+            }
+
+            const defaultTypeId = resolvedTypeId;
             if (defaultTypeId) {
               await useSchemaCacheStore.getState().loadSchema('target', projectKey, defaultTypeId);
               const entry =
