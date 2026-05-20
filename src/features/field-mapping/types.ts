@@ -17,4 +17,6 @@ export interface FieldMappingRow {
   transformerKind: TransformerKind;
   sourceSchema: FieldSchemaType;
   targetSchema: FieldSchemaType;
+  /** Phase 27 — present only when transformerKind === 'static'. Stored as a JSON-encoded string the pipeline parses with serde_json::from_str. For option fields the UI stores the pre-serialized JSON write-shape (e.g. JSON.stringify({ id: opt.id })) so the pipeline pass-through emits the correct {"id":"..."} object to Jira. */
+  staticValue?: string;
 }

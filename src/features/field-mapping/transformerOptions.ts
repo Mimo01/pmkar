@@ -7,7 +7,8 @@ export type TransformerKind =
   | 'version'
   | 'component'
   | 'wiki_to_adf'
-  | 'priority';
+  | 'priority'
+  | 'static';
 
 export interface TransformerOption {
   value: TransformerKind;
