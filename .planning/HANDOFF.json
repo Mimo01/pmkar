@@ -1,49 +1,52 @@
 {
   "version": "1.0",
-  "timestamp": "2026-05-05T11:23:46Z",
-  "phase": "24",
-  "phase_name": "audit-log-copy-time-resolution",
-  "phase_dir": ".planning/phases/24-audit-log-copy-time-resolution",
-  "plan": null,
-  "task": null,
-  "total_tasks": null,
+  "timestamp": "2026-05-20T13:21:57.633Z",
+  "phase": "27",
+  "phase_name": "add-static-value-mapping-to-configurable-field-mapping",
+  "phase_dir": ".planning/phases/27-add-static-value-mapping-to-configurable-field-mapping",
+  "plan": 4,
+  "task": 4,
+  "total_tasks": 4,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "Phase 24 execution (copy-time audit loop + UI badge)", "status": "done", "commit": "fc84c1f"},
-    {"id": 2, "name": "Phase 24 bug fixes (i18n, catch blocks, failure reason, previewCopyId)", "status": "done", "commit": "583d904"},
-    {"id": 3, "name": "Debug: wiki_to_adf/user fields showing skipped in audit log", "status": "done — root cause resolved", "commit": "4fc24c7"},
-    {"id": 4, "name": "Fix: Copy button missing !targetIssueTypeId guard", "status": "done", "commit": "4fc24c7"},
-    {"id": 5, "name": "Fix: mock server create_issue discarding assignee", "status": "done", "commit": "4fc24c7"},
-    {"id": 6, "name": "Fix: CopyPreviewModal.test.tsx regressions from Phase 24", "status": "done", "commit": "4fc24c7"}
+    {"id": "27-01", "name": "Wave 0 failing test scaffolding", "status": "done", "commit": "4492339"},
+    {"id": "27-02", "name": "Rust backend — DB migration + pipeline static branch", "status": "done", "commit": "1fcde87"},
+    {"id": "27-03", "name": "TypeScript types + i18n (11 keys EN+SK)", "status": "done", "commit": "57114de"},
+    {"id": "27-04-task1", "name": "StaticValueWidget.tsx", "status": "done", "commit": "e0bd21c"},
+    {"id": "27-04-task2", "name": "StaticMappingRow.tsx", "status": "done", "commit": "d460841"},
+    {"id": "27-04-task3", "name": "FieldMappingSection wiring", "status": "done", "commit": "0cd9fed"},
+    {"id": "fix-copy-modal", "name": "Fix static prefill + preview log in copy modal", "status": "done", "commit": "a238498"}
   ],
   "remaining_tasks": [
-    {"id": 7, "name": "NEW PHASE: preview-time resolution of wiki_to_adf and user fields", "status": "not_started"}
-  ],
-  "blockers": [],
-  "human_actions_pending": [],
-  "decisions": [
     {
-      "decision": "New phase required for preview-time resolution",
-      "rationale": "User wants description (wiki_to_adf) and all user fields pre-filled and editable in the copy preview modal before clicking Copy. Current architecture explicitly defers these to copy time. This is a separate phase, not a bug fix.",
-      "phase": "25-tbd"
-    },
-    {
-      "decision": "Description field: editable (not read-only)",
-      "rationale": "User confirmed they want to edit description before copying",
-      "phase": "25-tbd"
-    },
-    {
-      "decision": "User fields: all of them (not just assignee)",
-      "rationale": "User confirmed all user-type fields should be pre-filled",
-      "phase": "25-tbd"
+      "id": "27-04-task4",
+      "name": "Human verification of smart widget per UI-SPEC dispatch table",
+      "status": "awaiting_human",
+      "notes": "User must restart app and verify: (1) copy modal shows static values prefilled, (2) copy log shows 'copied' not 'skipped', (3) actual Jira payloads correct. Type 'approved' to complete checkpoint."
     }
   ],
-  "uncommitted_files": [
-    ".planning/STATE.md",
-    ".planning/debug/wiki-adf-user-map-copy-skip.md",
-    ".planning/phases/24-audit-log-copy-time-resolution/24-RESEARCH.md",
-    ".planning/phases/24-audit-log-copy-time-resolution/24-VALIDATION.md"
+  "blockers": [
+    {
+      "description": "Human verify checkpoint — Task 4 of plan 27-04",
+      "type": "human_action",
+      "workaround": "All bugs fixed (a238498). Restart app first, then test."
+    }
   ],
-  "next_action": "Start new phase for preview-time resolution. Run /gsd:discuss-phase or /gsd:plan-phase. Phase goal: resolve wiki_to_adf fields (description etc.) and user fields at copy-preview-open time so users can review and edit them before clicking Copy.",
-  "context_notes": "Phase 24 is complete and all its fixes are committed. The copy workflow works end-to-end (copy_ticket_v2 now runs when issue type is selected). User discovered that wiki_to_adf and user fields show as skipped in the preview modal — this is by design (async resolution runs at copy time) but user wants them pre-filled and editable at preview time. This is a new phase. Key design decisions already made: (1) description should be editable, (2) all user fields should be resolved. The wiki_to_adf approach will need a backend command to convert HTML→ADF at preview time, storing result in overrideValues. User fields need Cloud user resolution at preview time."
+  "human_actions_pending": [
+    {
+      "action": "npm run tauri dev → verify static value feature per 27-04-PLAN.md Task 4 how-to-verify steps 1-14",
+      "context": "Two copy-flow bugs fixed this session: PREFILLABLE_KINDS missing 'static' + preview log wrongly marking static rows as skipped. Re-test both.",
+      "blocking": true
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "parseStaticValueForOverride() mirrors Rust pipeline dispatch — used in both CopyPreviewModal and CopyPreviewPage",
+      "rationale": "Needed to convert stored staticValue string to correct JS shape for overrideValues",
+      "phase": "27"
+    }
+  ],
+  "uncommitted_files": [".planning/STATE.md"],
+  "next_action": "User approves human checkpoint → plan 27-04 complete → run /gsd:execute-phase 27 to trigger verification and completion.",
+  "context_notes": "All Phase 27 code is on main. Copy-flow display bugs fixed. The Rust pipeline was always correct — only frontend display was wrong. Human verify is the only remaining gate."
 }
