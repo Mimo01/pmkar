@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v0.4.0
 milestone_name: milestone
 status: Phase complete
-stopped_at: context exhaustion at 76% (2026-05-08)
-last_updated: "2026-05-08T21:45:41.222Z"
-last_activity: "2026-05-08 - Completed quick task 260508-m7q: Add more properties to cloud jira mock"
+stopped_at: context exhaustion at 75% (2026-05-20)
+last_updated: "2026-05-20T09:09:34.775Z"
+last_activity: "2026-05-09 - Completed quick task 260509-r46: Release version 0.4.6"
 progress:
   total_phases: 3
   completed_phases: 3
@@ -332,10 +332,11 @@ None yet.
 | 260508-m7q | Add more properties to cloud jira mock | 2026-05-08 | 36a6972 | | [260508-m7q-add-properties-to-cloud-jira-mock](./quick/260508-m7q-add-properties-to-cloud-jira-mock/) |
 | 260508-x1s | Homescreen empty state text clarity — pre-fetch vs no-results | 2026-05-08 | 3e03bf6 | | [260508-x1s-on-the-homescreen-before-the-first-fetch](./quick/260508-x1s-on-the-homescreen-before-the-first-fetch/) |
 | 260509-r46 | Release version 0.4.6 | 2026-05-09 | 520df21 | Complete | [260509-r46-release-v0-4-6](./quick/260509-r46-release-v0-4-6/) |
+| 260520-fje | Release version 0.4.7 | 2026-05-20 | da0edad | Complete | [260520-fje-release-version-0-4-7](./quick/260520-fje-release-version-0-4-7/) |
 
 ## Session Continuity
 
-Last activity: 2026-05-09 - Completed quick task 260509-r46: Release version 0.4.6
-Last session: 2026-05-08T21:45:41.219Z
-Stopped at: context exhaustion at 76% (2026-05-08)
+Last activity: 2026-05-20 - Completed quick task 260520-fje: Release version 0.4.7
+Last session: 2026-05-20T09:09:34.771Z
+Stopped at: context exhaustion at 75% (2026-05-20)
 Resume file: None
