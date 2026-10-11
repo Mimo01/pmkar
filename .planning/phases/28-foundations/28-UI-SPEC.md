@@ -1,7 +1,8 @@
 ---
 phase: 28
 slug: foundations
-status: draft
+status: approved
+reviewed_at: 2026-10-11
 shadcn_initialized: true
 preset: existing (style default, baseColor neutral, cssVariables, lucide)
 created: 2026-10-11
@@ -45,7 +46,7 @@ Exceptions: the existing `mt-0.5` (2px) under step detail in `CopyResultModal` i
 
 ## Typography
 
-Existing result-screen styles are preserved; no new sizes introduced (3 sizes in use, 2 weights).
+Existing result-screen styles are preserved; no new sizes introduced (4 sizes in use, 2 weights).
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
