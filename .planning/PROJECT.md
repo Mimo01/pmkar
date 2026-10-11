@@ -8,6 +8,19 @@ Pmkar is a cross-platform desktop app (Tauri 2.10 / React 19 / Rust) that bridge
 
 Surface relevant tickets from the customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
 
+## Current Milestone: v0.5.0 Custom Groups
+
+**Goal:** Let users organise issues into their own named groups, layered on top of the core New / Not mine / Linked triage, with a polished, uncluttered UX.
+
+**Target features:**
+- Create, rename, delete, reorder and color user-defined groups (tabs after a divider next to the core tabs)
+- Tag-like membership — an issue can be in many groups, from any triage state, and still shows in its core tab
+- Add/remove issues via explicit detail-panel button and list multi-select (plus other natural entry points)
+- Group view: flat list with triage-state badge per card; normal card actions work
+- Never silently lose a grouped issue — unfetched issues stay with a "no longer in results" hint and one-click remove
+- Local persistence, EN+SK strings
+- CONI-01: CopyResultModal step label i18n
+
 ## Requirements
 
 ### Validated
@@ -52,8 +65,12 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ### Active
 
+- [ ] User-defined issue groups (create/rename/delete/reorder/color) — v0.5.0
+- [ ] Tag-like group membership independent of triage state — v0.5.0
+- [ ] Add/remove issues to groups from detail and via list multi-select — v0.5.0
+- [ ] Grouped issues never silently lost when absent from fetch — v0.5.0
 - [ ] Excel export capability (scope TBD) — tracked as EXPRT-01
-- [ ] CopyResultModal step label i18n coverage (raw strings for some steps) — tracked as CONI-01
+- [ ] CopyResultModal step label i18n coverage (raw strings for some steps) — tracked as CONI-01 (v0.5.0)
 - [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
 - [ ] In-app notification history panel — tracked as NHIST-01
 - [ ] Phase 22 VERIFICATION.md — formal verification of PERS-01..04, OVRD-01..06 (code confirmed wired; human verification deferred)
@@ -136,4 +153,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-11 after v0.4.8 milestone*
+*Last updated: 2026-10-11 after v0.5.0 milestone start*

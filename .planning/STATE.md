@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.4.8
-milestone_name: Mapping Refinements & Static Values
-status: Milestone complete
-stopped_at: v0.4.8 milestone archived (2026-10-11)
-last_updated: "2026-10-11T00:00:00.000Z"
+milestone: v0.5.0
+milestone_name: Custom Groups
+status: planning
+last_updated: "2026-10-11T20:26:36.499Z"
 last_activity: 2026-10-11
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,9 +24,10 @@ See: .planning/PROJECT.md (updated 2026-10-11)
 
 ## Current Position
 
-Milestone v0.4.8 Mapping Refinements & Static Values — COMPLETE, archived 2026-10-11 (shipped 2026-05-20).
-Phases 24-27 archived to .planning/milestones/v0.4.8-phases/.
-Next: /gsd:new-milestone.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-10-11 — Milestone v0.5.0 started
 
 ## Deferred Items
 
