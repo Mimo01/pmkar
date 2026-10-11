@@ -144,6 +144,43 @@
 
 ---
 
+## Milestone: v0.4.8 — Mapping Refinements & Static Values
+
+**Shipped:** 2026-05-20
+**Phases:** 4 | **Plans:** 9 | **Quick tasks:** ~70
+
+### What Was Built
+- Copy-time per-field audit rows (`copied` outcome, blue badge) after `apply_mapping`
+- Preview-time resolution of description (wiki→ADF) and user fields via two new Tauri commands
+- Per-watched-user batched ticket fetch with progress counter and partial-failure warning
+- `static` transformer kind: DB column, schema-aware pipeline branch, StaticValueWidget/StaticMappingRow UI
+
+### What Worked
+- Shipping as small incremental releases (v0.4.1 → v0.4.8) gave fast real-world feedback on the mapping engine
+- Wave 0 RED test scaffolding with requirement IDs in Phase 27 made the backend/UI waves straightforward
+- Quick tasks handled most real-world fixes without phase overhead
+
+### What Was Inefficient
+- The milestone was never formally opened: no REQUIREMENTS.md, phases labelled "hotfix" or "—", and requirements had to be reconstructed at close
+- Code review findings (CR-01 SSRF, WR-01..03) were recorded in STATE.md but not acted on before close
+- Phase 25 human UAT was left partial; Phase 24 shipped with a known modal-flow gap
+- ~70 quick tasks with no status metadata add noise to `audit-open`
+
+### Patterns Established
+- Free sync helper functions (`write_copy_time_audit`) extracted from Tauri commands for unit testability
+- Async IIFE + cancelled guard for preview-time effects
+- Static option values stored as `{id,value}` so labels render without a lookup
+
+### Key Lessons
+1. When post-milestone "hotfixes" grow past 2 phases, open a milestone with `/gsd:new-milestone` instead of tacking phases on
+2. Security findings from code review should block a release, not just a milestone close
+3. Close UAT before tagging releases — partial UAT tends to stay partial
+
+### Cost Observations
+- Model mix: not tracked
+- Sessions: many short sessions (quick tasks + debug)
+- Notable: quick-task-heavy cadence; 9 planned plans vs ~70 quick tasks
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -153,6 +190,7 @@
 | v0.1.0 | 11 | 45 | Baseline established — mock-first, phase-gated, Zustand-centric |
 | v0.3.0 | 5 | 10 | Parallel phase execution, milestone audit before completion, Rust-side background loops |
 | v0.4.0 | 7 | 28 | Quick tasks for post-phase bugs, debug sessions for systematic investigation, wave-based parallel within phases |
+| v0.4.8 | 4 | 9 | Incremental patch releases, quick-task-dominant cadence, milestone opened retroactively |
 
 ### Cumulative Quality
 
@@ -161,6 +199,7 @@
 | v0.1.0 | 389 + 28 Rust | 80.11% | 16,284 |
 | v0.3.0 | 528 + 75 Rust | — | 23,250 |
 | v0.4.0 | 682+ frontend + 221+ Rust | — | ~35,744 |
+| v0.4.8 | 835 frontend + 271 Rust | — | ~47,836 |
 
 ### Top Lessons (Verified Across Milestones)
 

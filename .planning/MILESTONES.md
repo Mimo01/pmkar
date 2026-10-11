@@ -1,5 +1,33 @@
 # Milestones
 
+## v0.4.8 Mapping Refinements & Static Values (Shipped: 2026-05-20)
+
+**Phases:** 4 (24-27) | **Plans:** 9 | **Quick tasks:** ~70
+**Timeline:** 22 days (2026-04-29 → 2026-05-20), released incrementally as v0.4.1 → v0.4.8
+**Codebase:** ~47,800 LOC (29,427 TypeScript + 18,409 Rust) | 234 commits | 835 frontend + 271 Rust tests
+**Git range:** 1fedada → 606cca0 (125 files, +11,343 / −2,271 excluding .planning)
+
+**Delivered:** Post-v0.4.0 hardening of the field mapping engine. Copy-time audit rows show resolved values. Description and user fields are resolved when the copy preview opens. Ticket fetching runs one batch per watched user. A new `static` transformer kind fills target-only Cloud fields with a constant.
+
+**Key accomplishments:**
+
+1. Copy-time audit resolution — `copy_ticket_v2` writes per-field `copied/skipped/failed` rows after the override merge; a blue `copied` badge appears in Field Transformations
+2. Preview-time resolution — new `resolve_description_to_adf` + `resolve_users_preview` commands; description ADF and user picks are visible and editable before Copy
+3. Per-user batched ticket fetch — sequential JQL per watched user with progress counter and partial-failure warning; no more single oversized call
+4. Static value mapping — `static_value` column, schema-aware `apply_mapping` static branch (scalar/option/array), `StaticValueWidget` + `StaticMappingRow` UI, 11 EN+SK keys
+5. ~70 quick tasks — `user_name` transformer, priority renderer, dynamic source field listing, audit log redesign, JQL presets (mine/all/watched), richer mock data, loading UX, eager priority prefetch for static mapping
+
+### Known Gaps
+
+Known deferred items at close: 6 (see STATE.md Deferred Items)
+- AUDIT-CT-03: CopyPreviewModal passes `null` copyId — modal-flow copy rows are not grouped with preview rows (Phase 24 VERIFICATION gaps_found)
+- Phase 25: VERIFICATION human_needed; HUMAN-UAT 3 scenarios pending
+- CR-01: SSRF risk in `resolve_users_preview` (security — address first)
+- Phase 26 review WR-01/02/03
+- Debug sessions `knowledge-base`, `user-mapping-not-resolved` left open
+
+---
+
 ## v0.4.0 Configurable Field Mapping (Shipped: 2026-04-29)
 
 **Phases:** 7 (17-23) | **Plans:** 28

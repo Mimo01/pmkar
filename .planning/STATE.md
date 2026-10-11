@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v0.4.0
-milestone_name: milestone
-status: Phase complete
-stopped_at: Phase 27 all plans verified and complete (2026-05-20)
-last_updated: "2026-05-20T15:44:00.000Z"
-last_activity: 2026-05-20
+milestone: v0.4.8
+milestone_name: Mapping Refinements & Static Values
+status: Milestone complete
+stopped_at: v0.4.8 milestone archived (2026-10-11)
+last_updated: "2026-10-11T00:00:00.000Z"
+last_activity: 2026-10-11
 progress:
   total_phases: 4
   completed_phases: 4
@@ -18,19 +18,16 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-29)
+See: .planning/PROJECT.md (updated 2026-10-11)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** Phase 27 — add-static-value-mapping-to-configurable-field-mapping
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 27 (add-static-value-mapping-to-configurable-field-mapping) — COMPLETE
-Plan: 4 of 4 — all plans verified
-Milestone v0.4.0 COMPLETE — archived 2026-04-29.
-Post-milestone hotfixes complete: Phase 24 (audit log copy-time resolution), Phase 25 (preview-time wiki_to_adf + user resolution), and Phase 26 (batch ticket fetching per watched user) — all shipped 2026-05-06.
-Security note: CR-01 (SSRF in resolve_users_preview) open — address with /gsd-code-review 25 --fix.
-Code review note (Phase 26): WR-01 (all-batches-failure clears tickets), WR-02 (mine batch label untranslated in warning), WR-03 (poll-complete listener missing isLoading guard) — run /gsd-code-review 26 --fix to address.
+Milestone v0.4.8 Mapping Refinements & Static Values — COMPLETE, archived 2026-10-11 (shipped 2026-05-20).
+Phases 24-27 archived to .planning/milestones/v0.4.8-phases/.
+Next: /gsd:new-milestone. Recommended first item: CR-01 SSRF fix (/gsd:code-review 25 --fix — note phase dir now archived).
 
 ## Deferred Items
 
@@ -42,6 +39,19 @@ Items acknowledged and deferred at milestone close on 2026-04-29:
 | tech-debt | DISC-04 human verification items (probe banner visual, status pill, dismiss/restart) | deferred |
 | tech-debt | TRAN-05 wiki ADF spot-check (links/blockquotes/hard-breaks) | deferred |
 | tech-debt | CTRL-08 VirtualizedCombobox 500+ item browser observation | deferred |
+
+Items acknowledged and deferred at milestone close on 2026-10-11 (v0.4.8):
+
+| Category | Item | Status |
+|----------|------|--------|
+| security | CR-01 SSRF in resolve_users_preview (Phase 25) | open |
+| verification | Phase 24 VERIFICATION gaps_found — CopyPreviewModal null copyId | deferred |
+| verification | Phase 25 VERIFICATION human_needed | deferred |
+| uat | Phase 25 HUMAN-UAT — 3 scenarios pending | partial |
+| code-review | Phase 26 WR-01/WR-02/WR-03 | open |
+| debug | knowledge-base | unknown |
+| debug | user-mapping-not-resolved | done (not moved to resolved/) |
+| quick_task | 72 quick task dirs with status `missing` (no status metadata) | informational |
 
 ## Performance Metrics
 
