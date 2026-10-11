@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-11)
 
 Milestone v0.4.8 Mapping Refinements & Static Values — COMPLETE, archived 2026-10-11 (shipped 2026-05-20).
 Phases 24-27 archived to .planning/milestones/v0.4.8-phases/.
-Next: /gsd:new-milestone. Recommended first item: CR-01 SSRF fix (/gsd:code-review 25 --fix — note phase dir now archived).
+Next: /gsd:new-milestone.
 
 ## Deferred Items
 
@@ -44,11 +44,9 @@ Items acknowledged and deferred at milestone close on 2026-10-11 (v0.4.8):
 
 | Category | Item | Status |
 |----------|------|--------|
-| security | CR-01 SSRF in resolve_users_preview (Phase 25) | open |
-| verification | Phase 24 VERIFICATION gaps_found — CopyPreviewModal null copyId | deferred |
+| verification | Phase 24 VERIFICATION gaps_found — gap fixed in 5fb7594, not re-verified | stale doc |
 | verification | Phase 25 VERIFICATION human_needed | deferred |
 | uat | Phase 25 HUMAN-UAT — 3 scenarios pending | partial |
-| code-review | Phase 26 WR-01/WR-02/WR-03 | open |
 | debug | knowledge-base | unknown |
 | debug | user-mapping-not-resolved | done (not moved to resolved/) |
 | quick_task | 72 quick task dirs with status `missing` (no status metadata) | informational |

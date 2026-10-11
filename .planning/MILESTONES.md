@@ -19,11 +19,9 @@
 
 ### Known Gaps
 
-Known deferred items at close: 6 (see STATE.md Deferred Items)
-- AUDIT-CT-03: CopyPreviewModal passes `null` copyId — modal-flow copy rows are not grouped with preview rows (Phase 24 VERIFICATION gaps_found)
-- Phase 25: VERIFICATION human_needed; HUMAN-UAT 3 scenarios pending
-- CR-01: SSRF risk in `resolve_users_preview` (security — address first)
-- Phase 26 review WR-01/02/03
+Known deferred items at close: 3 (see STATE.md Deferred Items)
+- Phase 25: VERIFICATION human_needed; HUMAN-UAT 3 scenarios pending (description prose rendering, picker pre-fill, E2E copy)
+- Phase 24 VERIFICATION.md still reads gaps_found, but the gap was fixed in 5fb7594; it was never re-verified
 - Debug sessions `knowledge-base`, `user-mapping-not-resolved` left open
 
 ---

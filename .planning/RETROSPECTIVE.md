@@ -162,7 +162,7 @@
 
 ### What Was Inefficient
 - The milestone was never formally opened: no REQUIREMENTS.md, phases labelled "hotfix" or "—", and requirements had to be reconstructed at close
-- Code review findings (CR-01 SSRF, WR-01..03) were recorded in STATE.md but not acted on before close
+- Code review fixes landed, but STATE.md was never updated, so it kept reporting them as open until the milestone close
 - Phase 25 human UAT was left partial; Phase 24 shipped with a known modal-flow gap
 - ~70 quick tasks with no status metadata add noise to `audit-open`
 
@@ -173,7 +173,7 @@
 
 ### Key Lessons
 1. When post-milestone "hotfixes" grow past 2 phases, open a milestone with `/gsd:new-milestone` instead of tacking phases on
-2. Security findings from code review should block a release, not just a milestone close
+2. Update STATE.md when review fixes land; stale notes there misreport the project's status
 3. Close UAT before tagging releases — partial UAT tends to stay partial
 
 ### Cost Observations

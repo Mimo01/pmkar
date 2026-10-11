@@ -45,7 +45,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Mapping Editor Settings UI: Settings → Copying → Field Mapping section with MappingRow auto-save, DriftWarning, SuggestionsPanel heuristics (3-tier: exact-id / normalized-name / synonym set), FieldMappingSection orchestrator, Refresh schema + Last refreshed timestamp, 29 i18n keys (EN+SK), 70 tests — v0.4.0 Phase 21 (DISC-05, MAP-03, MAP-04, MAP-05, EDIT-01, EDIT-02, EDIT-03)
 - ✓ Copy Preview override panel: IssueTypeChooser (defaults to source-name match), per-copy in-memory overrides, computeGapFields + GapsSection with required-field gating, always-visible person picker with email pre-fill (initialQueriesByFieldId), Copy button disabled until all required fields resolved — v0.4.0 Phase 22 (PERS-01..04, OVRD-01..06) — VERIFICATION.md deferred
 - ✓ copy_ticket_v2: mapping-aware copy command replacing copy_ticket — CopyContext seam, 5 extracted helpers, mapping load + UserResolver + apply_mapping + per-field audit with credential redaction, parameterized target project key (zero MYPROJ literals), full-pipeline integration test with ACME project key — v0.4.0 Phase 23 (CUTV-01, CUTV-02, CUTV-03, CUTV-04)
-- ✓ Copy-time per-field audit rows (`copied` outcome) reflecting actual `apply_mapping` resolution — v0.4.8 Phase 24 (modal-flow grouping gap deferred)
+- ✓ Copy-time per-field audit rows (`copied` outcome) reflecting actual `apply_mapping` resolution — v0.4.8 Phase 24 
 - ✓ Preview-time resolution of description (wiki→ADF) and user fields so they can be reviewed before copy — v0.4.8 Phase 25 (human UAT pending)
 - ✓ Per-watched-user batched ticket fetch with progress counter and partial-failure warning — v0.4.8 Phase 26
 - ✓ Static value mapping: `static` transformer kind fills target-only Cloud fields with a configured constant (schema-aware scalar/option/array) — v0.4.8 Phase 27
@@ -57,9 +57,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
 - [ ] In-app notification history panel — tracked as NHIST-01
 - [ ] Phase 22 VERIFICATION.md — formal verification of PERS-01..04, OVRD-01..06 (code confirmed wired; human verification deferred)
-- [ ] CR-01: fix SSRF risk in `resolve_users_preview` (security, from Phase 25 review)
-- [ ] CopyPreviewModal copy_id grouping (Phase 24 gap) + Phase 25 human UAT (3 scenarios)
-- [ ] Phase 26 review fixes WR-01..03 (all-batches-failure clears tickets, untranslated mine label, poll-complete isLoading guard)
+- [ ] Phase 25 human UAT (3 scenarios: description prose rendering, picker pre-fill, E2E copy)
 - [ ] ADF rich-text editor for description in copy preview (currently read-only)
 
 ### Out of Scope
@@ -78,7 +76,7 @@ Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18n
 Local pre-commit hook replaces GitHub Actions CI (lint + type-check + test + clippy + fmt).
 Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 Mapping engine fully operational: field discovery → SQLite persistence → renderer registry → copy preview (with preview-time resolution) → copy_ticket_v2 pipeline, plus static value mappings.
-Known issues: CR-01 SSRF in preview user lookup (open); several human-verification items deferred across v0.4.0 and v0.4.8.
+Known issues: several human-verification items deferred across v0.4.0 and v0.4.8.
 
 ## Constraints
 
@@ -101,9 +99,9 @@ Known issues: CR-01 SSRF in preview user lookup (open); several human-verificati
 | Hash-based audit redaction by default | PII protection on by default; verbose mode opt-in for debugging | ✓ Good — v0.4.0 |
 | db-per-concern for mapping.db | Follows established pattern (triage.db / snapshot.db / audit.db); avoids cross-domain schema coupling | ✓ Good — v0.4.0 |
 | Preview-time resolution of async fields (v0.4.8) | Users must see description/assignee outcomes before committing a copy | ✓ Good — v0.4.8 |
-| Per-user sequential fetch batches (v0.4.8) | Avoids oversized single JQL; per-batch failure isolation | ✓ Good — v0.4.8 (WR-01..03 open) |
+| Per-user sequential fetch batches (v0.4.8) | Avoids oversized single JQL; per-batch failure isolation | ✓ Good — v0.4.8 |
 | Static transformer kind stored in field_mapping (v0.4.8) | Reuses mapping persistence + pipeline instead of separate config | ✓ Good — v0.4.8 |
-| Preview lookups bypass HTTP audit client (v0.4.8) | Keep audit log focused on actual copy writes | — Pending (CR-01 SSRF to resolve on that path) |
+| Preview lookups bypass HTTP audit client (v0.4.8) | Keep audit log focused on actual copy writes | ✓ Good — v0.4.8 (CR-01 fixed: base URL taken from keychain, not frontend) |
 | Tauri over Electron | Lighter footprint, Rust backend for security, native feel | ✓ Good — v0.1.0 |
 | OS keychain for credentials | Most secure option, native to each platform | ✓ Good — v0.1.0 |
 | One-time copy with origin tracking | Full sync too complex, origin links sufficient | ✓ Good — v0.1.0 |
