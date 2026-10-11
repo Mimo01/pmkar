@@ -11,7 +11,7 @@ Build it as a separate, orthogonal layer:
 - a new `groups.db` (db-per-concern, no new Rust crates);
 - a new `useGroupStore`, hydrated at App startup;
 - a pure memoised `resolveGroupItems` that joins membership against `tickets[]`;
-- `@dnd-kit/core`, `@dnd-kit/sortable` and `@dnd-kit/utilities` for tab drag-reorder, plus `@radix-ui/react-checkbox` for multi-select;
+- `@radix-ui/react-checkbox` for multi-select (no drag & drop — user decision 2026-10-11; reorder via Move left/right menu actions);
 - a fixed token palette instead of a color picker.
 
 Two refactors come first:
@@ -34,7 +34,6 @@ Mitigations:
 
 ### Stack
 - **Add:**
-  - `@dnd-kit/core` ^6.3.1, `@dnd-kit/sortable` ^10.0.0 and `@dnd-kit/utilities` ^3.2.2;
   - `@radix-ui/react-checkbox`.
 - **No new Rust crates.**
 - **Do not add:**
@@ -49,7 +48,7 @@ Mitigations:
 ### Features
 - **Table stakes:**
   - group CRUD with a fixed palette;
-  - drag-reorder with a keyboard fallback;
+  - reorder via Move left/right menu actions (drag & drop rejected by user);
   - tab strip with a divider, ＋ and overflow handling;
   - "Add to group" popover in ticket detail, with inline create;
   - bulk add/remove from multi-select;
@@ -87,7 +86,7 @@ Mitigations:
 2. No source scope on issue identity.
 3. Fragile migrations, and FK cascade that does nothing without the pragma.
 4. Zustand selector loops: never `?? []`; use a reverse index with a `null` fallback.
-5. Tab accessibility conflicting with dnd-kit keyboard handling.
+5. Tab accessibility (menu-based reorder must announce new position).
 
 **Also:**
 - selection leaking across tabs;
@@ -108,10 +107,10 @@ Mitigations:
    - data-driven AppShell, divider, overflow;
    - `GroupTicketsPage` with triage badge and empty state;
    - fallback tab when the active group is deleted.
-3. **Group management and drag-reorder**
+3. **Group management and reorder**
    - create / rename / recolor / delete;
    - delete AlertDialog showing the issue count;
-   - dnd-kit sortable tabs with a Move left/right fallback and live-region announcements.
+   - Move left/right menu actions with live-region announcements.
 4. **Membership entry points**
    - detail picker with inline create, and chips;
    - TicketCard restructure;
@@ -130,7 +129,6 @@ Mitigations:
 
 ## Research Flags
 - **Phase 1:** decide identity scope, snapshot table and group id type.
-- **Phase 3:** verify the dnd-kit API against current docs, its keyboard handling alongside Radix Tabs, and that it runs on React 19.
 - **Phase 5:** check whether the default JQL presets include done issues, and pin down the exact gating rules.
 
 ## Gaps and Resolutions

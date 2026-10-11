@@ -13,9 +13,8 @@
 - [ ] **GRP-02**: User can rename a group from the group tab's "…" menu, with the same validation as create
 - [ ] **GRP-03**: User can pick a group color from a fixed palette (~8 colors, WCAG AA legible in light and dark); a new group gets the next unused color by default
 - [ ] **GRP-04**: User can delete a group after a confirmation dialog that states the issue count and that issues themselves are not affected; if the deleted group was the active tab, the app falls back to a core tab
-- [ ] **GRP-05**: User can reorder group tabs by drag & drop; core tabs stay fixed and are not draggable
-- [ ] **GRP-06**: User can reorder group tabs with the keyboard ("Move left / Move right" in the tab menu), with the new position announced to screen readers
-- [ ] **GRP-07**: Groups, their names, colors, order and memberships persist across app restarts in local storage
+- [ ] **GRP-05**: User can reorder group tabs via "Move left / Move right" actions in the tab's "…" menu (keyboard accessible, new position announced to screen readers); core tabs stay fixed
+- [ ] **GRP-06**: Groups, their names, colors, order and memberships persist across app restarts in local storage
 
 ### Navigation & Group View (GVIEW)
 
@@ -67,6 +66,7 @@
 
 | Feature | Reason |
 |---------|--------|
+| Drag & drop reordering | App has no drag & drop anywhere; keep interaction model consistent — menu-based Move left/right instead |
 | Nested groups | Complicates tab UI, reorder and membership semantics |
 | Free-text tags | Typos and sprawl; managed list with inline create covers the need |
 | Auto-rules (JQL/status-based membership) | Duplicates core triage; hidden membership is confusing |
@@ -81,11 +81,42 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| GRP-01 | Phase 29 | Pending |
+| GRP-02 | Phase 30 | Pending |
+| GRP-03 | Phase 30 | Pending |
+| GRP-04 | Phase 30 | Pending |
+| GRP-05 | Phase 30 | Pending |
+| GRP-06 | Phase 28 | Pending |
+| GVIEW-01 | Phase 29 | Pending |
+| GVIEW-02 | Phase 29 | Pending |
+| GVIEW-03 | Phase 29 | Pending |
+| GVIEW-04 | Phase 29 | Pending |
+| GVIEW-05 | Phase 29 | Pending |
+| GVIEW-06 | Phase 29 | Pending |
+| GMEM-01 | Phase 31 | Pending |
+| GMEM-02 | Phase 31 | Pending |
+| GMEM-03 | Phase 31 | Pending |
+| GMEM-04 | Phase 31 | Pending |
+| GMEM-05 | Phase 31 | Pending |
+| GMEM-06 | Phase 31 | Pending |
+| GMEM-07 | Phase 31 | Pending |
+| GMEM-08 | Phase 31 | Pending |
+| GMEM-09 | Phase 31 | Pending |
+| GDUR-01 | Phase 32 | Pending |
+| GDUR-02 | Phase 32 | Pending |
+| GDUR-03 | Phase 32 | Pending |
+| GDUR-04 | Phase 32 | Pending |
+| GDUR-05 | Phase 32 | Pending |
+| GDUR-06 | Phase 32 | Pending |
+| CONI-01 | Phase 28 | Pending |
+| GQA-01 | Phase 33 | Pending |
+| GQA-02 | Phase 33 | Pending |
 
 **Coverage:**
-- v0.5.0 requirements: 31 total
-- Mapped to phases: 0 (pending roadmap)
+- v0.5.0 requirements: 30 total
+- Mapped to phases: 30
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-11*
-*Last updated: 2026-10-11 after initial definition*
+*Last updated: 2026-10-11 after roadmap creation*

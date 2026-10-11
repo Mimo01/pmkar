@@ -6,6 +6,7 @@
 - ✅ **v0.3.0 Notifications & Change Tracking** — Phases 12-16 (shipped 2026-03-29)
 - ✅ **v0.4.0 Configurable Field Mapping** — Phases 17-23 (shipped 2026-04-29)
 - ✅ **v0.4.8 Mapping Refinements & Static Values** — Phases 24-27 (shipped 2026-05-20)
+- 🚧 **v0.5.0 Custom Groups** — Phases 28-33 (in progress)
 
 ## Phases
 
@@ -68,6 +69,92 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 </details>
 
+<details open>
+<summary>🚧 v0.5.0 Custom Groups (Phases 28-33) — IN PROGRESS</summary>
+
+- [ ] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels
+- [ ] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list
+- [ ] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right
+- [ ] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar
+- [ ] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove
+- [ ] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI
+
+### Phase 28: Foundations
+**Goal**: Groups have a durable, restart-safe home and the shared building blocks later phases rely on exist, while copy-step labels are fully translated
+**Depends on**: Nothing (first phase of milestone)
+**Requirements**: GRP-06, CONI-01
+**Success Criteria** (what must be TRUE):
+  1. Groups, names, colors, order and memberships written through the app are still present after restarting the app
+  2. Copy progress/result screens show translated EN and SK labels for every step, including add_remotelink, fetch_source, update_triage and worklog:fetch
+  3. A test fails if the Rust side emits a copy step id that has no translation key
+  4. Existing New / Not mine / Linked lists filter and sort exactly as before after the shared list utilities extraction
+**Plans**: TBD
+**Research flag**: Decide identity scope column, snapshot table shape (issue_snapshot with ticket_json) and INTEGER AUTOINCREMENT group id; verify Slovak plural key set against the installed i18next version
+
+### Phase 29: Tab Strip & Group View
+**Goal**: Users can create groups and open each as a flat, filterable list alongside the unchanged core tabs
+**Depends on**: Phase 28
+**Requirements**: GRP-01, GVIEW-01, GVIEW-02, GVIEW-03, GVIEW-04, GVIEW-05, GVIEW-06
+**Success Criteria** (what must be TRUE):
+  1. User can click the end-of-bar plus control, type a name, and a new group tab appears; empty, duplicate, and reserved names show an inline rejection message
+  2. Group tabs sit right of the three core tabs after a divider, each showing its color and member count; with many groups the bar scrolls horizontally, core tabs stay put, and long names truncate with a tooltip
+  3. Opening a group shows its members as one flat list with a New / Not mine / Linked badge on each card; an empty group explains how to add issues
+  4. User can search, filter, sort, open detail, copy, and dismiss/restore from a group view, and triage changes appear immediately in both the group view and core tabs
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 30: Group Management & Reorder
+**Goal**: Users can fully manage existing groups: rename, recolor, delete safely, and reorder tabs via Move left/right menu actions
+**Depends on**: Phase 29
+**Requirements**: GRP-02, GRP-03, GRP-04, GRP-05
+**Success Criteria** (what must be TRUE):
+  1. User can rename a group from the tab's "..." menu with the same validation as create
+  2. User can choose a group color from a fixed palette; a newly created group defaults to the next unused color
+  3. Deleting a group asks for confirmation stating the issue count and that issues are not affected; if it was the active tab the app lands on a core tab
+  4. User can reorder group tabs with "Move left / Move right" in the tab menu (mouse or keyboard); core tabs stay fixed, a screen reader announces the new position, and the order survives restart
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 31: Membership Entry Points
+**Goal**: Users can put issues into and take them out of any number of groups from detail, cards, and multi-select
+**Depends on**: Phase 30
+**Requirements**: GMEM-01, GMEM-02, GMEM-03, GMEM-04, GMEM-05, GMEM-06, GMEM-07, GMEM-08, GMEM-09
+**Success Criteria** (what must be TRUE):
+  1. From ticket detail, the "Groups" button opens a searchable checkbox picker where toggling adds/removes immediately, and "Create '<name>'" makes a group and adds the issue in one step
+  2. An issue can be in several groups at once and still appears in its core tab; its card shows up to 2 colored chips plus "+N" with a tooltip, hidden for the current group inside a group view
+  3. Clicking a chip switches to that group's tab; user can also remove the issue from a group via the detail picker or detail chip
+  4. A "Select" toggle in every list header reveals checkboxes with shift-click range selection; selection clears on tab change or leaving select mode
+  5. The selection bar shows the count and adds all selected issues to a group atomically (with inline create); inside a group view it also offers "Remove from group"
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 32: Durability
+**Goal**: Grouped issues never silently vanish; missing ones are clearly flagged only when that is actually true, and removal is always explicit
+**Depends on**: Phase 31
+**Requirements**: GDUR-01, GDUR-02, GDUR-03, GDUR-04, GDUR-05, GDUR-06
+**Success Criteria** (what must be TRUE):
+  1. A grouped issue that drops out of fetch results still renders its card in the group from its stored snapshot and stays a member until the user removes it or deletes the group
+  2. After a complete successful fetch, absent members appear dimmed with "No longer in results" and a labelled "Remove" button
+  3. The hint never appears before the first fetch of a session, after a partially failed fetch, or on truncated results
+  4. A group with missing members offers "Remove all missing", which asks for confirmation before removing
+  5. Snapshots refresh after each successful fetch and are cleaned up once no group references the issue
+**Plans**: TBD
+**Research flag**: Check whether default JQL presets include done issues and pin down exact gating rules
+
+### Phase 33: Polish & Verification
+**Goal**: All new group UI is fully bilingual and meets WCAG AA in both themes
+**Depends on**: Phase 32
+**Requirements**: GQA-01, GQA-02
+**Success Criteria** (what must be TRUE):
+  1. Switching to Slovak shows no untranslated or English-fallback strings in any group UI, and counts use correct Slovak plural forms
+  2. Tabs, tab menus, picker, selection mode and bar, and dialogs are fully operable by keyboard alone, with focus returning to the trigger after dialogs close
+  3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
+  4. With about 25 groups the tab bar and cards remain usable and uncluttered
+**Plans**: TBD
+**UI hint**: yes
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -99,3 +186,9 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | v0.4.8 | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
+| 28. Foundations | v0.5.0 | 0/TBD | Not started | - |
+| 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
+| 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
+| 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
+| 32. Durability | v0.5.0 | 0/TBD | Not started | - |
+| 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
