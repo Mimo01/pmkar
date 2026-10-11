@@ -353,11 +353,12 @@ Likely failures to expect from UI-SPEC starting values at 3:1 on `#ffffff`/`#f7f
 | A4 | i18next 25 internals use Intl.PluralRules for sk | State of the Art | Low; no plural keys this phase |
 | A5 | Reserved tab label keys discoverable in en.json (key names not yet looked up) | Pitfall 6 | Low |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Command surface for Phase 28 (no UI).** Success criterion 1 says "written through the app". Recommendation: implement the full backend CRUD now (`list_groups`, `create_group`, `rename_group`, `set_group_color`, `move_group`, `delete_group`, `add_to_group` / `remove_from_group` bulk, `get_group_members`) plus store actions, verified by Rust tests and store tests with mocked `invoke`; Phases 29-31 only add UI.
-2. **No source connection configured.** Recommendation: empty list, mutations return `no_scope`.
-3. **Mock-server/fixtures.** No fixture changes needed in this phase (groups never touch Jira).
+1. **Command surface for Phase 28 (no UI).** RESOLVED: implement the full backend CRUD now (`list_groups`, `create_group`, `rename_group`, `set_group_color`, `move_group`, `delete_group`, `add_to_group` / `remove_from_group` bulk, `get_group_members`) plus store actions, verified by Rust tests and store tests with mocked `invoke`. Adopted in 28-05 (commands) and 28-06 (store); Phases 29-31 only add UI.
+2. **No source connection configured.** RESOLVED: `list_groups` returns an empty list; all write commands return the `no_scope` error. Adopted in 28-05.
+3. **Mock-server/fixtures.** RESOLVED: no fixture changes in this phase (groups never touch Jira).
+4. **Multiple groups per ticket (A3).** RESOLVED: a ticket may belong to multiple groups; membership PK is `(group_id, issue_key)` with no UNIQUE(scope, issue_key). Adopted in 28-04 schema; revisit only if Phase 29 discuss decides otherwise.
 
 ## Environment Availability
 

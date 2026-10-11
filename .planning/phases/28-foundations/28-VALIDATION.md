@@ -43,15 +43,16 @@ created: 2026-10-11
 | 28-01-T3 | 01 | 1 | GRP-06 (SC4) | T-28-01 | Page tests unchanged and green | component | `npx vitest run src/features/tickets` | ✅ | ⬜ pending |
 | 28-02-T1 | 02 | 1 | CONI-01 | T-28-05 | Sync test non-vacuous (min 8 ids) | unit | `npx vitest run src/features/tickets/__tests__/copyStepLabel.test.ts src/features/tickets/__tests__/copyStepSync.test.ts src/i18n` | ❌ W0 | ⬜ pending |
 | 28-02-T2 | 02 | 1 | CONI-01 | T-28-03 | Text children only, no innerHTML | component | `npx vitest run src/features/tickets/CopyResultModal.test.tsx src/features/tickets/__tests__/CopyResultPage.test.tsx` | ✅ extend | ⬜ pending |
-| 28-03-T1 | 03 | 1 | GRP-06 | T-28-07 | No red tokens; >=3:1 contrast | unit | `npx vitest run src/features/groups/__tests__/colors.test.ts` | ❌ W0 | ⬜ pending |
-| 28-03-T2 | 03 | 1 | GRP-06 | T-28-06 | CSS == colors.ts | unit | `npx vitest run src/features/groups/__tests__/colors.test.ts` | ❌ W0 | ⬜ pending |
+| 28-03-T1 | 03 | 1 | GRP-06 | T-28-07 | No red tokens; >=3:1 contrast; token order via deep-equal test (no CSS-parity asserts yet, file fully green) | unit | `npx vitest run src/features/groups/__tests__/colors.test.ts` | ❌ W0 | ⬜ pending |
+| 28-03-T2 | 03 | 1 | GRP-06 | T-28-06 | CSS-parity describe added RED, then CSS vars make it GREEN; CSS == colors.ts | unit | `npx vitest run src/features/groups/__tests__/colors.test.ts` | ❌ W0 | ⬜ pending |
 | 28-04-T1 | 04 | 1 | GRP-06 | T-28-SC | Blocking human crate check | manual | n/a (checkpoint) | n/a | ⬜ pending |
 | 28-04-T2 | 04 | 1 | GRP-06 | T-28-09 | Rust-authoritative validation, shared vectors | unit | `cd src-tauri && cargo test groups_db` | ❌ W0 | ⬜ pending |
 | 28-04-T3 | 04 | 1 | GRP-06 | T-28-08, T-28-10, T-28-11 | params![] only, scope filter, FK + tx | unit | `cd src-tauri && cargo test groups_db` | ❌ W0 | ⬜ pending |
 | 28-05-T1 | 05 | 2 | GRP-06 | T-28-14, T-28-16 | Rust-derived scope, lock order | unit | `cd src-tauri && cargo test groups_commands` | ❌ W0 | ⬜ pending |
 | 28-05-T2 | 05 | 2 | GRP-06 | T-28-15 | N/A | build | `cd src-tauri && cargo build && cargo test` | ✅ | ⬜ pending |
 | 28-06-T1 | 06 | 3 | GRP-06 | T-28-20 | TS mirror == Rust vectors | unit | `npx vitest run src/features/groups/__tests__/validation.test.ts` | ❌ W0 | ⬜ pending |
-| 28-06-T2 | 06 | 3 | GRP-06 | T-28-19, T-28-21 | ?? null selector; color coercion | unit | `npx vitest run src/features/groups src/App.test.tsx src/__tests__/App.test.tsx` | ❌ W0 | ⬜ pending |
+| 28-06-T2 | 06 | 3 | GRP-06 | T-28-19, T-28-21 | ?? null selector; color coercion; rehydrateAfter waits for persist; App hydrates at startup only | unit | `npx vitest run src/features/groups src/App.test.tsx src/__tests__/App.test.tsx` | ❌ W0 | ⬜ pending |
+| 28-06-T3 | 06 | 3 | GRP-06 (D-01) | T-28-23 | list_groups invoked only after set_connection_meta settles (server only) | component | `npx vitest run src/features/connections src/features/groups` | ✅ extend | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -64,6 +65,7 @@ created: 2026-10-11
 - [ ] `src/features/groups/__tests__/*` (store, validation, colors)
 - [ ] `ticketListUtils.test.ts` characterization tests — committed BEFORE extraction
 - [ ] `copyStepLabel.test.ts`, `copyStepSync.test.ts`
+- [ ] Ordering tests in `SettingsPage.test.tsx` / `SetupWizard.test.tsx` (extend existing) for re-hydration after `set_connection_meta`
 
 ---
 
