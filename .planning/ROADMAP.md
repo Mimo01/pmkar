@@ -88,7 +88,14 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   2. Copy progress/result screens show translated EN and SK labels for every step, including add_remotelink, fetch_source, update_triage and worklog:fetch
   3. A test fails if the Rust side emits a copy step id that has no translation key
   4. Existing New / Not mine / Linked lists filter and sort exactly as before after the shared list utilities extraction
-**Plans**: TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 28-01-PLAN.md — Characterize then extract New/Not mine/Linked filter+sort into ticketListUtils (SC4)
+- [ ] 28-02-PLAN.md — Shared copyStepLabel helper, EN/SK keys, Rust step-id sync test, translate result screens (CONI-01)
+- [ ] 28-03-PLAN.md — Group color palette tokens (colors.ts + CSS vars) with contrast and parity tests
+- [ ] 28-04-PLAN.md — groups.db data layer: scope, validation, CRUD, atomic membership, shared vectors (crate checkpoint)
+- [ ] 28-05-PLAN.md — Tauri group commands with Rust-derived scope and lock ordering; open groups.db at startup
+- [ ] 28-06-PLAN.md — useGroupStore, TS validation mirror, App hydration on startup and source change
 **Research flag**: Decide identity scope column, snapshot table shape (issue_snapshot with ticket_json) and INTEGER AUTOINCREMENT group id; verify Slovak plural key set against the installed i18next version
 
 ### Phase 29: Tab Strip & Group View
