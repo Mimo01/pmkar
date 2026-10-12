@@ -7,6 +7,14 @@ export function groupTabId(id: number): TabId {
   return `group:${id}`;
 }
 
+/** Focuses a core nav tab by its data-tab-id. Returns false when it is not mounted. */
+export function focusCoreTab(tab: CoreTab): boolean {
+  const el = document.querySelector<HTMLElement>(`[data-tab-id="${tab}"]`);
+  if (!el) return false;
+  el.focus();
+  return true;
+}
+
 export function parseGroupTabId(tab: string): number | null {
   const m = /^group:(\d+)$/.exec(tab);
   return m ? Number(m[1]) : null;

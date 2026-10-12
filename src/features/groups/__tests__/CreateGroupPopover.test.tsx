@@ -76,7 +76,7 @@ async function setup() {
   return { user, onCreated, trigger, input };
 }
 
-const createButton = () => screen.getByRole('button', { name: 'Create' });
+const createButton = () => screen.getByRole('button', { name: 'Create group' });
 const alertText = () => screen.getByRole('alert').textContent;
 const createCalls = () => invokeMock.mock.calls.filter((c) => c[0] === 'create_group');
 
