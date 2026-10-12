@@ -6,6 +6,7 @@ pub mod field_discovery;
 pub mod field_mapping_db;
 pub mod field_transform;
 pub mod fixtures;
+pub mod groups_db;
 pub mod jira_client;
 pub mod keychain;
 pub mod mock_server;

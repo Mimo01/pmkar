@@ -1,0 +1,195 @@
+{
+  "palette": [
+    "blue",
+    "teal",
+    "green",
+    "amber",
+    "orange",
+    "purple",
+    "pink",
+    "slate"
+  ],
+  "names": [
+    {
+      "input": "  Úlohy  ",
+      "existing": [],
+      "display": "Úlohy",
+      "key": "ulohy",
+      "error": null
+    },
+    {
+      "input": "U\u0301lohy",
+      "existing": [],
+      "display": "Úlohy",
+      "key": "ulohy",
+      "error": null
+    },
+    {
+      "input": "",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "   ",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "existing": [],
+      "display": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "error": null
+    },
+    {
+      "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "too_long"
+    },
+    {
+      "input": "U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301",
+      "existing": [],
+      "display": "ÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚ",
+      "key": "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
+      "error": null
+    },
+    {
+      "input": "ULOHY",
+      "existing": [
+        "Úlohy"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "ulohy",
+      "existing": [
+        "Úlohy"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "new",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "NOVÉ",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "nove",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "dismissed",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "zamietnute",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "already linked",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "Uz prelinkovane",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "reserved"
+    },
+    {
+      "input": "Newsletter",
+      "existing": [],
+      "display": "Newsletter",
+      "key": "newsletter",
+      "error": null
+    }
+  ],
+  "scope": [
+    {
+      "input": "HTTPS://Jira.Example.com/",
+      "scope": "https://jira.example.com"
+    },
+    {
+      "input": "https://j.com:443/jira/",
+      "scope": "https://j.com/jira"
+    },
+    {
+      "input": "https://j.com:8443/",
+      "scope": "https://j.com:8443"
+    },
+    {
+      "input": "https://user@j.com/jira/?x=1#y",
+      "scope": "https://j.com/jira"
+    },
+    {
+      "input": "",
+      "scope": null
+    },
+    {
+      "input": "   ",
+      "scope": null
+    },
+    {
+      "input": "not a url/",
+      "scope": "not a url"
+    }
+  ],
+  "defaultColor": [
+    {
+      "used": [],
+      "expected": "blue"
+    },
+    {
+      "used": [
+        "blue"
+      ],
+      "expected": "teal"
+    },
+    {
+      "used": [
+        "blue",
+        "teal",
+        "bogus"
+      ],
+      "expected": "green"
+    },
+    {
+      "used": [
+        "blue",
+        "blue",
+        "teal"
+      ],
+      "expected": "green"
+    }
+  ]
+}
