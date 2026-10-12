@@ -35,7 +35,7 @@ export function CardGroupChip({ group }: { group: Group }) {
         e.stopPropagation();
         navigateToGroup(group.id);
       }}
-      className="relative z-10 inline-flex items-center h-5 px-1 rounded border border-brand-border-subtle text-xs text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+      className="relative z-10 inline-flex items-center h-5 px-1 rounded border border-brand-border-subtle text-xs text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
     >
       <GroupChipLabel group={group} />
     </button>

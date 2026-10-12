@@ -344,7 +344,7 @@ function GroupPickerBody(props: BodyProps) {
           setError(null);
         }}
         onKeyDown={handleKeyDown}
-        className="w-full rounded-md border border-brand-border bg-transparent px-2 py-1.5 text-sm text-brand-text outline-none focus:border-brand focus:ring-2 focus:ring-brand"
+        className="w-full rounded-md border border-brand-border bg-transparent px-2 py-1.5 text-sm text-brand-text outline-none focus:border-focus-ring focus:ring-2 focus:ring-focus-ring"
       />
       <div
         id={listboxId}
@@ -372,7 +372,7 @@ function GroupPickerBody(props: BodyProps) {
               {checkbox && (
                 <span
                   aria-hidden="true"
-                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-brand-border ${
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-brand-text-secondary ${
                     selected ? 'bg-brand text-white' : ''
                   }`}
                 >
@@ -401,7 +401,7 @@ function GroupPickerBody(props: BodyProps) {
             onKeyDown={undefined}
             className={`flex h-8 items-center gap-2 rounded px-2 text-sm ${
               createState === 'disabled' || creating
-                ? 'cursor-not-allowed text-brand-muted'
+                ? 'cursor-not-allowed text-brand-muted' // disabled control: exempt from WCAG 1.4.3
                 : 'cursor-pointer text-brand-text'
             } ${createIdx === activeIdx ? 'bg-brand-surface-hover' : ''}`}
           >
@@ -424,7 +424,10 @@ function GroupPickerBody(props: BodyProps) {
           {t('groups.picker.noMatch', { query: normalizeGroupName(query) })}
         </p>
       )}
-      <p role="alert" className="mt-1 min-h-4 flex items-center gap-1 text-xs text-destructive">
+      <p
+        role="alert"
+        className="mt-1 min-h-4 flex items-center gap-1 text-xs text-destructive-text"
+      >
         {message && (
           <>
             <AlertCircle className="h-3 w-3" aria-hidden="true" />

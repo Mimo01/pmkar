@@ -161,12 +161,12 @@ export function GroupNameForm({
         placeholder={t('groups.name.label')}
         aria-invalid={form.message ? true : undefined}
         aria-describedby={errorId}
-        className="w-full rounded-md border border-brand-border bg-transparent px-2 py-1.5 text-sm text-brand-text outline-none focus:border-brand focus:ring-2 focus:ring-brand"
+        className="w-full rounded-md border border-brand-border bg-transparent px-2 py-1.5 text-sm text-brand-text outline-none focus:border-focus-ring focus:ring-2 focus:ring-focus-ring"
       />
       <p
         id={errorId}
         role="alert"
-        className="mt-1 min-h-4 flex items-center gap-1 text-xs text-destructive"
+        className="mt-1 min-h-4 flex items-center gap-1 text-xs text-destructive-text"
       >
         {form.message && (
           <>
