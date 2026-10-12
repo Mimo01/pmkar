@@ -1,153 +1,173 @@
 ---
 phase: 32-durability
-reviewed: 2026-10-12T20:05:00Z
+reviewed: 2026-10-12T20:40:00Z
 depth: standard
-files_reviewed: 34
+files_reviewed: 37
 files_reviewed_list:
   - src-tauri/src/groups_commands.rs
   - src-tauri/src/groups_db.rs
   - src-tauri/src/main.rs
-  - src/features/groups/__tests__/ConfirmRemovePopover.test.tsx
-  - src/features/groups/__tests__/groupI18n.test.ts
-  - src/features/groups/__tests__/GroupMenuItems.test.tsx
-  - src/features/groups/__tests__/groupStore.test.ts
-  - src/features/groups/__tests__/GroupTabStripOverlays.test.tsx
-  - src/features/groups/__tests__/GroupViewPage.test.tsx
-  - src/features/groups/__tests__/membershipActions.test.ts
-  - src/features/groups/__tests__/missingMembers.test.tsx
-  - src/features/groups/__tests__/RemoveMissingPopover.test.tsx
-  - src/features/groups/__tests__/useGroupMembers.test.tsx
   - src/features/groups/ConfirmRemovePopover.tsx
   - src/features/groups/GroupMenuItems.tsx
-  - src/features/groups/groupStore.ts
   - src/features/groups/GroupTabStrip.tsx
   - src/features/groups/GroupViewPage.tsx
+  - src/features/groups/RemoveMissingPopover.tsx
+  - src/features/groups/__tests__/ConfirmRemovePopover.test.tsx
+  - src/features/groups/__tests__/GroupMenuItems.test.tsx
+  - src/features/groups/__tests__/GroupTabStripOverlays.test.tsx
+  - src/features/groups/__tests__/GroupViewPage.test.tsx
+  - src/features/groups/__tests__/RemoveMissingPopover.test.tsx
+  - src/features/groups/__tests__/groupI18n.test.ts
+  - src/features/groups/__tests__/groupStore.test.ts
+  - src/features/groups/__tests__/membershipActions.test.ts
+  - src/features/groups/__tests__/missingMembers.test.tsx
+  - src/features/groups/__tests__/useGroupMembers.test.tsx
+  - src/features/groups/groupStore.ts
   - src/features/groups/membershipActions.ts
   - src/features/groups/missingMembers.ts
-  - src/features/groups/RemoveMissingPopover.tsx
+  - src/features/groups/types.ts
   - src/features/groups/useGroupMembers.ts
-  - src/features/tickets/__tests__/fetchSignature.test.ts
+  - src/features/tickets/TicketCard.tsx
+  - src/features/tickets/TicketListPage.test.tsx
+  - src/features/tickets/TicketListPage.tsx
   - src/features/tickets/__tests__/TicketCard.test.tsx
   - src/features/tickets/__tests__/TicketListPage.handleFetch.test.tsx
+  - src/features/tickets/__tests__/fetchSignature.test.ts
+  - src/features/tickets/__tests__/ticketListParity.test.tsx
   - src/features/tickets/__tests__/ticketStore.test.ts
   - src/features/tickets/__tests__/useHintsEligible.test.tsx
   - src/features/tickets/fetchSignature.ts
-  - src/features/tickets/TicketCard.tsx
-  - src/features/tickets/TicketListPage.tsx
   - src/features/tickets/ticketStore.ts
   - src/features/tickets/useHintsEligible.ts
   - src/i18n/locales/en.json
   - src/i18n/locales/sk.json
 findings:
-  critical: 1
-  warning: 5
-  info: 6
-  total: 12
+  critical: 0
+  warning: 6
+  info: 9
+  total: 15
 status: issues_found
 ---
 
-# Phase 32: Code Review Report (re-review after gap closure 32-08 / 32-09)
+# Phase 32: Code Review Report (re-review after gap closure 32-10 .. 32-13)
 
-**Reviewed:** 2026-10-12T20:05:00Z
+**Reviewed:** 2026-10-12T20:40:00Z
 **Depth:** standard
-**Files Reviewed:** 34
+**Files Reviewed:** 37
 **Status:** issues_found
 
 ## Summary
 
-This re-review covers the phase 32 sources and the gap-closure commits `b84d587` and `ba0589a` (32-08, CR-01) and `25cf844` (32-09, WR-01). Verification run: `tsc --noEmit` is clean, vitest passes 915/915 in `src/features/groups` and `src/features/tickets/__tests__`, and `cargo test --lib groups` passes 37/37.
+This re-review covers the phase 32 sources plus the 32-10..32-13 gap-closure commits: `cea115e`/`cdf2603` (add-path veto), `40e9ef9`/`0f32c50` (stale list clear and mid-flight discard), `63fc2b0` (confirm-state reset), and `9a312c1` (loading guard).
 
-**Prior CR-01 (snapshot refresh scope guard): RESOLVED for the refresh path.**
-- `handleFetch` captures `fetchSig` at fetch start. Both the custom path and the batch path call `refreshSnapshots` only when `isFetchStillCurrent()` is true (TicketListPage.tsx:148-151, 168-170, 293-295).
-- `refresh_group_snapshots_inner` vetoes the write when `normalize_scope(expected_base_url)` differs from the scope Rust derives (groups_commands.rs:161-164). The expected URL can only veto a write, never choose the scope. An empty or unparseable value yields `None` and is a no-op.
-- The Rust check also covers the window where the frontend store has switched to B while `set_connection_meta` is still in flight or has failed silently (SettingsPage `.catch(() => {})`).
-- The scope TOCTOU between `require_scope` and `lock_groups` is benign: the write still lands in the scope that equals the fetch source.
-- Tests cover: base URL switched mid-flight, username changed mid-flight, preset changed mid-flight, a scope mismatch, an empty expected URL, and case- and slash-insensitive matching.
+Verification run:
+- `tsc --noEmit` is clean.
+- `vitest run src/features/groups src/features/tickets` passes 1026/1026.
+- `cargo test --lib groups` passes 43/43.
 
-However, the same cross-scope corruption is still reachable through `add_issues_to_group` and the unguarded stale ticket list. See CR-01 below.
+### Status of prior findings
 
-**Prior WR-01 (single-card confirm-time recheck): RESOLVED.**
-- `removeMissingMember` returns `false` before any IPC unless `readMissingKeysNow(group.id).has(issueKey)` (membershipActions.ts:59).
-- `GroupViewPage` clears `pendingFocusRef` on `false` (GroupViewPage.tsx:126-127).
-- Tests cover three abort cases: the member came back, hints became ineligible, and the key is no longer a member.
+**CR-01 (cross-server scope via the add path and the stale ticket list): RESOLVED.** All three sub-paths are closed:
+1. *Stale list.* A module-level `useConnectionStore.subscribe` in `ticketStore.ts:202-208` calls `resetForServerSwitch()` on A -> B and A -> null. That clears `tickets`, `triageMap`, the selection, `lastCompleteFetchSignature` and `hasFetchedThisSession`. It correctly skips the startup null -> A hydration. Because the list is gone, group views can no longer prefer another server's live ticket (sub-path 3).
+2. *Mid-flight results.* `isSameServerAsFetch()` gates `setTickets` on both the custom and batch paths (`TicketListPage.tsx:179-182, 291-294`). There is no `await` between the check and `setTickets`, so the gate is atomic with respect to the subscription.
+3. *Add path.* `add_issues_to_group_inner` vetoes with the new `ScopeMismatch` code before the groups lock is taken (`groups_commands.rs:142-144`). An empty or unparseable expected URL fails closed. The error is wired through `types.ts`, `ERROR_CODES`, `membershipErrorKey`, and both locales.
 
-**Deferred items still open** (per 32-09-SUMMARY "Deferred Review Items"): WR-02, WR-03, WR-04, IN-01, IN-02, IN-03. They are re-listed below with the tag `[DEFERRED]` and their original IDs, so the fixer's `--auto` pass can skip them.
+Residual weaknesses are reported below as new findings, not as reopenings:
+- **WR-07:** a fetch orphaned by an unmounted `TicketListPage` can clobber the new server's state.
+- **WR-09:** the veto compares the *current* frontend connection, not the origin of the tickets, and its error copy is misleading when Rust and the frontend drift.
+
+**WR-05 (destructive confirm re-opens on its own): RESOLVED.** The new effect (`GroupViewPage.tsx:84-89`) clears `confirmKey` when its card leaves `missingVisible`, and clears `confirmAll` when the block empties.
+- I checked whether the block can empty transiently and close the popover under the user. `useGroupMembers` keeps the previous `result` across `snapshotRevision` reloads, and `loading` is true only before the first load. `useHintsEligible` ignores `fetchStatus`. So `missingVisible` does not flicker on polls.
+- The tab-strip variant is not re-mount based and cannot re-open on its own. It has a related cosmetic issue (IN-10).
+
+**WR-06 (confirm-time recheck during an in-flight fetch): RESOLVED as specified.** `readHintsEligibleNow()` returns `false` while `fetchStatus === 'loading'` (`useHintsEligible.ts:43-49`). All three removal paths go through `readMissingKeysNow`, so all of them abort. The guard cannot be defeated into the unsafe direction: every path that resets `fetchStatus` to non-loading early (discard, catch, all-failed) also calls `markFetchIncomplete()`.
+
+The fix does introduce a UX regression: during every fetch, removals silently do nothing (WR-08, which supersedes IN-06).
+
+**Deferred items still open:** WR-02, WR-03, WR-04, IN-01, IN-02, IN-03. IN-04 and IN-05 from the previous pass are also unchanged.
 
 ## Narrative Findings (AI reviewer)
 
-## Critical Issues
-
-### CR-01: Cross-server snapshot corruption is still possible via the add path and the stale ticket list (CR-01 only partially closed)
-
-**File:** `src/features/tickets/TicketListPage.tsx:161-167, 286-292`, `src/features/groups/groupStore.ts:183-187`, `src-tauri/src/groups_commands.rs:127-135`, `src-tauri/src/groups_db.rs:589-596`, `src/features/groups/useGroupMembers.ts:111`
-
-**Issue:** The 32-08 fix guards only `refresh_group_snapshots`. There are three other paths that still put one server's ticket data into another server's scope.
-
-1. **`store.setTickets(...)` is still unconditional after a mid-flight switch** (lines 161 and 286). If the user switches from server A to B while a fetch is in flight, A's tickets become the live ticket list while B is the active connection. Nothing clears them later: `setServerConnection` (connectionStore.ts:65) only sets the connection, and no effect refetches when the connection changes. The same stale list also exists without any race: switch servers in Settings, then return to the list, and A's tickets are still shown.
-
-2. **The add path has no scope veto, and it overwrites snapshots.** Selecting a stale A ticket and using "Add to group" calls `add_issues_to_group`. Rust resolves the scope as B, and `add_members` runs `INSERT ... ON CONFLICT(scope, issue_key) DO UPDATE SET ticket_json = excluded.ticket_json`. Issue keys are not unique across servers (the reason CR-01 was raised). If B already has `AB-1` in any group, A's `AB-1` JSON silently replaces B's snapshot in **every** B group that contains it. The bad snapshot persists until a later B fetch happens to return `AB-1`. This is the same persisted corruption CR-01 described, reached by a normal user action rather than a narrow race.
-
-3. **Group views show A's live tickets for B's members.** `useGroupMembers` prefers `live.get(key)` over the snapshot. While the stale list is loaded, B's group views render A's summary and status for any colliding key. (`missingKeys` stays empty here because the signature no longer matches, so this is display-only, but it is wrong data.)
-
-**Fix:**
-- Apply the same `isFetchStillCurrent()` gate to `setTickets` in both paths. On a mismatch, discard the result, call `markFetchIncomplete()`, and set the status back to idle.
-- When `serverConnection.baseUrl` changes, clear the stale list. For example, in the connection store or a `useConnectionStore.subscribe` in the ticket feature:
-  ```ts
-  useConnectionStore.subscribe((s, prev) => {
-    if (s.serverConnection?.baseUrl !== prev.serverConnection?.baseUrl) {
-      useTicketStore.setState({ tickets: [], lastCompleteFetchSignature: null, hasFetchedThisSession: false });
-    }
-  });
-  ```
-- Give `add_issues_to_group` the same veto as refresh. Pass `expectedBaseUrl` from `useConnectionStore.getState().serverConnection.baseUrl` (ideally the base URL the tickets were fetched from, stored alongside `tickets`). In Rust, return an error such as `GroupErrorCode::NoScope` (or a new `scope_mismatch`) instead of `Ok(0)`, because this is a user action and must fail loudly:
-  ```rust
-  let scope = require_scope(triage_db)?;
-  if normalize_scope(expected_base_url).as_deref() != Some(scope.as_str()) {
-      return Err(GroupError::new(GroupErrorCode::NoScope));
-  }
-  ```
-
 ## Warnings
 
-### WR-05: Stale `confirmKey` / `confirmAll` re-open the remove popover without the user asking
+### WR-07: A fetch orphaned by the Settings round-trip clobbers the new server's fetch state (catch path is unguarded, discard is unconditional)
 
-**File:** `src/features/groups/GroupViewPage.tsx:63-64, 104-106, 237-250`
+**File:** `src/features/tickets/TicketListPage.tsx:105, 129-130, 163-169, 378-381`
 
-**Issue:** `confirmKey` and `confirmAll` are reset only through `onOpenChange`. Here is how they go stale:
-1. The user opens the single-card "Remove" confirm.
-2. A background `poll-complete` triggers `handleFetch` (TicketListPage.tsx:396-399), and the ticket returns to the results.
-3. The card moves to `present`, `footerSlot` becomes `undefined`, and `ConfirmRemovePopover` unmounts without calling `onOpenChange(false)`.
-4. `confirmKey` still holds the key.
+**Issue:** Switching servers always happens in Settings, and `App.tsx:208` returns the Settings tree, which **unmounts `TicketListPage`**. `fetchInFlightRef` is per-instance, so the remounted page starts with `false`. A fetch for server B can therefore run concurrently with A's orphaned `handleFetch`, which keeps running. The 32-11 guards assume they are the only fetch, and they are not:
 
-The next time that key goes missing (a later fetch), the card renders with `open={confirmKey === ticket.key}` already `true`. The destructive confirm pops open by itself and its `onOpenAutoFocus` steals focus to Cancel.
+1. **The catch path has no server check.** A common reason to switch servers is that A is slow or down. When A's `invoke('fetch_tickets')` later rejects (timeout, network), the catch at lines 378-381 runs `markFetchIncomplete()` and `setFetchStatus('error', <A's error>)` against the shared store. B's view then shows an error banner for a server it is not using. If B's fetch has already completed, the banner persists, and B's valid `lastCompleteFetchSignature` is wiped, which hides the missing-member hints until the next fetch.
+2. **`discardStaleResult()` does not check who owns the status.** When A's orphan reaches line 179 or 291 after the switch, it sets `fetchStatus` to `'idle'` and clears the signature. If B is mid-fetch, its loader disappears while it is still running. If B has finished, B's complete signature is erased.
+3. The post-`setTickets` change-detection loop (lines 204-232 and 336-370) has no server check either; see IN-08.
 
-The same thing happens with `confirmAll` when the whole missing block unmounts (every missing member came back) and later reappears. The 32-09 recheck makes the eventual click safe, but the uninvited popover and focus theft are still a bug.
+None of these paths can write cross-scope data (Rust vetoes and the list gate hold). They do corrupt B's UI state and hint eligibility.
 
-**Fix:** Reset the state when its subject disappears:
+**Fix:** Make fetch ownership global rather than per-instance, and make every terminal write conditional on ownership. One way:
+
 ```ts
-useEffect(() => {
-  if (confirmKey !== null && !missingVisible.some((m) => m.key === confirmKey)) setConfirmKey(null);
-  if (confirmAll && missingVisible.length === 0) setConfirmAll(false);
-}, [missingVisible, confirmKey, confirmAll]);
+// ticketStore: bump on every fetch start and in resetForServerSwitch
+fetchGeneration: number;
+
+// handleFetch
+const gen = useTicketStore.getState().beginFetch(); // ++fetchGeneration, sets 'loading'
+const owns = () => useTicketStore.getState().fetchGeneration === gen;
+...
+if (!owns()) return;           // replaces discardStaleResult(): someone else owns the status now
+...
+} catch (err) {
+  if (!owns()) return;
+  useTicketStore.getState().markFetchIncomplete();
+  store.setFetchStatus('error', ...);
+}
 ```
+
+Also guard the change-detection loops with `if (!owns()) break;`. If you keep the current design, at least hoist `isSameServerAsFetch` above the `try`, and in `catch` call `if (!isSameServerAsFetch()) return;` before writing the error.
+
+### WR-08: During any fetch, every "Remove" confirm is a silent no-op, and the tab-menu bulk path reports nothing
+
+**File:** `src/features/tickets/useHintsEligible.ts:14-18, 43-49`, `src/features/groups/membershipActions.ts:66`, `src/features/groups/GroupViewPage.tsx:267-268`, `src/features/groups/RemoveMissingPopover.tsx:37-38`, `src/features/groups/ConfirmRemovePopover.tsx:43-45`
+
+**Issue:** By design, `useHintsEligible` ignores `fetchStatus`. The missing block, the per-card "Remove" buttons, and the tab-menu "Remove N missing" entry therefore stay visible and enabled during a fetch. `readHintsEligibleNow` now returns `false` during that same window, so every confirm path aborts:
+- `removeMissingMember` returns `false`.
+- The in-view bulk confirm returns `false`.
+- `RemoveMissingPopover` returns `undefined`.
+
+`ConfirmRemovePopover` ignores the result (WR-03) and closes. The user clicks a destructive "Remove", the popover closes, and nothing happens, with no feedback.
+
+`poll-complete` triggers `handleFetch` (`TicketListPage.tsx:424-426`). With a multi-user `all_watched` preset plus the per-ticket change-detection loop, the `'loading'` phase can be long and recurring, so this is not a rare race. This escalates prior IN-06 from Info.
+
+**Fix:** Choose one of these:
+- Disable the remove triggers while loading. Read `fetchStatus` in `GroupViewPage` and `GroupTabStrip`, and pass `disabled` to the "Remove" and "Remove all missing" buttons and to the menu item, with a tooltip such as "Refreshing results...". The hook's visibility stays as it is, so there is no flicker.
+- Keep the triggers enabled, but have the abort path report itself. Return a discriminated result (`'removed' | 'aborted' | 'failed'`), keep the popover open on `'aborted'`, and show `toast.info(t('groups.missing.busy'))`.
+
+Either way, `ConfirmRemovePopover` must stop treating every resolution as success (pairs with WR-03).
+
+### WR-09: The add veto checks the frontend's current server, not where the tickets came from, and its error is misleading on Rust/frontend drift
+
+**File:** `src/features/groups/groupStore.ts:188-189`, `src-tauri/src/groups_commands.rs:142-144`, `src/i18n/locales/en.json:611`, `src/i18n/locales/sk.json:611`
+
+**Issue:**
+1. `expectedBaseUrl` is `useConnectionStore.getState().serverConnection?.baseUrl` at the moment of the add, not the base URL the tickets were fetched from. The veto therefore detects "frontend and Rust disagree about the active server". It does not detect "these tickets belong to another server". The tickets-from-A case is only covered indirectly, by `resetForServerSwitch` clearing the list. Any future ticket source that outlives the reset will bypass the veto: a detail pane holding its own ticket object, a copied selection, or a group-view snapshot. The CR-01 fix suggested storing the origin with the tickets for this reason.
+2. The only way the current check can fire is drift: `set_connection_meta` is still in flight, or it failed. `SettingsPage.tsx:558-567` swallows that failure with `.catch(() => {})`, after `setServerConnection` has already switched the frontend. When persistence fails, **every** add fails permanently with "These tickets are from a different server than the one now connected. Fetch tickets again, then retry." Refetching does not help, because the frontend is already fetching from B. Meanwhile every refresh is silently vetoed (IN-05). The user has no way to recover short of re-saving the connection.
+
+**Fix:**
+- Record the source of each list. Add `ticketsBaseUrl` to `ticketStore`, set it in `setTickets` from `serverConn.baseUrl`, and clear it in `resetForServerSwitch`. Pass that value (or a per-ticket origin) as `expectedBaseUrl`.
+- In `SettingsPage`, surface `set_connection_meta` failures (toast, and roll back or retry) instead of swallowing them.
+- Change the copy to something that holds in both cases, for example "The connected server changed. Reopen the ticket list and try again." or "The connection is out of sync. Re-save the server connection in Settings."
 
 ### WR-02 [DEFERRED]: The bulk-remove confirm count differs from the visible heading, and the action can remove members the user never saw
 
-**File:** `src/features/groups/GroupViewPage.tsx:242, 247-250, 256-261`
+**File:** `src/features/groups/GroupViewPage.tsx:251, 257, 267-269`
 
-**Issue:** Still open. The heading uses `missingVisible.length`, which is filtered by search and assignee. The question uses `missingKeys.size`, and the action removes every key from `readMissingKeysNow`. That includes keys hidden by the filter, and keys whose snapshot is unreadable and so never render. With a filter active, the user can see 2 missing cards and still remove 5 members. When the search hides every missing card, the "Remove all missing" button is unreachable from the view, but the tab menu (RemoveMissingPopover) still removes all of them. Deferred as a product decision (32-09-SUMMARY).
+**Issue:** Unchanged. The heading uses `missingVisible.length`, which is filtered. The question uses `missingKeys.size`, and the action removes every key in `readMissingKeysNow`, including filtered or unrenderable ones.
 
-**Fix:** Either restrict the bulk action to `missingVisible` keys intersected with `readMissingKeysNow`, or make the copy state "including N hidden by filters".
+**Fix:** Restrict the action to the visible keys, or state the hidden count in the copy.
 
 ### WR-03 [DEFERRED]: ConfirmRemovePopover ignores the result of `onConfirm`, always closes, and leaks rejections
 
 **File:** `src/features/groups/ConfirmRemovePopover.tsx:39-50`, `src/features/groups/RemoveMissingPopover.tsx:35-40`
 
-**Issue:** Still open.
-- `await onConfirm()` discards the boolean, so the popover closes on failure and the user cannot retry in place.
-- There is no `catch`, so a rejection becomes an unhandled promise rejection from the click handler.
-- `RemoveMissingPopover` still returns `void`.
-- After 32-09, the WR-01 abort (`removeMissingMember` returns `false` because the member came back) also closes silently. That is acceptable for an abort, but it cannot be told apart from a failure.
+**Issue:** Unchanged. It is now more visible because of WR-08: aborts, failures and successes all close the popover the same way.
 
 **Fix:**
 ```ts
@@ -158,57 +178,68 @@ try {
   console.warn('[groups] confirm failed', err);
 } finally { inFlightRef.current = false; setBusy(false); }
 ```
-Also make `RemoveMissingPopover` return the boolean from `removeAllMissingWithFeedback`.
 
 ### WR-04 [DEFERRED]: One invalid ticket aborts the whole snapshot refresh, indefinitely
 
-**File:** `src-tauri/src/groups_db.rs:629-638`, `src/features/groups/groupStore.ts:149-163`
+**File:** `src-tauri/src/groups_db.rs` (`refresh_snapshots` validation loop), `src/features/groups/groupStore.ts:150-165`
 
-**Issue:** Still open. `refresh_snapshots` fails the entire batch with `InvalidIssueKey` or `InvalidTicket` if any one item is malformed. The frontend only calls `console.warn`. A single bad issue therefore turns off offline snapshot freshness for every member on every fetch.
+**Issue:** Unchanged. `add_members` (lines 578-586) has the same all-or-nothing validation, which is acceptable for a user action. For the best-effort refresh, one bad item turns off freshness for every member.
 
-**Fix:** For this best-effort command, skip invalid items in Rust (`continue`) instead of returning `Err`, or pre-filter them in `refreshSnapshots`.
-
-### WR-06: The confirm-time recheck treats the pre-fetch list as authoritative while a fetch is in flight
-
-**File:** `src/features/groups/missingMembers.ts:44-48`, `src/features/tickets/useHintsEligible.ts:36-43`, `src/features/tickets/TicketListPage.tsx:132-133`
-
-**Issue:** `handleFetch` sets `fetchStatus = 'loading'` but leaves `lastCompleteFetchSignature` as it was. During the whole fetch, including a silent background refetch triggered by `poll-complete`, `readHintsEligibleNow()` stays `true` and `readMissingKeysNow` compares against the previous ticket list.
-
-The T-32-23 guarantee ("a member that came back is never removed") therefore only holds against already-applied results. A confirm that lands while the fetch which would bring the member back is still running goes ahead and removes it. Both the single path (fixed in 32-09) and the bulk paths have this gap.
-
-**Fix:** Either treat hints as ineligible while a fetch is running, or abort removals then:
-```ts
-export function readHintsEligibleNow(): boolean {
-  const s = useTicketStore.getState();
-  if (s.fetchStatus === 'loading' || s.lastCompleteFetchSignature === null) return false;
-  ...
-}
-```
-If the hook version is changed the same way, the missing UI hides during loading. That may be preferable to offering removals while the data is in flux.
+**Fix:** Skip invalid items in `refresh_snapshots` instead of returning `Err`.
 
 ## Info
 
-### IN-04: Over-broad CR-01 gate drops valid refreshes on non-scope changes
+### IN-07: A username-only switch keeps the previous account's ticket list live
 
-**File:** `src/features/tickets/TicketListPage.tsx:148-151`
+**File:** `src/features/tickets/ticketStore.ts:202-208`, `src/features/tickets/TicketListPage.tsx:157-162`
 
-**Issue:** `isFetchStillCurrent` compares the full signature (preset, custom JQL, project key, watched users). Editing the watched-users list mid-fetch skips the snapshot refresh even though the data comes from the correct server. This is safe, but it is broader than the CR-01 intent. Refresh is best-effort, so this is acceptable. Add a comment so a future change does not "fix" it by gating on `baseUrl` alone without the Rust veto.
+**Issue:** The subscription resets only when `baseUrl` changes. `isSameServerAsFetch` also compares `username`. After re-saving the same server with another account, an in-flight fetch is discarded (it is treated as stale), but the already-loaded list from the old account stays visible and addable. The scope is per base URL, so this is not cross-scope corruption. It does show data under the wrong identity, and the two guards disagree on what "same server" means.
 
-**Fix:** Document the trade-off, or gate refresh on `baseUrl` and `username` equality only.
+**Fix:** Also reset on a `username` change, or drop `username` from `isSameServerAsFetch`. Either way, document the chosen identity.
 
-### IN-05: The scope-mismatch veto is indistinguishable from "nothing changed"
+### IN-08: The orphaned change-detection loop keeps writing the old server's unseen markers after a switch
 
-**File:** `src-tauri/src/groups_commands.rs:162-164`
+**File:** `src/features/tickets/TicketListPage.tsx:204-232, 336-370`, `src/features/tickets/ticketStore.ts:132-142`
 
-**Issue:** A mismatch returns `Ok(0)`, the same value as a refresh with no changed rows. If the frontend and Rust base URLs drift permanently (for example, `set_connection_meta` failed and is swallowed in SettingsPage), every refresh is vetoed silently forever, with no log line. There is also a needless clone: `Some(scope.clone())`.
+**Issue:** If the switch happens after `setTickets` but during the long per-ticket detail loop, A's loop keeps running. It calls `fetch_ticket_detail` against A and `check_ticket_changes`, whose snapshot DB is unscoped, and it calls `store.setUnseenChange(<A key>)`. `resetForServerSwitch` deliberately keeps `unseenChanges`, so a colliding key on B shows a change dot that belongs to A. The snapshot DB being unscoped is pre-existing. The in-memory leak is new relative to the CR-01 intent.
 
-**Fix:** Write `normalize_scope(expected_base_url).as_deref() != Some(scope.as_str())`, and emit a `log::debug!` or `eprintln!` on veto. Alternatively, return a distinct code that the frontend `console.warn`s.
+**Fix:** Inside the loops, `if (!isSameServerAsFetch()) break;` (or use the generation check from WR-07).
+
+### IN-09: Create-then-add in GroupPicker leaves an empty group behind on `scope_mismatch`
+
+**File:** `src/features/groups/groupStore.ts:180-191` (contract), caller `GroupPicker.tsx:233-266`
+
+**Issue:** `create_group` has no expected-scope check, so in the drift window the group is created in Rust's scope and the following add fails with `scope_mismatch`. "The group is kept even when the add fails" is documented, but in this case the new group may be in a scope the user is not looking at.
+
+**Fix:** Pass `expectedBaseUrl` to `create_group` too, or run the scope check before the create.
+
+### IN-10: The tab-anchored remove-missing confirm can sit open asking to "Remove 0 issues"
+
+**File:** `src/features/groups/RemoveMissingPopover.tsx:25, 34`, `src/features/groups/GroupTabStrip.tsx:407-409`
+
+**Issue:** This is the tab-strip counterpart of WR-05. The popover stays open while `count` is recomputed live. If every member returns (or hints turn ineligible) while it is open, the question reads "Remove 0 issues from 'X'?", and confirming silently does nothing.
+
+**Fix:** Close it (clear `pending`) when `missingByGroup.get(group.id)` becomes empty, mirroring the `GroupViewPage` effect.
+
+### IN-04: The over-broad refresh gate drops valid refreshes on non-scope changes
+
+**File:** `src/features/tickets/TicketListPage.tsx:148-151, 190, 320`
+
+**Issue:** Unchanged. The new comment at lines 153-156 explains the list gate, but not why refresh still uses the full signature.
+
+**Fix:** Add a one-line comment, or gate refresh on server identity only.
+
+### IN-05: The refresh scope veto is indistinguishable from "nothing changed"
+
+**File:** `src-tauri/src/groups_commands.rs:173-175`
+
+**Issue:** Unchanged. `Ok(0)` with no log, plus a needless `Some(scope.clone())`. The add path (line 142) already uses the clone-free `as_deref()` form, so the two vetoes are now inconsistent. This silent veto is what turns the WR-09 drift into permanent, invisible staleness.
+
+**Fix:** Use `normalize_scope(expected_base_url).as_deref() != Some(scope.as_str())` and log the veto.
 
 ### IN-01 [DEFERRED]: Remove-all leaves focus on an element that has been removed
 
-**File:** `src/features/groups/GroupViewPage.tsx:252-261`
-
-**Issue:** Still open. After a successful bulk removal, the missing block and `removeAllRef` unmount, so focus falls back to `body`.
+**File:** `src/features/groups/GroupViewPage.tsx:265-270`
 
 **Fix:** On success, focus `listRef.current` or the select toggle.
 
@@ -216,24 +247,16 @@ If the hook version is changed the same way, the missing UI hides during loading
 
 **File:** `src/features/groups/ConfirmRemovePopover.tsx:11`
 
-**Fix:** Type it as `Promise<boolean | void>` (pairs with WR-03).
+**Fix:** Type it as `Promise<boolean | void>` (pairs with WR-03 and WR-08).
 
 ### IN-03 [DEFERRED]: Redundant `_few` / `_many` plural keys in `en`
 
-**File:** `src/i18n/locales/en.json:594-598, 603-607`
+**File:** `src/i18n/locales/en.json`
 
 **Fix:** Keep only `_one` and `_other` for `en`, if `groupI18n.test.ts` parity rules allow it.
 
-### IN-06: An aborted single removal gives no feedback
-
-**File:** `src/features/groups/membershipActions.ts:59`
-
-**Issue:** When the 32-09 recheck aborts (hints became ineligible, or the member came back), the popover closes with no message. The "came back" case is self-explanatory because the card leaves the missing block. The "hints ineligible" case (for example, filters changed in another view) looks like a click that did nothing.
-
-**Fix:** Optional. Show a `toast.info` such as "Results changed; nothing was removed" when aborting while the key is still a member.
-
 ---
 
-_Reviewed: 2026-10-12T20:05:00Z_
+_Reviewed: 2026-10-12T20:40:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
