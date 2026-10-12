@@ -29,6 +29,28 @@ export function AppShell({
     { id: 'linked', label: t('nav.linked') },
   ];
 
+  // Arrow keys are a focus accelerator only: every tab stays in the Tab order
+  // (Phase 29 lock) and activation remains Enter/Space/click.
+  function handleNavKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const target = e.target as HTMLElement;
+    if (!target.hasAttribute('data-nav-tab')) return;
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[data-nav-tab]'));
+    const current = items.indexOf(target);
+    if (current < 0) return;
+    let next = current;
+    if (e.key === 'ArrowLeft') next = current - 1;
+    else if (e.key === 'ArrowRight') next = current + 1;
+    else if (e.key === 'Home') next = 0;
+    else next = items.length - 1;
+    next = Math.max(0, Math.min(items.length - 1, next));
+    e.preventDefault();
+    if (next === current) return;
+    items[next].focus();
+    items[next].scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
+  }
+
   return (
     <div className="h-screen bg-brand-bg text-brand-text flex flex-col overflow-hidden">
       <header className="relative flex items-center justify-between px-5 py-2.5 bg-brand-surface border-b border-brand-border">
@@ -79,11 +101,13 @@ export function AppShell({
         <nav
           className="flex items-stretch px-4 bg-brand-surface border-b border-brand-border"
           aria-label={t('nav.mainAria')}
+          onKeyDown={handleNavKeyDown}
         >
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
               data-tab-id={tab.id}
+              data-nav-tab=""
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={`shrink-0 text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
