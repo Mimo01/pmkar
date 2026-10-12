@@ -225,7 +225,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A group with missing members offers "Remove all missing", which asks for confirmation before removing
   5. Snapshots refresh after each successful fetch and are cleaned up once no group references the issue
 
-**Plans:** 7/7 plans complete
+**Plans:** 7/9 plans complete (2 gap-closure plans pending)
 **Wave 1**
 
 - [x] 32-01-PLAN.md — Rust UPDATE-only refresh_snapshots + refresh_group_snapshots command; GC regression tests (GDUR-01, GDUR-06)
@@ -241,6 +241,11 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 - [x] 32-05-PLAN.md — handleFetch completeness gating + fire-and-forget snapshot refresh (GDUR-01, GDUR-04, GDUR-06)
 - [x] 32-06-PLAN.md — TicketCard dimmed/footer slot; GroupViewPage missing block, per-card Remove, Remove all missing (GDUR-01..03, GDUR-05)
 - [x] 32-07-PLAN.md — Group menu "Remove all missing (N)" with tab-anchored confirm (GDUR-05)
+
+**Gap closure** *(parallel, wave 1)*
+
+- [ ] 32-08-PLAN.md — CR-01: gate snapshot refresh on unchanged fetch signature + Rust expected-scope check (GDUR-06)
+- [ ] 32-09-PLAN.md — WR-01: single-card Remove rechecks still-missing at confirm (GDUR-05)
 **Research flag**: Check whether default JQL presets include done issues and pin down exact gating rules
 
 ### Phase 33: Polish & Verification
