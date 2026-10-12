@@ -281,4 +281,49 @@ describe('ticketStore', () => {
       expect(useTicketStore.getState().watchedUsers).toEqual([]);
     });
   });
+
+  describe('lastCompleteFetchSignature (GDUR-04)', () => {
+    beforeEach(() => {
+      useTicketStore.setState({ lastCompleteFetchSignature: null, truncated: false });
+    });
+
+    it('starts null', () => {
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+    });
+
+    it('is set when setTickets receives a signature', () => {
+      useTicketStore.getState().setTickets([], {}, 0, false, 'sig-a');
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe('sig-a');
+    });
+
+    it('is null for legacy 4-arg setTickets calls', () => {
+      useTicketStore.getState().setTickets([], {}, 0, false, 'sig-a');
+      useTicketStore.getState().setTickets([], {}, 0);
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+    });
+
+    it('markFetchIncomplete clears it without touching tickets', () => {
+      const t = makeTicket('A-1');
+      useTicketStore.getState().setTickets([t], {}, 1, true, 'sig-a');
+      useTicketStore.getState().markFetchIncomplete();
+      const s = useTicketStore.getState();
+      expect(s.lastCompleteFetchSignature).toBeNull();
+      expect(s.tickets).toEqual([t]);
+      expect(s.truncated).toBe(true);
+      expect(s.fetchStatus).toBe('idle');
+    });
+
+    it('config setters and hydrate do not change it', () => {
+      useTicketStore.getState().setTickets([], {}, 0, false, 'sig-a');
+      useTicketStore.getState().setJqlPreset('custom');
+      useTicketStore.getState().setJqlCustom('project = X');
+      useTicketStore.getState().hydrateFetchConfig({
+        jqlPreset: 'mine',
+        jqlCustom: null,
+        watchedUsers: [],
+        lastFetchedAt: null,
+      } as FetchConfig);
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe('sig-a');
+    });
+  });
 });
