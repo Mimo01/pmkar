@@ -37,3 +37,18 @@ describe('group validation vs shared vectors', () => {
     expect(RESERVED_NAME_KEYS.has('nove')).toBe(true);
   });
 });
+
+describe('rename (self excluded)', () => {
+  it('allows a case-only change of own name', () => {
+    expect(validateGroupName('sprint', ['QA']).ok).toBe(true);
+  });
+  it('allows a diacritic-only change of own name', () => {
+    expect(validateGroupName('Spríńt', ['QA']).ok).toBe(true);
+  });
+  it('still rejects other duplicates', () => {
+    expect(validateGroupName('qa', ['QA'])).toEqual({ ok: false, code: 'duplicate' });
+  });
+  it('still rejects reserved names', () => {
+    expect(validateGroupName('New', [])).toEqual({ ok: false, code: 'reserved' });
+  });
+});

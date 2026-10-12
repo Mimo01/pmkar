@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { computeOverflow, groupTabId, parseGroupTabId, resolveActiveTab } from '../groupTabs';
+import {
+  computeOverflow,
+  focusCoreTab,
+  groupTabId,
+  parseGroupTabId,
+  resolveActiveTab,
+} from '../groupTabs';
+
+describe('focusCoreTab', () => {
+  it('focuses the element with matching data-tab-id', () => {
+    const btn = document.createElement('button');
+    btn.setAttribute('data-tab-id', 'new');
+    document.body.appendChild(btn);
+    expect(focusCoreTab('new')).toBe(true);
+    expect(document.activeElement).toBe(btn);
+    btn.remove();
+  });
+  it('returns false when absent', () => {
+    expect(focusCoreTab('linked')).toBe(false);
+  });
+});
 
 describe('group tab ids', () => {
   it('round-trips', () => {

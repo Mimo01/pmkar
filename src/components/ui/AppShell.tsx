@@ -83,6 +83,7 @@ export function AppShell({
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
+              data-tab-id={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
               className={`shrink-0 text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
