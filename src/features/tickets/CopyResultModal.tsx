@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConnectionStore } from '../connections/connectionStore';
+import { copyStepLabel } from './copyStepLabel';
 import { useCopyStore } from './copyStore';
 import { useTicketStore } from './ticketStore';
-import type { CopyStepResult } from './types';
 
 export function CopyResultModal() {
   const { t } = useTranslation();
@@ -22,48 +22,6 @@ export function CopyResultModal() {
 
   const allPassed = result?.steps.every((s) => s.success) ?? false;
   const issueCreated = result?.steps.some((s) => s.step === 'create_issue' && s.success) ?? false;
-
-  function stepLabel(step: CopyStepResult): string {
-    if (step.step === 'create_issue') {
-      return step.success ? t('copy.step.coreFields') : t('copy.step.coreFieldsFailed');
-    }
-    if (step.step === 'convert_description') {
-      return step.success ? t('copy.step.descConverted') : t('copy.step.descFailed');
-    }
-    if (step.step.startsWith('upload_image')) {
-      return step.success
-        ? `${t('copy.step.imagesUploaded')}${step.detail ? ` (${step.detail})` : ''}`
-        : t('copy.step.imagesFailed');
-    }
-    if (step.step === 'add_remote_link') {
-      return step.success ? t('copy.step.remoteLinkAdded') : t('copy.step.remoteLinkFailed');
-    }
-    if (step.step.startsWith('attach:')) {
-      const filename = step.step.slice('attach:'.length);
-      return step.success
-        ? t('copy.step.attached', { filename })
-        : t('copy.step.attachFailed', { filename, detail: step.detail || 'attachment failed' });
-    }
-    if (step.step.startsWith('comment:')) {
-      const n = step.step.slice('comment:'.length);
-      return step.success
-        ? t('copy.step.commentCopied', { n })
-        : t('copy.step.commentFailed', { n, detail: step.detail || 'failed' });
-    }
-    if (step.step.startsWith('worklog:')) {
-      const n = step.step.slice('worklog:'.length);
-      return step.success
-        ? t('copy.step.worklogCopied', { n })
-        : t('copy.step.worklogFailed', { n, detail: step.detail || 'failed' });
-    }
-    if (step.step.startsWith('subtask:')) {
-      const key = step.step.slice('subtask:'.length);
-      return step.success
-        ? t('copy.step.subtaskCreated', { key, detail: step.detail || 'created' })
-        : t('copy.step.subtaskFailed', { key, detail: step.detail || 'creation failed' });
-    }
-    return step.step;
-  }
 
   const handleOpenInJira = () => {
     if (result?.targetUrl) {
@@ -110,7 +68,7 @@ export function CopyResultModal() {
                       <X className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
                     )}
                     <div>
-                      <span className="text-sm text-brand-text">{stepLabel(step)}</span>
+                      <span className="text-sm text-brand-text">{copyStepLabel(step, t)}</span>
                       {step.detail && !step.success && (
                         <p className="text-xs text-brand-muted mt-0.5">{step.detail}</p>
                       )}
@@ -122,7 +80,9 @@ export function CopyResultModal() {
 
             {/* Target key display */}
             {result.targetKey && (
-              <p className="text-xs text-brand-muted">Created: {result.targetKey}</p>
+              <p className="text-xs text-brand-muted">
+                {t('copy.result.created', { key: result.targetKey })}
+              </p>
             )}
           </>
         )}

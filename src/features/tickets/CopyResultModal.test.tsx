@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from '../../i18n';
 import { CopyResultModal } from './CopyResultModal';
 
 const mockReset = vi.fn();
@@ -27,7 +28,7 @@ const allSuccessResult = {
   steps: [
     { step: 'create_issue', success: true, detail: 'MYCO-42' },
     { step: 'convert_description', success: true, detail: null },
-    { step: 'add_remote_link', success: true, detail: null },
+    { step: 'add_remotelink', success: true, detail: null },
   ],
 };
 
@@ -88,7 +89,7 @@ describe('CopyResultModal', () => {
         ...allSuccessResult,
         steps: [
           { step: 'create_issue', success: true, detail: 'MYCO-42' },
-          { step: 'add_remote_link', success: false, detail: 'Could not add link' },
+          { step: 'add_remotelink', success: false, detail: 'Could not add link' },
         ],
       },
     });
@@ -212,6 +213,38 @@ describe('CopyResultModal', () => {
     render(<CopyResultModal />);
     expect(screen.getByText(/Sub-task CUST-102/)).toBeInTheDocument();
     expect(screen.getAllByText(/400/).length).toBeGreaterThan(0);
+  });
+
+  describe('translated step labels (CONI-01)', () => {
+    const steps = [
+      { step: 'fetch_source', success: true, detail: null },
+      { step: 'add_remotelink', success: true, detail: null },
+      { step: 'worklog:fetch', success: true, detail: null },
+      { step: 'update_triage', success: true, detail: null },
+    ];
+
+    afterEach(async () => {
+      await i18n.changeLanguage('en');
+    });
+
+    it('renders EN labels and translated Created line', () => {
+      mockStoreState({ result: { ...allSuccessResult, targetKey: 'CLOUD-9', steps } });
+      render(<CopyResultModal />);
+      expect(screen.getByText('Source ticket loaded')).toBeInTheDocument();
+      expect(screen.getByText('Origin link added')).toBeInTheDocument();
+      expect(screen.getByText('Work log loaded')).toBeInTheDocument();
+      expect(screen.getByText('Triage state updated')).toBeInTheDocument();
+      expect(screen.getByText('Created: CLOUD-9')).toBeInTheDocument();
+    });
+
+    it('renders SK labels and never the raw step id', async () => {
+      await i18n.changeLanguage('sk');
+      mockStoreState({ result: { ...allSuccessResult, targetKey: 'CLOUD-9', steps } });
+      render(<CopyResultModal />);
+      expect(screen.getByText('Vytvorené: CLOUD-9')).toBeInTheDocument();
+      expect(screen.queryByText('worklog:fetch')).not.toBeInTheDocument();
+      expect(screen.queryByText('fetch_source')).not.toBeInTheDocument();
+    });
   });
 
   it('shows partial failure title when attachment fails but create_issue succeeds (COPY-02)', () => {
