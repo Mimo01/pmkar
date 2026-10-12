@@ -12,6 +12,7 @@ import { GroupTab } from './GroupTab';
 import { canMove, type DeleteFocusTarget, deleteFocusTarget, positionOf } from './groupMoves';
 import { useGroupStore } from './groupStore';
 import {
+  type CoreTab,
   computeOverflow,
   focusCoreTab,
   groupTabId,
@@ -58,6 +59,8 @@ export function GroupTabStrip({
   const fetching = useRemovalBlockedByFetch();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  const leftArrowRef = useRef<HTMLButtonElement | null>(null);
+  const rightArrowRef = useRef<HTMLButtonElement | null>(null);
   const [overflow, setOverflow] = useState({ canScrollLeft: false, canScrollRight: false });
   const wrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const moreRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -92,6 +95,16 @@ export function GroupTabStrip({
       clientWidth: el.clientWidth,
       scrollWidth: el.scrollWidth,
     });
+    const focused = document.activeElement;
+    if (
+      focused !== null &&
+      ((focused === leftArrowRef.current && !next.canScrollLeft) ||
+        (focused === rightArrowRef.current && !next.canScrollRight))
+    ) {
+      const id = parseGroupTabId(activeTab);
+      if (id !== null) tabRefs.current.get(id)?.focus();
+      else focusCoreTab(activeTab as CoreTab);
+    }
     setOverflow((prev) =>
       prev.canScrollLeft === next.canScrollLeft && prev.canScrollRight === next.canScrollRight
         ? prev
@@ -273,7 +286,9 @@ export function GroupTabStrip({
 
   function scrollByDir(dir: -1 | 1) {
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
-    scrollerRef.current?.scrollBy?.({ left: dir * 200, behavior: reduced ? 'auto' : 'smooth' });
+    const el = scrollerRef.current;
+    const step = el?.clientWidth ? Math.round(el.clientWidth * 0.8) : 200;
+    el?.scrollBy?.({ left: dir * step, behavior: reduced ? 'auto' : 'smooth' });
   }
 
   function handleCreated(id: number) {
@@ -353,6 +368,7 @@ export function GroupTabStrip({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      ref={leftArrowRef}
                       aria-label={t('groups.scrollLeft')}
                       onClick={() => scrollByDir(-1)}
                       className={ARROW_CLASS}
@@ -373,6 +389,7 @@ export function GroupTabStrip({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      ref={rightArrowRef}
                       aria-label={t('groups.scrollRight')}
                       onClick={() => scrollByDir(1)}
                       className={ARROW_CLASS}
