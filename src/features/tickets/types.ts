@@ -176,7 +176,9 @@ export interface FetchTicketsResult {
 export type CopyPhase = 'idle' | 'loading_preview' | 'previewing' | 'copying' | 'result';
 
 export interface CopyStepResult {
-  step: string; // "create_issue" | "convert_description" | "upload_images" | "add_remote_link"
+  // "fetch_source" | "create_issue" | "add_remotelink" | "attach:{filename}" | "comment:{n}"
+  // | "worklog:fetch" | "worklog:{n}" | "subtask:{key}" | "update_triage"
+  step: string;
   success: boolean;
   detail: string | null; // error message or created key
 }
