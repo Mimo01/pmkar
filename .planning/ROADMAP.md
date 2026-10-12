@@ -267,14 +267,14 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
   4. With about 25 groups the tab bar and cards remain usable and uncluttered
 
-**Plans:** 10 plans
+**Plans:** 3/10 plans executed
 **UI hint**: yes
 
 **Wave 1**
 
-- [ ] 33-01-PLAN.md — Normalise EN/SK groups.* copy (quotes, _many, SK audit) with locale guard tests
-- [ ] 33-02-PLAN.md — Shared contrast helpers, D-04 token tests in both themes, focus-ring/destructive-text tokens
-- [ ] 33-03-PLAN.md — Mock-server scenarios (drop, partial_fail, truncated, mutate) with Rust tests
+- [x] 33-01-PLAN.md — Normalise EN/SK groups.* copy (quotes, _many, SK audit) with locale guard tests
+- [x] 33-02-PLAN.md — Shared contrast helpers, D-04 token tests in both themes, focus-ring/destructive-text tokens
+- [x] 33-03-PLAN.md — Mock-server scenarios (drop, partial_fail, truncated, mutate) with Rust tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -336,4 +336,4 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
-| 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
+| 33. Polish & Verification | v0.5.0 | 3/10 | In Progress|  |
