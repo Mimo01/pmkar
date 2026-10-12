@@ -76,7 +76,7 @@ describe('Phase 30 copy', () => {
     for (const lng of ['en', 'sk']) {
       await i18n.changeLanguage(lng);
       for (const token of GROUP_COLOR_TOKENS) {
-        expect(i18n.exists('groups.color.' + token)).toBe(true);
+        expect(i18n.exists(`groups.color.${token}`)).toBe(true);
       }
     }
   });
