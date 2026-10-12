@@ -20,6 +20,7 @@ interface AllowedValueItem {
   value: string;
 }
 
+const EMPTY_ISSUE_TYPES: IssueTypeRef[] = [];
 export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetProps) {
   const { t } = useTranslation();
   const schema = field.schema;
@@ -28,9 +29,11 @@ export function StaticValueWidget({ field, value, onChange }: StaticValueWidgetP
   // ── Priority — stores {id, name} JSON; populated from schemaCacheStore.prewarmedPriorities (M43) ──
   // All hooks must be called unconditionally (Rules of Hooks).
   const targetProjectKey = useConnectionStore((s) => s.targetProjectKey);
-  const issueTypes = useSchemaCacheStore(
-    (s) => s.prewarmedIssueTypes[targetProjectKey ?? ''] ?? [],
-  ) as IssueTypeRef[];
+  // null fallback (not []) keeps the selector result referentially stable.
+  const prewarmedIssueTypes = useSchemaCacheStore(
+    (s) => (s.prewarmedIssueTypes[targetProjectKey ?? ''] as IssueTypeRef[] | undefined) ?? null,
+  );
+  const issueTypes = prewarmedIssueTypes ?? EMPTY_ISSUE_TYPES;
   // prewarmedPriorities: eagerly fetched by FieldMappingSection on mount via fetchPriorities().
   // Use null fallback (not []) to distinguish "not yet loaded" from "loaded but empty".
   const prewarmedPriorities = useSchemaCacheStore((s) => s.prewarmedPriorities);
