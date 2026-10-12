@@ -219,7 +219,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | v0.4.8 | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
-| 28. Foundations | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
+| 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |

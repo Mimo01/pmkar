@@ -48,7 +48,7 @@
 
 ### Copy i18n (CONI)
 
-- [ ] **CONI-01**: All copy-step labels in CopyResultModal / CopyResultPage are translated in EN and SK (Rust step ids matched correctly, including `add_remotelink`, `fetch_source`, `update_triage`, `worklog:fetch`), via one shared helper, with a test that every emitted step has a key
+- [x] **CONI-01**: All copy-step labels in CopyResultModal / CopyResultPage are translated in EN and SK (Rust step ids matched correctly, including `add_remotelink`, `fetch_source`, `update_triage`, `worklog:fetch`), via one shared helper, with a test that every emitted step has a key
 
 ### Quality (GQA)
 
@@ -108,7 +108,7 @@
 | GDUR-04 | Phase 32 | Pending |
 | GDUR-05 | Phase 32 | Pending |
 | GDUR-06 | Phase 32 | Pending |
-| CONI-01 | Phase 28 | Pending |
+| CONI-01 | Phase 28 | Complete |
 | GQA-01 | Phase 33 | Pending |
 | GQA-02 | Phase 33 | Pending |
 
