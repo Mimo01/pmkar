@@ -102,6 +102,32 @@ describe('TicketCard', () => {
   it('has no checkbox when select mode is off', () => {
     setup();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Card summary' })).not.toHaveAttribute(
+      'aria-pressed',
+    );
+  });
+
+  it('select mode: primary button exposes selected state via aria-pressed', () => {
+    const { rerender } = setup({ selectMode: true, selected: false, onToggleSelect: vi.fn() });
+    expect(screen.getByRole('button', { name: 'Card summary' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    rerender(
+      <NavigationContext.Provider value={{ navigateToGroup: vi.fn() }}>
+        <TicketCard
+          ticket={ticket}
+          onClick={vi.fn()}
+          selectMode
+          selected
+          onToggleSelect={vi.fn()}
+        />
+      </NavigationContext.Provider>,
+    );
+    expect(screen.getByRole('button', { name: 'Card summary' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 
   it('select mode: body and checkbox toggle without opening detail', async () => {

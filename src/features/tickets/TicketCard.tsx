@@ -50,6 +50,9 @@ export function TicketCard({
       <button
         type="button"
         aria-label={ticket.fields.summary}
+        // In select mode this button toggles selection (and stays focusable for
+        // Shift+Space range select), so expose the selected state to AT
+        aria-pressed={selectMode ? !!selected : undefined}
         onClick={(e) => {
           if (selectMode && onToggleSelect) {
             onToggleSelect(e.shiftKey);
