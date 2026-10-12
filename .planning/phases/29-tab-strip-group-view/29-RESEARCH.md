@@ -366,15 +366,19 @@ Seed `useGroupStore.setState({groups:[...], memberKeysByGroup:{1:['T-1']}, hydra
 | A4 | `TicketCard` ignores `triageEntry` and does not render TriageIndicator itself | Pattern 4 | The red dot may need to be placed by the group view; confirm by reading `TicketListPage`/`TriageIndicator` usage |
 | A5 | Fixing Phase 28 WR-01..WR-04 inside Phase 29 is wanted | Pitfall 2 | Scope/time; needs user confirmation |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Fix Phase 28 review warnings WR-01..04 in this phase?**
    - Known: memory and STATE say they should be fixed "before or during Phase 29". WR-01/02 directly affect tab stability.
    - Recommendation: add one early plan fixing WR-01, WR-02 (store) and WR-03/04 (validation both sides, shared vectors). If user declines, at least gate the active-tab fallback on `hydrated` and tolerate `groups: []` blips.
+   - RESOLVED: User chose to fix WR-01..04 in Phase 29 (plan 29-01).
 2. **Where does the TriageIndicator (red dot / copied key) render for cards?**
    - `TicketCard` ignores `triageEntry`; check `TicketListPage.tsx` and `TriageIndicator.tsx` for how the New tab shows its red dot (likely via `actionSlot`). The group view must reproduce whatever the New tab passes for New-state cards.
+   - RESOLVED: TriageIndicator is unused in production; group view does not reproduce a red dot (pill + actionSlot only).
 3. **Pill wording:** CONTEXT says "Not mine"/"Linked", locale says "Dismissed"/"Already Linked". Recommendation: reuse `nav.*` (matches D-12 "carries the core tab's name" and UI-SPEC "reuse nav.* values"). Mention to user at review time.
+   - RESOLVED: User chose to reuse `nav.*` labels; only `groups.badge.done` is new.
 4. **Unparseable snapshot with no live ticket:** skip silently (documented exception to D-14) vs render a stub card. Recommendation: skip and `console.warn`; extremely unlikely since Rust validates `ticket_json` on add.
+   - RESOLVED: Skip and `console.warn` (plan 29-05).
 
 ## Environment Availability
 

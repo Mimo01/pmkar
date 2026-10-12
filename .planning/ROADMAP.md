@@ -116,9 +116,9 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 **Requirements**: GRP-01, GVIEW-01, GVIEW-02, GVIEW-03, GVIEW-04, GVIEW-05, GVIEW-06
 **Success Criteria** (what must be TRUE):
 
-  1. User can click the end-of-bar plus control, type a name, and a new group tab appears; empty, duplicate, and reserved names show an inline rejection message
+  1. User can click the end-of-bar plus control, type a name, and a new group tab appears; an empty or whitespace-only name keeps Create disabled, and duplicate, reserved, and too-long names show an inline rejection message
   2. Group tabs sit right of the three core tabs after a divider, each showing its color and member count; with many groups the bar scrolls horizontally, core tabs stay put, and long names truncate with a tooltip
-  3. Opening a group shows its members as one flat list with a New / Not mine / Linked badge on each card; an empty group explains how to add issues
+  3. Opening a group shows its members as one flat list with a New / Dismissed / Already Linked / Done badge (core tab labels) on each card; an empty group explains how to add issues
   4. User can search, filter, sort, open detail, copy, and dismiss/restore from a group view, and triage changes appear immediately in both the group view and core tabs
 
 **Plans:** 6 plans
@@ -126,7 +126,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 - [ ] 29-01-PLAN.md — Fix Phase 28 WR-01..WR-04: hydrate sequencing + keep last good state; TS/Rust trim and zero-width alignment with shared vectors
 - [ ] 29-02-PLAN.md — Tab-id helpers + active-group fallback + overflow math, triage pill mapping, shared restoreTicket, all groups.* EN/SK strings
-- [ ] 29-03-PLAN.md — Verify (human gate) and install @radix-ui/react-popover; shadcn Popover primitive
+- [ ] 29-03-PLAN.md — Automated legitimacy check and exact-pinned install of @radix-ui/react-popover; shadcn Popover primitive
 
 **Wave 2** *(blocked on Wave 1 completion)*
 

@@ -9,7 +9,7 @@
 
 ### Group Management (GRP)
 
-- [ ] **GRP-01**: User can create a named group from a `＋` control at the end of the tab bar; empty, whitespace-only, duplicate (case- and diacritic-aware) and reserved core-tab names are rejected with an inline message
+- [ ] **GRP-01**: User can create a named group from a `＋` control at the end of the tab bar; empty and whitespace-only names keep Create disabled; duplicate (case- and diacritic-aware) and reserved core-tab names are rejected with an inline message
 - [ ] **GRP-02**: User can rename a group from the group tab's "…" menu, with the same validation as create
 - [ ] **GRP-03**: User can pick a group color from a fixed palette (~8 colors, WCAG AA legible in light and dark); a new group gets the next unused color by default
 - [ ] **GRP-04**: User can delete a group after a confirmation dialog that states the issue count and that issues themselves are not affected; if the deleted group was the active tab, the app falls back to a core tab

@@ -40,13 +40,13 @@ Known baseline failures (NOT regressions): vitest `TicketListPage` x2, `StaticMa
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 29-01-T1 | 01 | 1 | GVIEW-01 (tab stability) | T-29-02, T-29-03 | Stale hydrates dropped; failed hydrate keeps last good groups | unit | `npx vitest run src/features/groups/__tests__/groupStore.test.ts` | ✅ (rewritten) | ⬜ pending |
+| 29-01-T1 | 01 | 1 | GRP-01 (supports GVIEW-01 tab stability; GVIEW-01 delivered by 29-06) | T-29-02, T-29-03 | Stale hydrates dropped; failed hydrate keeps last good groups | unit | `npx vitest run src/features/groups/__tests__/groupStore.test.ts` | ✅ (rewritten) | ⬜ pending |
 | 29-01-T2 | 01 | 1 | GRP-01 | T-29-01 | Zero-width / BOM / NEL names agree TS vs Rust; invisible-only rejected | unit (TS + Rust vectors) | `npx vitest run src/features/groups/__tests__/validation.test.ts && cargo test --manifest-path src-tauri/Cargo.toml groups_db` | ✅ | ⬜ pending |
-| 29-02-T1 | 02 | 1 | GVIEW-03, GVIEW-02, (cross) fallback | — | N/A | unit | `npx vitest run src/features/groups/__tests__/groupTabs.test.ts src/features/groups/__tests__/groupBadge.test.ts` | ❌ W0 (created in task) | ⬜ pending |
+| 29-02-T1 | 02 | 1 | supports GVIEW-02, GVIEW-03 (delivered by 29-05/29-06), (cross) fallback | — | N/A | unit | `npx vitest run src/features/groups/__tests__/groupTabs.test.ts src/features/groups/__tests__/groupBadge.test.ts` | ❌ W0 (created in task) | ⬜ pending |
 | 29-02-T2 | 02 | 1 | GVIEW-04 | T-29-05 | Same restore write path | component | `npx vitest run src/features/tickets/IgnoredTicketsPage.test.tsx` | ✅ | ⬜ pending |
-| 29-02-T3 | 02 | 1 | GVIEW-05, (cross) i18n parity | T-29-07 | Reserved names unchanged (size 6) | unit | `npx vitest run src/features/groups/__tests__/groupI18n.test.ts src/i18n/__tests__/translations.test.ts src/features/groups/__tests__/validation.test.ts` | ❌ W0 (created in task) | ⬜ pending |
-| 29-03-T1 | 03 | 1 | GRP-01 | T-29-SC | Human verifies package before install | checkpoint | `npm view @radix-ui/react-popover repository.url scripts` | n/a | ⬜ pending |
-| 29-03-T2 | 03 | 1 | GRP-01 | T-29-SC, T-29-08 | Lockfile pins version | component | `npx vitest run src/components/ui/__tests__/popover.test.tsx` | ❌ W0 (created in task) | ⬜ pending |
+| 29-02-T3 | 02 | 1 | supports GVIEW-05 (delivered by 29-05), (cross) i18n parity | T-29-07 | Reserved names unchanged (size 6) | unit | `npx vitest run src/features/groups/__tests__/groupI18n.test.ts src/i18n/__tests__/translations.test.ts src/features/groups/__tests__/validation.test.ts` | ❌ W0 (created in task) | ⬜ pending |
+| 29-03-T1 | 03 | 1 | GRP-01 | T-29-SC, T-29-08 | Automated registry check: repo = radix-ui/primitives, no pre/post/install scripts; exact-pinned 1.3.0 install; lockfile committed | automated CLI check | `npm view @radix-ui/react-popover@1.3.0 repository.url scripts --json` (asserted via node; fails plan on mismatch) | n/a | ⬜ pending |
+| 29-03-T2 | 03 | 1 | GRP-01 | — | Popover opens, Esc closes, focus returns | component | `npx vitest run src/components/ui/__tests__/popover.test.tsx` | ❌ W0 (created in task) | ⬜ pending |
 | 29-04-T1 | 04 | 2 | GRP-01 | T-29-09, T-29-10, T-29-11 | Inline validation; mapped errors only; single submit | component | `npx vitest run src/features/groups/__tests__/CreateGroupPopover.test.tsx` | ❌ W0 (created in task) | ⬜ pending |
 | 29-05-T1 | 05 | 2 | GVIEW-03 | T-29-12, T-29-14 | Corrupt snapshots skipped; no selector loop | component (hook) | `npx vitest run src/features/groups/__tests__/useGroupMembers.test.tsx` | ❌ W0 (created in task) | ⬜ pending |
 | 29-05-T2 | 05 | 2 | GVIEW-03, GVIEW-04, GVIEW-05, GVIEW-06 | T-29-13, T-29-15 | Text-only rendering of snapshot data | component | `npx vitest run src/features/groups/__tests__/GroupViewPage.test.tsx` | ❌ W0 (created in task) | ⬜ pending |
@@ -65,7 +65,7 @@ Each test file is created by the task that implements the behavior (tdd="true" t
 - [ ] `src/features/groups/__tests__/GroupViewPage.test.tsx`, `useGroupMembers.test.tsx` — GVIEW-03..06 (29-05)
 - [ ] `src/features/groups/__tests__/groupBadge.test.ts`, `groupTabs.test.ts`, `groupI18n.test.ts` (29-02)
 - [ ] `src/components/ui/__tests__/popover.test.tsx` (29-03)
-- [ ] `npm install @radix-ui/react-popover` after human legitimacy check (29-03-T1)
+- [ ] `npm install @radix-ui/react-popover` @1.3.0 --save-exact after automated legitimacy check (29-03-T1)
 
 ---
 
