@@ -1,10 +1,11 @@
 ---
 phase: 30
 slug: group-management-reorder
-status: draft
+status: approved
 shadcn_initialized: true
 preset: existing (style default, baseColor neutral, cssVariables, lucide)
 created: 2026-10-12
+reviewed_at: 2026-10-12
 ---
 
 # Phase 30 — UI Design Contract
@@ -212,11 +213,11 @@ New npm dependencies: `@radix-ui/react-dropdown-menu`, `@radix-ui/react-context-
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (accepted — popover "Cancel" exception; "Rename group"/"Keep group" refine D-06/D-12 wording)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-12
