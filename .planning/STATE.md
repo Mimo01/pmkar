@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v0.5.0
 milestone_name: Custom Groups
 status: planning
-last_updated: "2026-10-12T14:40:48.938Z"
+last_updated: "2026-10-12T14:45:40.144Z"
 last_activity: 2026-10-12
 progress:
   total_phases: 6
@@ -354,6 +354,6 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-05-20 - Completed quick task 260520-p66: release version 0.4.8
-Last session: 2026-10-12T14:40:48.934Z
-Stopped at: Phase 31 context gathered
-Resume file: .planning/phases/31-membership-entry-points/31-CONTEXT.md
+Last session: 2026-10-12T14:45:40.139Z
+Stopped at: Phase 31 UI-SPEC approved
+Resume file: .planning/phases/31-membership-entry-points/31-UI-SPEC.md
