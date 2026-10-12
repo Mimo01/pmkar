@@ -33,6 +33,7 @@ vi.mock('../../connections/connectionStore', () => {
   return {
     useConnectionStore: Object.assign((selector: (s: unknown) => unknown) => selector(state), {
       getState: () => state,
+      subscribe: () => () => {},
     }),
   };
 });

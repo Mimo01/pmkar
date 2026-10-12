@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useConnectionStore } from '../../connections/connectionStore';
 import { useTicketStore } from '../ticketStore';
 import type { FetchConfig, JiraTicket, TriageEntry, WatchedUser } from '../types';
 
@@ -324,6 +325,91 @@ describe('ticketStore', () => {
         lastFetchedAt: null,
       } as FetchConfig);
       expect(useTicketStore.getState().lastCompleteFetchSignature).toBe('sig-a');
+    });
+  });
+  describe('server switch reset (CR-01)', () => {
+    const meta = (baseUrl: string, username = 'u', status: 'connected' | 'error' = 'connected') =>
+      ({
+        baseUrl,
+        username,
+        serverVersion: '9',
+        lastTestedAt: null,
+        status,
+      }) as unknown as NonNullable<
+        ReturnType<typeof useConnectionStore.getState>['serverConnection']
+      >;
+
+    const seed = () =>
+      useTicketStore.setState({
+        tickets: [makeTicket('AB-1')],
+        triageMap: { 'AB-1': { state: 'new' } as TriageEntry },
+        selectedTicketKey: 'AB-1',
+        totalCount: 1,
+        newCount: 1,
+        truncated: true,
+        lastCompleteFetchSignature: 'sig',
+        hasFetchedThisSession: true,
+        unseenChanges: { 'AB-1': ['summary'] },
+        jqlPreset: 'mine',
+        fetchStatus: 'loading' as never,
+      });
+
+    beforeEach(() => {
+      useConnectionStore.setState({ serverConnection: null, cloudConnection: null });
+      useTicketStore.setState({ ...initialState, unseenChanges: {} });
+    });
+
+    it('A to B clears list state and leaves unrelated state', () => {
+      useConnectionStore.setState({ serverConnection: meta('http://a') });
+      seed();
+      useConnectionStore.getState().setServerConnection(meta('http://b'));
+      const s = useTicketStore.getState();
+      expect(s.tickets).toEqual([]);
+      expect(s.triageMap).toEqual({});
+      expect(s.selectedTicketKey).toBeNull();
+      expect(s.totalCount).toBe(0);
+      expect(s.newCount).toBe(0);
+      expect(s.truncated).toBe(false);
+      expect(s.lastCompleteFetchSignature).toBeNull();
+      expect(s.hasFetchedThisSession).toBe(false);
+      expect(s.unseenChanges).toEqual({ 'AB-1': ['summary'] });
+      expect(s.jqlPreset).toBe('mine');
+      expect(s.fetchStatus).toBe('loading');
+    });
+
+    it('null to A (startup hydration) does not clear', () => {
+      seed();
+      useConnectionStore.getState().setServerConnection(meta('http://a'));
+      expect(useTicketStore.getState().tickets).toHaveLength(1);
+    });
+
+    it('same baseUrl with different username/status does not clear', () => {
+      useConnectionStore.setState({ serverConnection: meta('http://a') });
+      seed();
+      useConnectionStore.getState().setServerConnection(meta('http://a', 'other', 'error'));
+      expect(useTicketStore.getState().tickets).toHaveLength(1);
+    });
+
+    it('clearConnections clears', () => {
+      useConnectionStore.setState({ serverConnection: meta('http://a') });
+      seed();
+      useConnectionStore.getState().clearConnections();
+      expect(useTicketStore.getState().tickets).toEqual([]);
+    });
+
+    it('cloudConnection and sourceProjectKey changes do not clear', () => {
+      useConnectionStore.setState({ serverConnection: meta('http://a') });
+      seed();
+      useConnectionStore.getState().setCloudConnection(meta('http://cloud'));
+      useConnectionStore.getState().setSourceProjectKey('XY');
+      expect(useTicketStore.getState().tickets).toHaveLength(1);
+    });
+
+    it('resetForServerSwitch can be called directly', () => {
+      seed();
+      useTicketStore.getState().resetForServerSwitch();
+      expect(useTicketStore.getState().tickets).toEqual([]);
+      expect(useTicketStore.getState().hasFetchedThisSession).toBe(false);
     });
   });
 });

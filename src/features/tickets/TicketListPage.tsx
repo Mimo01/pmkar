@@ -150,6 +150,24 @@ export function TicketListPage() {
           currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
         ) === fetchSig;
 
+      // CR-01: results from a server that is no longer active must not become the live list.
+      // Gate on server identity only (not the full signature): a same-server filter change
+      // mid-flight keeps its fetch-start-signature semantics, and refresh still uses
+      // isFetchStillCurrent.
+      const isSameServerAsFetch = () => {
+        const now = useConnectionStore.getState().serverConnection;
+        return (
+          now !== null && now.baseUrl === serverConn.baseUrl && now.username === serverConn.username
+        );
+      };
+      const discardStaleResult = () => {
+        const ts = useTicketStore.getState();
+        ts.markFetchIncomplete();
+        ts.setFetchStatus('idle');
+        setBatchesTotal(0);
+        setFailedUserNames([]);
+      };
+
       const preset = store.jqlPreset;
 
       // Fast path: custom JQL — single invoke, no batching (Pitfall 4)
@@ -158,6 +176,10 @@ export function TicketListPage() {
           baseUrl: serverConn.baseUrl,
           jql: store.jqlCustom,
         });
+        if (!isSameServerAsFetch()) {
+          discardStaleResult();
+          return;
+        }
         store.setTickets(
           result.issues,
           result.triageMap,
@@ -264,6 +286,11 @@ export function TicketListPage() {
           localFailedUsers.push(batch.label);
         }
         setBatchesDone((n) => n + 1);
+      }
+
+      if (!isSameServerAsFetch()) {
+        discardStaleResult();
+        return;
       }
 
       // WR-01: if every batch failed, preserve existing tickets and show an error banner.

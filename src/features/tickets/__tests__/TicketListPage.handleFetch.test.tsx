@@ -1271,26 +1271,58 @@ describe('TicketListPage — fetch completeness and snapshot refresh (D-12, D-13
     useConnectionStore.setState({ serverConnection: { ...cur, ...patch } });
   }
 
-  it('custom path: baseUrl switched mid-flight never refreshes snapshots', async () => {
+  async function settleDiscarded(d: { resolve: (v: FetchTicketsResult) => void }) {
+    d.resolve(makeFetchResult(['AB-1']));
+    await waitFor(() => expect(useTicketStore.getState().fetchStatus).toBe('idle'));
+    // let any trailing microtasks (that would apply tickets) run
+    await new Promise((r) => setTimeout(r, 0));
+  }
+
+  function expectDiscarded() {
+    const s = useTicketStore.getState();
+    expect(s.tickets.some((t) => t.key === 'AB-1')).toBe(false);
+    expect(s.lastCompleteFetchSignature).toBeNull();
+    expect(s.hasFetchedThisSession).toBe(false);
+    expect(refreshCalls().length).toBe(0);
+    const cmds = mockInvoke.mock.calls.map(([c]) => c);
+    expect(cmds).not.toContain('trigger_manual_poll');
+    expect(cmds).not.toContain('fetch_ticket_detail');
+  }
+
+  it('custom path: baseUrl switched mid-flight discards results and never refreshes', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    seed({ tickets: [makeFetchResult(['OLD-1']).issues[0]], hasFetchedThisSession: false });
+    const d = await startPendingFetch();
+    switchConnection({ baseUrl: 'http://other.example.com' });
+    await settleDiscarded(d);
+    expectDiscarded();
+    expect(useTicketStore.getState().tickets).toEqual([]);
+  });
+
+  it('batch path: baseUrl switched mid-flight discards results and never refreshes', async () => {
+    const d = await startPendingFetch();
+    switchConnection({ baseUrl: 'http://other.example.com' });
+    await settleDiscarded(d);
+    expectDiscarded();
+  });
+
+  it('batch path: username changed mid-flight discards results and never refreshes', async () => {
+    const d = await startPendingFetch();
+    switchConnection({ username: 'someoneelse' });
+    await settleDiscarded(d);
+    expectDiscarded();
+  });
+
+  it('discard releases the in-flight lock so a second fetch runs', async () => {
     seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
     const d = await startPendingFetch();
     switchConnection({ baseUrl: 'http://other.example.com' });
-    await settle(d);
-    expect(refreshCalls().length).toBe(0);
-  });
-
-  it('batch path: baseUrl switched mid-flight never refreshes snapshots', async () => {
-    const d = await startPendingFetch();
-    switchConnection({ baseUrl: 'http://other.example.com' });
-    await settle(d);
-    expect(refreshCalls().length).toBe(0);
-  });
-
-  it('batch path: username changed mid-flight never refreshes snapshots', async () => {
-    const d = await startPendingFetch();
-    switchConnection({ username: 'someoneelse' });
-    await settle(d);
-    expect(refreshCalls().length).toBe(0);
+    await settleDiscarded(d);
+    const before = mockInvoke.mock.calls.filter(([c]) => c === 'fetch_tickets').length;
+    await clickFetch();
+    await waitFor(() =>
+      expect(mockInvoke.mock.calls.filter(([c]) => c === 'fetch_tickets').length).toBe(before + 1),
+    );
   });
 
   it('custom path: preset changed mid-flight never refreshes snapshots', async () => {
