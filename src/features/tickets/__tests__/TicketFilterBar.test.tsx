@@ -658,3 +658,47 @@ describe('TicketListPage filter integration', () => {
     expect(summariesAfter[0].textContent).toBe('Summary for OTHER-1');
   });
 });
+
+describe('TicketFilterBar — Select toggle', () => {
+  const base = {
+    searchText: '',
+    onSearchChange: vi.fn(),
+    assigneeFilter: '',
+    onAssigneeChange: vi.fn(),
+    sortField: 'updated' as const,
+    onSortFieldChange: vi.fn(),
+    sortDirection: 'desc' as const,
+    onToggleSort: vi.fn(),
+    resultCount: 3,
+  };
+
+  it('does not render without onToggleSelectMode', () => {
+    render(<TicketFilterBar {...base} />);
+    expect(screen.queryByRole('button', { name: 'Select' })).not.toBeInTheDocument();
+  });
+
+  it('renders unpressed and calls onToggleSelectMode on click', () => {
+    const onToggle = vi.fn();
+    render(<TicketFilterBar {...base} onToggleSelectMode={onToggle} selectMode={false} />);
+    const btn = screen.getByRole('button', { name: 'Select' });
+    expect(btn).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(btn);
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('is pressed when selectMode is true', () => {
+    render(<TicketFilterBar {...base} onToggleSelectMode={vi.fn()} selectMode />);
+    expect(screen.getByRole('button', { name: 'Select' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('is disabled but rendered when selectDisabled', () => {
+    render(<TicketFilterBar {...base} onToggleSelectMode={vi.fn()} selectDisabled />);
+    expect(screen.getByRole('button', { name: 'Select' })).toBeDisabled();
+  });
+
+  it('forwards selectToggleRef to the button', () => {
+    const ref = { current: null as HTMLButtonElement | null };
+    render(<TicketFilterBar {...base} onToggleSelectMode={vi.fn()} selectToggleRef={ref} />);
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Select' }));
+  });
+});

@@ -1,7 +1,10 @@
 import { invoke } from '@tauri-apps/api/core';
-import { ArrowDown, ArrowUp, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckSquare, Search, X } from 'lucide-react';
+import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { useConnectionStore } from '../connections/connectionStore';
 import type { JiraUser } from './types';
 import { UserAvatar } from './UserAvatar';
@@ -18,6 +21,10 @@ interface TicketFilterBarProps {
   sortDirection: 'asc' | 'desc';
   onToggleSort: () => void;
   resultCount: number;
+  selectMode?: boolean;
+  onToggleSelectMode?: () => void;
+  selectDisabled?: boolean;
+  selectToggleRef?: React.Ref<HTMLButtonElement>;
 }
 
 export function TicketFilterBar({
@@ -30,6 +37,10 @@ export function TicketFilterBar({
   sortDirection,
   onToggleSort,
   resultCount,
+  selectMode,
+  onToggleSelectMode,
+  selectDisabled,
+  selectToggleRef,
 }: TicketFilterBarProps) {
   const { t } = useTranslation();
   const serverConn = useConnectionStore((s) => s.serverConnection);
@@ -261,6 +272,25 @@ export function TicketFilterBar({
       <span className="text-xs text-brand-muted shrink-0 ml-auto">
         {t('tickets.filter.showing', { count: resultCount })}
       </span>
+
+      {onToggleSelectMode && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          ref={selectToggleRef}
+          aria-pressed={!!selectMode}
+          disabled={selectDisabled}
+          onClick={onToggleSelectMode}
+          className={cn(
+            'h-7 px-3 shrink-0',
+            selectMode && 'bg-brand/10 text-brand-text border-brand',
+          )}
+        >
+          <CheckSquare className="w-4 h-4" aria-hidden="true" />
+          {t('tickets.filter.select')}
+        </Button>
+      )}
     </div>
   );
 }
