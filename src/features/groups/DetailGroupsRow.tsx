@@ -85,7 +85,7 @@ export function DetailGroupsRow({
               type="button"
               aria-label={t('groups.chip.goTo', { name: g.name })}
               onClick={() => navigateToGroup(g.id)}
-              className="inline-flex items-center px-1 hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+              className="inline-flex items-center px-1 hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
             >
               <GroupChipLabel group={g} />
             </button>
@@ -97,7 +97,7 @@ export function DetailGroupsRow({
                 <button
                   type="button"
                   aria-label={t('groups.chip.remove', { name: g.name })}
-                  className="inline-flex items-center justify-center h-5 w-5 text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+                  className="inline-flex items-center justify-center h-5 w-5 text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
                 >
                   <X className="w-3 h-3" aria-hidden="true" />
                 </button>

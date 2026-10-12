@@ -53,7 +53,7 @@ export function CreateGroupPopover({
               ref={triggerRef}
               type="button"
               aria-label={t('groups.new')}
-              className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+              className="flex items-center justify-center w-7 h-7 text-brand-text-secondary hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
             </button>

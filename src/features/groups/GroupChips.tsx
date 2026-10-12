@@ -34,7 +34,7 @@ export function GroupChips({ issueKey, hideGroupId }: { issueKey: string; hideGr
                   names: rest.map((g) => g.name).join(', '),
                 })}
                 onClick={(e) => e.stopPropagation()}
-                className="relative z-10 text-xs text-brand-text-secondary cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+                className="relative z-10 text-xs text-brand-text-secondary cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
               >
                 {t('groups.chip.more', { count: rest.length })}
               </button>

@@ -82,7 +82,7 @@ export function GroupColorSwatches({
                 tabIndex={token === focusedToken ? 0 : -1}
                 onClick={() => onSelect(token)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
-                className="relative flex h-6 w-6 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+                className="relative flex h-6 w-6 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
               >
                 <span
                   aria-hidden="true"

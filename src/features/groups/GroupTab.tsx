@@ -65,7 +65,7 @@ export function GroupTab({
       aria-label={triggerLabel}
       aria-hidden={active ? undefined : true}
       tabIndex={active ? 0 : -1}
-      className={`flex h-5 w-5 items-center justify-center rounded text-brand-text-secondary hover:text-brand-text focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+      className={`flex h-5 w-5 items-center justify-center rounded text-brand-text-secondary hover:text-brand-text focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
         active ? '' : 'invisible pointer-events-none'
       }`}
     >
@@ -91,10 +91,10 @@ export function GroupTab({
                 onKeyDown={handleKeyDown}
                 aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-1 text-sm py-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                className={`flex items-center gap-1 text-sm py-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                   active
                     ? 'text-brand-text font-semibold'
-                    : 'text-brand-muted font-normal hover:text-brand-text'
+                    : 'text-brand-text-secondary font-normal hover:text-brand-text'
                 }`}
               >
                 <span

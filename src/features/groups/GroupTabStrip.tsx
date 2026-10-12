@@ -23,7 +23,7 @@ import { RemoveMissingPopover } from './RemoveMissingPopover';
 import { RenameGroupPopover } from './RenameGroupPopover';
 
 const ARROW_CLASS =
-  'flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2';
+  'flex items-center justify-center w-7 h-7 text-brand-text-secondary hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2';
 
 export type PendingAction = {
   groupId: number;
