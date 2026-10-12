@@ -34,6 +34,8 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
   const [submitting, setSubmitting] = useState(false);
   const createdRef = useRef(false);
   const inFlightRef = useRef(false);
+  // Incremented on every open; a create that settles after a reopen is stale.
+  const openSeq = useRef(0);
   const groups = useGroupStore((s) => s.groups);
 
   const v = useMemo(
@@ -54,9 +56,10 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
     if (next) {
       setName('');
       setSubmitError(null);
-      setSubmitting(false);
       createdRef.current = false;
-      inFlightRef.current = false;
+      openSeq.current += 1;
+      // inFlightRef/submitting are deliberately not reset: a create started before
+      // Cancel/Esc may still be pending, and Create stays disabled until it settles.
     }
     setOpen(next);
   }
@@ -66,8 +69,12 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
     if (!v.ok || submitting || inFlightRef.current) return;
     inFlightRef.current = true;
     setSubmitting(true);
+    const token = openSeq.current;
     try {
       const r = await useGroupStore.getState().createGroup(v.display);
+      // The popover was reopened while this request was pending; do not close or
+      // navigate under the user, and do not show a stale error.
+      if (token !== openSeq.current) return;
       if (r.ok) {
         // If the follow-up hydrate failed, the new group is not in the store yet, so
         // its tab cannot be selected or focused. Close normally and let focus return

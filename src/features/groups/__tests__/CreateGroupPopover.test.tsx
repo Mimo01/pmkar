@@ -221,6 +221,28 @@ describe('CreateGroupPopover', () => {
     expect(alertText()).toBe('');
   });
 
+  it('reopening during an in-flight create keeps Create disabled and ignores the stale result', async () => {
+    let release: (v: unknown) => void = () => {};
+    createBehavior = () => new Promise((r) => (release = r));
+    const { user, input, onCreated, trigger } = await setup();
+    await user.type(input, 'QA{Enter}');
+    expect(createCalls()).toHaveLength(1);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument();
+
+    await user.click(trigger);
+    const again = await screen.findByLabelText('Group name');
+    await user.type(again, 'Ops');
+    expect(createButton()).toBeDisabled();
+    await user.keyboard('{Enter}');
+    expect(createCalls()).toHaveLength(1);
+
+    release({ ...sprint, id: 5, name: 'QA' });
+    await waitFor(() => expect(createButton()).not.toBeDisabled());
+    expect(screen.getByLabelText('Group name')).toHaveValue('Ops');
+    expect(onCreated).not.toHaveBeenCalled();
+  });
+
   it('Cancel closes without invoking create_group', async () => {
     const { user, input } = await setup();
     await user.type(input, 'QA');
