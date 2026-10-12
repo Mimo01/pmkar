@@ -14,7 +14,7 @@
 - [ ] **GRP-03**: User can pick a group color from a fixed palette (~8 colors, WCAG AA legible in light and dark); a new group gets the next unused color by default
 - [ ] **GRP-04**: User can delete a group after a confirmation dialog that states the issue count and that issues themselves are not affected; if the deleted group was the active tab, the app falls back to a core tab
 - [ ] **GRP-05**: User can reorder group tabs via "Move left / Move right" actions in the tab's "…" menu (keyboard accessible, new position announced to screen readers); core tabs stay fixed
-- [ ] **GRP-06**: Groups, their names, colors, order and memberships persist across app restarts in local storage
+- [x] **GRP-06**: Groups, their names, colors, order and memberships persist across app restarts in local storage
 
 ### Navigation & Group View (GVIEW)
 
@@ -86,7 +86,7 @@
 | GRP-03 | Phase 30 | Pending |
 | GRP-04 | Phase 30 | Pending |
 | GRP-05 | Phase 30 | Pending |
-| GRP-06 | Phase 28 | Pending |
+| GRP-06 | Phase 28 | Complete |
 | GVIEW-01 | Phase 29 | Pending |
 | GVIEW-02 | Phase 29 | Pending |
 | GVIEW-03 | Phase 29 | Pending |

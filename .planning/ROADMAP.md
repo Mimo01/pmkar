@@ -91,7 +91,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. A test fails if the Rust side emits a copy step id that has no translation key
   4. Existing New / Not mine / Linked lists filter and sort exactly as before after the shared list utilities extraction
 
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 **Wave 1**
 
 - [x] 28-01-PLAN.md — Characterize then extract New/Not mine/Linked filter+sort into ticketListUtils (SC4)
@@ -101,7 +101,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 28-05-PLAN.md — Tauri group commands with Rust-derived scope and lock ordering; open groups.db at startup
+- [x] 28-05-PLAN.md — Tauri group commands with Rust-derived scope and lock ordering; open groups.db at startup
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -219,7 +219,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | v0.4.8 | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
-| 28. Foundations | v0.5.0 | 4/6 | In Progress|  |
+| 28. Foundations | v0.5.0 | 5/6 | In Progress|  |
 | 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
