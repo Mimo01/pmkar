@@ -9,8 +9,10 @@
  * never as a tinted background or colored text. Every value reaches >= 3:1
  * non-text contrast against the card surface and page background of its theme.
  *
- * The hex values here are mirrored as --color-group-* variables in
- * src/index.css; a test keeps the two in sync.
+ * The hex values here are mirrored as --color-group-* variables in the plain
+ * :root (light) and body.dark (dark) rules of src/index.css; a test keeps them
+ * in sync. They must not be moved into @theme: Tailwind v4 would drop the ones
+ * not named literally in source.
  */
 
 export const GROUP_COLOR_TOKENS = [

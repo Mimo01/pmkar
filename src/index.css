@@ -40,8 +40,12 @@
   --color-input: var(--color-brand-border);
   --color-ring: var(--color-brand);
   --radius: 0.5rem;
+}
 
-  /* Group palette (Phase 28, D-05..D-07): dot color only, never tinted backgrounds */
+/* Group palette (Phase 28, D-05..D-07): dot color only, never tinted backgrounds.
+   Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
+   and these are referenced only via a runtime-built var() name in colors.ts. */
+:root {
   --color-group-blue: #2563eb;
   --color-group-teal: #0d9488;
   --color-group-green: #16a34a;
