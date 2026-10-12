@@ -209,7 +209,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [ ] 31-08-PLAN.md — GroupViewPage select mode + Remove from group + hide current-group chip
-- [ ] 31-09-PLAN.md — Core lists select mode + GMEM-01 regression + tab-change clearing
+- [ ] 31-09-PLAN.md — Core lists select mode + GMEM-01 regression + App-level tab-change clearing and detail chip navigation
 **UI hint**: yes
 
 ### Phase 32: Durability

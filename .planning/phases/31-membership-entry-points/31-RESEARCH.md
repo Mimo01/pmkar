@@ -270,12 +270,25 @@ Also verify that Radix calls `preventDefault` or otherwise make the picker's `on
 | A4 | The `pendingFocusId`/`tabRefs` mechanism is reachable from the new navigate function | Pattern 3 | May need a small export from `GroupTabStrip.tsx` |
 | A5 | Space toggles a picker row only when the search is empty (deviation from "Space or Enter") | Pattern 6 | Planner or user may want a different rule |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+Numbering note: the orchestrator's resolution list used OQ3 for the picker Space rule and OQ4 for the Radix Esc/shiftKey checks. In this file the Space rule is Assumption A5 and the Radix Esc/shiftKey items are Assumptions A1/A2. The resolutions below use this file's numbering, and plans cite "RESEARCH A5" for the Space rule.
 
 1. **How does the nav function reach the focus mechanism of `GroupTabStrip`?** Inspect `GroupTabStrip.tsx` (`pendingFocusId`). It may need to be lifted or exposed via ref/context. Recommend deciding in the plan's first wave.
+   RESOLVED: `NavigationContext` (no-op default) plus an App-owned `focusRequest` prop on `GroupTabStrip` that feeds the existing `pendingFocus` consumer effect, per 31-PATTERNS.md "Resolved: Open Question 1". Implemented in Plan 31-02. This also resolves A4.
 2. **All-already-members bulk add:** the toast is informational (count 0). Recommend treating it as success and still ending select mode.
+   RESOLVED: treated as success. Select mode ends and an "All selected issues are already in ‘<name>’." info toast is shown. `addToGroup` feedback in Plan 31-04 (returns true on value 0), bulk bar in Plan 31-06, and core-list tests in Plans 31-08/31-09.
 3. **Group-less issue in `Linked`/`Ignored` list opened from a group snapshot:** detail-to-ticket fallback (Pattern 4) covers it. Confirm `ticketStore.tickets` includes ignored and linked issues (it appears to, as `IgnoredTicketsPage` filters it).
+   RESOLVED: `resolveTicketForIssue` prefers the `ticketStore.tickets` entry and falls back to `detailToTicket(detail)`, with a test proving the fallback snapshot passes `isRenderableTicket`. Implemented in Plan 31-07 Task 1.
 4. **Esc to leave select mode** requires focus inside the list or the bar. Choose a scoped `onKeyDown` on the page wrapper, not a document listener, so it does not conflict with popovers or the detail view.
+   RESOLVED: scoped `handleKeyDown` from `useListSelection` on each page wrapper, guarded by `!e.defaultPrevented` (Plan 31-03; wired in Plans 31-08/31-09). The Radix Esc assumption (A2) and the keyboard `shiftKey` assumption (A1) are verified by explicit tests with documented fallbacks: Plan 31-03 (hook), 31-05 (card shift fallback via keydown ref), 31-06 (bar popovers do not reach the page Esc handler), 31-07 (detail Esc guard with `data-radix-popper-content-wrapper` fallback) and 31-08 (group view). Plans cite this as "resolved OQ4".
+
+**Assumption resolutions:**
+- A1 (keyboard click carries `shiftKey`): RESOLVED by test plus `onKeyDown` shift-ref fallback in Plan 31-05.
+- A2 (Radix Esc vs document listener): RESOLVED by explicit tests plus fallback in Plans 31-03/31-06/31-07/31-08 (see OQ4).
+- A3 (`useShallow` not needed): accepted; perf only, no plan action.
+- A4 (focus mechanism reachable): RESOLVED via OQ1 (Plan 31-02).
+- A5 (Space toggles a picker row only when the search is empty): RESOLVED as an accepted deviation from UI-SPEC "Space or Enter". Implemented and tested in Plan 31-04 with a code comment.
 
 ## Environment Availability
 
