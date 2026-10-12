@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 import { toast } from 'sonner';
 import type { JiraTicket } from '../tickets/types';
 import { useGroupStore } from './groupStore';
+import { readMissingKeysNow } from './missingMembers';
 import type { GroupErrorCode } from './types';
 
 export function membershipErrorKey(code: GroupErrorCode): string {
@@ -46,12 +47,16 @@ export async function removeIssuesWithFeedback(
   return true;
 }
 
-/** Single missing-member removal (D-16: same GC path). No success toast; failures are loud. */
+/**
+ * Single missing-member removal (D-16: same GC path). No success toast; failures are loud.
+ * Rechecks at confirm time; a member that came back is never removed (T-32-23).
+ */
 export async function removeMissingMember(
   group: { id: number; name: string },
   issueKey: string,
   t: TFunction,
 ): Promise<boolean> {
+  if (!readMissingKeysNow(group.id).has(issueKey)) return false;
   const r = await useGroupStore.getState().removeFromGroup(group.id, [issueKey]);
   if (!r.ok) {
     toast.error(
