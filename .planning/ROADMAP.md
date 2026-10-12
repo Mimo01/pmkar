@@ -267,8 +267,36 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
   4. With about 25 groups the tab bar and cards remain usable and uncluttered
 
-**Plans**: TBD
+**Plans:** 10 plans
 **UI hint**: yes
+
+**Wave 1**
+
+- [ ] 33-01-PLAN.md — Normalise EN/SK groups.* copy (quotes, _many, SK audit) with locale guard tests
+- [ ] 33-02-PLAN.md — Shared contrast helpers, D-04 token tests in both themes, focus-ring/destructive-text tokens
+- [ ] 33-03-PLAN.md — Mock-server scenarios (drop, partial_fail, truncated, mutate) with Rust tests
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 33-04-PLAN.md — Adopt focus-ring and secondary-text tokens across tab strip, core tabs, picker, forms, chips
+- [ ] 33-05-PLAN.md — Missing-state dimming (opacity-70), card text, destructive-text for menu item and errors
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 33-06-PLAN.md — AST literal-string scan, key existence in both locales, token-usage guard, literal fixes
+- [ ] 33-07-PLAN.md — Tab-strip arrow hardening (80% step, focus handoff) and 25-group scale tests
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 33-08-PLAN.md — axe runner (human legitimacy gate) over all D-01 key states, fix violations
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 33-09-PLAN.md — Tab-strip arrow/Home/End navigation and keyboard/focus-return test matrix
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 33-10-PLAN.md — Consolidated v0.5.0 milestone UAT (phases 29-33) with mock-scenario steps
 
 </details>
 
