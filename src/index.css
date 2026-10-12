@@ -40,6 +40,16 @@
   --color-input: var(--color-brand-border);
   --color-ring: var(--color-brand);
   --radius: 0.5rem;
+
+  /* Group palette (Phase 28, D-05..D-07): dot color only, never tinted backgrounds */
+  --color-group-blue: #2563eb;
+  --color-group-teal: #0d9488;
+  --color-group-green: #16a34a;
+  --color-group-amber: #b45309;
+  --color-group-orange: #ea580c;
+  --color-group-purple: #7c3aed;
+  --color-group-pink: #db2777;
+  --color-group-slate: #64748b;
 }
 
 /* Light theme body defaults */
@@ -83,6 +93,16 @@ body.dark {
   --color-border: #2e2e30;
   --color-input: #2e2e30;
   --color-ring: #c02232;
+
+  /* Group palette dark values */
+  --color-group-blue: #60a5fa;
+  --color-group-teal: #2dd4bf;
+  --color-group-green: #4ade80;
+  --color-group-amber: #fbbf24;
+  --color-group-orange: #fb923c;
+  --color-group-purple: #a78bfa;
+  --color-group-pink: #f472b6;
+  --color-group-slate: #94a3b8;
 }
 
 ::-webkit-scrollbar {
