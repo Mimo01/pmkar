@@ -111,15 +111,15 @@ describe('membership regression (GMEM-01, D-20)', () => {
   it('keeps a multi-group issue in the New list with all of its chips', () => {
     render(<TicketListPage />);
     const card = cardFor('P-1');
-    expect(within(card).getByRole('button', { name: 'Go to group ‘Sprint’' })).toBeTruthy();
-    expect(within(card).getByRole('button', { name: 'Go to group ‘QA’' })).toBeTruthy();
+    expect(within(card).getByRole('button', { name: 'Go to group “Sprint”' })).toBeTruthy();
+    expect(within(card).getByRole('button', { name: 'Go to group “QA”' })).toBeTruthy();
     expect(screen.queryByText('P-2')).toBeNull();
   });
 
   it('keeps a grouped dismissed issue in the Dismissed list with its chip', () => {
     render(<IgnoredTicketsPage />);
     const card = cardFor('P-2');
-    expect(within(card).getByRole('button', { name: 'Go to group ‘QA’' })).toBeTruthy();
+    expect(within(card).getByRole('button', { name: 'Go to group “QA”' })).toBeTruthy();
     expect(screen.queryByText('P-1')).toBeNull();
   });
 
@@ -147,7 +147,7 @@ describe('membership regression (GMEM-01, D-20)', () => {
         <TicketListPage />
       </NavigationContext.Provider>,
     );
-    fireEvent.click(within(cardFor('P-1')).getByRole('button', { name: 'Go to group ‘QA’' }));
+    fireEvent.click(within(cardFor('P-1')).getByRole('button', { name: 'Go to group “QA”' }));
     expect(spy).toHaveBeenCalledWith(2);
     expect(useTicketStore.getState().selectedTicketKey).toBeNull();
   });

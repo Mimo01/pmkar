@@ -165,11 +165,11 @@ describe('SelectionBar', () => {
       />,
     );
     await userEvent.click(screen.getByRole('button', { name: 'Remove from group' }));
-    expect(await screen.findByText('Remove 3 issues from ‘QA’?')).toBeTruthy();
+    expect(await screen.findByText('Remove 3 issues from “QA”?')).toBeTruthy();
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     await waitFor(() => expect(document.activeElement).toBe(cancel));
     await userEvent.click(cancel);
-    await waitFor(() => expect(screen.queryByText('Remove 3 issues from ‘QA’?')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Remove 3 issues from “QA”?')).toBeNull());
     expect(callsOf('remove_issues_from_group')).toHaveLength(0);
   });
 
@@ -209,7 +209,7 @@ describe('SelectionBar', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(onDone).not.toHaveBeenCalled();
-    await waitFor(() => expect(screen.queryByText('Remove 3 issues from ‘QA’?')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Remove 3 issues from “QA”?')).toBeNull());
   });
 
   it('Add failure does not report success', async () => {
@@ -281,10 +281,10 @@ describe('SelectionBar', () => {
         </div>,
       );
       await userEvent.click(screen.getByRole('button', { name: 'Remove from group' }));
-      await screen.findByText('Remove 3 issues from ‘QA’?');
+      await screen.findByText('Remove 3 issues from “QA”?');
       spy.mockClear();
       await userEvent.keyboard('{Escape}');
-      await waitFor(() => expect(screen.queryByText('Remove 3 issues from ‘QA’?')).toBeNull());
+      await waitFor(() => expect(screen.queryByText('Remove 3 issues from “QA”?')).toBeNull());
       for (const [e] of spy.mock.calls) {
         if (e.key === 'Escape') expect(e.defaultPrevented).toBe(true);
       }

@@ -30,7 +30,7 @@ describe('GroupChips', () => {
     seed({ 'P-1': [3, 1] });
     render(<GroupChips issueKey="P-1" />);
     const names = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
-    expect(names).toEqual(['Go to group ‘A’', 'Go to group ‘C’']);
+    expect(names).toEqual(['Go to group “A”', 'Go to group “C”']);
     expect(screen.queryByText('+1')).not.toBeInTheDocument();
   });
 
@@ -47,9 +47,9 @@ describe('GroupChips', () => {
         </div>
       </NavigationContext.Provider>,
     );
-    expect(screen.getByRole('button', { name: 'Go to group ‘A’' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to group ‘B’' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go to group ‘C’' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to group “A”' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to group “B”' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go to group “C”' })).not.toBeInTheDocument();
     const more = screen.getByRole('button', { name: '2 more groups: C, D' });
     expect(more).toHaveTextContent('+2');
     await user.click(more);
@@ -73,9 +73,9 @@ describe('GroupChips', () => {
   it('hides the current group and does not count it', () => {
     seed({ 'P-1': [1, 2, 3] });
     render(<GroupChips issueKey="P-1" hideGroupId={1} />);
-    expect(screen.queryByRole('button', { name: 'Go to group ‘A’' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to group ‘B’' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to group ‘C’' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go to group “A”' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to group “B”' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to group “C”' })).toBeInTheDocument();
     expect(screen.queryByText(/^\+\d/)).not.toBeInTheDocument();
   });
 
@@ -116,7 +116,7 @@ describe('GroupChips', () => {
         </div>
       </NavigationContext.Provider>,
     );
-    const chip = screen.getByRole('button', { name: 'Go to group ‘C’' });
+    const chip = screen.getByRole('button', { name: 'Go to group “C”' });
     await user.click(chip);
     expect(spy).toHaveBeenCalledWith(3);
     expect(parent).not.toHaveBeenCalled();

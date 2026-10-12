@@ -105,7 +105,7 @@ describe('RemoveMissingPopover', () => {
     const user = userEvent.setup();
     renderWithI18n(<Harness onOpenChange={onOpenChange} onReturnFocus={() => {}} />);
     expect(
-      await screen.findByText('Remove 1 issue from ‘Sprint’? It is no longer in results.'),
+      await screen.findByText('Remove 1 issue from “Sprint”? It is no longer in results.'),
     ).toBeTruthy();
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     await waitFor(() => expect(document.activeElement).toBe(cancel));

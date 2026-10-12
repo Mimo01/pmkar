@@ -74,7 +74,7 @@ describe('TicketCard', () => {
 
   it('chip click navigates and does not open detail', async () => {
     const { onClick, navigateToGroup, user } = setup();
-    await user.click(screen.getByRole('button', { name: 'Go to group ‘QA’' }));
+    await user.click(screen.getByRole('button', { name: 'Go to group “QA”' }));
     expect(navigateToGroup).toHaveBeenCalledWith(2);
     expect(onClick).not.toHaveBeenCalled();
   });
@@ -95,8 +95,8 @@ describe('TicketCard', () => {
 
   it('hideGroupId hides that chip', () => {
     setup({ hideGroupId: 1 });
-    expect(screen.queryByRole('button', { name: 'Go to group ‘Dev’' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to group ‘QA’' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Go to group “Dev”' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Go to group “QA”' })).toBeInTheDocument();
   });
 
   it('has no checkbox when select mode is off', () => {
@@ -167,7 +167,7 @@ describe('TicketCard', () => {
   it('select mode: chips still navigate', async () => {
     const onToggleSelect = vi.fn();
     const { navigateToGroup, user } = setup({ selectMode: true, onToggleSelect });
-    await user.click(screen.getByRole('button', { name: 'Go to group ‘Dev’' }));
+    await user.click(screen.getByRole('button', { name: 'Go to group “Dev”' }));
     expect(navigateToGroup).toHaveBeenCalledWith(1);
     expect(onToggleSelect).not.toHaveBeenCalled();
   });
@@ -207,7 +207,7 @@ describe('TicketCard', () => {
         expect(screen.getByText(text).className).toContain('opacity-60');
       }
       const unDimmed = [
-        screen.getByRole('button', { name: 'Go to group ‘Dev’' }),
+        screen.getByRole('button', { name: 'Go to group “Dev”' }),
         screen.getByRole('checkbox', { name: 'Select P-1' }),
         screen.getByRole('button', { name: 'Footer btn' }),
       ];

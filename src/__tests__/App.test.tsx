@@ -447,7 +447,7 @@ describe('App', () => {
       act(() => {
         useTicketStore.getState().selectTicket('P-1');
       });
-      const chip = await screen.findByRole('button', { name: 'Go to group ‘QA’' });
+      const chip = await screen.findByRole('button', { name: 'Go to group “QA”' });
       fireEvent.click(chip);
 
       await waitFor(() => {
