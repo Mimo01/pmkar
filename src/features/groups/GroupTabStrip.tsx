@@ -1,14 +1,33 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CreateGroupPopover } from './CreateGroupPopover';
+import { GroupMenuItems } from './GroupMenuItems';
 import { GroupTab } from './GroupTab';
+import { canMove, positionOf } from './groupMoves';
 import { useGroupStore } from './groupStore';
 import { computeOverflow, groupTabId, parseGroupTabId, type TabId } from './groupTabs';
 
 const ARROW_CLASS =
   'flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2';
+
+export type PendingAction = {
+  groupId: number;
+  kind: 'rename' | 'color' | 'delete';
+} | null;
+
+type MenuIntent = {
+  groupId: number;
+  kind: 'rename' | 'color' | 'delete' | 'move-left' | 'move-right';
+} | null;
+
+type PendingFocus = {
+  id: number;
+  target: 'tab' | 'more';
+  source: 'create' | 'manage';
+} | null;
 
 export function GroupTabStrip({
   activeTab,
@@ -22,7 +41,17 @@ export function GroupTabStrip({
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [overflow, setOverflow] = useState({ canScrollLeft: false, canScrollRight: false });
-  const [pendingFocusId, setPendingFocusId] = useState<number | null>(null);
+  const wrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const moreRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+  const anchorRef = useRef<HTMLElement | null>(null);
+  const menuIntentRef = useRef<MenuIntent>(null);
+  const movingRef = useRef(false);
+  const [moving, setMoving] = useState(false);
+  const [pendingFocus, setPendingFocus] = useState<PendingFocus>(null);
+  const [pending, setPending] = useState<PendingAction>(null);
+  const [announcement, setAnnouncement] = useState('');
+  const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function updateOverflow() {
     const el = scrollerRef.current;
@@ -69,21 +98,97 @@ export function GroupTabStrip({
     tabRefs.current.get(id)?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
   }, [activeTab, groups]);
 
-  // Drop a pending focus request once the user navigates away from that group, so a
-  // later unrelated hydrate can never pull focus onto it.
+  // Drop a create-focus request once the user navigates away from that group, so a
+  // later unrelated hydrate can never pull focus onto it. Manage requests (menu actions)
+  // may target an inactive tab, so they are kept.
   useEffect(() => {
-    setPendingFocusId((p) => (p !== null && activeTab !== groupTabId(p) ? null : p));
+    setPendingFocus((p) =>
+      p !== null && p.source === 'create' && activeTab !== groupTabId(p.id) ? null : p,
+    );
   }, [activeTab]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wait for the new group to render
   useEffect(() => {
-    if (pendingFocusId === null) return;
-    const el = tabRefs.current.get(pendingFocusId);
+    if (pendingFocus === null) return;
+    const map = pendingFocus.target === 'more' ? moreRefs.current : tabRefs.current;
+    const el = map.get(pendingFocus.id);
     if (!el) return;
     el.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     el.focus();
-    setPendingFocusId(null);
-  }, [pendingFocusId, groups]);
+    setPendingFocus(null);
+  }, [pendingFocus, groups]);
+
+  // A pending rename/color action whose group vanished from the store is dropped.
+  useEffect(() => {
+    if (pending && pending.kind !== 'delete' && !groups.some((g) => g.id === pending.groupId)) {
+      setPending(null);
+      toast.error(t('groups.error.notFound'));
+    }
+  }, [groups, pending, t]);
+
+  useEffect(
+    () => () => {
+      if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
+      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+    },
+    [],
+  );
+
+  function focusGroupTrigger(id: number) {
+    setPendingFocus({
+      id,
+      target: activeTab === groupTabId(id) ? 'more' : 'tab',
+      source: 'manage',
+    });
+  }
+
+  function announce(msg: string) {
+    if (announceTimerRef.current) clearTimeout(announceTimerRef.current);
+    if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+    setAnnouncement('');
+    announceTimerRef.current = setTimeout(() => setAnnouncement(msg), 50);
+    clearTimerRef.current = setTimeout(() => setAnnouncement(''), 5000);
+  }
+
+  async function handleMove(id: number, dir: 'left' | 'right') {
+    if (movingRef.current) return;
+    movingRef.current = true;
+    setMoving(true);
+    try {
+      const r = await useGroupStore.getState().moveGroup(id, dir);
+      if (!r.ok) {
+        toast.error(t(r.code === 'not_found' ? 'groups.error.notFound' : 'groups.error.move'));
+        return;
+      }
+      const current = useGroupStore.getState().groups;
+      const pos = positionOf(current, id);
+      const name = current.find((g) => g.id === id)?.name;
+      if (pos && name !== undefined) {
+        announce(t('groups.move.announce', { name, position: pos.position, total: pos.total }));
+      }
+      focusGroupTrigger(id);
+    } finally {
+      movingRef.current = false;
+      setMoving(false);
+    }
+  }
+
+  function recordIntent(groupId: number, kind: NonNullable<MenuIntent>['kind']) {
+    menuIntentRef.current = { groupId, kind };
+  }
+
+  function handleMenuCloseAutoFocus(e: Event) {
+    const intent = menuIntentRef.current;
+    menuIntentRef.current = null;
+    if (!intent) return;
+    e.preventDefault();
+    if (intent.kind === 'move-left' || intent.kind === 'move-right') {
+      void handleMove(intent.groupId, intent.kind === 'move-left' ? 'left' : 'right');
+      return;
+    }
+    anchorRef.current = wrapperRefs.current.get(intent.groupId) ?? null;
+    setPending({ groupId: intent.groupId, kind: intent.kind });
+  }
 
   function scrollByDir(dir: -1 | 1) {
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
@@ -93,13 +198,22 @@ export function GroupTabStrip({
   function handleCreated(id: number) {
     // Only honour focus/tab switch for a group the store actually has.
     if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
-    setPendingFocusId(id);
+    setPendingFocus({ id, target: 'tab', source: 'create' });
     onTabChange(groupTabId(id));
   }
 
   return (
     <TooltipProvider delayDuration={300}>
       <div className="flex flex-1 min-w-0 items-center">
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+          data-testid="group-move-status"
+        >
+          {announcement}
+        </div>
         <span
           data-testid="group-divider"
           aria-hidden="true"
@@ -123,6 +237,27 @@ export function GroupTabStrip({
                   if (el) tabRefs.current.set(g.id, el);
                   else tabRefs.current.delete(g.id);
                 }}
+                moreButtonRef={(el) => {
+                  if (el) moreRefs.current.set(g.id, el);
+                  else moreRefs.current.delete(g.id);
+                }}
+                wrapperRef={(el) => {
+                  if (el) wrapperRefs.current.set(g.id, el);
+                  else wrapperRefs.current.delete(g.id);
+                }}
+                onMenuCloseAutoFocus={handleMenuCloseAutoFocus}
+                renderMenuItems={(variant) => (
+                  <GroupMenuItems
+                    variant={variant}
+                    canMoveLeft={!moving && canMove(groups, g.id, 'left')}
+                    canMoveRight={!moving && canMove(groups, g.id, 'right')}
+                    onRename={() => recordIntent(g.id, 'rename')}
+                    onChangeColor={() => recordIntent(g.id, 'color')}
+                    onMoveLeft={() => recordIntent(g.id, 'move-left')}
+                    onMoveRight={() => recordIntent(g.id, 'move-right')}
+                    onDelete={() => recordIntent(g.id, 'delete')}
+                  />
+                )}
               />
             ))}
           </div>

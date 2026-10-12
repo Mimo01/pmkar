@@ -1,4 +1,12 @@
+import { MoreHorizontal } from 'lucide-react';
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { groupColorVar } from './colors';
 import type { Group } from './types';
@@ -8,43 +16,126 @@ interface GroupTabProps {
   active: boolean;
   onSelect: () => void;
   buttonRef: (el: HTMLButtonElement | null) => void;
+  moreButtonRef: (el: HTMLButtonElement | null) => void;
+  wrapperRef: (el: HTMLDivElement | null) => void;
+  renderMenuItems: (variant: 'dropdown' | 'context') => React.ReactNode;
+  onMenuCloseAutoFocus: (e: Event) => void;
 }
 
-export function GroupTab({ group, active, onSelect, buttonRef }: GroupTabProps) {
+export function GroupTab({
+  group,
+  active,
+  onSelect,
+  buttonRef,
+  moreButtonRef,
+  wrapperRef,
+  renderMenuItems,
+  onMenuCloseAutoFocus,
+}: GroupTabProps) {
   const { t } = useTranslation();
+  const localWrapperRef = useRef<HTMLDivElement | null>(null);
+  const triggerLabel = t('groups.menu.trigger', { name: group.name });
+
+  function setWrapper(el: HTMLDivElement | null) {
+    localWrapperRef.current = el;
+    wrapperRef(el);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) {
+      e.preventDefault();
+      const wrapper = localWrapperRef.current;
+      if (!wrapper) return;
+      const rect = wrapper.getBoundingClientRect();
+      wrapper.dispatchEvent(
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          clientX: rect.left,
+          clientY: rect.bottom,
+        }),
+      );
+    }
+  }
+
+  const moreButton = (
+    <button
+      type="button"
+      ref={moreButtonRef}
+      aria-label={triggerLabel}
+      aria-hidden={active ? undefined : true}
+      tabIndex={active ? 0 : -1}
+      className={`flex h-5 w-5 items-center justify-center rounded text-brand-text-secondary hover:text-brand-text focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+        active ? '' : 'invisible pointer-events-none'
+      }`}
+    >
+      <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          ref={buttonRef}
-          onClick={onSelect}
-          aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
-          aria-current={active ? 'page' : undefined}
-          className={`shrink-0 flex items-center gap-1 text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
-            active
-              ? 'text-brand-text font-semibold border-brand'
-              : 'text-brand-muted font-normal hover:text-brand-text border-transparent'
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div
+          ref={setWrapper}
+          className={`shrink-0 inline-flex items-center gap-1 mr-4 border-b-2 transition-colors duration-150 ${
+            active ? 'border-brand' : 'border-transparent'
           }`}
         >
-          <span
-            aria-hidden="true"
-            className="w-2 h-2 rounded-full shrink-0"
-            style={{ backgroundColor: groupColorVar(group.color) }}
-          />
-          <span className="grid max-w-[160px]">
-            <span
-              aria-hidden="true"
-              className="col-start-1 row-start-1 truncate invisible font-semibold"
-            >
-              {group.name}
-            </span>
-            <span className="col-start-1 row-start-1 truncate">{group.name}</span>
-          </span>
-          <span className="text-xs text-brand-text-secondary">{group.memberCount}</span>
-        </button>
-      </TooltipTrigger>
-      <TooltipContent aria-hidden="true">{group.name}</TooltipContent>
-    </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                ref={buttonRef}
+                onClick={onSelect}
+                onKeyDown={handleKeyDown}
+                aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
+                aria-current={active ? 'page' : undefined}
+                className={`flex items-center gap-1 text-sm py-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+                  active
+                    ? 'text-brand-text font-semibold'
+                    : 'text-brand-muted font-normal hover:text-brand-text'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ backgroundColor: groupColorVar(group.color) }}
+                />
+                <span className="grid max-w-[160px]">
+                  <span
+                    aria-hidden="true"
+                    className="col-start-1 row-start-1 truncate invisible font-semibold"
+                  >
+                    {group.name}
+                  </span>
+                  <span className="col-start-1 row-start-1 truncate">{group.name}</span>
+                </span>
+                <span className="text-xs text-brand-text-secondary">{group.memberCount}</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent aria-hidden="true">{group.name}</TooltipContent>
+          </Tooltip>
+          <DropdownMenu>
+            {active ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>{moreButton}</DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent aria-hidden="true">{triggerLabel}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <DropdownMenuTrigger asChild>{moreButton}</DropdownMenuTrigger>
+            )}
+            <DropdownMenuContent onCloseAutoFocus={onMenuCloseAutoFocus}>
+              {renderMenuItems('dropdown')}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent onCloseAutoFocus={onMenuCloseAutoFocus}>
+        {renderMenuItems('context')}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
