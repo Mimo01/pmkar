@@ -189,11 +189,11 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A "Select" toggle in every list header reveals checkboxes with shift-click range selection; selection clears on tab change or leaving select mode
   5. The selection bar shows the count and adds all selected issues to a group atomically (with inline create); inside a group view it also offers "Remove from group"
 
-**Plans:** 9 plans
+**Plans:** 2/9 plans executed
 **Wave 1**
 
-- [ ] 31-01-PLAN.md — EN/SK strings for picker, chips, select mode, bar, toasts (Slovak plurals, D-18 check)
-- [ ] 31-02-PLAN.md — NavigationContext + App navigateToGroup + GroupTabStrip focusRequest
+- [x] 31-01-PLAN.md — EN/SK strings for picker, chips, select mode, bar, toasts (Slovak plurals, D-18 check)
+- [x] 31-02-PLAN.md — NavigationContext + App navigateToGroup + GroupTabStrip focusRequest
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -279,6 +279,6 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
-| 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
+| 31. Membership Entry Points | v0.5.0 | 2/9 | In Progress|  |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
