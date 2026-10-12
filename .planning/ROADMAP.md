@@ -91,13 +91,13 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. A test fails if the Rust side emits a copy step id that has no translation key
   4. Existing New / Not mine / Linked lists filter and sort exactly as before after the shared list utilities extraction
 
-**Plans:** 6 plansPlans:
+**Plans:** 4/6 plans executed
 **Wave 1**
 
-- [ ] 28-01-PLAN.md — Characterize then extract New/Not mine/Linked filter+sort into ticketListUtils (SC4)
-- [ ] 28-02-PLAN.md — Shared copyStepLabel helper, EN/SK keys, Rust step-id sync test, translate result screens (CONI-01)
-- [ ] 28-03-PLAN.md — Group color palette tokens (colors.ts + CSS vars) with contrast and parity tests
-- [ ] 28-04-PLAN.md — groups.db data layer: scope, validation, CRUD, atomic membership, shared vectors (crate checkpoint)
+- [x] 28-01-PLAN.md — Characterize then extract New/Not mine/Linked filter+sort into ticketListUtils (SC4)
+- [x] 28-02-PLAN.md — Shared copyStepLabel helper, EN/SK keys, Rust step-id sync test, translate result screens (CONI-01)
+- [x] 28-03-PLAN.md — Group color palette tokens (colors.ts + CSS vars) with contrast and parity tests
+- [x] 28-04-PLAN.md — groups.db data layer: scope, validation, CRUD, atomic membership, shared vectors (crate checkpoint)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -219,7 +219,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | v0.4.8 | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
-| 28. Foundations | v0.5.0 | 0/TBD | Not started | - |
+| 28. Foundations | v0.5.0 | 4/6 | In Progress|  |
 | 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
