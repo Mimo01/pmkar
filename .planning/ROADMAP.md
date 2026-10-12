@@ -77,7 +77,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 - [x] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right (completed 2026-10-12)
 - [x] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar (completed 2026-10-12)
 - [x] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove (completed 2026-10-12)
-- [ ] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI
+- [x] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI (completed 2026-10-12)
 
 ### Phase 28: Foundations
 
@@ -267,7 +267,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
   4. With about 25 groups the tab bar and cards remain usable and uncluttered
 
-**Plans:** 9/10 plans executed
+**Plans:** 10/10 plans complete
 **UI hint**: yes
 
 **Wave 1**
@@ -296,7 +296,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 33-10-PLAN.md — Consolidated v0.5.0 milestone UAT (phases 29-33) with mock-scenario steps
+- [x] 33-10-PLAN.md — Consolidated v0.5.0 milestone UAT (phases 29-33) with mock-scenario steps
 
 </details>
 
@@ -336,4 +336,4 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
-| 33. Polish & Verification | v0.5.0 | 9/10 | In Progress|  |
+| 33. Polish & Verification | v0.5.0 | 10/10 | Complete   | 2026-10-12 |
