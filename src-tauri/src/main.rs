@@ -2,7 +2,8 @@
 
 use pmkar_lib::{
     audit::AuditDb, commands, field_mapping_db::FieldMappingDb, fixtures::build_fixtures,
-    poll_engine::PollFrequency, snapshot_db::SnapshotDb, triage_db::TriageDb,
+    groups_commands, groups_db::GroupsDb, poll_engine::PollFrequency, snapshot_db::SnapshotDb,
+    triage_db::TriageDb,
 };
 use std::sync::{Arc, Mutex};
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
@@ -142,6 +143,11 @@ fn main() {
                 FieldMappingDb::open(&mapping_db_path).expect("Failed to open mapping database");
             app.manage(Arc::new(Mutex::new(mapping_db)));
 
+            let groups_db_path = app_dir.join("groups.db");
+            let groups_db =
+                GroupsDb::open(&groups_db_path).expect("Failed to open groups database");
+            app.manage(Arc::new(Mutex::new(groups_db)));
+
             app.manage(fixtures.clone());
 
             // Poll engine: create watch channel and spawn background loop
@@ -194,6 +200,16 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            groups_commands::list_groups,
+            groups_commands::list_group_memberships,
+            groups_commands::get_group_members,
+            groups_commands::create_group,
+            groups_commands::rename_group,
+            groups_commands::set_group_color,
+            groups_commands::move_group,
+            groups_commands::delete_group,
+            groups_commands::add_issues_to_group,
+            groups_commands::remove_issues_from_group,
             commands::store_credential,
             commands::get_credential,
             commands::delete_credential,
