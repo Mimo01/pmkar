@@ -225,7 +225,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A group with missing members offers "Remove all missing", which asks for confirmation before removing
   5. Snapshots refresh after each successful fetch and are cleaned up once no group references the issue
 
-**Plans:** 9/9 plans complete
+**Plans:** 9/13 plans complete
 **Wave 1**
 
 - [x] 32-01-PLAN.md — Rust UPDATE-only refresh_snapshots + refresh_group_snapshots command; GC regression tests (GDUR-01, GDUR-06)
@@ -246,6 +246,13 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 - [x] 32-08-PLAN.md — CR-01: gate snapshot refresh on unchanged fetch signature + Rust expected-scope check (GDUR-06)
 - [x] 32-09-PLAN.md — WR-01: single-card Remove rechecks still-missing at confirm (GDUR-05)
+
+**Gap closure 2** *(parallel, wave 1)*
+
+- [ ] 32-10-PLAN.md — CR-01 (add path): Rust add_issues_to_group expected-scope veto with loud scope_mismatch error, en/sk copy (GDUR-06)
+- [ ] 32-11-PLAN.md — CR-01 (stale list): clear tickets on server baseUrl change; discard fetch results after a mid-flight server switch (GDUR-06)
+- [ ] 32-12-PLAN.md — WR-05: reset stale confirmKey/confirmAll so destructive popovers never re-open uninvited (GDUR-05)
+- [ ] 32-13-PLAN.md — WR-06: confirm-time eligibility false while a fetch is loading (GDUR-04, GDUR-05)
 **Research flag**: Check whether default JQL presets include done issues and pin down exact gating rules
 
 ### Phase 33: Polish & Verification
