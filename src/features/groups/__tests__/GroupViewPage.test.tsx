@@ -57,7 +57,7 @@ function seed(
 }
 
 function cardFor(key: string): HTMLElement {
-  const el = screen.getByText(key).closest('button');
+  const el = screen.getByText(key).closest<HTMLElement>('[data-testid="ticket-card"]');
   if (!el) throw new Error(`no card for ${key}`);
   return el;
 }
@@ -141,7 +141,7 @@ describe('GroupViewPage', () => {
   it('clicking a card selects the ticket', () => {
     seed({ 1: ['T-1'] });
     render(<GroupViewPage groupId={1} />);
-    fireEvent.click(cardFor('T-1'));
+    fireEvent.click(within(cardFor('T-1')).getByRole('button', { name: 'Summary T-1' }));
     expect(useTicketStore.getState().selectedTicketKey).toBe('T-1');
   });
 

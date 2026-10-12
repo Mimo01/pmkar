@@ -298,7 +298,7 @@ describe('TicketListPage', () => {
     });
 
     // Click on the first ticket card
-    fireEvent.click(screen.getByText('First ticket summary'));
+    fireEvent.click(screen.getByRole('button', { name: 'First ticket summary' }));
 
     await waitFor(() => {
       expect(useTicketStore.getState().selectedTicketKey).toBe('PROJ-1');
