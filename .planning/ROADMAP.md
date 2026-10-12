@@ -150,7 +150,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Deleting a group asks for confirmation stating the issue count and that issues are not affected; if it was the active tab the app lands on a core tab
   4. User can reorder group tabs with "Move left / Move right" in the tab menu (mouse or keyboard); core tabs stay fixed, a screen reader announces the new position, and the order survives restart
 
-**Plans:** 2/7 plans executed
+**Plans:** 5/7 plans executed
 **Wave 1**
 
 - [x] 30-01-PLAN.md — Legitimacy gate + exact-pinned Radix dropdown/context menu packages, shadcn wrappers, jsdom stubs (checkpoint)
@@ -158,9 +158,9 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 30-03-PLAN.md — Shared useGroupNameForm/GroupNameForm extraction, GroupColorSwatches radiogroup, Create popover swatch row + triggerRef
-- [ ] 30-04-PLAN.md — DeleteGroupDialog (alertdialog, frozen count, Slovak plurals) + DialogContent hideClose
-- [ ] 30-05-PLAN.md — GroupMenuItems, GroupTab `…` + right-click/Shift+F10 menu, Move left/right with announcement and focus return
+- [x] 30-03-PLAN.md — Shared useGroupNameForm/GroupNameForm extraction, GroupColorSwatches radiogroup, Create popover swatch row + triggerRef
+- [x] 30-04-PLAN.md — DeleteGroupDialog (alertdialog, frozen count, Slovak plurals) + DialogContent hideClose
+- [x] 30-05-PLAN.md — GroupMenuItems, GroupTab `…` + right-click/Shift+F10 menu, Move left/right with announcement and focus return
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -254,7 +254,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
-| 30. Group Management & Reorder | v0.5.0 | 2/7 | In Progress|  |
+| 30. Group Management & Reorder | v0.5.0 | 5/7 | In Progress|  |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
