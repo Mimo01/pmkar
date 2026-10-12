@@ -3,6 +3,7 @@ import type React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '../../lib/format';
 import { GroupChips } from '../groups/GroupChips';
 import { PriorityIcon } from './PriorityIcon';
@@ -22,6 +23,10 @@ interface TicketCardProps {
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (shift: boolean) => void;
+  /** Dims the content (key, dates, summary, metadata) but not chips, checkbox or footer. */
+  dimmed?: boolean;
+  /** Full-contrast control row rendered below the content. */
+  footerSlot?: React.ReactNode;
 }
 
 // --- TicketCard component ---
@@ -34,15 +39,22 @@ export function TicketCard({
   selectMode,
   selected,
   onToggleSelect,
+  dimmed,
+  footerSlot,
 }: TicketCardProps) {
   const { t } = useTranslation();
   const unseenFields = useTicketStore((s) => s.unseenChanges[ticket.key]);
   const hasUnseenChanges = !!unseenFields;
   const changeCount = unseenFields?.length ?? 0;
   const fieldList = unseenFields?.join(', ') ?? '';
+  // Opacity on a parent cannot be undone by a child, so dim individual elements only.
+  const dimClass = dimmed
+    ? 'opacity-60 transition-opacity duration-150 motion-reduce:transition-none'
+    : '';
   return (
     <div
       data-testid="ticket-card"
+      data-ticket-key={ticket.key}
       className={`group relative border-b border-brand-border transition-colors duration-150 hover:bg-brand-surface-hover ${
         selectMode && selected ? 'shadow-[inset_3px_0_0_var(--color-brand)]' : ''
       }`}
@@ -66,7 +78,7 @@ export function TicketCard({
         {/* Line 1: ticket key + dates on right */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-brand-muted">{ticket.key}</span>
+            <span className={cn('text-xs font-mono text-brand-muted', dimClass)}>{ticket.key}</span>
             {hasUnseenChanges && (
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
@@ -95,7 +107,7 @@ export function TicketCard({
               {actionSlot}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-brand-muted">
+          <div className={cn('flex items-center gap-2 text-xs text-brand-muted', dimClass)}>
             {ticket.fields.created && (
               <>
                 <span>
@@ -110,24 +122,43 @@ export function TicketCard({
           </div>
         </div>
         {/* Line 2: summary */}
-        <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-1 mb-1">
+        <p
+          className={cn(
+            'text-sm font-semibold text-brand-text leading-snug line-clamp-1 mb-1',
+            dimClass,
+          )}
+        >
           {ticket.fields.summary}
         </p>
         {/* Line 4: metadata row */}
         <div className="flex items-center gap-2">
-          <StatusBadge status={ticket.fields.status.name} />
-          <PriorityIcon priority={ticket.fields.priority.name} size="sm" />
-          <UserAvatar user={ticket.fields.assignee} size="sm" />
-          {ticket.fields.assignee && (
-            <span className="text-xs text-brand-text-secondary truncate">
-              {ticket.fields.assignee.displayName}
-            </span>
-          )}
+          <span className={cn('flex items-center gap-2 min-w-0', dimClass)}>
+            <StatusBadge status={ticket.fields.status.name} />
+            <PriorityIcon priority={ticket.fields.priority.name} size="sm" />
+            <UserAvatar user={ticket.fields.assignee} size="sm" />
+            {ticket.fields.assignee && (
+              <span className="text-xs text-brand-text-secondary truncate">
+                {ticket.fields.assignee.displayName}
+              </span>
+            )}
+          </span>
           <span className="pointer-events-auto relative z-10 ml-auto min-w-0">
             <GroupChips issueKey={ticket.key} hideGroupId={hideGroupId} />
           </span>
         </div>
       </div>
+      {footerSlot && (
+        // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: only stops click propagation; real controls live inside footerSlot
+        <div
+          className={cn(
+            'pointer-events-auto relative z-10 px-4 pb-3 -mt-1 flex items-center justify-between gap-2',
+            selectMode && 'pl-14',
+          )}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {footerSlot}
+        </div>
+      )}
       {selectMode && (
         // biome-ignore lint/a11y/useSemanticElements: custom 24px hit area with styled box; shift-click needs the click event
         <button
