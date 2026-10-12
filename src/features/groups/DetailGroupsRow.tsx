@@ -104,6 +104,7 @@ export function DetailGroupsRow({
               </PopoverTrigger>
               <PopoverContent
                 className="w-70 p-4"
+                aria-label={t('groups.chip.removeConfirm', { name: g.name })}
                 onOpenAutoFocus={(e) => {
                   e.preventDefault();
                   cancelRef.current?.focus();

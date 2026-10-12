@@ -90,6 +90,7 @@ export function SelectionBar({
                 </PopoverTrigger>
                 <PopoverContent
                   className="w-70 p-4"
+                  aria-label={t('groups.bar.removeConfirm', { count, name: group.name })}
                   side="top"
                   onOpenAutoFocus={(e) => {
                     e.preventDefault();

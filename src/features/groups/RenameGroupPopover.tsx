@@ -53,6 +53,7 @@ export function RenameGroupPopover({
       <PopoverContent
         align="start"
         className="w-[280px] p-4"
+        aria-label={t('groups.rename.title')}
         onCloseAutoFocus={(e) => {
           // No PopoverTrigger exists, so focus is returned explicitly (D-08).
           e.preventDefault();

@@ -63,6 +63,7 @@ export function CreateGroupPopover({
       </Tooltip>
       <PopoverContent
         align="end"
+        aria-label={t('groups.new')}
         onCloseAutoFocus={(e) => {
           if (createdRef.current) e.preventDefault();
         }}

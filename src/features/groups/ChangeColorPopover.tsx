@@ -51,6 +51,7 @@ export function ChangeColorPopover({
       <PopoverContent
         align="start"
         className="w-[280px] p-4"
+        aria-label={t('groups.color.title')}
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           onReturnFocus();
