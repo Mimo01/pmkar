@@ -45,6 +45,7 @@ vi.mock('../connections/connectionStore', () => ({
         cloudConnection: null,
         hasCompletedSetup: () => true,
       }),
+      subscribe: () => () => {},
     },
   ),
 }));

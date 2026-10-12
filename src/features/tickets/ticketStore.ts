@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { useConnectionStore } from '../connections/connectionStore';
 import type {
   FetchConfig,
   FetchStatus,
@@ -46,6 +47,12 @@ interface TicketState {
   ) => void;
   /** Clears hint eligibility (partial/failed fetch). Tickets are left untouched. */
   markFetchIncomplete: () => void;
+  /**
+   * CR-01: drops the previous server's live list, selection and hint eligibility.
+   * Deliberately leaves unseenChanges (hydrated from SQLite independently), fetch config,
+   * poll state and fetchStatus alone; an in-flight fetch settles fetchStatus itself.
+   */
+  resetForServerSwitch: () => void;
   selectTicket: (key: string | null) => void;
   markSeen: (key: string) => void;
   setFetchStatus: (status: FetchStatus, error?: string) => void;
@@ -122,6 +129,18 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   markFetchIncomplete: () => set({ lastCompleteFetchSignature: null }),
 
+  resetForServerSwitch: () =>
+    set({
+      tickets: [],
+      triageMap: {},
+      selectedTicketKey: null,
+      totalCount: 0,
+      newCount: 0,
+      truncated: false,
+      lastCompleteFetchSignature: null,
+      hasFetchedThisSession: false,
+    }),
+
   selectTicket: (key) => set({ selectedTicketKey: key }),
 
   markSeen: (key) => {
@@ -176,3 +195,14 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       return { unseenChanges: rest };
     }),
 }));
+
+// CR-01: the old server's tickets must not stay live after a server switch, because group views
+// prefer live data and the list feeds add_issues_to_group. Skip the startup null -> A hydration;
+// clear on A -> B and A -> null. Strict string comparison: an over-eager clear just means a refetch.
+useConnectionStore.subscribe((state, prev) => {
+  const prevUrl = prev.serverConnection?.baseUrl ?? null;
+  const nextUrl = state.serverConnection?.baseUrl ?? null;
+  if (prevUrl !== null && nextUrl !== prevUrl) {
+    useTicketStore.getState().resetForServerSwitch();
+  }
+});
