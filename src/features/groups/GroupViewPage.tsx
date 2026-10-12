@@ -79,6 +79,15 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
     (targetBtn ?? removeAllRef.current ?? list)?.focus();
   }, [ordered]);
 
+  // A popover that unmounts with its card or block never fires onOpenChange(false), so stale
+  // state would re-open it uninvited later (WR-05).
+  useEffect(() => {
+    if (confirmKey !== null && !missingVisible.some((m) => m.key === confirmKey)) {
+      setConfirmKey(null);
+    }
+    if (confirmAll && missingVisible.length === 0) setConfirmAll(false);
+  }, [missingVisible, confirmKey, confirmAll]);
+
   const isEmpty = keys === null || keys.length === 0;
   // Members exist and loaded, but the search/assignee filter excludes all of them.
   const noResults = !isEmpty && !loading && members.length > 0 && sorted.length === 0;

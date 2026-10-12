@@ -586,6 +586,51 @@ describe('GroupViewPage missing members', () => {
     expect(callsOf('remove_issues_from_group')).toHaveLength(0);
   });
 
+  it('per-card confirm does not re-open when the member returns and goes missing again', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    expect(await screen.findByText('Remove ‘AB-2’ from ‘QA’?')).toBeInTheDocument();
+    act(() => useTicketStore.setState({ tickets: [A1, M2] }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument(),
+    );
+    act(() => useTicketStore.setState({ tickets: [A1] }));
+    await screen.findByRole('button', { name: 'Remove AB-2 from QA' });
+    expect(screen.queryByText('Remove ‘AB-2’ from ‘QA’?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+  });
+
+  it('per-card confirm does not re-open after a filter hides and restores the card', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    await screen.findByText('Remove ‘AB-2’ from ‘QA’?');
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-4' } });
+    await waitFor(() => expect(screen.queryByText('AB-2')).not.toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: '' } });
+    await screen.findByText('AB-2');
+    expect(screen.queryByText('Remove ‘AB-2’ from ‘QA’?')).not.toBeInTheDocument();
+  });
+
+  it('Remove all missing confirm does not re-open when the block disappears and reappears', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove all missing' }));
+    await screen.findByText(/They are no longer in results/);
+    act(() => useTicketStore.setState({ tickets: [A1, M2, M4] }));
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Remove all missing' })).not.toBeInTheDocument(),
+    );
+    act(() => useTicketStore.setState({ tickets: [A1] }));
+    await screen.findByRole('button', { name: 'Remove all missing' });
+    expect(screen.queryByText(/They are no longer in results/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+  });
+
   it('select mode: shift-range follows present-then-missing DOM order', async () => {
     setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-3', 'AB-4'], live: [A1, A3] });
     render(<GroupViewPage groupId={7} />);
