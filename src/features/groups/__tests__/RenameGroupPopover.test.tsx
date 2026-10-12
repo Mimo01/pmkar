@@ -219,4 +219,43 @@ describe('RenameGroupPopover', () => {
     await waitFor(() => expect(input().value).toBe('Sprint 12'));
     expect(screen.getByRole('alert')).toHaveTextContent('');
   });
+
+  it('selects the whole existing name when reopened after a different edit', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderWithI18n(<Harness />);
+    await screen.findByRole('heading', { name: 'Rename group' });
+    await user.clear(input());
+    await user.type(input(), 'Q');
+    await act(async () => {
+      rerender(<Harness open={false} />);
+    });
+    await waitFor(() => expect(screen.queryByRole('textbox')).toBeNull());
+    await act(async () => {
+      rerender(<Harness open />);
+    });
+    await waitFor(() => expect(input()).toHaveFocus());
+    // The input mounts already seeded, so select-on-focus covers the full name.
+    expect(input().value).toBe('Sprint 12');
+    expect(input().selectionStart).toBe(0);
+    expect(input().selectionEnd).toBe('Sprint 12'.length);
+  });
+
+  it('mounts the input with the group name already seeded', async () => {
+    const seen: string[] = [];
+    const { rerender } = renderWithI18n(<Harness open={false} />);
+    const orig = HTMLInputElement.prototype.select;
+    const spy = vi.spyOn(HTMLInputElement.prototype, 'select').mockImplementation(function (
+      this: HTMLInputElement,
+    ) {
+      seen.push(this.value);
+      orig.call(this);
+    });
+    await act(async () => {
+      rerender(<Harness open />);
+    });
+    await waitFor(() => expect(input()).toHaveFocus());
+    spy.mockRestore();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((v) => v === 'Sprint 12')).toBe(true);
+  });
 });

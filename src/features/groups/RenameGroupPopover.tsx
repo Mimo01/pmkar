@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
@@ -29,11 +29,15 @@ export function RenameGroupPopover({
   const groupId = group?.id;
   const groupName = group?.name;
 
-  // State resets on every open (D-06).
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when opening or switching group, not on each rename hydrate
-  useEffect(() => {
-    if (open && groupName !== undefined) reset(groupName);
-  }, [open, groupId]);
+  // State resets on every open or group switch (D-06), not on each rename hydrate.
+  // Seeded during render (not in an effect) so the autoFocus input mounts with the
+  // name already in place and select-on-focus covers the whole existing name.
+  const openKey = open && groupId !== undefined ? groupId : null;
+  const [seededKey, setSeededKey] = useState<number | null>(null);
+  if (openKey !== seededKey) {
+    setSeededKey(openKey);
+    if (openKey !== null && groupName !== undefined) reset(groupName);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
