@@ -1,0 +1,43 @@
+import type { Group } from './types';
+
+export type CoreTab = 'new' | 'not-mine' | 'linked';
+export type TabId = CoreTab | `group:${number}`;
+
+export function groupTabId(id: number): TabId {
+  return `group:${id}`;
+}
+
+export function parseGroupTabId(tab: string): number | null {
+  const m = /^group:(\d+)$/.exec(tab);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Resolves the effective tab. Falls back to 'new' only when the active tab is a
+ * group tab, groups are hydrated, and no group has that id. A failed hydrate keeps
+ * the last good groups, so a transient error never triggers this fallback; a scope
+ * change or deletion does.
+ */
+export function resolveActiveTab(
+  tab: TabId,
+  groups: readonly Pick<Group, 'id'>[],
+  groupsHydrated: boolean,
+): TabId {
+  const id = parseGroupTabId(tab);
+  if (id === null || !groupsHydrated) return tab;
+  return groups.some((g) => g.id === id) ? tab : 'new';
+}
+
+export function computeOverflow(m: {
+  scrollLeft: number;
+  clientWidth: number;
+  scrollWidth: number;
+}): {
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+} {
+  return {
+    canScrollLeft: m.scrollLeft > 0,
+    canScrollRight: m.scrollLeft + m.clientWidth < m.scrollWidth - 1,
+  };
+}
