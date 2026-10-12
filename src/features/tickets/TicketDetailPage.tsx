@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatDate, formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
+import { DetailGroupsRow } from '../groups/DetailGroupsRow';
 import { useCopyStore } from './copyStore';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { ChangesTab } from './tabs/ChangesTab';
@@ -125,7 +126,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   // Escape key goes back
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
         onBack();
       }
     },
@@ -220,7 +221,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       <div className="flex-1 overflow-y-auto px-8 py-6">
         {/* Ticket header: summary + updated time */}
         <h1 className="text-base font-semibold text-brand-text mb-1">{detail.fields.summary}</h1>
-        <p className="text-xs text-brand-muted mb-6">
+        <p className="text-xs text-brand-muted mb-3">
           {detail.fields.created && (
             <>
               {t('tickets.card.created', { time: formatDate(detail.fields.created) })}
@@ -229,6 +230,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           )}
           {t('tickets.card.updated', { time: formatRelativeTime(detail.fields.updated) })}
         </p>
+
+        <DetailGroupsRow issueKey={issueKey} detail={detail} />
 
         {/* Action buttons */}
         <TooltipProvider delayDuration={300}>
