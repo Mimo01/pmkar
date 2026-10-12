@@ -1,7 +1,8 @@
 ---
 phase: 31
 slug: membership-entry-points
-status: draft
+status: approved
+reviewed_at: 2026-10-12
 shadcn_initialized: true
 preset: existing (style default, baseColor neutral, cssVariables, lucide)
 created: 2026-10-12
