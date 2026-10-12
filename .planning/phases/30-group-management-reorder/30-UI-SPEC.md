@@ -44,7 +44,7 @@ Declared values (multiples of 4):
 
 Exceptions:
 - Swatch button: 24px square hit area containing a 16px color circle; selected swatch adds a 2px ring (offset 2px) and a 12px `Check`. The 2px ring and 2px ring offset are stroke widths (border-like), not layout spacing, so they are exempt from the 4px-multiple scale and do not affect the 24px hit area or the 220px row width. 8 swatches in one row: 8 x 24 + 7 x 4 = 220px, fits the 280px popover (248px content width).
-- `…` button inside the tab: 20px square, 16px icon, placed after the count with 4px gap. Tab keeps the Phase 29 `max-w-[160px]` name truncation. The `…` slot is reserved on the active tab only (see Tab integration).
+- `…` button inside the tab: 20px square, 16px icon, placed after the count with 4px gap. Tab keeps the Phase 29 `max-w-[160px]` name truncation. The `…` slot is always laid out on every group tab but visible and focusable only on the active tab (see Tab integration — width stability).
 - Menu: min-width 180px, 4px container padding.
 - Rename/Color popover width 280px (same as Create). Delete dialog max-width 400px.
 

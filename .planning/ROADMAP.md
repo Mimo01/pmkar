@@ -150,7 +150,26 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Deleting a group asks for confirmation stating the issue count and that issues are not affected; if it was the active tab the app lands on a core tab
   4. User can reorder group tabs with "Move left / Move right" in the tab menu (mouse or keyboard); core tabs stay fixed, a screen reader announces the new position, and the order survives restart
 
-**Plans**: TBD
+**Plans:** 7 plans
+**Wave 1**
+
+- [ ] 30-01-PLAN.md — Legitimacy gate + exact-pinned Radix dropdown/context menu packages, shadcn wrappers, jsdom stubs (checkpoint)
+- [ ] 30-02-PLAN.md — EN/SK copy (menu, rename, color names, delete plurals, move announce, errors), groupMoves helpers, focusCoreTab + AppShell data-tab-id
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 30-03-PLAN.md — Shared useGroupNameForm/GroupNameForm extraction, GroupColorSwatches radiogroup, Create popover swatch row + triggerRef
+- [ ] 30-04-PLAN.md — DeleteGroupDialog (alertdialog, frozen count, Slovak plurals) + DialogContent hideClose
+- [ ] 30-05-PLAN.md — GroupMenuItems, GroupTab `…` + right-click/Shift+F10 menu, Move left/right with announcement and focus return
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 30-06-PLAN.md — RenameGroupPopover and ChangeColorPopover (virtualRef-anchored, controlled)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 30-07-PLAN.md — Strip wiring of rename/color/delete overlays, delete fallback to New and D-14 focus targets
+
 **UI hint**: yes
 
 ### Phase 31: Membership Entry Points
