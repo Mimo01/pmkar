@@ -11,6 +11,7 @@
   "common.error": "Chyba",
   "common.retry": "Skúsiť znova",
   "settings.heading": "Nastavenia",
+  "settings.connectionSaveFailed": "Pripojenie sa nepodarilo uložiť. Naďalej sa používa predchádzajúce pripojenie. Skúste to znova.",
   "settings.back": "Späť do aplikácie",
   "settings.connections": "Pripojenia",
   "settings.language": "Jazyk",
@@ -609,5 +610,5 @@
   "groups.missing.removeAllError": "Úlohy sa nepodarilo odstrániť. Nič sa nezmenilo. Skúste to znova.",
   "groups.missing.refreshing": "Výsledky sa obnovujú… Odstrániť bude možné po dokončení načítania.",
   "groups.error.membership": "Skupinu sa nepodarilo aktualizovať. Skúste to znova.",
-  "groups.error.scopeMismatch": "Tieto úlohy sú z iného servera, než je teraz pripojený. Znova načítajte úlohy a skúste to znova."
+  "groups.error.scopeMismatch": "Pripojený server sa zmenil alebo nie je zosynchronizovaný. Znova otvorte zoznam úloh a skúste to znova. Ak sa to opakuje, znova uložte pripojenie k serveru v Nastaveniach."
 }

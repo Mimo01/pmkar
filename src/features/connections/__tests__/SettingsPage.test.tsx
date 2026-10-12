@@ -14,6 +14,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
+import { toast } from 'sonner';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -697,6 +698,32 @@ describe('SettingsPage — group re-hydration on source change', () => {
       expect(cmds()).toContain('list_groups');
       expect(cmds().indexOf('list_groups')).toBeGreaterThan(cmds().indexOf('set_connection_meta'));
     });
+  });
+
+  it('WR-09: a failed set_connection_meta rolls the server back and shows an error', async () => {
+    const toastError = vi.spyOn(toast, 'error').mockImplementation(() => '' as never);
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setup(Promise.reject(new Error('disk full')));
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Edit$/i }));
+    const urlInput = screen.getByLabelText('Base URL');
+    fireEvent.change(urlInput, { target: { value: 'https://other.example.com' } });
+    fireEvent.blur(urlInput);
+    fireEvent.change(screen.getByLabelText('Personal Access Token'), {
+      target: { value: 'pat' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "Couldn't save the connection. The previous connection is still in use. Try again.",
+      ),
+    );
+    expect(useConnectionStore.getState().serverConnection).toEqual(mockConnection);
+    // Groups re-hydrate against the scope Rust actually kept.
+    await waitFor(() => expect(cmds()).toContain('list_groups'));
+    toastError.mockRestore();
+    err.mockRestore();
   });
 
   it('cloud edit does not invoke list_groups', async () => {

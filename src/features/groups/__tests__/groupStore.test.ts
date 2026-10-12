@@ -8,8 +8,14 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { useConnectionStore } from '../../connections/connectionStore';
+import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket } from '../../tickets/types';
-import { selectGroupIdsForIssue, toGroupErrorCode, useGroupStore } from '../groupStore';
+import {
+  expectedAddScope,
+  selectGroupIdsForIssue,
+  toGroupErrorCode,
+  useGroupStore,
+} from '../groupStore';
 import type { Group } from '../types';
 
 const initial = useGroupStore.getState();
@@ -321,6 +327,47 @@ describe('groupStore', () => {
       'add_issues_to_group',
       expect.objectContaining({ expectedBaseUrl: '' }),
     );
+  });
+
+  describe('WR-09: expected scope comes from the tickets, not just the current connection', () => {
+    const conn = (baseUrl: string) => ({
+      baseUrl,
+      username: 'u',
+      serverVersion: '9',
+      lastTestedAt: '',
+      status: 'ok' as const,
+    });
+    const tk = (key: string) => ({ key, fields: {} }) as unknown as JiraTicket;
+
+    it('a list ticket still held after a switch carries its origin, so Rust can veto it', async () => {
+      mockLists([], []);
+      useConnectionStore.setState({ serverConnection: conn('http://a') });
+      const fromA = tk('A-1');
+      useTicketStore.getState().setTickets([fromA], {}, 1, false, null, 'http://a');
+      useConnectionStore.setState({ serverConnection: conn('http://b') }); // list is reset
+      expect(useTicketStore.getState().tickets).toEqual([]);
+      await useGroupStore.getState().addToGroup(1, [fromA]); // stale reference
+      expect(invokeMock).toHaveBeenCalledWith(
+        'add_issues_to_group',
+        expect.objectContaining({ expectedBaseUrl: 'http://a' }),
+      );
+      useConnectionStore.setState({ serverConnection: null });
+    });
+
+    it('tickets without a recorded origin (snapshot, detail) use the current server', () => {
+      useConnectionStore.setState({ serverConnection: conn('http://b') });
+      expect(expectedAddScope([tk('S-1')])).toBe('http://b');
+      expect(expectedAddScope([])).toBe('http://b');
+      useConnectionStore.setState({ serverConnection: null });
+    });
+
+    it('mixed origins fail closed with an empty expectation', () => {
+      useConnectionStore.setState({ serverConnection: conn('http://b') });
+      const fromA = tk('A-2');
+      useTicketStore.getState().setTickets([fromA], {}, 1, false, null, 'http://a');
+      expect(expectedAddScope([fromA, tk('S-2')])).toBe('');
+      useConnectionStore.setState({ serverConnection: null });
+    });
   });
 
   it('addToGroup maps scope_mismatch rejection', async () => {

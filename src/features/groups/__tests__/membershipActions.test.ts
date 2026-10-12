@@ -100,7 +100,7 @@ describe('addIssuesWithFeedback', () => {
     };
     expect(await addIssuesWithFeedback(group, tickets(1), t)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith(t('groups.error.scopeMismatch'));
-    expect(t('groups.error.scopeMismatch')).toContain('different server');
+    expect(t('groups.error.scopeMismatch')).toContain('out of sync');
   });
 
   it('reports internal errors', async () => {

@@ -11,6 +11,7 @@
   "common.error": "Error",
   "common.retry": "Retry",
   "settings.heading": "Settings",
+  "settings.connectionSaveFailed": "Couldn't save the connection. The previous connection is still in use. Try again.",
   "settings.back": "Back to App",
   "settings.connections": "Connections",
   "settings.language": "Language",
@@ -609,5 +610,5 @@
   "groups.missing.removeAllError": "Couldn't remove the issues. Nothing was changed. Try again.",
   "groups.missing.refreshing": "Refreshing results… Remove is available when the fetch finishes.",
   "groups.error.membership": "Could not update the group. Try again.",
-  "groups.error.scopeMismatch": "These tickets are from a different server than the one now connected. Fetch tickets again, then retry."
+  "groups.error.scopeMismatch": "The connected server changed or is out of sync. Reopen the ticket list and try again. If this keeps happening, save the server connection again in Settings."
 }

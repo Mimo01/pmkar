@@ -191,6 +191,7 @@ export function TicketListPage() {
           result.total,
           result.truncated,
           result.truncated ? null : fetchSig,
+          serverConn.baseUrl,
         );
         if (isFetchStillCurrent()) {
           void useGroupStore.getState().refreshSnapshots(result.issues, serverConn.baseUrl);
@@ -324,6 +325,7 @@ export function TicketListPage() {
         totalCount,
         anyTruncated,
         localFailedUsers.length === 0 && !anyTruncated ? fetchSig : null,
+        serverConn.baseUrl,
       );
       if (isFetchStillCurrent()) {
         void useGroupStore.getState().refreshSnapshots(mergedIssues, serverConn.baseUrl);

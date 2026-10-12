@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
 import { useConnectionStore } from '../connections/connectionStore';
+import { ticketOriginBaseUrl } from '../tickets/ticketStore';
 import type { JiraTicket } from '../tickets/types';
 import { type GroupColorToken, isGroupColorToken } from './colors';
 import type {
@@ -185,8 +186,8 @@ export const useGroupStore = create<GroupState>((set, get) => {
     addToGroup: (groupId, tickets) =>
       mutate<number>('add_issues_to_group', {
         groupId,
-        // CR-01: Rust vetoes the add when this does not match the current scope.
-        expectedBaseUrl: useConnectionStore.getState().serverConnection?.baseUrl ?? '',
+        // CR-01/WR-09: Rust vetoes the add when this does not match the current scope.
+        expectedBaseUrl: expectedAddScope(tickets),
         issues: tickets.map((t) => ({ issueKey: t.key, ticketJson: JSON.stringify(t) })),
       }),
     removeFromGroup: (groupId, issueKeys) =>
@@ -202,6 +203,18 @@ export const useGroupStore = create<GroupState>((set, get) => {
     },
   };
 });
+
+/**
+ * WR-09: the scope the tickets belong to, not just the frontend's current server. Tickets from a
+ * list fetch carry their recorded origin; others (snapshots, detail loaded by key) were read
+ * through the current connection. Mixed origins cannot all match one scope, so fail closed ('').
+ */
+export function expectedAddScope(tickets: readonly JiraTicket[]): string {
+  const current = useConnectionStore.getState().serverConnection?.baseUrl ?? '';
+  if (tickets.length === 0) return current;
+  const origins = new Set(tickets.map((t) => ticketOriginBaseUrl(t) ?? current));
+  return origins.size === 1 ? [...origins][0] : '';
+}
 
 export const selectGroupIdsForIssue =
   (issueKey: string) =>

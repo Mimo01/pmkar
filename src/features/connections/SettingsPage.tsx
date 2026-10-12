@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -539,6 +540,9 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
       status: 'ok',
     };
 
+    const connKey = connectionType === 'server' ? 'serverConnection' : 'cloudConnection';
+    const previous = useConnectionStore.getState()[connKey];
+
     if (connectionType === 'server') {
       useConnectionStore.getState().setServerConnection(meta);
       invoke('store_credential', {
@@ -564,7 +568,16 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
         lastTestedAt: meta.lastTestedAt,
         status: 'ok',
       },
-    }).catch(() => {});
+    }).catch((err) => {
+      // WR-09: Rust still holds the previous connection. Swallowing this left the frontend on the
+      // new server while every group add was vetoed as scope_mismatch. Roll the frontend back so
+      // both sides agree (unless a newer save already replaced it), and tell the user.
+      console.error('Failed to persist connection meta:', err);
+      if (useConnectionStore.getState()[connKey] === meta) {
+        useConnectionStore.setState({ [connKey]: previous });
+      }
+      toast.error(t('settings.connectionSaveFailed'));
+    });
     // Group scope is server-only (D-01); re-hydrate after persistence settles.
     if (connectionType === 'server') void useGroupStore.getState().rehydrateAfter(persisted);
 

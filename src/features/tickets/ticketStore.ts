@@ -51,6 +51,8 @@ interface TicketState {
     total: number,
     truncated?: boolean,
     completeSignature?: string | null,
+    /** WR-09: base URL the tickets were fetched from; recorded per ticket (ticketOriginBaseUrl). */
+    sourceBaseUrl?: string | null,
   ) => void;
   /** Clears hint eligibility (partial/failed fetch). Tickets are left untouched. */
   markFetchIncomplete: () => void;
@@ -97,6 +99,18 @@ interface TicketState {
   clearUnseenChange: (key: string) => void;
 }
 
+/**
+ * WR-09: per-ticket origin, keyed by object identity. A reference to a list ticket that outlives
+ * resetForServerSwitch (detail pane, copied selection, ...) still reports the server it came
+ * from, so add_issues_to_group can veto it. Not part of the ticket JSON, so never persisted.
+ */
+const ticketOrigins = new WeakMap<JiraTicket, string>();
+
+/** Base URL a ticket was fetched from, or null when it did not come from a list fetch. */
+export function ticketOriginBaseUrl(ticket: JiraTicket): string | null {
+  return ticketOrigins.get(ticket) ?? null;
+}
+
 export const useTicketStore = create<TicketState>((set, get) => ({
   // Initial state
   tickets: [],
@@ -123,7 +137,17 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   unseenChanges: {},
 
   // Actions
-  setTickets: (tickets, triageMap, total, truncated = false, completeSignature = null) => {
+  setTickets: (
+    tickets,
+    triageMap,
+    total,
+    truncated = false,
+    completeSignature = null,
+    sourceBaseUrl = null,
+  ) => {
+    if (sourceBaseUrl) {
+      for (const t of tickets) ticketOrigins.set(t, sourceBaseUrl);
+    }
     const safeMap = triageMap ?? {};
     const newCount = Object.values(safeMap).filter((e) => e.state === 'new').length;
     set({
