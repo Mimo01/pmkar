@@ -301,6 +301,20 @@ describe('groupStore', () => {
     expect(invokeMock).toHaveBeenCalledWith('list_group_memberships');
   });
 
+  it('rehydrateAfter clears previous scope groups when the read fails', async () => {
+    mockLists([g(1, 0)], [{ groupId: 1, issueKey: 'A-1' }]);
+    await useGroupStore.getState().hydrate();
+    invokeMock.mockReset();
+    invokeMock.mockRejectedValue(new Error('x'));
+    await useGroupStore.getState().rehydrateAfter(Promise.resolve());
+    const s = useGroupStore.getState();
+    expect(s.groups).toEqual([]);
+    expect(s.memberKeysByGroup).toEqual({});
+    expect(s.groupIdsByIssue).toEqual({});
+    expect(s.hydrated).toBe(true);
+    expect(s.hydrateError).toBe(true);
+  });
+
   it('rehydrateAfter hydrates even if persist rejects', async () => {
     mockLists([], []);
     await expect(

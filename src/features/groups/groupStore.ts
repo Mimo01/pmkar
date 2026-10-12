@@ -72,7 +72,9 @@ export const useGroupStore = create<GroupState>((set, get) => {
   // chains onto it so callers never resolve before the store reflects the latest read.
   let latestHydrate: Promise<void> = Promise.resolve();
 
-  async function load(seq: number): Promise<void> {
+  // clearOnError: the read follows a scope change, so the previous scope's groups
+  // are no longer valid and must not stay interactive if the read fails.
+  async function load(seq: number, clearOnError: boolean): Promise<void> {
     try {
       const [rawGroups, rawMemberships] = await Promise.all([
         invoke<Group[]>('list_groups'),
@@ -102,9 +104,30 @@ export const useGroupStore = create<GroupState>((set, get) => {
       set({ groups, memberKeysByGroup, groupIdsByIssue, hydrated: true, hydrateError: false });
     } catch {
       if (seq !== hydrateSeq) return;
+      if (clearOnError) {
+        set({
+          groups: [],
+          memberKeysByGroup: {},
+          groupIdsByIssue: {},
+          hydrated: true,
+          hydrateError: true,
+        });
+        return;
+      }
       // Keep the last good state so tabs never vanish on a transient failure.
       set({ hydrated: true, hydrateError: true });
     }
+  }
+
+  function startHydrate(clearOnError: boolean): Promise<void> {
+    const seq = ++hydrateSeq;
+    // If a newer hydrate starts while this one is in flight, wait for it (and,
+    // transitively, any hydrate that supersedes it) instead of resolving early.
+    const result = load(seq, clearOnError).then(() =>
+      seq === hydrateSeq ? undefined : latestHydrate,
+    );
+    latestHydrate = result;
+    return result;
   }
 
   return {
@@ -120,17 +143,11 @@ export const useGroupStore = create<GroupState>((set, get) => {
       } catch {
         // Rust state is read as-is regardless of persistence outcome.
       }
-      await get().hydrate();
+      // Scope may have changed: on failure, clear rather than keep the old scope's groups.
+      await startHydrate(true);
     },
 
-    hydrate: () => {
-      const seq = ++hydrateSeq;
-      // If a newer hydrate starts while this one is in flight, wait for it (and,
-      // transitively, any hydrate that supersedes it) instead of resolving early.
-      const result = load(seq).then(() => (seq === hydrateSeq ? undefined : latestHydrate));
-      latestHydrate = result;
-      return result;
-    },
+    hydrate: () => startHydrate(false),
 
     createGroup: (name, color) => mutate<Group>('create_group', { name, color }),
     renameGroup: (groupId, name) => mutate<Group>('rename_group', { groupId, name }),

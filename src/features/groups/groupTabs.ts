@@ -14,9 +14,11 @@ export function parseGroupTabId(tab: string): number | null {
 
 /**
  * Resolves the effective tab. Falls back to 'new' only when the active tab is a
- * group tab, groups are hydrated, and no group has that id. A failed hydrate keeps
- * the last good groups, so a transient error never triggers this fallback; a scope
- * change or deletion does.
+ * group tab, groups are hydrated, and no group has that id. A failed plain hydrate
+ * keeps the last good groups, so a transient error never triggers this fallback.
+ * Deletion does, and so does a scope change (rehydrateAfter): its successful read
+ * returns the new scope's groups, and its failed read clears groups rather than
+ * leaving the previous scope's tabs interactive.
  */
 export function resolveActiveTab(
   tab: TabId,
