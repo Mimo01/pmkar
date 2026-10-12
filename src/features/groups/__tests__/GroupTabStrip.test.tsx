@@ -141,12 +141,44 @@ describe('GroupTabStrip', () => {
     expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
   });
 
-  it('clicking the right arrow scrolls by 200', async () => {
+  it('clicking the right arrow scrolls by 80% of the viewport', async () => {
     seed([sprint, qa]);
     renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
     fireEvent.scroll(setOverflowMetrics(600, 200, 0));
     await userEvent.setup().click(screen.getByRole('button', { name: 'Scroll tabs right' }));
-    expect(scrollByMock).toHaveBeenCalledWith(expect.objectContaining({ left: 200 }));
+    expect(scrollByMock).toHaveBeenCalledWith(expect.objectContaining({ left: 160 }));
+  });
+
+  it('clicking the left arrow scrolls back by 80% of the viewport', async () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
+    fireEvent.scroll(setOverflowMetrics(600, 200, 300));
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Scroll tabs left' }));
+    expect(scrollByMock).toHaveBeenCalledWith(expect.objectContaining({ left: -160 }));
+  });
+
+  it('moves focus to the active group tab when the focused arrow disappears', () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    const arrow = screen.getByRole('button', { name: 'Scroll tabs right' });
+    arrow.focus();
+    expect(arrow).toHaveFocus();
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
+  });
+
+  it('does not steal focus when an unfocused arrow disappears', () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).not.toHaveFocus();
   });
 
   it('renders no arrows when not overflowing', () => {
