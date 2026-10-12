@@ -146,8 +146,63 @@ pub struct JiraIssue {
     pub fields: serde_json::Value, // Flexible to support both v2 and v3 shapes
 }
 
+/// Switchable mock-server behaviour used to reproduce Phase 32 missing-state UAT cases.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "scenario", rename_all = "snake_case")]
+pub enum MockScenario {
+    /// Normal behaviour.
+    #[default]
+    Default,
+    /// Issues with these keys are hidden from v2 search but still returned by GET issue.
+    Drop { keys: Vec<String> },
+    /// v2 searches for this assignee fail with HTTP 500.
+    PartialFail { assignee: String },
+    /// v2 search reports more than 1000 matches.
+    Truncated,
+}
+
+impl MockScenario {
+    /// Read the initial scenario from `PMKAR_MOCK_SCENARIO` (mock-server builds only).
+    #[cfg(feature = "mock-server")]
+    #[must_use]
+    pub fn from_env() -> Self {
+        let Ok(raw) = std::env::var("PMKAR_MOCK_SCENARIO") else {
+            return Self::Default;
+        };
+        match raw.trim().to_lowercase().as_str() {
+            "" | "default" => Self::Default,
+            "drop" => {
+                let keys = std::env::var("PMKAR_MOCK_DROP_KEYS")
+                    .unwrap_or_else(|_| "PROJ-1".to_string())
+                    .split(',')
+                    .map(|k| k.trim().to_string())
+                    .filter(|k| !k.is_empty())
+                    .collect();
+                Self::Drop { keys }
+            }
+            "partial_fail" => Self::PartialFail {
+                assignee: std::env::var("PMKAR_MOCK_FAIL_ASSIGNEE")
+                    .unwrap_or_else(|_| "csmith".to_string()),
+            },
+            "truncated" => Self::Truncated,
+            other => {
+                eprintln!("PMKAR_MOCK_SCENARIO: unknown value '{other}', using default");
+                Self::Default
+            }
+        }
+    }
+
+    /// Outside mock-server builds scenarios are never activated.
+    #[cfg(not(feature = "mock-server"))]
+    #[must_use]
+    pub fn from_env() -> Self {
+        Self::Default
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct FixtureState {
+    pub scenario: MockScenario,
     pub server_v2_issues: HashMap<String, JiraIssue>,
     pub cloud_v3_issues: HashMap<String, JiraIssue>,
     pub next_issue_id: u32,
@@ -3113,6 +3168,7 @@ pub fn build_fixtures() -> SharedFixtures {
     }
 
     Arc::new(Mutex::new(FixtureState {
+        scenario: MockScenario::from_env(),
         server_v2_issues: v2,
         cloud_v3_issues: v3,
         next_issue_id: 10041,
