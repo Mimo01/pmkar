@@ -121,7 +121,21 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Opening a group shows its members as one flat list with a New / Not mine / Linked badge on each card; an empty group explains how to add issues
   4. User can search, filter, sort, open detail, copy, and dismiss/restore from a group view, and triage changes appear immediately in both the group view and core tabs
 
-**Plans**: TBD
+**Plans:** 6 plans
+**Wave 1**
+
+- [ ] 29-01-PLAN.md — Fix Phase 28 WR-01..WR-04: hydrate sequencing + keep last good state; TS/Rust trim and zero-width alignment with shared vectors
+- [ ] 29-02-PLAN.md — Tab-id helpers + active-group fallback + overflow math, triage pill mapping, shared restoreTicket, all groups.* EN/SK strings
+- [ ] 29-03-PLAN.md — Verify (human gate) and install @radix-ui/react-popover; shadcn Popover primitive
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 29-04-PLAN.md — CreateGroupPopover: live validation, Rust error mapping, onCreated (GRP-01)
+- [ ] 29-05-PLAN.md — useGroupMembers (live + snapshot) and GroupViewPage with pills, actions, filter bar, empty state (GVIEW-03..06)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 29-06-PLAN.md — GroupTabStrip (divider, overflow scroll, arrows/fades, create-then-focus) wired into AppShell and App.tsx (GVIEW-01, GVIEW-02)
 **UI hint**: yes
 
 ### Phase 30: Group Management & Reorder
