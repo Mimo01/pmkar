@@ -267,7 +267,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
   4. With about 25 groups the tab bar and cards remain usable and uncluttered
 
-**Plans:** 7/10 plans executed
+**Plans:** 8/10 plans executed
 **UI hint**: yes
 
 **Wave 1**
@@ -288,7 +288,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 33-08-PLAN.md — axe runner (human legitimacy gate) over all D-01 key states, fix violations
+- [x] 33-08-PLAN.md — axe runner (human legitimacy gate) over all D-01 key states, fix violations
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -336,4 +336,4 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
-| 33. Polish & Verification | v0.5.0 | 7/10 | In Progress|  |
+| 33. Polish & Verification | v0.5.0 | 8/10 | In Progress|  |
