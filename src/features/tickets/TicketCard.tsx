@@ -68,7 +68,7 @@ export function TicketCard({
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 flex-shrink-0">
+                    <span className="pointer-events-auto relative z-10 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-400 flex-shrink-0">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-current" />
                       {t('tickets.card.changedLabel')}
                     </span>

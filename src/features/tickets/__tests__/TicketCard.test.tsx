@@ -5,6 +5,7 @@ import { useGroupStore } from '../../groups/groupStore';
 import { NavigationContext } from '../../groups/NavigationContext';
 import type { Group } from '../../groups/types';
 import { TicketCard } from '../TicketCard';
+import { useTicketStore } from '../ticketStore';
 import type { JiraTicket } from '../types';
 
 const ticket: JiraTicket = {
@@ -143,6 +144,14 @@ describe('TicketCard', () => {
     await user.click(screen.getByRole('button', { name: 'Go to group ‘Dev’' }));
     expect(navigateToGroup).toHaveBeenCalledWith(1);
     expect(onToggleSelect).not.toHaveBeenCalled();
+  });
+
+  it('changed badge tooltip opens on hover', async () => {
+    useTicketStore.setState({ unseenChanges: { 'P-1': ['status', 'priority'] } });
+    const { user } = setup();
+    await user.hover(screen.getByText('Changed'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(/status, priority/);
+    useTicketStore.setState({ unseenChanges: {} });
   });
 
   it('selected shows aria-checked true and the marker class', () => {
