@@ -81,3 +81,69 @@ describe('Phase 30 copy', () => {
     }
   });
 });
+
+describe('Phase 31 copy', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('en bar count and toasts', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('groups.bar.count', { count: 1 })).toBe('1 selected');
+    expect(i18n.t('groups.bar.count', { count: 3 })).toBe('3 selected');
+    expect(i18n.t('groups.toast.addedWithSkipped', { count: 3, skipped: 2, name: 'QA' })).toBe(
+      'Added 3 issues to ‘QA’ (2 already in group)',
+    );
+  });
+
+  it('sk bar count plurals', async () => {
+    await i18n.changeLanguage('sk');
+    expect(i18n.t('groups.bar.count', { count: 1 })).toBe('1 vybraná');
+    expect(i18n.t('groups.bar.count', { count: 3 })).toBe('3 vybrané');
+    expect(i18n.t('groups.bar.count', { count: 5 })).toBe('5 vybraných');
+  });
+
+  it('sk toast added plurals', async () => {
+    await i18n.changeLanguage('sk');
+    const name = 'QA';
+    expect(i18n.t('groups.toast.added', { count: 1, name })).toBe(
+      'Pridaná 1 úloha do skupiny ‘QA’',
+    );
+    expect(i18n.t('groups.toast.added', { count: 3, name })).toBe(
+      'Pridané 3 úlohy do skupiny ‘QA’',
+    );
+    expect(i18n.t('groups.toast.added', { count: 5, name })).toBe(
+      'Pridaných 5 úloh do skupiny ‘QA’',
+    );
+  });
+
+  it('sk bar removeConfirm plurals', async () => {
+    await i18n.changeLanguage('sk');
+    expect(i18n.t('groups.bar.removeConfirm', { count: 1, name: 'QA' })).toBe(
+      'Odstrániť 1 úlohu zo skupiny ‘QA’?',
+    );
+    expect(i18n.t('groups.bar.removeConfirm', { count: 5, name: 'QA' })).toBe(
+      'Odstrániť 5 úloh zo skupiny ‘QA’?',
+    );
+  });
+
+  it('sk chip moreAria', async () => {
+    await i18n.changeLanguage('sk');
+    expect(i18n.t('groups.chip.moreAria', { count: 2, names: 'A, B' })).toBe(
+      '2 ďalšie skupiny: A, B',
+    );
+  });
+
+  it('D-18: empty body names the shipped labels', async () => {
+    await i18n.changeLanguage('en');
+    const en = i18n.t('groups.empty.body');
+    expect(en).toContain(i18n.t('groups.picker.button'));
+    expect(en).toContain(i18n.t('groups.bar.add'));
+    expect(en).toContain('Groups');
+    expect(en).toContain('Add to group');
+    await i18n.changeLanguage('sk');
+    const sk = i18n.t('groups.empty.body');
+    expect(sk).toContain('Skupiny');
+    expect(sk).toContain('Pridať do skupiny');
+  });
+});
