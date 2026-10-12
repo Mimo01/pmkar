@@ -204,12 +204,12 @@ describe('CopyResultPage', () => {
       expect(screen.getByText(/images/i)).toBeInTheDocument();
     });
 
-    it('add_remote_link step shows remote link label', () => {
+    it('add_remotelink step shows remote link label', () => {
       setupStore(
         makeResult({
           steps: [
             { step: 'create_issue', success: true, detail: null },
-            { step: 'add_remote_link', success: true, detail: null },
+            { step: 'add_remotelink', success: true, detail: null },
           ],
         }),
       );
@@ -272,17 +272,38 @@ describe('CopyResultPage', () => {
       expect(screen.getByText(/Sub-task CHILD-1/)).toBeInTheDocument();
     });
 
-    it('unknown step renders step name as-is', () => {
+    it('unknown step renders translated fallback including the id', () => {
       setupStore(
         makeResult({
           steps: [
             { step: 'create_issue', success: true, detail: null },
-            { step: 'custom_unknown_step', success: true, detail: null },
+            { step: 'foo_bar', success: true, detail: null },
           ],
         }),
       );
       renderWithI18n(<CopyResultPage />);
-      expect(screen.getByText('custom_unknown_step')).toBeInTheDocument();
+      expect(screen.getByText('Step: foo_bar — completed')).toBeInTheDocument();
+    });
+
+    it('renders translated labels for Rust-emitted ids and Created label', () => {
+      setupStore(
+        makeResult({
+          targetKey: 'CLOUD-9',
+          steps: [
+            { step: 'fetch_source', success: true, detail: null },
+            { step: 'add_remotelink', success: true, detail: null },
+            { step: 'worklog:fetch', success: true, detail: null },
+            { step: 'update_triage', success: true, detail: null },
+          ],
+        }),
+      );
+      const { container } = renderWithI18n(<CopyResultPage />);
+      expect(screen.getByText('Source ticket loaded')).toBeInTheDocument();
+      expect(screen.getByText('Origin link added')).toBeInTheDocument();
+      expect(screen.getByText('Work log loaded')).toBeInTheDocument();
+      expect(screen.getByText('Triage state updated')).toBeInTheDocument();
+      expect(container.textContent).toContain('Created:');
+      expect(container.textContent).toContain('CLOUD-9');
     });
   });
 
