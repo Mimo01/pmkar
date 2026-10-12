@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toastErrorMock = vi.fn();
-vi.mock('sonner', () => ({ toast: { error: (...a: unknown[]) => toastErrorMock(...a) } }));
+const toastSuccessMock = vi.fn();
+vi.mock('sonner', () => ({
+  toast: {
+    error: (...a: unknown[]) => toastErrorMock(...a),
+    success: (...a: unknown[]) => toastSuccessMock(...a),
+  },
+}));
 
 const invokeMock = vi.fn();
 vi.mock('@tauri-apps/api/core', () => ({
@@ -12,6 +18,10 @@ vi.mock('@tauri-apps/api/core', () => ({
 }));
 
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
+import { useConnectionStore } from '../../connections/connectionStore';
+import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
+import { useTicketStore } from '../../tickets/ticketStore';
+import type { JiraTicket } from '../../tickets/types';
 import { GroupTabStrip } from '../GroupTabStrip';
 import { useGroupStore } from '../groupStore';
 import type { TabId } from '../groupTabs';
@@ -128,6 +138,77 @@ async function openMoreMenu(user: ReturnType<typeof userEvent.setup>, name: stri
 function tabButton(name: string) {
   return screen.getByRole('button', { name: new RegExp(`^${name},`) });
 }
+
+const tk = (key: string) => ({ id: key, key, fields: {} }) as unknown as JiraTicket;
+
+function seedMissing(eligible = true) {
+  useGroupStore.setState({ memberKeysByGroup: { 1: ['AB-1', 'AB-2'], 2: ['AB-1'] } });
+  useTicketStore.setState({ tickets: [tk('AB-1')], lastCompleteFetchSignature: null });
+  if (eligible) {
+    useTicketStore.setState({
+      lastCompleteFetchSignature: computeFetchSignature(
+        currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
+      ),
+    });
+  }
+}
+
+describe('GroupTabStrip remove all missing', () => {
+  beforeEach(() => {
+    toastSuccessMock.mockReset();
+  });
+
+  it('menu item opens the confirm; Cancel returns focus to the actions button', async () => {
+    seedMissing();
+    const { user } = setup('group:1');
+    await openMoreMenu(user, 'Sprint 12');
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove all missing (1)' }));
+    expect(
+      await screen.findByText('Remove 1 issue from ‘Sprint 12’? It is no longer in results.'),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Group actions for Sprint 12' })).toHaveFocus(),
+    );
+    expect(invokeMock.mock.calls.some((c) => c[0] === 'remove_issues_from_group')).toBe(false);
+  });
+
+  it('Remove makes one call, toasts and returns focus to the tab', async () => {
+    seedMissing();
+    const { user } = setup('new');
+    fireEvent.contextMenu(tabButton('Sprint 12'));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove all missing (1)' }));
+    await screen.findByText(/Remove 1 issue/);
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('remove_issues_from_group', {
+        groupId: 1,
+        issueKeys: ['AB-2'],
+      }),
+    );
+    expect(invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group')).toHaveLength(
+      1,
+    );
+    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalled());
+    await waitFor(() => expect(tabButton('Sprint 12')).toHaveFocus());
+  });
+
+  it('has no item when the gate is off', async () => {
+    seedMissing(false);
+    const { user } = setup('group:1');
+    await openMoreMenu(user, 'Sprint 12');
+    await screen.findByRole('menuitem', { name: 'Rename…' });
+    expect(screen.queryByRole('menuitem', { name: /Remove all missing/ })).toBeNull();
+  });
+
+  it('has no item when all members are present', async () => {
+    seedMissing();
+    const { user } = setup('group:2');
+    await openMoreMenu(user, 'QA');
+    await screen.findByRole('menuitem', { name: 'Rename…' });
+    expect(screen.queryByRole('menuitem', { name: /Remove all missing/ })).toBeNull();
+  });
+});
 
 describe('GroupTabStrip overlays', () => {
   it('Rename opens focused popover, saves, and refocuses the renamed `…`', async () => {

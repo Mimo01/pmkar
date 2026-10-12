@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Palette, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ListX, Palette, Pencil, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu';
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -11,6 +11,8 @@ export interface GroupMenuItemsProps {
   onChangeColor: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
+  missingCount: number;
+  onRemoveMissing: () => void;
   onDelete: () => void;
 }
 
@@ -23,6 +25,8 @@ export function GroupMenuItems({
   onChangeColor,
   onMoveLeft,
   onMoveRight,
+  missingCount,
+  onRemoveMissing,
   onDelete,
 }: GroupMenuItemsProps) {
   const { t } = useTranslation();
@@ -48,6 +52,12 @@ export function GroupMenuItems({
         {t('groups.menu.moveRight')}
       </Item>
       <Separator />
+      {missingCount > 0 && (
+        <Item onSelect={onRemoveMissing}>
+          <ListX className="h-4 w-4" aria-hidden="true" />
+          {t('groups.menu.removeMissing', { count: missingCount })}
+        </Item>
+      )}
       <Item destructive onSelect={onDelete}>
         <Trash2 className="h-4 w-4" aria-hidden="true" />
         {t('groups.menu.delete')}
