@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
@@ -45,6 +46,7 @@ vi.mock('@/stores/schemaCacheStore', () => ({
 
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../../connections/connectionStore';
+import { useGroupStore } from '../../groups/groupStore';
 import { useCopyStore } from '../copyStore';
 import { TicketDetailPage } from '../TicketDetailPage';
 import { useTicketStore } from '../ticketStore';
@@ -254,5 +256,80 @@ describe('TicketDetailPage', () => {
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+  describe('Groups row', () => {
+    const groups = [
+      { id: 1, name: 'Sprint', color: 'blue', position: 0, createdAt: 't', memberCount: 1 },
+      { id: 2, name: 'QA', color: 'red', position: 1, createdAt: 't', memberCount: 0 },
+    ];
+
+    beforeEach(() => {
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          observe() {}
+          unobserve() {}
+          disconnect() {}
+        },
+      );
+      Element.prototype.scrollIntoView = vi.fn();
+      mockInvoke.mockImplementation(async (cmd: string) => {
+        if (cmd === 'list_groups') return groups;
+        if (cmd === 'list_group_memberships') return [{ groupId: 1, issueKey: 'PROJ-1' }];
+        if (cmd === 'get_issue') return makeDetail();
+        return makeDetail();
+      });
+      useGroupStore.setState({
+        groups: groups as never,
+        memberKeysByGroup: {},
+        groupIdsByIssue: { 'PROJ-1': [1] },
+        hydrated: true,
+        hydrateError: false,
+      });
+    });
+
+    it('renders the Groups button before the action buttons', async () => {
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      const groupsBtn = await screen.findByRole('button', {
+        name: /^groups$|groups\.picker\.button/i,
+      });
+      const action = screen.getByText(/dismiss|detail\.ignore/i);
+      expect(
+        groupsBtn.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('Escape with no popover open calls onBack once', async () => {
+      const onBack = vi.fn();
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={onBack} />);
+      await screen.findByRole('button', { name: /^groups$|groups\.picker\.button/i });
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('Escape inside the open picker closes it without calling onBack', async () => {
+      const user = userEvent.setup();
+      const onBack = vi.fn();
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={onBack} />);
+      await user.click(
+        await screen.findByRole('button', { name: /^groups$|groups\.picker\.button/i }),
+      );
+      const input = await screen.findByRole('combobox');
+      expect(input).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('combobox')).toBeNull());
+      expect(onBack).not.toHaveBeenCalled();
+    });
+
+    it('Escape inside a chip remove confirm closes it without calling onBack', async () => {
+      const user = userEvent.setup();
+      const onBack = vi.fn();
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={onBack} />);
+      await user.click(await screen.findByRole('button', { name: /Remove from .Sprint./ }));
+      await screen.findByText(/Remove from .Sprint.\?/);
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByText(/Remove from .Sprint.\?/)).toBeNull());
+      expect(onBack).not.toHaveBeenCalled();
+    });
   });
 });
