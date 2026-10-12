@@ -520,8 +520,7 @@ describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
       if (cmd === 'get_field_mapping') return [];
       if (cmd === 'search_cloud_users_by_query') return [];
       if (cmd === 'log_preview_transformations') return null;
-      if (cmd === 'resolve_description_to_adf')
-        return { version: 1, type: 'doc', content: [] };
+      if (cmd === 'resolve_description_to_adf') return { version: 1, type: 'doc', content: [] };
       if (cmd === 'resolve_users_preview')
         return [{ accountId: 'acc-1', displayName: 'Alice', emailAddress: 'alice@acme.com' }];
       return null;
@@ -624,7 +623,12 @@ describe('CopyPreviewPage — Phase 25 async pre-fill resolution', () => {
   it('PREV-03 description field is excluded from DynamicTargetForm fields prop', async () => {
     currentStoreState = buildState({
       resolvedTargetFields: [
-        { fieldId: 'description', name: 'Description', required: false, schema: { type: 'string', system: 'description' } },
+        {
+          fieldId: 'description',
+          name: 'Description',
+          required: false,
+          schema: { type: 'string', system: 'description' },
+        },
         { fieldId: 'assignee', name: 'Assignee', required: false, schema: { type: 'user' } },
       ],
     });

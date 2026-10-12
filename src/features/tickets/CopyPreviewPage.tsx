@@ -259,9 +259,10 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
           wasOverridden: false,
           gapKind: null,
           sourceValue: null,
-          targetValue: row.staticValue != null
-            ? parseStaticValueForOverride(row.staticValue, row.targetSchema)
-            : null,
+          targetValue:
+            row.staticValue != null
+              ? parseStaticValueForOverride(row.staticValue, row.targetSchema)
+              : null,
         });
       }
 
@@ -375,7 +376,8 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
               transformerKind: descRow.transformerKind,
               outcome: 'ok',
               failureReason: null,
-              wasOverridden: useCopyStore.getState().overrideValues[descRow.targetFieldId] !== undefined,
+              wasOverridden:
+                useCopyStore.getState().overrideValues[descRow.targetFieldId] !== undefined,
               gapKind: null,
               sourceValue: descHtml,
               targetValue: adf,
@@ -556,7 +558,8 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
                   outcome: 'ok',
                   failureReason: null,
                   // WR-02: read live state instead of stale closure snapshot.
-                  wasOverridden: useCopyStore.getState().overrideValues[row.targetFieldId] !== undefined,
+                  wasOverridden:
+                    useCopyStore.getState().overrideValues[row.targetFieldId] !== undefined,
                   gapKind: null,
                   sourceValue: sourceVal,
                   targetValue: resolvedUser,
@@ -702,23 +705,20 @@ export function CopyPreviewPage({ onOpenSettingsSection }: CopyPreviewPageProps 
   }, [reset, onOpenSettingsSection]);
 
   // ── Tauri user-search wrapper (D-17, PERS-03, T-22-15) ───────────────────
-  const searchUsersForPicker = useCallback(
-    async (q: string): Promise<JiraUser[]> => {
-      const trimmed = q.trim();
-      if (!trimmed) return [];
-      const at = trimmed.lastIndexOf('@');
-      const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-      if (!query) return [];
-      try {
-        const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
-        return Array.isArray(users) ? users : [];
-      } catch (e) {
-        console.error('[CopyPreviewPage] search_cloud_users_by_query failed:', e);
-        return [];
-      }
-    },
-    [],
-  );
+  const searchUsersForPicker = useCallback(async (q: string): Promise<JiraUser[]> => {
+    const trimmed = q.trim();
+    if (!trimmed) return [];
+    const at = trimmed.lastIndexOf('@');
+    const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+    if (!query) return [];
+    try {
+      const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
+      return Array.isArray(users) ? users : [];
+    } catch (e) {
+      console.error('[CopyPreviewPage] search_cloud_users_by_query failed:', e);
+      return [];
+    }
+  }, []);
 
   // ── Copy gating (OVRD-04) ─────────────────────────────────────────────────
   // A gap field gates the copy only while its override value is empty.

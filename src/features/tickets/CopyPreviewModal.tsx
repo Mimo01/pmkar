@@ -138,23 +138,20 @@ export function CopyPreviewModal({ onOpenSettingsSection }: CopyPreviewModalProp
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
 
   // ── Tauri user-search wrapper (mirrors CopyPreviewPage.searchUsersForPicker) ──
-  const searchUsersForPicker = useCallback(
-    async (q: string): Promise<JiraUser[]> => {
-      const trimmed = q.trim();
-      if (!trimmed) return [];
-      const at = trimmed.lastIndexOf('@');
-      const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
-      if (!query) return [];
-      try {
-        const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
-        return Array.isArray(users) ? users : [];
-      } catch (e) {
-        console.error('[CopyPreviewModal] search_cloud_users_by_query failed:', e);
-        return [];
-      }
-    },
-    [],
-  );
+  const searchUsersForPicker = useCallback(async (q: string): Promise<JiraUser[]> => {
+    const trimmed = q.trim();
+    if (!trimmed) return [];
+    const at = trimmed.lastIndexOf('@');
+    const query = at >= 0 ? trimmed.slice(at + 1) : trimmed;
+    if (!query) return [];
+    try {
+      const users = await invoke<JiraUser[]>('search_cloud_users_by_query', { query });
+      return Array.isArray(users) ? users : [];
+    } catch (e) {
+      console.error('[CopyPreviewModal] search_cloud_users_by_query failed:', e);
+      return [];
+    }
+  }, []);
 
   // ── Cloud projects ─────────────────────────────────────────────────────────
   const [cloudProjects, setCloudProjects] = useState<Array<{ key: string; name: string }>>([]);

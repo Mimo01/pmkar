@@ -148,9 +148,7 @@ export function AllFieldsSection({
     //   2. Inline names map from expand=names (per-ticket, catches stale-cache gaps)
     //   3. prettifyKey fallback
     const resolvedName =
-      fieldSchema?.name ??
-      (fieldNames && fieldNames[fieldId]) ??
-      prettifyKey(fieldId);
+      fieldSchema?.name ?? (fieldNames && fieldNames[fieldId]) ?? prettifyKey(fieldId);
 
     // Apply label-based skip (case-insensitive)
     if (skipLabels?.some((l) => l.toLowerCase() === resolvedName.toLowerCase())) continue;

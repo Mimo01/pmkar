@@ -166,7 +166,9 @@ function renderHtmlContent(html: string): ReactNode {
   // than rendering an invisible empty table.
   const text = stripHtml(sanitized);
   if (!text) {
-    return <span className="text-xs italic text-brand-muted">[Dynamic content — view in Jira]</span>;
+    return (
+      <span className="text-xs italic text-brand-muted">[Dynamic content — view in Jira]</span>
+    );
   }
   return (
     <div
@@ -188,10 +190,8 @@ function renderJavaToString(s: string): ReactNode {
   const pairs: Array<[string, string]> = [];
   const seen = new Set<string>();
   // Match key='quoted', key=digits, or key=ALL_CAPS
-  const re =
-    /\b([a-zA-Z][a-zA-Z0-9_]*)=('([^']*)'|(\d+(?:\.\d+)?)(?!\d)|([A-Z][A-Z_]{1,}))/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(noClasses)) !== null) {
+  const re = /\b([a-zA-Z][a-zA-Z0-9_]*)=('([^']*)'|(\d+(?:\.\d+)?)(?!\d)|([A-Z][A-Z_]{1,}))/g;
+  for (const m of noClasses.matchAll(re)) {
     const key = m[1];
     const val = m[3] ?? m[4] ?? m[5];
     // Skip empty values (prevents trailing separator) and zero counts (noise)
@@ -201,9 +201,7 @@ function renderJavaToString(s: string): ReactNode {
     }
   }
   const display =
-    pairs.length > 0
-      ? pairs.map(([k, v]) => `${k}: ${v}`).join(' · ')
-      : 'No activity';
+    pairs.length > 0 ? pairs.map(([k, v]) => `${k}: ${v}`).join(' · ') : 'No activity';
   const truncated = display.length > 200 ? `${display.slice(0, 200)}…` : display;
   return <span className="text-xs text-brand-muted">{truncated}</span>;
 }
@@ -467,7 +465,11 @@ export function renderSourceFieldValue(
       ) {
         const p = value as Record<string, unknown>;
         if (typeof p.progress === 'number' && typeof p.total === 'number') {
-          return <span>{formatSeconds(p.progress)} / {formatSeconds(p.total)}</span>;
+          return (
+            <span>
+              {formatSeconds(p.progress)} / {formatSeconds(p.total)}
+            </span>
+          );
         }
       }
       // Shape-based: status object enriched with statusCategory (no fieldId match needed)

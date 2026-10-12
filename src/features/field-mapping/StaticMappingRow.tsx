@@ -81,6 +81,7 @@ export function StaticMappingRow({
         <Tooltip>
           <TooltipTrigger asChild>
             <div
+              role="note"
               className="inline-flex w-full items-center min-h-9 rounded-md border border-input bg-background px-3 text-sm text-muted-foreground cursor-default select-none"
               aria-label="Static mapping — no source field"
             >

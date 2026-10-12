@@ -21,16 +21,15 @@ export function CommentsTab({ comments }: CommentsTabProps) {
   }
 
   const sortedComments = [...comments].sort((a, b) =>
-    sortOrder === 'desc'
-      ? b.created.localeCompare(a.created)
-      : a.created.localeCompare(b.created)
+    sortOrder === 'desc' ? b.created.localeCompare(a.created) : a.created.localeCompare(b.created),
   );
 
   return (
     <div>
       <div className="flex items-center justify-end px-5 pt-2 pb-1">
         <button
-          onClick={() => setSortOrder(o => (o === 'desc' ? 'asc' : 'desc'))}
+          type="button"
+          onClick={() => setSortOrder((o) => (o === 'desc' ? 'asc' : 'desc'))}
           className="text-xs text-brand-muted hover:text-brand-text-secondary transition-colors"
           aria-label={t('detail.comments.sortToggle.ariaLabel')}
         >
@@ -45,7 +44,9 @@ export function CommentsTab({ comments }: CommentsTabProps) {
               <span className="text-xs font-semibold text-brand-text-secondary">
                 {comment.author.displayName}
               </span>
-              <span className="text-xs text-brand-muted">{formatRelativeTime(comment.created)}</span>
+              <span className="text-xs text-brand-muted">
+                {formatRelativeTime(comment.created)}
+              </span>
             </div>
             <div className="text-sm text-brand-text-secondary pb-3">
               {typeof comment.body === 'string' ? (

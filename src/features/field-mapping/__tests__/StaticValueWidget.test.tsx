@@ -149,19 +149,25 @@ describe('StaticValueWidget — issuetype branch (M42)', () => {
 
   it('renders issuetype combobox when schema.type is issuetype', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useSchemaCacheStore as any).mockImplementation((selector: (s: unknown) => unknown) => {
-      return selector({
-        prewarmedIssueTypes: {
-          TARGET_PROJ: [
-            { id: '10001', name: 'Bug' },
-            { id: '10002', name: 'Story' },
-          ],
-        },
-      });
-    });
+    vi.mocked(useSchemaCacheStore as any).mockImplementation(
+      (selector: (s: unknown) => unknown) => {
+        return selector({
+          prewarmedIssueTypes: {
+            TARGET_PROJ: [
+              { id: '10001', name: 'Bug' },
+              { id: '10002', name: 'Story' },
+            ],
+          },
+        });
+      },
+    );
 
     renderWithI18n(
-      <StaticValueWidget field={issuetypeField} value={null as unknown as string} onChange={vi.fn()} />,
+      <StaticValueWidget
+        field={issuetypeField}
+        value={null as unknown as string}
+        onChange={vi.fn()}
+      />,
     );
 
     // VirtualizedCombobox is mocked as <select>; combobox role should be present
@@ -173,22 +179,28 @@ describe('StaticValueWidget — issuetype branch (M42)', () => {
 
   it('calls onChange with JSON.stringify({id,name}) when issue type selected', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useSchemaCacheStore as any).mockImplementation((selector: (s: unknown) => unknown) => {
-      return selector({
-        prewarmedIssueTypes: {
-          TARGET_PROJ: [
-            { id: '10001', name: 'Bug' },
-            { id: '10002', name: 'Story' },
-          ],
-        },
-      });
-    });
+    vi.mocked(useSchemaCacheStore as any).mockImplementation(
+      (selector: (s: unknown) => unknown) => {
+        return selector({
+          prewarmedIssueTypes: {
+            TARGET_PROJ: [
+              { id: '10001', name: 'Bug' },
+              { id: '10002', name: 'Story' },
+            ],
+          },
+        });
+      },
+    );
 
     const onChange = vi.fn();
     const user = userEvent.setup();
 
     renderWithI18n(
-      <StaticValueWidget field={issuetypeField} value={null as unknown as string} onChange={onChange} />,
+      <StaticValueWidget
+        field={issuetypeField}
+        value={null as unknown as string}
+        onChange={onChange}
+      />,
     );
 
     const select = screen.getByRole('combobox');
@@ -199,14 +211,20 @@ describe('StaticValueWidget — issuetype branch (M42)', () => {
 
   it('shows empty state when prewarmedIssueTypes is empty', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(useSchemaCacheStore as any).mockImplementation((selector: (s: unknown) => unknown) => {
-      return selector({
-        prewarmedIssueTypes: { TARGET_PROJ: [] },
-      });
-    });
+    vi.mocked(useSchemaCacheStore as any).mockImplementation(
+      (selector: (s: unknown) => unknown) => {
+        return selector({
+          prewarmedIssueTypes: { TARGET_PROJ: [] },
+        });
+      },
+    );
 
     renderWithI18n(
-      <StaticValueWidget field={issuetypeField} value={null as unknown as string} onChange={vi.fn()} />,
+      <StaticValueWidget
+        field={issuetypeField}
+        value={null as unknown as string}
+        onChange={vi.fn()}
+      />,
     );
 
     expect(screen.getByText('No issue types loaded for the target project')).toBeInTheDocument();

@@ -4,8 +4,8 @@
 
 import { useTranslation } from 'react-i18next';
 import { useConnectionStore } from '@/features/connections/connectionStore';
-import { useCopyStore } from '@/features/tickets/copyStore';
 import { VirtualizedCombobox } from '@/features/field-renderers/components/VirtualizedCombobox';
+import { useCopyStore } from '@/features/tickets/copyStore';
 import { useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema, IssueTypeRef } from '@/types/fieldSchema';
 

@@ -582,14 +582,18 @@ describe('copyStore — Phase 25 override values in confirmCopy', () => {
       selectedLabels: [],
       targetIssueTypeId: 'it-p25',
     });
-    useCopyStore.getState().setOverrideValue('description', { version: 1, type: 'doc', content: [] });
+    useCopyStore
+      .getState()
+      .setOverrideValue('description', { version: 1, type: 'doc', content: [] });
     useCopyStore.getState().setOverrideValue('assignee', {
       accountId: 'acc-phase25',
       displayName: 'Phase25 User',
       emailAddress: 'p25@acme.com',
     });
 
-    await useCopyStore.getState().confirmCopy('http://source.example.com', 'http://cloud.example.com', 'copy-id-p25');
+    await useCopyStore
+      .getState()
+      .confirmCopy('http://source.example.com', 'http://cloud.example.com', 'copy-id-p25');
 
     expect(mockInvoke).toHaveBeenCalledWith(
       'copy_ticket_v2',

@@ -384,19 +384,16 @@ describe('renderSourceFieldValue', () => {
   });
 
   it('Test 22b — any: array of {value} objects renders comma-joined values', () => {
-    const container = renderNode(
-      { type: 'any' },
-      [{ id: '1', value: 'Alpha' }, { id: '2', value: 'Beta' }],
-    )!;
+    const container = renderNode({ type: 'any' }, [
+      { id: '1', value: 'Alpha' },
+      { id: '2', value: 'Beta' },
+    ])!;
     expect(container.textContent).toBe('Alpha, Beta');
     expect(container.querySelector('code')).toBeNull();
   });
 
   it('Test 22c — any: array mixing {name} and {value} objects renders all labels', () => {
-    const container = renderNode(
-      { type: 'any' },
-      [{ name: 'Frontend' }, { value: 'Backend' }],
-    )!;
+    const container = renderNode({ type: 'any' }, [{ name: 'Frontend' }, { value: 'Backend' }])!;
     expect(container.textContent).toBe('Frontend, Backend');
     expect(container.querySelector('code')).toBeNull();
   });
@@ -547,8 +544,7 @@ describe('renderSourceFieldValue', () => {
   });
 
   it('Test 27b — string: ScriptRunner HTML-only field shows placeholder', () => {
-    const htmlOnly =
-      "<style type='text/css'>#scriptField{border-collapse:collapse;}</style>";
+    const htmlOnly = "<style type='text/css'>#scriptField{border-collapse:collapse;}</style>";
     const container = renderNode({ type: 'string' }, htmlOnly)!;
     expect(container.textContent).not.toContain('<style');
     expect(container.textContent).not.toContain('border-collapse');
