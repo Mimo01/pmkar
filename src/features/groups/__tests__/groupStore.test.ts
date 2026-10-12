@@ -343,3 +343,51 @@ describe('groupStore', () => {
     expect(invokeMock).toHaveBeenCalledWith('list_groups');
   });
 });
+
+describe('groupStore.refreshSnapshots', () => {
+  const tk = (key: string) => ({ id: key, key, fields: { summary: key } }) as unknown as JiraTicket;
+
+  beforeEach(() => {
+    useGroupStore.setState({ groupIdsByIssue: { 'AB-1': [1] }, snapshotRevision: 0 });
+  });
+
+  it('sends only member tickets in one call', async () => {
+    invokeMock.mockResolvedValue(0);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1'), tk('AB-9')]);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock).toHaveBeenCalledWith('refresh_group_snapshots', {
+      issues: [{ issueKey: 'AB-1', ticketJson: JSON.stringify(tk('AB-1')) }],
+    });
+  });
+
+  it('skips the call when no ticket is a member', async () => {
+    await useGroupStore.getState().refreshSnapshots([tk('AB-9')]);
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it('bumps snapshotRevision only when rows changed', async () => {
+    invokeMock.mockResolvedValueOnce(2);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    expect(useGroupStore.getState().snapshotRevision).toBe(1);
+    invokeMock.mockResolvedValueOnce(0);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    expect(useGroupStore.getState().snapshotRevision).toBe(1);
+  });
+
+  it('swallows errors with a warning and never hydrates', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    invokeMock.mockRejectedValue({ code: 'internal' });
+    await expect(useGroupStore.getState().refreshSnapshots([tk('AB-1')])).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    expect(useGroupStore.getState().snapshotRevision).toBe(0);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    expect(invokeMock).not.toHaveBeenCalledWith('list_groups');
+    warn.mockRestore();
+  });
+
+  it('does not hydrate after a successful refresh', async () => {
+    invokeMock.mockResolvedValue(1);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+  });
+});
