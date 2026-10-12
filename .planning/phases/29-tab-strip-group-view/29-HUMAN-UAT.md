@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 29-tab-strip-group-view
 source: [29-VERIFICATION.md]
 started: 2026-10-12T11:40:22Z
