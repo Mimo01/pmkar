@@ -41,9 +41,13 @@ type PendingFocus = {
 export function GroupTabStrip({
   activeTab,
   onTabChange,
+  focusRequest,
+  onFocusRequestHandled,
 }: {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
+  focusRequest?: { id: number; seq: number } | null;
+  onFocusRequestHandled?: () => void;
 }) {
   const { t } = useTranslation();
   const groups = useGroupStore((s) => s.groups);
@@ -128,6 +132,16 @@ export function GroupTabStrip({
       p !== null && p.source === 'create' && activeTab !== groupTabId(p.id) ? null : p,
     );
   }, [activeTab]);
+
+  // External navigation request (navigateToGroup). Uses source 'manage' deliberately so the
+  // drop effect above never clears it when the active tab changes.
+  useEffect(() => {
+    if (focusRequest == null) return;
+    if (useGroupStore.getState().groups.some((g) => g.id === focusRequest.id)) {
+      setPendingFocus({ id: focusRequest.id, target: 'tab', source: 'manage' });
+    }
+    onFocusRequestHandled?.();
+  }, [focusRequest, onFocusRequestHandled]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: wait for the new group to render
   useEffect(() => {
