@@ -1,7 +1,8 @@
 ---
 phase: 29
 slug: tab-strip-group-view
-status: draft
+status: approved
+reviewed_at: 2026-10-12
 shadcn_initialized: true
 preset: existing (style default, baseColor neutral, cssVariables, lucide)
 created: 2026-10-12
@@ -32,7 +33,7 @@ Declared values (multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Dot-to-name gap, name-to-count gap, badge inner vertical padding |
-| sm | 8px | Gap between tab items in group section, popover button gap, badge gap from issue key, divider horizontal margin |
+| sm | 8px | Popover button gap, badge gap from issue key, divider horizontal margin |
 | md | 16px | Popover padding, nav horizontal padding (existing `px-4`), empty state inner gaps |
 | lg | 24px | Empty state heading-to-body block spacing |
 | xl | 32px | Empty state top offset |
@@ -77,7 +78,7 @@ Existing theme tokens in `src/index.css`; no changes.
 
 Accent reserved for: active tab bottom border (`border-brand`, shared by core and group tabs), keyboard focus ring (`focus-visible:ring-brand`), and the primary "Create" button. Nothing else.
 
-Group colors (`--color-group-*`) are used only as the 8px dot fill in the tab. Never tinted tab backgrounds, never colored text. Name text stays `text-brand-text` (active) or `text-brand-muted` (inactive); count is `text-brand-muted`.
+Group colors (`--color-group-*`) are used only as the 8px dot fill in the tab. Never tinted tab backgrounds, never colored text. Name text stays `text-brand-text` (active) or `text-brand-muted` (inactive); count is `text-brand-text-secondary` (muted fails AA at 12px; see Accessibility).
 
 Triage pill: neutral `bg-brand-surface-hover text-brand-text-secondary` with `border border-brand-border-subtle`, `rounded` , 12px text. Same style for New, Not mine, Linked and Done (no per-state color; the label carries the meaning).
 
@@ -88,7 +89,7 @@ Triage pill: neutral `bg-brand-surface-hover text-brand-text-secondary` with `bo
 ### Tab strip (extends `AppShell` `<nav aria-label="Main navigation">`)
 
 Layout (left to right): core tabs (fixed, unchanged) | divider | scrollable group section (`flex-1 min-w-0 overflow-x-auto`, scrollbar hidden) | `＋` pinned right.
-- Group tab: `<button>` with `aria-current="page"` when active; same classes as core tabs (`text-sm py-2 border-b-2`, active `border-brand font-semibold text-brand-text`, inactive `text-brand-muted border-transparent hover:text-brand-text`, same focus ring). Content: dot (8px, `aria-hidden`), name (truncate, `max-w-[160px]`), count (12px muted). Items separated by 16px (`mr-4`, same as core tabs).
+- Group tab: `<button>` with `aria-current="page"` when active; same classes as core tabs (`text-sm py-2 border-b-2`, active `border-brand font-semibold text-brand-text`, inactive `text-brand-muted border-transparent hover:text-brand-text`, same focus ring). Content: dot (8px, `aria-hidden`), name (truncate, `max-w-[160px]`), count (12px `text-brand-text-secondary`). Items separated by 16px (`mr-4`, same as core tabs).
 - Accessible name per tab: `"{name}, {count} issues"` via i18next plural (`_one/_few/_many/_other` in SK); count text itself is visible number only.
 - Truncated names: Tooltip (300ms delay, existing provider) shows full name; only rendered when text is actually truncated (or always, acceptable). Tooltip content `aria-hidden`; the full name is in the button's aria-label.
 - Active tab stays active-underlined (semibold causes width shift; reserve width by rendering a hidden semibold copy or `font-semibold` on an invisible `::after` so tabs do not jitter).
@@ -171,11 +172,11 @@ Phase 31 must verify the empty-state wording against the shipped control labels.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking)
+- [x] Dimension 2 Visuals: FLAG (non-blocking)
+- [x] Dimension 3 Color: PASS (count color contradiction resolved)
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS (tab gap contradiction resolved, 16px)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-12
