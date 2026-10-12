@@ -1,57 +1,26 @@
 // src-tauri/tests/resolve_users_preview_integration.rs
 //
 // Phase 25 — integration test for UserResolver::fetch_users_by_domain against mock Cloud server.
-// Uses the same start_servers_once() pattern as mock_server_field_routes.rs.
-// Cloud v3 mock is at http://127.0.0.1:8081 (start_mock_servers binds this port).
+// Uses the shared free-port mock servers from tests/common.
+// Cloud v3 mock base URL comes from `common::v3_base()`.
 // GET /rest/api/3/user/search?query=@example.com returns the "jdoe@example.com" user.
 
+mod common;
+
 use pmkar_lib::field_transform::user::UserResolver;
-use pmkar_lib::fixtures::build_fixtures;
-use pmkar_lib::mock_server::start_mock_servers;
-use std::sync::Once;
-use std::time::Duration;
-
-static RESOLVE_USERS_ONCE: Once = Once::new();
-
-fn start_servers_once() {
-    RESOLVE_USERS_ONCE.call_once(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-            rt.block_on(async {
-                let fixtures = build_fixtures();
-                start_mock_servers(fixtures)
-                    .await
-                    .expect("Failed to start mock servers");
-                loop {
-                    tokio::time::sleep(Duration::from_secs(3600)).await;
-                }
-            });
-        });
-        // Initial grace period, then TCP probe for up to ~600ms more.
-        std::thread::sleep(Duration::from_millis(300));
-        for _ in 0..30 {
-            if std::net::TcpStream::connect("127.0.0.1:8081").is_ok() {
-                break;
-            }
-            std::thread::sleep(Duration::from_millis(20));
-        }
-    });
-}
 
 /// Phase 25 — verify fetch_users_by_domain returns accountId for known mock user.
 ///
-/// The Cloud v3 mock at 127.0.0.1:8081 serves:
+/// The Cloud v3 mock serves:
 ///   GET /rest/api/3/user/search?query=@example.com
 /// returning [{ accountId: "5b10ac8d82e05b22cc7d4ef5", displayName: "Jane Doe", ... }].
 /// fetch_users_by_domain("example.com") constructs query=@example.com and calls this route.
 #[tokio::test(flavor = "multi_thread")]
 async fn resolve_users_preview_returns_account_id_for_known_mock_user() {
-    start_servers_once();
-
     let resolver = UserResolver::new(
         reqwest::Client::new(),
         "Basic dGVzdDp0ZXN0".to_string(), // base64("test:test") — mock ignores auth
-        "http://127.0.0.1:8081".to_string(),
+        common::v3_base().to_string(),
     );
 
     let results = resolver

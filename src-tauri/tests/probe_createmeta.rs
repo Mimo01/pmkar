@@ -1,36 +1,14 @@
 //! Integration tests for Phase 17 Plan 04: `probe_paginated_createmeta`.
 //!
 //! Tests:
-//!   1. Probe succeeds against MYPROJ on mock v3 (port 8081) → ok=true, status_code=200
+//!   1. Probe succeeds against MYPROJ on mock v3 → ok=true, status_code=200
 //!   2. Probe fails gracefully on closed port 9999 → ok=false, no Err returned
 //!   3. Probe never leaks credential values in any ProbeResult field
 
+mod common;
+
 use base64::Engine as _;
 use pmkar_lib::field_discovery::probe_paginated_createmeta;
-use pmkar_lib::fixtures::build_fixtures;
-use pmkar_lib::mock_server::start_mock_servers;
-use std::sync::Once;
-use std::time::Duration;
-
-static PROBE_SERVERS_ONCE: Once = Once::new();
-
-fn start_servers_once() {
-    PROBE_SERVERS_ONCE.call_once(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-            rt.block_on(async {
-                let fixtures = build_fixtures();
-                start_mock_servers(fixtures)
-                    .await
-                    .expect("Failed to start mock servers");
-                loop {
-                    tokio::time::sleep(Duration::from_secs(3600)).await;
-                }
-            });
-        });
-        std::thread::sleep(Duration::from_millis(300));
-    });
-}
 
 fn cloud_auth() -> String {
     format!(
@@ -42,11 +20,10 @@ fn cloud_auth() -> String {
 // Test 1: Probe succeeds against mock v3 server for MYPROJ
 #[tokio::test(flavor = "multi_thread")]
 async fn probe_succeeds_against_known_project() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let auth = cloud_auth();
 
-    let result = probe_paginated_createmeta(&client, "http://127.0.0.1:8081", &auth, "MYPROJ")
+    let result = probe_paginated_createmeta(&client, common::v3_base(), &auth, "MYPROJ")
         .await
         .expect("probe must produce a ProbeResult, never an Err");
 

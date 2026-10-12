@@ -976,19 +976,61 @@ pub fn build_v3_router(fixtures: SharedFixtures) -> Router {
         .with_state(fixtures)
 }
 
+/// Default ports the app and fixtures assume: Server v2 on 8080, Cloud v3 on 8081.
+pub const DEFAULT_V2_ADDR: &str = "127.0.0.1:8080";
+pub const DEFAULT_V3_ADDR: &str = "127.0.0.1:8081";
+
+/// Base URLs of a running pair of mock servers.
+#[derive(Debug, Clone)]
+pub struct MockServerUrls {
+    pub v2_base_url: String,
+    pub v3_base_url: String,
+}
+
 /// Start both mock servers as background tokio tasks.
 /// Server v2 binds to 127.0.0.1:8080, Cloud v3 binds to 127.0.0.1:8081.
 pub async fn start_mock_servers(fixtures: SharedFixtures) -> AppResult<()> {
-    let v2_router = build_v2_router(Arc::clone(&fixtures));
-    let v3_router = build_v3_router(Arc::clone(&fixtures));
+    start_mock_servers_on(fixtures, DEFAULT_V2_ADDR, DEFAULT_V3_ADDR).await?;
+    Ok(())
+}
 
-    let v2_listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
-        .await
-        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8080: {e}")))?;
+/// Start both mock servers on the given addresses (use port 0 for a free port).
+///
+/// Fixtures and handlers embed absolute URLs on the default ports (e.g. attachment
+/// `content` links). When a server binds elsewhere, JSON response bodies are
+/// rewritten so those URLs point at the actual bound addresses.
+pub async fn start_mock_servers_on(
+    fixtures: SharedFixtures,
+    v2_addr: &str,
+    v3_addr: &str,
+) -> AppResult<MockServerUrls> {
+    let v2_listener = tokio::net::TcpListener::bind(v2_addr).await.map_err(|e| {
+        crate::error::AppError::MockServer(format!("Failed to bind {v2_addr}: {e}"))
+    })?;
+    let v3_listener = tokio::net::TcpListener::bind(v3_addr).await.map_err(|e| {
+        crate::error::AppError::MockServer(format!("Failed to bind {v3_addr}: {e}"))
+    })?;
 
-    let v3_listener = tokio::net::TcpListener::bind("127.0.0.1:8081")
-        .await
-        .map_err(|e| crate::error::AppError::MockServer(format!("Failed to bind :8081: {e}")))?;
+    let local = |l: &tokio::net::TcpListener| {
+        l.local_addr()
+            .map(|a| a.to_string())
+            .map_err(|e| crate::error::AppError::MockServer(format!("No local address: {e}")))
+    };
+    let v2_bound = local(&v2_listener)?;
+    let v3_bound = local(&v3_listener)?;
+
+    let mut rewrites: Vec<(String, String)> = Vec::new();
+    for (default, bound) in [(DEFAULT_V2_ADDR, &v2_bound), (DEFAULT_V3_ADDR, &v3_bound)] {
+        if default != bound {
+            let default_port = default.rsplit(':').next().unwrap_or_default();
+            rewrites.push((default.to_string(), bound.clone()));
+            rewrites.push((format!("localhost:{default_port}"), bound.clone()));
+        }
+    }
+    let rewrites = Arc::new(rewrites);
+
+    let v2_router = with_url_rewrites(build_v2_router(Arc::clone(&fixtures)), &rewrites);
+    let v3_router = with_url_rewrites(build_v3_router(Arc::clone(&fixtures)), &rewrites);
 
     tokio::spawn(async move {
         axum::serve(v2_listener, v2_router).await.ok();
@@ -998,5 +1040,45 @@ pub async fn start_mock_servers(fixtures: SharedFixtures) -> AppResult<()> {
         axum::serve(v3_listener, v3_router).await.ok();
     });
 
-    Ok(())
+    Ok(MockServerUrls {
+        v2_base_url: format!("http://{v2_bound}"),
+        v3_base_url: format!("http://{v3_bound}"),
+    })
+}
+
+fn with_url_rewrites(router: Router, rewrites: &Arc<Vec<(String, String)>>) -> Router {
+    if rewrites.is_empty() {
+        return router;
+    }
+    let rewrites = Arc::clone(rewrites);
+    router.layer(middleware::map_response(
+        move |response: axum::response::Response| {
+            let rewrites = Arc::clone(&rewrites);
+            async move { rewrite_json_urls(response, &rewrites).await }
+        },
+    ))
+}
+
+async fn rewrite_json_urls(
+    response: axum::response::Response,
+    rewrites: &[(String, String)],
+) -> axum::response::Response {
+    let is_json = response
+        .headers()
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v.starts_with("application/json"));
+    if !is_json {
+        return response;
+    }
+    let (mut parts, body) = response.into_parts();
+    let Ok(bytes) = axum::body::to_bytes(body, usize::MAX).await else {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    };
+    let mut text = String::from_utf8_lossy(&bytes).into_owned();
+    for (from, to) in rewrites {
+        text = text.replace(from.as_str(), to.as_str());
+    }
+    parts.headers.remove(axum::http::header::CONTENT_LENGTH);
+    axum::response::Response::from_parts(parts, axum::body::Body::from(text))
 }

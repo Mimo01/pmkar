@@ -8,44 +8,23 @@
 //!      any production helper still hardcoded "MYPROJ", this test would fail —
 //!      either via an HTTP error from the mock or a mismatched assertion below.
 //!
-//! Mock servers (started by `start_servers_once()`):
-//!   v2 (source / server PAT auth) — 127.0.0.1:8080
-//!   v3 (target / cloud Basic auth) — 127.0.0.1:8081
+//! Mock servers (started on free ports by `common::mock_servers()`):
+//!   v2 (source / server PAT auth) — `common::v2_base()`
+//!   v3 (target / cloud Basic auth) — `common::v3_base()`
 //!
 //! Direct call pattern (matches `probe_createmeta.rs`): we exercise the
 //! `copy_pipeline` free functions library-side, not via Tauri IPC. The
 //! Tauri-command-level wiring is covered by the regression-net of frontend
 //! tests in copyStore.test.ts (Plan 23-03 Task 2).
 
+mod common;
+
 use base64::Engine as _;
 use pmkar_lib::audit::{build_audited_client, AuditDb};
 use pmkar_lib::copy_pipeline::{
     add_remote_link, copy_attachments, copy_comments, copy_subtasks, copy_worklogs, CopyContext,
 };
-use pmkar_lib::fixtures::build_fixtures;
-use pmkar_lib::mock_server::start_mock_servers;
-use std::sync::{Arc, Mutex, Once};
-use std::time::Duration;
-
-static CUTV_SERVERS_ONCE: Once = Once::new();
-
-fn start_servers_once() {
-    CUTV_SERVERS_ONCE.call_once(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-            rt.block_on(async {
-                let fixtures = build_fixtures();
-                start_mock_servers(fixtures)
-                    .await
-                    .expect("Failed to start mock servers");
-                loop {
-                    tokio::time::sleep(Duration::from_hours(1)).await;
-                }
-            });
-        });
-        std::thread::sleep(Duration::from_millis(300));
-    });
-}
+use std::sync::{Arc, Mutex};
 
 fn cloud_auth() -> String {
     format!(
@@ -65,8 +44,8 @@ fn build_test_ctx(source_key: &str, target_key: &str) -> CopyContext {
         client,
         cloud_auth: cloud_auth(),
         server_pat: "test-token-any-value".to_string(),
-        source_base_url: "http://127.0.0.1:8080".to_string(),
-        target_base_url: "http://127.0.0.1:8081".to_string(),
+        source_base_url: common::v2_base().to_string(),
+        target_base_url: common::v3_base().to_string(),
         source_key: source_key.to_string(),
         target_key: target_key.to_string(),
         target_project_key: "ACME".to_string(),
@@ -126,8 +105,6 @@ async fn create_target_issue(ctx: &CopyContext) -> String {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn copy_ticket_v2_full_pipeline_succeeds() {
-    start_servers_once();
-
     // PROJ-1 is the most complete source fixture: comments, attachment, subtasks PROJ-7/PROJ-8.
     let mut ctx = build_test_ctx("PROJ-1", "");
 

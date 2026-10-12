@@ -1,33 +1,6 @@
+mod common;
+
 use pmkar_lib::field_discovery::fetch_target_issue_types;
-use pmkar_lib::fixtures::build_fixtures;
-use pmkar_lib::mock_server::start_mock_servers;
-use std::sync::Once;
-use std::time::Duration;
-
-static FIELD_SERVERS_ONCE: Once = Once::new();
-
-/// Starts mock servers in a dedicated background thread with its own tokio runtime.
-/// This ensures servers outlive individual test runtimes.
-/// Safe to call from multiple tests — servers start only once.
-fn start_servers_once() {
-    FIELD_SERVERS_ONCE.call_once(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-            rt.block_on(async {
-                let fixtures = build_fixtures();
-                start_mock_servers(fixtures)
-                    .await
-                    .expect("Failed to start mock servers");
-                // Keep the runtime alive indefinitely
-                loop {
-                    tokio::time::sleep(Duration::from_secs(3600)).await;
-                }
-            });
-        });
-        // Give servers time to bind
-        std::thread::sleep(Duration::from_millis(300));
-    });
-}
 
 fn auth_header() -> &'static str {
     "Bearer test-token-any-value"
@@ -36,10 +9,9 @@ fn auth_header() -> &'static str {
 // Test 1: v2 /field returns array with customfield_10001 "Story Points"
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v2_field_returns_custom_fields() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/field")
+        .get(format!("{}/rest/api/2/field", common::v2_base()))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -59,10 +31,9 @@ async fn test_v2_field_returns_custom_fields() {
 // Test 2: v3 /field returns array with all 6 custom fields
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_field_returns_custom_fields() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/field")
+        .get(format!("{}/rest/api/3/field", common::v3_base()))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -87,10 +58,12 @@ async fn test_v3_field_returns_custom_fields() {
 // Test 3: v3 createmeta issuetypes returns 3 types (Bug, Task, Story)
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_createmeta_issuetypes_returns_three() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/createmeta/MYPROJ/issuetypes")
+        .get(format!(
+            "{}/rest/api/3/issue/createmeta/MYPROJ/issuetypes",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -123,10 +96,9 @@ async fn test_v3_createmeta_issuetypes_returns_three() {
 // this was untested, meaning a shape mismatch could silently return Ok(vec![]).
 #[tokio::test(flavor = "multi_thread")]
 async fn test_fetch_target_issue_types_deserializes_mock_response() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let result =
-        fetch_target_issue_types(&client, "http://127.0.0.1:8081", auth_header(), "MYPROJ").await;
+        fetch_target_issue_types(&client, common::v3_base(), auth_header(), "MYPROJ").await;
     assert!(
         result.is_ok(),
         "fetch_target_issue_types should succeed against mock: {:?}",
@@ -147,10 +119,12 @@ async fn test_fetch_target_issue_types_deserializes_mock_response() {
 // Test 4: v3 createmeta Bug (10001) has priority and Severity as required
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_createmeta_bug_required_fields() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10001")
+        .get(format!(
+            "{}/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10001",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -181,10 +155,12 @@ async fn test_v3_createmeta_bug_required_fields() {
 // Test 5: v3 createmeta Task (10002) has only summary as required
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_createmeta_task_minimal_required() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10002")
+        .get(format!(
+            "{}/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10002",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -218,10 +194,12 @@ async fn test_v3_createmeta_task_minimal_required() {
 // Test 6: v3 createmeta Story (10003) has customfield_10001 Story Points as required
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_createmeta_story_required() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10003")
+        .get(format!(
+            "{}/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10003",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -244,10 +222,12 @@ async fn test_v3_createmeta_story_required() {
 // Test 7: v3 project versions has IDs different from v2 source version IDs
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_project_versions_diverge_from_v2() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/project/MYPROJ/versions")
+        .get(format!(
+            "{}/rest/api/3/project/MYPROJ/versions",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -268,10 +248,12 @@ async fn test_v3_project_versions_diverge_from_v2() {
 // Test 8: v3 project components returns non-empty array with id and name
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_project_components() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/project/MYPROJ/components")
+        .get(format!(
+            "{}/rest/api/3/project/MYPROJ/components",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -291,11 +273,13 @@ async fn test_v3_project_components() {
 // Test 9: v3 createmeta includes cascading-select with option-with-child schema and children
 #[tokio::test(flavor = "multi_thread")]
 async fn test_v3_cascading_select_shape() {
-    start_servers_once();
     let client = reqwest::Client::new();
     // Bug has customfield_10005 Department/Team cascading select
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10001?startAt=5&maxResults=5")
+        .get(format!(
+            "{}/rest/api/3/issue/createmeta/MYPROJ/issuetypes/10001?startAt=5&maxResults=5",
+            common::v3_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await

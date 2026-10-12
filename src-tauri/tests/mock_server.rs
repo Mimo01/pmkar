@@ -1,32 +1,4 @@
-use pmkar_lib::fixtures::build_fixtures;
-use pmkar_lib::mock_server::start_mock_servers;
-use std::sync::Once;
-use std::time::Duration;
-
-static SERVERS_ONCE: Once = Once::new();
-
-/// Starts mock servers in a dedicated background thread with its own tokio runtime.
-/// This ensures servers outlive individual test runtimes.
-/// Safe to call from multiple tests — servers start only once.
-fn start_servers_once() {
-    SERVERS_ONCE.call_once(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
-            rt.block_on(async {
-                let fixtures = build_fixtures();
-                start_mock_servers(fixtures)
-                    .await
-                    .expect("Failed to start mock servers");
-                // Keep the runtime alive indefinitely
-                loop {
-                    tokio::time::sleep(Duration::from_secs(3600)).await;
-                }
-            });
-        });
-        // Give servers time to bind
-        std::thread::sleep(Duration::from_millis(200));
-    });
-}
+mod common;
 
 fn auth_header() -> &'static str {
     "Bearer test-token-any-value"
@@ -35,10 +7,9 @@ fn auth_header() -> &'static str {
 // Test 1: v2 get issue returns 200 with correct key and string description
 #[tokio::test]
 async fn test_mock_v2_get_issue_returns_200() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/issue/PROJ-1")
+        .get(format!("{}/rest/api/2/issue/PROJ-1", common::v2_base()))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -56,10 +27,9 @@ async fn test_mock_v2_get_issue_returns_200() {
 // Test 2: v3 get issue returns 200 with ADF description (version: 1)
 #[tokio::test]
 async fn test_mock_v3_get_issue_returns_200() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8081/rest/api/3/issue/PROJ-1")
+        .get(format!("{}/rest/api/3/issue/PROJ-1", common::v3_base()))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -78,10 +48,12 @@ async fn test_mock_v3_get_issue_returns_200() {
 // Test 3: v2 search returns 200 with issues array
 #[tokio::test]
 async fn test_mock_v2_search_returns_issues() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/search?jql=assignee=jdoe")
+        .get(format!(
+            "{}/rest/api/2/search?jql=assignee=jdoe",
+            common::v2_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
@@ -101,10 +73,9 @@ async fn test_mock_v2_search_returns_issues() {
 // Test 4: v3 search (POST) returns 200 with issues array
 #[tokio::test]
 async fn test_mock_v3_search_returns_issues() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .post("http://127.0.0.1:8081/rest/api/3/search/jql")
+        .post(format!("{}/rest/api/3/search/jql", common::v3_base()))
         .header("Authorization", auth_header())
         .header("Content-Type", "application/json")
         .body(r#"{"jql": "project = PROJ"}"#)
@@ -122,10 +93,9 @@ async fn test_mock_v3_search_returns_issues() {
 // Test 5: Missing auth returns 401
 #[tokio::test]
 async fn test_mock_missing_auth_returns_401() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/issue/PROJ-1")
+        .get(format!("{}/rest/api/2/issue/PROJ-1", common::v2_base()))
         // No Authorization header
         .send()
         .await
@@ -140,10 +110,9 @@ async fn test_mock_missing_auth_returns_401() {
 // Test 6: Any non-empty Authorization token is accepted
 #[tokio::test]
 async fn test_mock_any_auth_token_accepted() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/issue/PROJ-1")
+        .get(format!("{}/rest/api/2/issue/PROJ-1", common::v2_base()))
         .header("Authorization", "Bearer any-value-here")
         .send()
         .await
@@ -158,7 +127,6 @@ async fn test_mock_any_auth_token_accepted() {
 // Test 7: v2 create issue returns 201
 #[tokio::test]
 async fn test_mock_v2_create_issue_returns_201() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let body = serde_json::json!({
         "fields": {
@@ -168,7 +136,7 @@ async fn test_mock_v2_create_issue_returns_201() {
         }
     });
     let resp = client
-        .post("http://127.0.0.1:8080/rest/api/2/issue")
+        .post(format!("{}/rest/api/2/issue", common::v2_base()))
         .header("Authorization", auth_header())
         .header("Content-Type", "application/json")
         .json(&body)
@@ -190,7 +158,6 @@ async fn test_mock_v2_create_issue_returns_201() {
 // Test 8: v3 create issue returns 201
 #[tokio::test]
 async fn test_mock_v3_create_issue_returns_201() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let body = serde_json::json!({
         "fields": {
@@ -203,7 +170,7 @@ async fn test_mock_v3_create_issue_returns_201() {
         }
     });
     let resp = client
-        .post("http://127.0.0.1:8081/rest/api/3/issue")
+        .post(format!("{}/rest/api/3/issue", common::v3_base()))
         .header("Authorization", auth_header())
         .header("Content-Type", "application/json")
         .json(&body)
@@ -225,10 +192,12 @@ async fn test_mock_v3_create_issue_returns_201() {
 // Test 9: Unknown issue key returns 404
 #[tokio::test]
 async fn test_mock_unknown_key_returns_404() {
-    start_servers_once();
     let client = reqwest::Client::new();
     let resp = client
-        .get("http://127.0.0.1:8080/rest/api/2/issue/UNKNOWN-999")
+        .get(format!(
+            "{}/rest/api/2/issue/UNKNOWN-999",
+            common::v2_base()
+        ))
         .header("Authorization", auth_header())
         .send()
         .await
