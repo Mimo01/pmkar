@@ -461,7 +461,7 @@ export function TicketListPage() {
         resultCount={sortedCandidates.length}
         selectMode={sel.selectMode}
         onToggleSelectMode={sel.toggleSelectMode}
-        selectDisabled={sortedCandidates.length === 0 && !sel.selectMode}
+        selectDisabled={(sortedCandidates.length === 0 || isLoading) && !sel.selectMode}
         selectToggleRef={sel.selectToggleRef}
       />
 
@@ -555,6 +555,8 @@ export function TicketListPage() {
           selectedTickets={selectedTickets}
           group={null}
           onClear={sel.clear}
+          // Cards are hidden during a refresh; block bulk actions on tickets the user can't see
+          actionsDisabled={isLoading}
           onActionSucceeded={() => {
             sel.exit();
             sel.focusSelectToggle();

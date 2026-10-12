@@ -17,6 +17,8 @@ export interface SelectionBarProps {
   onClear: () => void;
   /** Called only after a bulk add/remove succeeded. */
   onActionSucceeded: () => void;
+  /** Disables Add/Remove (e.g. while the list is hidden during a refresh). Count and Clear stay live. */
+  actionsDisabled?: boolean;
 }
 
 export function SelectionBar({
@@ -24,6 +26,7 @@ export function SelectionBar({
   group,
   onClear,
   onActionSucceeded,
+  actionsDisabled = false,
 }: SelectionBarProps) {
   const { t } = useTranslation();
   const count = selectedTickets.length;
@@ -33,7 +36,7 @@ export function SelectionBar({
   const inFlightRemoveRef = useRef(false);
 
   async function handleRemove() {
-    if (!group || inFlightRemoveRef.current) return;
+    if (!group || actionsDisabled || inFlightRemoveRef.current) return;
     inFlightRemoveRef.current = true;
     try {
       const ok = await removeIssuesWithFeedback(
@@ -69,19 +72,19 @@ export function SelectionBar({
               excludeGroupId={group?.id}
               side="top"
               align="start"
-              open={addOpen}
+              open={addOpen && !actionsDisabled}
               onOpenChange={setAddOpen}
               onAddSucceeded={onActionSucceeded}
             >
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" disabled={actionsDisabled}>
                 {t('groups.bar.add')}
                 <ChevronDown className="h-4 w-4" aria-hidden="true" />
               </Button>
             </GroupPicker>
             {group && (
-              <Popover open={removeOpen} onOpenChange={setRemoveOpen}>
+              <Popover open={removeOpen && !actionsDisabled} onOpenChange={setRemoveOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" disabled={actionsDisabled}>
                     {t('groups.bar.remove')}
                   </Button>
                 </PopoverTrigger>

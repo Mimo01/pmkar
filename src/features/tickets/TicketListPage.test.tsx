@@ -381,5 +381,7 @@ describe('TicketListPage selection extras', () => {
     expect(screen.getByRole('status', { name: 'Loading tickets' })).toBeInTheDocument();
     expect(screen.queryByTestId('ticket-card')).toBeNull();
     expect(screen.getAllByText('2 selected').length).toBeGreaterThan(0);
+    // Bulk actions are blocked while the cards are hidden (WR-03)
+    expect(screen.getByRole('button', { name: /Add to group/ })).toBeDisabled();
   });
 });
