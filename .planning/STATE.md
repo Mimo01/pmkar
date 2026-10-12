@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v0.5.0
 milestone_name: Custom Groups
 status: executing
-last_updated: "2026-10-12T15:16:59.087Z"
+last_updated: "2026-10-12T15:27:57.175Z"
 last_activity: 2026-10-12
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 29
-  completed_plans: 22
+  completed_plans: 25
   percent: 50
 ---
 
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-10-11)
 ## Current Position
 
 Phase: 31 (membership-entry-points) — EXECUTING
-Plan: 3 of 9
+Plan: 6 of 9
 Status: Ready to execute
 Last activity: 2026-10-12
 
