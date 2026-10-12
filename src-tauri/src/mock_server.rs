@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::error::AppResult;
-use crate::fixtures::{AdfDoc, JiraIssue, SharedFixtures};
+use crate::fixtures::{AdfDoc, JiraIssue, MockScenario, SharedFixtures};
 
 /// Auth middleware: accepts any non-empty Authorization header, returns 401 otherwise.
 async fn require_auth(
@@ -152,8 +152,8 @@ fn extract_jql_assignee(jql: &str) -> Option<String> {
 
 mod v2 {
     use super::{
-        filter_issues, json, IntoResponse, IssueQuery, JiraIssue, Json, Path, Query, SearchQuery,
-        SharedFixtures, State, StatusCode, UserSearchQuery, Value,
+        filter_issues, json, IntoResponse, IssueQuery, JiraIssue, Json, MockScenario, Path, Query,
+        SearchQuery, SharedFixtures, State, StatusCode, UserSearchQuery, Value,
     };
 
     pub async fn get_myself() -> impl IntoResponse {
@@ -311,9 +311,40 @@ mod v2 {
         Query(params): Query<SearchQuery>,
     ) -> impl IntoResponse {
         let state = fixtures.lock().unwrap();
-        let filtered = filter_issues(&state.server_v2_issues, params.jql.as_ref());
+        let mut filtered = filter_issues(&state.server_v2_issues, params.jql.as_ref());
         let start_at = params.start_at.unwrap_or(0);
         let max_results = params.max_results.unwrap_or(50);
+        let mut filler: Vec<JiraIssue> = Vec::new();
+        match &state.scenario {
+            MockScenario::Default => {}
+            MockScenario::Drop { keys } => filtered.retain(|i| !keys.contains(&i.key)),
+            MockScenario::PartialFail { assignee } => {
+                let requested = params.jql.as_deref().and_then(super::extract_jql_assignee);
+                if requested.as_deref() == Some(assignee.as_str()) {
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({ "errorMessages": ["mock partial failure"] })),
+                    )
+                        .into_response();
+                }
+            }
+            MockScenario::Truncated => {
+                filler = (1..=1000)
+                    .map(|n| JiraIssue {
+                        id: (900_000 + n).to_string(),
+                        key: format!("FILL-{n}"),
+                        fields: json!({
+                            "summary": format!("Filler issue {n}"),
+                            "status": { "name": "Done", "statusCategory": { "key": "done" } },
+                            "assignee": null,
+                            "created": "2026-05-06T07:00:00.000+0000",
+                            "updated": "2026-05-06T07:00:00.000+0000"
+                        }),
+                    })
+                    .collect();
+            }
+        }
+        filtered.extend(filler.iter());
         let response = super::make_search_response_paged(&filtered, start_at, max_results);
         (StatusCode::OK, Json(response)).into_response()
     }
@@ -897,8 +928,76 @@ mod v3 {
 
 // --- Router construction ---
 
+#[cfg(feature = "mock-server")]
+mod mock_control {
+    use super::{json, IntoResponse, Json, SharedFixtures, State, StatusCode};
+    use crate::fixtures::MockScenario;
+    use serde::Deserialize;
+
+    #[derive(Debug, Deserialize)]
+    pub struct MutateBody {
+        pub key: String,
+        pub summary: Option<String>,
+        pub status: Option<String>,
+    }
+
+    pub async fn get_scenario(State(fixtures): State<SharedFixtures>) -> impl IntoResponse {
+        let scenario = fixtures.lock().unwrap().scenario.clone();
+        Json(scenario)
+    }
+
+    pub async fn set_scenario(
+        State(fixtures): State<SharedFixtures>,
+        Json(scenario): Json<MockScenario>,
+    ) -> impl IntoResponse {
+        fixtures.lock().unwrap().scenario = scenario.clone();
+        Json(scenario)
+    }
+
+    pub async fn mutate_issue(
+        State(fixtures): State<SharedFixtures>,
+        Json(body): Json<MutateBody>,
+    ) -> impl IntoResponse {
+        let mut state = fixtures.lock().unwrap();
+        let Some(issue) = state.server_v2_issues.get_mut(&body.key) else {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(json!({ "errorMessages": ["Issue does not exist"] })),
+            )
+                .into_response();
+        };
+        if let Some(summary) = body.summary {
+            issue.fields["summary"] = json!(summary);
+        }
+        if let Some(status) = body.status {
+            issue.fields["status"] =
+                json!({ "name": status, "statusCategory": { "key": "indeterminate" } });
+        }
+        (
+            StatusCode::OK,
+            Json(json!({ "key": body.key, "fields": issue.fields })),
+        )
+            .into_response()
+    }
+}
+
+#[cfg(feature = "mock-server")]
+fn with_control_routes(router: Router<SharedFixtures>) -> Router<SharedFixtures> {
+    router
+        .route(
+            "/__mock/scenario",
+            get(mock_control::get_scenario).post(mock_control::set_scenario),
+        )
+        .route("/__mock/mutate", post(mock_control::mutate_issue))
+}
+
+#[cfg(not(feature = "mock-server"))]
+fn with_control_routes(router: Router<SharedFixtures>) -> Router<SharedFixtures> {
+    router
+}
+
 pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
-    Router::new()
+    let router = Router::new()
         .route("/rest/api/2/myself", get(v2::get_myself))
         .route("/rest/api/2/serverInfo", get(v2::get_server_info))
         .route(
@@ -919,7 +1018,8 @@ pub fn build_v2_router(fixtures: SharedFixtures) -> Router {
             get(v2::download_attachment),
         )
         .route("/rest/api/2/project", get(v2::get_projects))
-        .route("/rest/api/2/field", get(v2::get_fields))
+        .route("/rest/api/2/field", get(v2::get_fields));
+    with_control_routes(router)
         .layer(middleware::from_fn(require_auth))
         .with_state(fixtures)
 }
