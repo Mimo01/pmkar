@@ -502,5 +502,8 @@
   "groups.error.internal": "Skupinu sa nepodarilo vytvoriť. Skúste to znova.",
   "groups.empty.heading": "V tejto skupine zatiaľ nie sú žiadne úlohy",
   "groups.empty.body": "Otvorte úlohu a použite „Skupiny“, alebo vyberte úlohy v ľubovoľnom zozname a zvoľte „Pridať do skupiny“.",
+  "groups.noResults.heading": "Aktuálnemu filtru nezodpovedajú žiadne úlohy",
+  "groups.noResults.body": "Vymažte vyhľadávanie alebo filter riešiteľa, aby sa zobrazili všetky úlohy v tejto skupine.",
+  "groups.loadError": "Niektoré úlohy v tejto skupine sa nepodarilo načítať.",
   "groups.badge.done": "Hotové"
 }

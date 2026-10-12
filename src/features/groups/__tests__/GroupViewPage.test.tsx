@@ -166,6 +166,31 @@ describe('GroupViewPage', () => {
     expect(screen.getByText('T-1')).toBeInTheDocument();
   });
 
+  it('shows a no-results state when the filter excludes every member', () => {
+    seed({ 1: ['T-1', 'T-2'] });
+    render(<GroupViewPage groupId={1} />);
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'ZZZ' } });
+    expect(screen.getByText('No issues match the current filter')).toBeInTheDocument();
+    expect(screen.queryByText('No issues in this group yet')).not.toBeInTheDocument();
+  });
+
+  it('shows an inline load error with Retry when snapshots fail to load', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    seed({ 1: ['T-1', 'X-9'] });
+    mockInvoke.mockRejectedValueOnce('boom');
+    render(<GroupViewPage groupId={1} />);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Some issues in this group could not be loaded.');
+    expect(screen.getByText('T-1')).toBeInTheDocument();
+    mockInvoke.mockResolvedValue([
+      { issueKey: 'X-9', ticketJson: JSON.stringify(mk('X-9', '2026-01-09T10:00:00.000Z')) },
+    ]);
+    fireEvent.click(within(alert).getByRole('button', { name: 'Retry' }));
+    await screen.findByText('X-9');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    warn.mockRestore();
+  });
+
   it('has no fetch control', () => {
     seed({ 1: ['T-1'] });
     render(<GroupViewPage groupId={1} />);

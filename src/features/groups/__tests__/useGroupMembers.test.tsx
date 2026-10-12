@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket } from '../../tickets/types';
@@ -44,7 +44,13 @@ describe('useGroupMembers', () => {
 
   it('no entry: keys null, no members, not loading', () => {
     const { result } = renderHook(() => useGroupMembers(1));
-    expect(result.current).toEqual({ keys: null, members: [], loading: false });
+    expect(result.current).toMatchObject({
+      keys: null,
+      members: [],
+      loading: false,
+      error: false,
+      incomplete: false,
+    });
   });
 
   it('prefers live ticket, falls back to snapshot, keeps order', async () => {
@@ -103,6 +109,38 @@ describe('useGroupMembers', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.members.map((m) => m.key)).toEqual(['T-1']);
     expect(warn).toHaveBeenCalled();
+    expect(result.current.error).toBe(true);
+    expect(result.current.incomplete).toBe(true);
+  });
+
+  it('unreadable snapshot without live ticket is incomplete but not an error', async () => {
+    useGroupStore.setState({ memberKeysByGroup: { 1: ['T-1'] } });
+    mockInvoke.mockResolvedValue([{ issueKey: 'T-1', ticketJson: '{bad', addedAt: '' }]);
+    const { result } = renderHook(() => useGroupMembers(1));
+    await waitFor(() => expect(result.current.incomplete).toBe(true));
+    expect(result.current.error).toBe(false);
+  });
+
+  it('complete load is neither error nor incomplete', async () => {
+    useGroupStore.setState({ memberKeysByGroup: { 1: ['T-2'] } });
+    mockInvoke.mockResolvedValue([snap('T-2', 'S')]);
+    const { result } = renderHook(() => useGroupMembers(1));
+    await waitFor(() => expect(result.current.members).toHaveLength(1));
+    expect(result.current.error).toBe(false);
+    expect(result.current.incomplete).toBe(false);
+  });
+
+  it('retry refetches and clears the error on success', async () => {
+    useGroupStore.setState({ memberKeysByGroup: { 1: ['T-2'] } });
+    mockInvoke.mockRejectedValueOnce('boom');
+    const { result } = renderHook(() => useGroupMembers(1));
+    await waitFor(() => expect(result.current.error).toBe(true));
+    mockInvoke.mockResolvedValue([snap('T-2', 'S')]);
+    act(() => result.current.retry());
+    await waitFor(() => expect(result.current.members).toHaveLength(1));
+    expect(result.current.error).toBe(false);
+    expect(result.current.incomplete).toBe(false);
+    expect(mockInvoke).toHaveBeenCalledTimes(2);
   });
 });
 

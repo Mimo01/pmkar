@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { JiraTicket } from '../tickets/types';
 import { useGroupStore } from './groupStore';
@@ -39,12 +39,26 @@ export function useGroupMembers(groupId: number): {
   keys: string[] | null;
   members: JiraTicket[];
   loading: boolean;
+  /** Loading stored snapshots failed for the current keys. */
+  error: boolean;
+  /** Some members could not be shown (load failure or unreadable snapshot, no live ticket). */
+  incomplete: boolean;
+  retry: () => void;
 } {
   // null fallback only: a fresh [] inside a selector causes an infinite re-render loop.
   const keys = useGroupStore((s) => s.memberKeysByGroup[groupId] ?? null);
   const tickets = useTicketStore((s) => s.tickets);
-  const [snapshots, setSnapshots] = useState<Record<string, JiraTicket> | null>(null);
+  // forKeys records which keys reference the snapshots were loaded for, so a stale
+  // result (keys changed, refetch pending) is never reported as incomplete.
+  const [result, setResult] = useState<{
+    forKeys: string[];
+    map: Record<string, JiraTicket>;
+    error: boolean;
+  } | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const snapshots = result?.map ?? null;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is a retry trigger
   useEffect(() => {
     if (keys === null || keys.length === 0) return;
     let cancelled = false;
@@ -56,7 +70,7 @@ export function useGroupMembers(groupId: number): {
         const map: Record<string, JiraTicket> = {};
         if (!res.ok) {
           console.warn(`[groups] failed to load group members for group ${groupId}: ${res.code}`);
-          setSnapshots(map);
+          setResult({ forKeys: keys, map, error: true });
           return;
         }
         for (const m of res.value) {
@@ -71,12 +85,12 @@ export function useGroupMembers(groupId: number): {
           }
           console.warn(`[groups] skipping unreadable snapshot for ${m.issueKey}`);
         }
-        setSnapshots(map);
+        setResult({ forKeys: keys, map, error: false });
       });
     return () => {
       cancelled = true;
     };
-  }, [groupId, keys]);
+  }, [groupId, keys, attempt]);
 
   const members = useMemo(() => {
     if (keys === null) return [];
@@ -93,6 +107,14 @@ export function useGroupMembers(groupId: number): {
 
   const loading =
     keys !== null && keys.length > 0 && snapshots === null && members.length < keys.length;
+  const fresh = result !== null && keys !== null && result.forKeys === keys;
+  const error = fresh && result.error;
+  const incomplete = fresh && members.length < keys.length;
 
-  return { keys, members, loading };
+  const retry = useCallback(() => {
+    setResult(null);
+    setAttempt((a) => a + 1);
+  }, []);
+
+  return { keys, members, loading, error, incomplete, retry };
 }

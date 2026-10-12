@@ -502,5 +502,8 @@
   "groups.error.internal": "Could not create the group. Try again.",
   "groups.empty.heading": "No issues in this group yet",
   "groups.empty.body": "Open an issue and use \"Groups\", or select issues in any list and choose \"Add to group\".",
+  "groups.noResults.heading": "No issues match the current filter",
+  "groups.noResults.body": "Clear the search or assignee filter to see all issues in this group.",
+  "groups.loadError": "Some issues in this group could not be loaded.",
   "groups.badge.done": "Done"
 }

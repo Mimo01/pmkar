@@ -1,3 +1,4 @@
+import { AlertCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
   const [sortField, setSortField] = useState<TicketSortField>('updated');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const triageMap = useTicketStore((s) => s.triageMap);
-  const { keys, members, loading } = useGroupMembers(groupId);
+  const { keys, members, loading, error, incomplete, retry } = useGroupMembers(groupId);
 
   const sorted = useMemo(
     () => sortTickets(filterTickets(members, searchText, assigneeFilter), sortField, sortDirection),
@@ -30,6 +31,8 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
   );
 
   const isEmpty = keys === null || keys.length === 0;
+  // Members exist and loaded, but the search/assignee filter excludes all of them.
+  const noResults = !isEmpty && !loading && members.length > 0 && sorted.length === 0;
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -56,7 +59,37 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
 
       {!isEmpty && loading && <SkeletonCards />}
 
-      {!isEmpty && !loading && (
+      {!isEmpty && !loading && incomplete && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 px-4 py-2 border-b border-brand-border text-xs text-destructive"
+        >
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span>{t('groups.loadError')}</span>
+          {error && (
+            <button
+              type="button"
+              onClick={retry}
+              className="ml-auto text-xs font-semibold text-brand-muted hover:text-brand-text transition-colors duration-150"
+            >
+              {t('common.retry')}
+            </button>
+          )}
+        </div>
+      )}
+
+      {noResults && (
+        <div className="flex flex-col items-center justify-center flex-1 py-16">
+          <p className="text-sm font-semibold text-brand-text mb-1">
+            {t('groups.noResults.heading')}
+          </p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">
+            {t('groups.noResults.body')}
+          </p>
+        </div>
+      )}
+
+      {!isEmpty && !loading && !noResults && (
         <div className="flex-1 overflow-y-auto">
           {sorted.map((ticket) => {
             const badge = groupBadgeKey(ticket, triageMap);
