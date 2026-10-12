@@ -166,6 +166,12 @@ describe('GroupTabStrip', () => {
     expect(under.defaultPrevented).toBe(false);
   });
 
+  it('scroller reserves inline scroll padding so tabs are not hidden under the arrows', () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
+    expect(screen.getByTestId('group-tab-scroller')).toHaveClass('scroll-px-10');
+  });
+
   it('scrolls the active tab into view on mount', () => {
     seed([sprint, qa]);
     renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);

@@ -110,7 +110,8 @@ export function GroupTabStrip({
             data-testid="group-tab-scroller"
             ref={scrollerRef}
             onScroll={updateOverflow}
-            className="flex items-end overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            // scroll-px-10 keeps scrollIntoView/focus scrolling clear of the arrow overlays.
+            className="flex items-end overflow-x-auto scroll-px-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {groups.map((g) => (
               <GroupTab
