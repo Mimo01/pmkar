@@ -36,6 +36,7 @@ beforeEach(() => {
     memberKeysByGroup: {},
     groupIdsByIssue: {},
     hydrated: false,
+    hydrateError: false,
   });
 });
 
@@ -57,13 +58,97 @@ describe('groupStore', () => {
     expect(s.hydrated).toBe(true);
   });
 
-  it('hydrate swallows rejection', async () => {
+  it('hydrate keeps last good state on rejection', async () => {
+    mockLists([g(1, 0)], [{ groupId: 1, issueKey: 'A-1' }]);
+    await useGroupStore.getState().hydrate();
+    invokeMock.mockReset();
     invokeMock.mockRejectedValue(new Error('x'));
     await expect(useGroupStore.getState().hydrate()).resolves.toBeUndefined();
     const s = useGroupStore.getState();
-    expect(s.groups).toEqual([]);
-    expect(s.groupIdsByIssue).toEqual({});
+    expect(s.groups.map((x) => x.id)).toEqual([1]);
+    expect(s.memberKeysByGroup).toEqual({ 1: ['A-1'] });
+    expect(s.groupIdsByIssue).toEqual({ 'A-1': [1] });
     expect(s.hydrated).toBe(true);
+    expect(s.hydrateError).toBe(true);
+  });
+
+  it('first hydrate failure leaves empty state with hydrateError', async () => {
+    invokeMock.mockRejectedValue(new Error('x'));
+    await useGroupStore.getState().hydrate();
+    const s = useGroupStore.getState();
+    expect(s.groups).toEqual([]);
+    expect(s.hydrated).toBe(true);
+    expect(s.hydrateError).toBe(true);
+  });
+
+  it('successful hydrate clears hydrateError', async () => {
+    invokeMock.mockRejectedValue(new Error('x'));
+    await useGroupStore.getState().hydrate();
+    mockLists([g(1, 0)], []);
+    await useGroupStore.getState().hydrate();
+    expect(useGroupStore.getState().hydrateError).toBe(false);
+  });
+
+  it('out-of-order hydrates: latest started wins', async () => {
+    let resolveFirst: (v: unknown[]) => void = () => {};
+    let call = 0;
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'list_groups') {
+        call += 1;
+        if (call === 1) return new Promise<unknown[]>((r) => (resolveFirst = r));
+        return [g(2, 0)];
+      }
+      return [];
+    });
+    const first = useGroupStore.getState().hydrate();
+    await useGroupStore.getState().hydrate();
+    resolveFirst([g(1, 0)]);
+    await first;
+    expect(useGroupStore.getState().groups.map((x) => x.id)).toEqual([2]);
+  });
+
+  it('stale rejection does not flag error', async () => {
+    let rejectFirst: (e: unknown) => void = () => {};
+    let call = 0;
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'list_groups') {
+        call += 1;
+        if (call === 1) return new Promise<unknown[]>((_, rej) => (rejectFirst = rej));
+        return [g(2, 0)];
+      }
+      return [];
+    });
+    const first = useGroupStore.getState().hydrate();
+    await useGroupStore.getState().hydrate();
+    rejectFirst(new Error('late'));
+    await first;
+    const s = useGroupStore.getState();
+    expect(s.hydrateError).toBe(false);
+    expect(s.groups.map((x) => x.id)).toEqual([2]);
+  });
+
+  it('memberships referencing unknown group ids are dropped', async () => {
+    mockLists(
+      [g(1, 0)],
+      [
+        { groupId: 1, issueKey: 'A-1' },
+        { groupId: 9, issueKey: 'B-2' },
+      ],
+    );
+    await useGroupStore.getState().hydrate();
+    const s = useGroupStore.getState();
+    expect(s.memberKeysByGroup).toEqual({ 1: ['A-1'] });
+    expect(s.groupIdsByIssue).toEqual({ 'A-1': [1] });
+  });
+
+  it('success with empty lists resets to empty', async () => {
+    mockLists([g(1, 0)], [{ groupId: 1, issueKey: 'A-1' }]);
+    await useGroupStore.getState().hydrate();
+    mockLists([], []);
+    await useGroupStore.getState().hydrate();
+    const s = useGroupStore.getState();
+    expect(s.groups).toEqual([]);
+    expect(s.hydrateError).toBe(false);
   });
 
   it('coerces invalid colors to slate', async () => {

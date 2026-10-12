@@ -11,16 +11,16 @@
   ],
   "names": [
     {
-      "input": "  Úlohy  ",
+      "input": "  \u00dalohy  ",
       "existing": [],
-      "display": "Úlohy",
+      "display": "\u00dalohy",
       "key": "ulohy",
       "error": null
     },
     {
       "input": "U\u0301lohy",
       "existing": [],
-      "display": "Úlohy",
+      "display": "\u00dalohy",
       "key": "ulohy",
       "error": null
     },
@@ -55,14 +55,14 @@
     {
       "input": "U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301U\u0301",
       "existing": [],
-      "display": "ÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚÚ",
+      "display": "\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da\u00da",
       "key": "uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu",
       "error": null
     },
     {
       "input": "ULOHY",
       "existing": [
-        "Úlohy"
+        "\u00dalohy"
       ],
       "display": null,
       "key": null,
@@ -71,7 +71,7 @@
     {
       "input": "ulohy",
       "existing": [
-        "Úlohy"
+        "\u00dalohy"
       ],
       "display": null,
       "key": null,
@@ -85,7 +85,7 @@
       "error": "reserved"
     },
     {
-      "input": "NOVÉ",
+      "input": "NOV\u00c9",
       "existing": [],
       "display": null,
       "key": null,
@@ -132,6 +132,75 @@
       "display": "Newsletter",
       "key": "newsletter",
       "error": null
+    },
+    {
+      "input": "\ufeff",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "\u0085",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "\ufeffTeam",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "Team\u0085",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "\u200b",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "\u00ad\u2060",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "Team\u200b",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "Te\u200bam",
+      "existing": [],
+      "display": "Te\u200bam",
+      "key": "team",
+      "error": null
+    },
+    {
+      "input": "\u0301",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
     }
   ],
   "scope": [

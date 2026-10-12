@@ -39,6 +39,7 @@ interface GroupState {
   memberKeysByGroup: Record<number, string[]>;
   groupIdsByIssue: Record<string, number[]>;
   hydrated: boolean;
+  hydrateError: boolean;
   hydrate: () => Promise<void>;
   rehydrateAfter: (persist: Promise<unknown>) => Promise<void>;
   createGroup: (name: string, color?: GroupColorToken) => Promise<GroupResult<Group>>;
@@ -66,11 +67,14 @@ export const useGroupStore = create<GroupState>((set, get) => {
     return { ok: true, value };
   }
 
+  let hydrateSeq = 0;
+
   return {
     groups: [],
     memberKeysByGroup: {},
     groupIdsByIssue: {},
     hydrated: false,
+    hydrateError: false,
 
     rehydrateAfter: async (persist) => {
       try {
@@ -82,11 +86,14 @@ export const useGroupStore = create<GroupState>((set, get) => {
     },
 
     hydrate: async () => {
+      const seq = ++hydrateSeq;
       try {
         const [rawGroups, rawMemberships] = await Promise.all([
           invoke<Group[]>('list_groups'),
           invoke<GroupMembership[]>('list_group_memberships'),
         ]);
+        // A newer hydrate started; drop this stale response.
+        if (seq !== hydrateSeq) return;
         if (!Array.isArray(rawGroups) || !Array.isArray(rawMemberships)) {
           throw new Error('unexpected group payload');
         }
@@ -98,15 +105,19 @@ export const useGroupStore = create<GroupState>((set, get) => {
           .sort((a, b) => a.position - b.position);
         const memberKeysByGroup: Record<number, string[]> = {};
         const groupIdsByIssue: Record<string, number[]> = {};
+        const knownIds = new Set(groups.map((g) => g.id));
         for (const m of rawMemberships) {
+          if (!knownIds.has(m.groupId)) continue;
           if (!memberKeysByGroup[m.groupId]) memberKeysByGroup[m.groupId] = [];
           memberKeysByGroup[m.groupId].push(m.issueKey);
           if (!groupIdsByIssue[m.issueKey]) groupIdsByIssue[m.issueKey] = [];
           groupIdsByIssue[m.issueKey].push(m.groupId);
         }
-        set({ groups, memberKeysByGroup, groupIdsByIssue, hydrated: true });
+        set({ groups, memberKeysByGroup, groupIdsByIssue, hydrated: true, hydrateError: false });
       } catch {
-        set({ groups: [], memberKeysByGroup: {}, groupIdsByIssue: {}, hydrated: true });
+        if (seq !== hydrateSeq) return;
+        // Keep the last good state so tabs never vanish on a transient failure.
+        set({ hydrated: true, hydrateError: true });
       }
     },
 

@@ -121,15 +121,31 @@ pub fn normalize_scope(base_url: &str) -> Option<String> {
 }
 
 /// Trim and NFC-normalise a raw group name (D-14).
+///
+/// Trim set is Unicode White_Space plus U+FEFF, identical to the TS mirror.
 pub fn normalize_group_name(raw: &str) -> String {
-    raw.trim().nfc().collect()
+    raw.trim_matches(|c: char| c.is_whitespace() || c == '\u{FEFF}')
+        .nfc()
+        .collect()
 }
 
-/// Comparison key: NFD, strip combining marks, NFC, lower-case (D-17).
+/// Format characters ignored in the comparison key (identical list in TS).
+fn is_ignored_format_char(c: char) -> bool {
+    matches!(
+        c,
+        '\u{200B}'..='\u{200F}' | '\u{2060}'..='\u{2064}' | '\u{00AD}' | '\u{FEFF}'
+    )
+}
+
+/// Comparison key: NFD, strip combining marks and format characters, NFC,
+/// lower-case (D-17).
 ///
 /// Letters without a decomposition (e.g. `ł`, `ß`) are only lower-cased.
 pub fn group_name_key(display: &str) -> String {
-    let stripped: String = display.nfd().filter(|c| !is_combining_mark(*c)).collect();
+    let stripped: String = display
+        .nfd()
+        .filter(|c| !is_combining_mark(*c) && !is_ignored_format_char(*c))
+        .collect();
     stripped.nfc().collect::<String>().to_lowercase()
 }
 
@@ -177,6 +193,9 @@ pub fn validate_group_name<'a>(
         return Err(GroupErrorCode::TooLong);
     }
     let key = group_name_key(&display);
+    if key.is_empty() {
+        return Err(GroupErrorCode::Empty);
+    }
     if reserved_name_keys().contains(&key) {
         return Err(GroupErrorCode::Reserved);
     }
