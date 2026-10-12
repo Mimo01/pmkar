@@ -27,7 +27,11 @@ function extractBlock(source: string, opener: RegExp): string {
 }
 
 const themeBlock = extractBlock(css, /@theme\s*\{/);
+const rootBlock = extractBlock(css, /:root\s*\{/);
 const darkBlock = extractBlock(css, /body\.dark\s*\{/);
+
+// Counts declarations only, so stray mentions in comments never change the count.
+const count = (block: string) => (block.match(/--color-group-[a-z]+\s*:/g) ?? []).length;
 
 function readVar(block: string, name: string): string {
   const m = new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})\\s*;`).exec(block);
@@ -144,19 +148,24 @@ describe('groupColorVar', () => {
 });
 
 describe('css parity', () => {
-  const count = (block: string) => (block.match(/--color-group-/g) ?? []).length;
-
   it('declares exactly eight group variables in each block', () => {
-    expect(count(themeBlock)).toBe(8);
+    expect(count(rootBlock)).toBe(8);
     expect(count(darkBlock)).toBe(8);
   });
 
   for (const t of GROUP_COLOR_TOKENS) {
     it(`${t} matches colors.ts in both themes`, () => {
-      expect(readVar(themeBlock, `--color-group-${t}`)).toBe(
-        GROUP_COLOR_HEX[t].light.toLowerCase(),
-      );
+      expect(readVar(rootBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].light.toLowerCase());
       expect(readVar(darkBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].dark.toLowerCase());
     });
   }
+});
+
+describe('light palette emission', () => {
+  // Phase 30 UAT gap: Tailwind v4 drops @theme variables not named literally in source.
+  // Group vars are referenced via a runtime-built var() name, so they must live in :root.
+  // See .planning/debug/group-colors-not-rendering.md
+  it('keeps group variables out of @theme so Tailwind cannot tree-shake them', () => {
+    expect(count(themeBlock)).toBe(0);
+  });
 });
