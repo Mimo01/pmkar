@@ -21,6 +21,11 @@ interface TicketState {
   newCount: number;
   /** True when the last fetch exceeded the backend pagination cap. UI surfaces a warning. */
   truncated: boolean;
+  /**
+   * Signature of the query whose latest fetch was fully complete (every batch ok, not truncated,
+   * no error). null = no missing-member hints. Session-only: never persisted or hydrated (GDUR-04).
+   */
+  lastCompleteFetchSignature: string | null;
 
   // Polling state (D-04, D-13, D-15)
   pollFrequency: string; // "off" | "5m" | "15m" | "30m" | "1h"
@@ -37,7 +42,10 @@ interface TicketState {
     triageMap: Record<string, TriageEntry>,
     total: number,
     truncated?: boolean,
+    completeSignature?: string | null,
   ) => void;
+  /** Clears hint eligibility (partial/failed fetch). Tickets are left untouched. */
+  markFetchIncomplete: () => void;
   selectTicket: (key: string | null) => void;
   markSeen: (key: string) => void;
   setFetchStatus: (status: FetchStatus, error?: string) => void;
@@ -83,6 +91,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   totalCount: 0,
   newCount: 0,
   truncated: false,
+  lastCompleteFetchSignature: null,
 
   pollFrequency: 'off',
   lastCheckedAt: null,
@@ -96,7 +105,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   unseenChanges: {},
 
   // Actions
-  setTickets: (tickets, triageMap, total, truncated = false) => {
+  setTickets: (tickets, triageMap, total, truncated = false, completeSignature = null) => {
     const safeMap = triageMap ?? {};
     const newCount = Object.values(safeMap).filter((e) => e.state === 'new').length;
     set({
@@ -105,10 +114,13 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       totalCount: total,
       newCount,
       truncated,
+      lastCompleteFetchSignature: completeSignature,
       fetchStatus: 'idle',
       fetchError: null,
     });
   },
+
+  markFetchIncomplete: () => set({ lastCompleteFetchSignature: null }),
 
   selectTicket: (key) => set({ selectedTicketKey: key }),
 
