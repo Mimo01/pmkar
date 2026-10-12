@@ -192,8 +192,9 @@ export function TicketCard({
 // --- SkeletonCards component ---
 
 export function SkeletonCards({ count = 3 }: { count?: number }) {
+  const { t } = useTranslation();
   return (
-    <div aria-busy="true" aria-label="Loading tickets" role="status">
+    <div aria-busy="true" aria-label={t('tickets.loadingAria')} role="status">
       {Array.from({ length: count }).map((_, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: skeleton loading rows are static, index is stable
         <div key={i} className="px-4 py-3 border-b border-brand-border">

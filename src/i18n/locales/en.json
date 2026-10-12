@@ -610,5 +610,7 @@
   "groups.missing.removeAllError": "Couldn't remove the issues. Nothing was changed. Try again.",
   "groups.missing.refreshing": "Refreshing results… Remove is available when the fetch finishes.",
   "groups.error.membership": "Could not update the group. Try again.",
-  "groups.error.scopeMismatch": "The connected server changed or is out of sync. Reopen the ticket list and try again. If this keeps happening, save the server connection again in Settings."
+  "groups.error.scopeMismatch": "The connected server changed or is out of sync. Reopen the ticket list and try again. If this keeps happening, save the server connection again in Settings.",
+  "tickets.loadingAria": "Loading tickets",
+  "nav.mainAria": "Main navigation"
 }

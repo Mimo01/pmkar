@@ -78,7 +78,7 @@ export function AppShell({
       {onTabChange && (
         <nav
           className="flex items-stretch px-4 bg-brand-surface border-b border-brand-border"
-          aria-label="Main navigation"
+          aria-label={t('nav.mainAria')}
         >
           {NAV_TABS.map((tab) => (
             <button

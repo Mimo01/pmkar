@@ -13,3 +13,9 @@ Pre-v0.5.0 TicketFilterBar controls left unchanged (muted text and brand focus r
 - src/components/ui/AppShell.tsx:49, 64 (header icon buttons, `text-brand-muted` and `ring-brand`)
 
 The Select toggle (TicketFilterBar.tsx ~L279) uses the shared shadcn Button ring, fixed by the dark `--color-ring` change in 33-02; no override present.
+
+## Non-group untranslated literals (D-03)
+
+Pre-v0.5.0 literals left untranslated; exempted by name in src/i18n/__tests__/noLiteralStrings.test.ts (DEFERRED_NON_GROUP):
+
+- src/features/tickets/TicketListPage.tsx:485 `title="Refresh (F5)"` (refresh button tooltip)
