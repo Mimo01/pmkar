@@ -142,3 +142,21 @@ describe('groupColorVar', () => {
     expect(groupColorVar('amber')).toBe('var(--color-group-amber)');
   });
 });
+
+describe('css parity', () => {
+  const count = (block: string) => (block.match(/--color-group-/g) ?? []).length;
+
+  it('declares exactly eight group variables in each block', () => {
+    expect(count(themeBlock)).toBe(8);
+    expect(count(darkBlock)).toBe(8);
+  });
+
+  for (const t of GROUP_COLOR_TOKENS) {
+    it(`${t} matches colors.ts in both themes`, () => {
+      expect(readVar(themeBlock, `--color-group-${t}`)).toBe(
+        GROUP_COLOR_HEX[t].light.toLowerCase(),
+      );
+      expect(readVar(darkBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].dark.toLowerCase());
+    });
+  }
+});
