@@ -62,6 +62,8 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Preview-time resolution of description (wiki→ADF) and user fields so they can be reviewed before copy — v0.4.8 Phase 25 (human UAT pending)
 - ✓ Per-watched-user batched ticket fetch with progress counter and partial-failure warning — v0.4.8 Phase 26
 - ✓ Static value mapping: `static` transformer kind fills target-only Cloud fields with a configured constant (schema-aware scalar/option/array) — v0.4.8 Phase 27
+- ✓ Copy-step labels fully translated (EN/SK) via shared `copyStepLabel` helper with Rust↔i18n sync test — v0.5.0 Phase 28 (CONI-01)
+- ✓ Durable groups storage foundation: `groups.db`, scoped group CRUD/order/membership Tauri commands, `useGroupStore` hydration (no UI yet) — v0.5.0 Phase 28 (GRP-06)
 
 ### Active
 
@@ -70,7 +72,6 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - [ ] Add/remove issues to groups from detail and via list multi-select — v0.5.0
 - [ ] Grouped issues never silently lost when absent from fetch — v0.5.0
 - [ ] Excel export capability (scope TBD) — tracked as EXPRT-01
-- [ ] CopyResultModal step label i18n coverage (raw strings for some steps) — tracked as CONI-01 (v0.5.0)
 - [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
 - [ ] In-app notification history panel — tracked as NHIST-01
 - [ ] Phase 22 VERIFICATION.md — formal verification of PERS-01..04, OVRD-01..06 (code confirmed wired; human verification deferred)
@@ -153,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-11 after v0.5.0 milestone start*
+*Last updated: 2026-10-12 after Phase 28 (Foundations)*
