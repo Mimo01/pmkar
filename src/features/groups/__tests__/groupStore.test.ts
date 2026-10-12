@@ -353,31 +353,36 @@ describe('groupStore.refreshSnapshots', () => {
 
   it('sends only member tickets in one call', async () => {
     invokeMock.mockResolvedValue(0);
-    await useGroupStore.getState().refreshSnapshots([tk('AB-1'), tk('AB-9')]);
+    await useGroupStore
+      .getState()
+      .refreshSnapshots([tk('AB-1'), tk('AB-9')], 'http://server.example.com');
     expect(invokeMock).toHaveBeenCalledTimes(1);
     expect(invokeMock).toHaveBeenCalledWith('refresh_group_snapshots', {
       issues: [{ issueKey: 'AB-1', ticketJson: JSON.stringify(tk('AB-1')) }],
+      expectedBaseUrl: 'http://server.example.com',
     });
   });
 
   it('skips the call when no ticket is a member', async () => {
-    await useGroupStore.getState().refreshSnapshots([tk('AB-9')]);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-9')], 'http://server.example.com');
     expect(invokeMock).not.toHaveBeenCalled();
   });
 
   it('bumps snapshotRevision only when rows changed', async () => {
     invokeMock.mockResolvedValueOnce(2);
-    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')], 'http://server.example.com');
     expect(useGroupStore.getState().snapshotRevision).toBe(1);
     invokeMock.mockResolvedValueOnce(0);
-    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')], 'http://server.example.com');
     expect(useGroupStore.getState().snapshotRevision).toBe(1);
   });
 
   it('swallows errors with a warning and never hydrates', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     invokeMock.mockRejectedValue({ code: 'internal' });
-    await expect(useGroupStore.getState().refreshSnapshots([tk('AB-1')])).resolves.toBeUndefined();
+    await expect(
+      useGroupStore.getState().refreshSnapshots([tk('AB-1')], 'http://server.example.com'),
+    ).resolves.toBeUndefined();
     expect(warn).toHaveBeenCalled();
     expect(useGroupStore.getState().snapshotRevision).toBe(0);
     expect(invokeMock).toHaveBeenCalledTimes(1);
@@ -387,7 +392,7 @@ describe('groupStore.refreshSnapshots', () => {
 
   it('does not hydrate after a successful refresh', async () => {
     invokeMock.mockResolvedValue(1);
-    await useGroupStore.getState().refreshSnapshots([tk('AB-1')]);
+    await useGroupStore.getState().refreshSnapshots([tk('AB-1')], 'http://server.example.com');
     expect(invokeMock).toHaveBeenCalledTimes(1);
   });
 });

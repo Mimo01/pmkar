@@ -43,7 +43,7 @@ interface GroupState {
   /** Bumped when a snapshot refresh changed stored rows, so member views reload snapshots. */
   snapshotRevision: number;
   /** Best-effort refresh of stored snapshots for tickets that are group members (D-15). */
-  refreshSnapshots: (tickets: readonly JiraTicket[]) => Promise<void>;
+  refreshSnapshots: (tickets: readonly JiraTicket[], expectedBaseUrl: string) => Promise<void>;
   hydrate: () => Promise<void>;
   rehydrateAfter: (persist: Promise<unknown>) => Promise<void>;
   createGroup: (name: string, color?: GroupColorToken) => Promise<GroupResult<Group>>;
@@ -146,14 +146,17 @@ export const useGroupStore = create<GroupState>((set, get) => {
     hydrateError: false,
     snapshotRevision: 0,
 
-    refreshSnapshots: async (tickets) => {
+    refreshSnapshots: async (tickets, expectedBaseUrl) => {
       const { groupIdsByIssue } = get();
       const issues = tickets
         .filter((t) => (groupIdsByIssue[t.key]?.length ?? 0) > 0)
         .map((t) => ({ issueKey: t.key, ticketJson: JSON.stringify(t) }));
       if (issues.length === 0) return;
       try {
-        const changed = await invoke<number>('refresh_group_snapshots', { issues });
+        const changed = await invoke<number>('refresh_group_snapshots', {
+          issues,
+          expectedBaseUrl,
+        });
         if (changed > 0) set((s) => ({ snapshotRevision: s.snapshotRevision + 1 }));
       } catch (err) {
         console.warn('[groups] snapshot refresh failed', toGroupErrorCode(err));
