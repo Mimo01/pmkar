@@ -64,6 +64,7 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Static value mapping: `static` transformer kind fills target-only Cloud fields with a configured constant (schema-aware scalar/option/array) — v0.4.8 Phase 27
 - ✓ Copy-step labels fully translated (EN/SK) via shared `copyStepLabel` helper with Rust↔i18n sync test — v0.5.0 Phase 28 (CONI-01)
 - ✓ Durable groups storage foundation: `groups.db`, scoped group CRUD/order/membership Tauri commands, `useGroupStore` hydration (no UI yet) — v0.5.0 Phase 28 (GRP-06)
+- ✓ Group management: rename, recolor (8-color palette, both themes), delete with confirmation and active-tab fallback, and Move left/right reorder from the tab `…`/context menu with screen-reader announcement — v0.5.0 Phase 30 (GRP-02, GRP-03, GRP-04, GRP-05)
 
 ### Active
 
@@ -154,4 +155,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-12 after Phase 28 (Foundations)*
+*Last updated: 2026-10-12 after Phase 30 (Group management & reorder)*
