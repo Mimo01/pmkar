@@ -246,6 +246,59 @@ describe('GroupTabStrip', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  describe('focusRequest', () => {
+    it('focuses the requested group tab and reports handled', async () => {
+      seed([sprint, qa]);
+      const handled = vi.fn();
+      renderWithI18n(
+        <GroupTabStrip
+          activeTab="group:2"
+          onTabChange={vi.fn()}
+          focusRequest={{ id: 2, seq: 1 }}
+          onFocusRequestHandled={handled}
+        />,
+      );
+      const b = screen.getByRole('button', { name: 'QA, 1 issue' });
+      await waitFor(() => expect(document.activeElement).toBe(b));
+      expect(handled).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores unknown groups but still reports handled', () => {
+      seed([sprint, qa]);
+      const handled = vi.fn();
+      const before = document.activeElement;
+      renderWithI18n(
+        <GroupTabStrip
+          activeTab="new"
+          onTabChange={vi.fn()}
+          focusRequest={{ id: 999, seq: 1 }}
+          onFocusRequestHandled={handled}
+        />,
+      );
+      expect(handled).toHaveBeenCalledTimes(1);
+      expect(document.activeElement).toBe(before);
+    });
+
+    it('a new seq for the same id focuses again', async () => {
+      seed([sprint, qa]);
+      const handled = vi.fn();
+      const ui = (seq: number) => (
+        <GroupTabStrip
+          activeTab="group:2"
+          onTabChange={vi.fn()}
+          focusRequest={{ id: 2, seq }}
+          onFocusRequestHandled={handled}
+        />
+      );
+      const { rerender } = renderWithI18n(ui(1));
+      const b = screen.getByRole('button', { name: 'QA, 1 issue' });
+      await waitFor(() => expect(document.activeElement).toBe(b));
+      screen.getByRole('button', { name: 'Sprint 12, 3 issues' }).focus();
+      rerender(ui(2));
+      await waitFor(() => expect(document.activeElement).toBe(b));
+    });
+  });
+
   describe('group menu', () => {
     const three = [sprint, qa, ops];
 
