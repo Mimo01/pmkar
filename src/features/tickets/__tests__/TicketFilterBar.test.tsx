@@ -447,7 +447,10 @@ describe('TicketFilterBar — Assignee autocomplete', () => {
 
     expect(screen.getByRole('listbox')).toBeInTheDocument();
 
-    fireEvent.keyDown(input, { key: 'Escape' });
+    // fireEvent returns false when the handler called preventDefault, so
+    // the list-page select-mode Escape handler leaves the selection alone
+    const notPrevented = fireEvent.keyDown(input, { key: 'Escape' });
+    expect(notPrevented).toBe(false);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 

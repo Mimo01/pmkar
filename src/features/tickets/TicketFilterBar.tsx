@@ -127,6 +127,8 @@ export function TicketFilterBar({
         selectUser(suggestions[selectedIdx]);
       }
     } else if (e.key === 'Escape') {
+      // Consume Escape so list-page select mode does not also exit
+      e.preventDefault();
       setShowSuggestions(false);
       setSelectedIdx(-1);
     }
