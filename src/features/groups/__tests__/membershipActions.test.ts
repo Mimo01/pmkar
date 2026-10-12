@@ -16,7 +16,9 @@ import { useGroupStore } from '../groupStore';
 import {
   addIssuesWithFeedback,
   membershipErrorKey,
+  removeAllMissingWithFeedback,
   removeIssuesWithFeedback,
+  removeMissingMember,
 } from '../membershipActions';
 
 const initial = useGroupStore.getState();
@@ -121,5 +123,64 @@ describe('removeIssuesWithFeedback', () => {
     };
     expect(await removeIssuesWithFeedback(group, ['A-1'], t)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith('Could not update the group. Try again.');
+  });
+});
+
+describe('removeMissingMember', () => {
+  it('removes one key silently', async () => {
+    mutationResult = async () => 1;
+    expect(await removeMissingMember(group, 'A-1', t)).toBe(true);
+    const calls = invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group');
+    expect(calls).toHaveLength(1);
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('toasts a keyed error on internal failure', async () => {
+    mutationResult = async () => {
+      throw { code: 'internal' };
+    };
+    expect(await removeMissingMember(group, 'A-1', t)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith("Couldn't remove A-1. Try again.");
+  });
+
+  it('toasts notFound for not_found', async () => {
+    mutationResult = async () => {
+      throw { code: 'not_found' };
+    };
+    expect(await removeMissingMember(group, 'A-1', t)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith('This group no longer exists.');
+  });
+});
+
+describe('removeAllMissingWithFeedback', () => {
+  it('makes one call with all keys and toasts the count', async () => {
+    mutationResult = async () => 3;
+    expect(await removeAllMissingWithFeedback(group, ['A-1', 'A-2', 'A-3'], t)).toBe(true);
+    const calls = invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group');
+    expect(calls).toHaveLength(1);
+    expect(toast.success).toHaveBeenCalledWith('Removed 3 issues from ‘QA’');
+  });
+
+  it('does nothing for an empty list', async () => {
+    expect(await removeAllMissingWithFeedback(group, [], t)).toBe(true);
+    expect(invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group')).toHaveLength(
+      0,
+    );
+  });
+
+  it('toasts removeAllError on failure and notFound for not_found', async () => {
+    mutationResult = async () => {
+      throw { code: 'internal' };
+    };
+    expect(await removeAllMissingWithFeedback(group, ['A-1'], t)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(
+      "Couldn't remove the issues. Nothing was changed. Try again.",
+    );
+    mutationResult = async () => {
+      throw { code: 'not_found' };
+    };
+    expect(await removeAllMissingWithFeedback(group, ['A-1'], t)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith('This group no longer exists.');
   });
 });

@@ -147,3 +147,60 @@ describe('Phase 31 copy', () => {
     expect(sk).toContain('Pridať do skupiny');
   });
 });
+
+describe('Phase 32 missing copy', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  const NEW_KEYS = [
+    'groups.missing.hint',
+    'groups.missing.heading',
+    'groups.missing.remove',
+    'groups.missing.removeAria',
+    'groups.missing.removeConfirm',
+    'groups.missing.removeAll',
+    'groups.missing.removeAllConfirm',
+    'groups.missing.removeError',
+    'groups.missing.removeAllError',
+    'groups.menu.removeMissing',
+  ];
+
+  it('en hint and heading', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('groups.missing.hint')).toBe('No longer in results');
+    expect(i18n.t('groups.missing.heading', { count: 1 })).toBe('No longer in results (1)');
+    expect(i18n.t('groups.missing.heading', { count: 3 })).toBe('No longer in results (3)');
+  });
+
+  it('en removeAllConfirm plurals', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('groups.missing.removeAllConfirm', { count: 1, name: 'Sprint' })).toBe(
+      'Remove 1 issue from ‘Sprint’? It is no longer in results.',
+    );
+    expect(i18n.t('groups.missing.removeAllConfirm', { count: 3, name: 'Sprint' })).toBe(
+      'Remove 3 issues from ‘Sprint’? They are no longer in results.',
+    );
+  });
+
+  it('sk plurals', async () => {
+    await i18n.changeLanguage('sk');
+    const c = (count: number) => i18n.t('groups.missing.removeAllConfirm', { count, name: 'S' });
+    expect(c(1)).toContain('1 úlohu');
+    expect(c(3)).toContain('3 úlohy');
+    expect(c(5)).toContain('5 úloh');
+    expect(i18n.t('groups.missing.heading', { count: 1 })).toBe('Už nie je vo výsledkoch (1)');
+    expect(i18n.t('groups.missing.heading', { count: 3 })).toBe('Už nie sú vo výsledkoch (3)');
+  });
+
+  it('new keys exist in both locales', async () => {
+    for (const lng of ['en', 'sk']) {
+      await i18n.changeLanguage(lng);
+      for (const key of NEW_KEYS) {
+        const v = i18n.t(key, { count: 2, name: 'N', key: 'K' });
+        expect(v, `${lng}:${key}`).not.toBe(key);
+        expect(v.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});

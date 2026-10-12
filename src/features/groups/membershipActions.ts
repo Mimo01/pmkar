@@ -45,3 +45,39 @@ export async function removeIssuesWithFeedback(
   toast.success(t('groups.toast.removed', { count: r.value, name: group.name }));
   return true;
 }
+
+/** Single missing-member removal (D-16: same GC path). No success toast; failures are loud. */
+export async function removeMissingMember(
+  group: { id: number; name: string },
+  issueKey: string,
+  t: TFunction,
+): Promise<boolean> {
+  const r = await useGroupStore.getState().removeFromGroup(group.id, [issueKey]);
+  if (!r.ok) {
+    toast.error(
+      t(r.code === 'not_found' ? 'groups.error.notFound' : 'groups.missing.removeError', {
+        key: issueKey,
+      }),
+    );
+    return false;
+  }
+  return true;
+}
+
+/** Bulk missing removal: one atomic call (D-16). */
+export async function removeAllMissingWithFeedback(
+  group: { id: number; name: string },
+  issueKeys: readonly string[],
+  t: TFunction,
+): Promise<boolean> {
+  if (issueKeys.length === 0) return true;
+  const r = await useGroupStore.getState().removeFromGroup(group.id, issueKeys);
+  if (!r.ok) {
+    toast.error(
+      t(r.code === 'not_found' ? 'groups.error.notFound' : 'groups.missing.removeAllError'),
+    );
+    return false;
+  }
+  toast.success(t('groups.toast.removed', { count: r.value, name: group.name }));
+  return true;
+}
