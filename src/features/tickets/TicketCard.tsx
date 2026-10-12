@@ -49,7 +49,7 @@ export function TicketCard({
   const fieldList = unseenFields?.join(', ') ?? '';
   // Opacity on a parent cannot be undone by a child, so dim individual elements only.
   const dimClass = dimmed
-    ? 'opacity-60 transition-opacity duration-150 motion-reduce:transition-none'
+    ? 'opacity-70 transition-opacity duration-150 motion-reduce:transition-none'
     : '';
   return (
     <div
@@ -72,13 +72,15 @@ export function TicketCard({
             onClick();
           }
         }}
-        className="absolute inset-0 w-full h-full cursor-pointer focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-[-2px]"
+        className="absolute inset-0 w-full h-full cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring focus-visible:outline-offset-[-2px]"
       />
       <div className={`pointer-events-none relative px-4 py-3 ${selectMode ? 'pl-14' : ''}`}>
         {/* Line 1: ticket key + dates on right */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <span className={cn('text-xs font-mono text-brand-muted', dimClass)}>{ticket.key}</span>
+            <span className={cn('text-xs font-mono text-brand-text-secondary', dimClass)}>
+              {ticket.key}
+            </span>
             {hasUnseenChanges && (
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
@@ -107,7 +109,9 @@ export function TicketCard({
               {actionSlot}
             </span>
           </div>
-          <div className={cn('flex items-center gap-2 text-xs text-brand-muted', dimClass)}>
+          <div
+            className={cn('flex items-center gap-2 text-xs text-brand-text-secondary', dimClass)}
+          >
             {ticket.fields.created && (
               <>
                 <span>
@@ -170,10 +174,10 @@ export function TicketCard({
             e.stopPropagation();
             onToggleSelect?.(e.shiftKey);
           }}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-6 h-6 flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-6 h-6 flex items-center justify-center cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
         >
           <span
-            className={`w-4 h-4 rounded-sm border border-brand-border flex items-center justify-center ${
+            className={`w-4 h-4 rounded-sm border border-brand-text-secondary flex items-center justify-center ${
               selected ? 'bg-brand border-brand text-white' : ''
             }`}
           >

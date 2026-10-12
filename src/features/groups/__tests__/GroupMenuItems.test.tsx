@@ -72,7 +72,9 @@ describe('GroupMenuItems', () => {
 
   it('styles Delete group as destructive', () => {
     renderDropdown();
-    expect(screen.getByRole('menuitem', { name: 'Delete group…' })).toHaveClass('text-destructive');
+    expect(screen.getByRole('menuitem', { name: 'Delete group…' })).toHaveClass(
+      'text-destructive-text',
+    );
   });
 
   it('selecting each enabled item calls exactly its handler once', async () => {

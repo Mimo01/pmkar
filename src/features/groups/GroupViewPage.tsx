@@ -165,7 +165,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                     e.stopPropagation();
                     restoreTicket(ticket.key);
                   }}
-                  className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
+                  className="text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150"
                 >
                   {t('ignored.restore')}
                 </button>
@@ -206,7 +206,9 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
           <p className="text-base font-semibold text-brand-text mb-2">
             {t('groups.empty.heading')}
           </p>
-          <p className="text-sm text-brand-muted text-center max-w-sm">{t('groups.empty.body')}</p>
+          <p className="text-sm text-brand-text-secondary text-center max-w-sm">
+            {t('groups.empty.body')}
+          </p>
         </div>
       )}
 
@@ -215,7 +217,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
       {!isEmpty && !loading && incomplete && (
         <div
           role="alert"
-          className="flex items-center gap-2 px-4 py-2 border-b border-brand-border text-xs text-destructive"
+          className="flex items-center gap-2 px-4 py-2 border-b border-brand-border text-xs text-destructive-text"
         >
           <AlertCircle className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
           <span>{t('groups.loadError')}</span>
@@ -223,7 +225,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
             <button
               type="button"
               onClick={retry}
-              className="ml-auto text-xs font-semibold text-brand-muted hover:text-brand-text transition-colors duration-150"
+              className="ml-auto text-xs font-semibold text-brand-text-secondary hover:text-brand-text transition-colors duration-150"
             >
               {t('common.retry')}
             </button>
@@ -236,7 +238,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
           <p className="text-sm font-semibold text-brand-text mb-1">
             {t('groups.noResults.heading')}
           </p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">
+          <p className="text-xs text-brand-text-secondary text-center max-w-sm">
             {t('groups.noResults.body')}
           </p>
         </div>

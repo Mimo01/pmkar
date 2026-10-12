@@ -469,7 +469,7 @@ describe('GroupViewPage missing members', () => {
     setup({ eligible: false, keys: ['AB-1', 'AB-2'], live: [A1] });
     const { container } = render(<GroupViewPage groupId={7} />);
     await screen.findByText('AB-2');
-    expect(container.innerHTML).not.toContain('opacity-60');
+    expect(container.innerHTML).not.toContain('opacity-70');
     expect(screen.queryByText(/No longer in results/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Remove AB-2/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
