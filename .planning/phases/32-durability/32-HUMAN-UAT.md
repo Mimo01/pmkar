@@ -3,7 +3,7 @@ status: partial
 phase: 32-durability
 source: [32-VERIFICATION.md]
 started: 2026-10-12T18:05:07Z
-updated: 2026-10-12T18:05:07Z
+updated: 2026-10-12T20:50:00Z
 ---
 
 ## Current Test
@@ -24,12 +24,16 @@ result: [pending]
 expected: Confirm popover, one removal, focus handling acceptable
 result: [pending]
 
+### 4. Switch server, and click Remove on a missing card while a poll fetch is loading
+expected: Switching server clears the old list (no cross-server tickets/hints); Remove during a loading fetch removes nothing (WR-08: currently silent no-op — judge whether acceptable)
+result: [pending]
+
 ## Summary
 
-total: 3
+total: 4
 passed: 0
 issues: 0
-pending: 3
+pending: 4
 skipped: 0
 blocked: 0
 
