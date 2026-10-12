@@ -155,6 +155,14 @@ describe('useListSelection', () => {
     expect(r.result.current.selectMode).toBe(true);
   });
 
+  it('Escape from a text input does not exit select mode', () => {
+    const r = setup();
+    on(r);
+    const input = document.createElement('input');
+    act(() => r.result.current.handleKeyDown(key({ target: input } as never)));
+    expect(r.result.current.selectMode).toBe(true);
+  });
+
   it('Escape while off does nothing', () => {
     const r = setup();
     const ev = key({});
