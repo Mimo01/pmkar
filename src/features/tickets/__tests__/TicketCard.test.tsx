@@ -190,10 +190,25 @@ describe('TicketCard', () => {
       'inset_3px_0_0',
     );
   });
+  describe('contrast tokens', () => {
+    it('uses secondary text for the key, never muted', () => {
+      setup();
+      const cls = screen.getByText('P-1').className;
+      expect(cls).toContain('text-brand-text-secondary');
+      expect(cls).not.toContain('text-brand-muted');
+    });
+
+    it('gives the unchecked select checkbox a visible boundary', () => {
+      setup({ selectMode: true, onToggleSelect: vi.fn() });
+      const box = screen.getByRole('checkbox', { name: 'Select P-1' }).querySelector('span');
+      expect(box?.className).toContain('border-brand-text-secondary');
+    });
+  });
+
   describe('dimmed and footerSlot', () => {
-    it('adds no opacity-60 without dimmed', () => {
+    it('adds no opacity-70 without dimmed', () => {
       const { container } = setup();
-      expect(container.innerHTML).not.toContain('opacity-60');
+      expect(container.innerHTML).not.toContain('opacity-70');
     });
 
     it('dims content but not chips, checkbox or footer', () => {
@@ -204,7 +219,7 @@ describe('TicketCard', () => {
         footerSlot: <button type="button">Footer btn</button>,
       });
       for (const text of ['P-1', 'Card summary']) {
-        expect(screen.getByText(text).className).toContain('opacity-60');
+        expect(screen.getByText(text).className).toContain('opacity-70');
       }
       const unDimmed = [
         screen.getByRole('button', { name: 'Go to group “Dev”' }),
@@ -214,7 +229,7 @@ describe('TicketCard', () => {
       for (const el of unDimmed) {
         let node: HTMLElement | null = el;
         while (node && node !== container) {
-          expect(node.className).not.toContain('opacity-60');
+          expect(node.className).not.toContain('opacity-70');
           node = node.parentElement;
         }
       }
