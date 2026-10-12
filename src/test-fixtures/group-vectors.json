@@ -201,6 +201,68 @@
       "display": null,
       "key": null,
       "error": "empty"
+    },
+    {
+      "input": "Team\u202e",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "Te\u202eam",
+      "existing": [],
+      "display": "Team",
+      "key": "team",
+      "error": null
+    },
+    {
+      "input": "\u2066\u2069",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "Team\u061c",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "\u3164",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "\u115f\u1160\uffa0\u2800\u180e",
+      "existing": [],
+      "display": null,
+      "key": null,
+      "error": "empty"
+    },
+    {
+      "input": "Team\u3164",
+      "existing": [
+        "Team"
+      ],
+      "display": null,
+      "key": null,
+      "error": "duplicate"
+    },
+    {
+      "input": "Te\u3164am",
+      "existing": [],
+      "display": "Te\u3164am",
+      "key": "team",
+      "error": null
     }
   ],
   "scope": [

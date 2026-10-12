@@ -9,23 +9,33 @@ import sk from '../../i18n/locales/sk.json';
 export const MAX_GROUP_NAME_CHARS = 40;
 
 /**
- * Trim set shared with Rust: Unicode White_Space plus U+FEFF. JS `\s` already
- * covers U+FEFF but not U+0085, which is added explicitly.
+ * Bidi embedding/override/isolate controls (U+061C, U+202A..U+202E,
+ * U+2066..U+2069) are removed from the display name so they cannot visually
+ * reorder a tab label (identical list in Rust). Trim set shared with Rust:
+ * Unicode White_Space plus U+FEFF. JS `\s` already covers U+FEFF but not
+ * U+0085, which is added explicitly.
  */
 export function normalizeGroupName(raw: string): string {
-  return raw.replace(/^[\s\u0085\uFEFF]+|[\s\u0085\uFEFF]+$/gu, '').normalize('NFC');
+  return raw
+    .replace(/[\u061C\u202A-\u202E\u2066-\u2069]/gu, '')
+    .replace(/^[\s\u0085\uFEFF]+|[\s\u0085\uFEFF]+$/gu, '')
+    .normalize('NFC');
 }
 
 /**
- * Comparison key: NFD, strip combining marks and the format characters
- * U+200B..U+200F, U+2060..U+2064, U+00AD, U+FEFF (identical list in Rust),
- * NFC, lower-case.
+ * Comparison key: NFD, strip combining marks and the ignored invisible
+ * characters (identical list in Rust), NFC, lower-case. Ignored: U+00AD,
+ * U+061C, U+115F, U+1160, U+180E, U+200B..U+200F, U+202A..U+202E,
+ * U+2060..U+2064, U+2066..U+2069, U+2800, U+3164, U+FEFF, U+FFA0.
  */
 export function groupNameKey(display: string): string {
   return display
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
-    .replace(/[\u200B-\u200F\u2060-\u2064\u00AD\uFEFF]/gu, '')
+    .replace(
+      /[\u00AD\u061C\u115F\u1160\u180E\u200B-\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\u2800\u3164\uFEFF\uFFA0]/gu,
+      '',
+    )
     .normalize('NFC')
     .toLowerCase();
 }

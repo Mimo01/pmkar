@@ -120,20 +120,41 @@ pub fn normalize_scope(base_url: &str) -> Option<String> {
     }
 }
 
-/// Trim and NFC-normalise a raw group name (D-14).
+/// Bidi embedding/override/isolate controls, removed from the display name so
+/// they cannot visually reorder a tab label (identical list in TS).
+fn is_bidi_control(c: char) -> bool {
+    matches!(c, '\u{061C}' | '\u{202A}'..='\u{202E}' | '\u{2066}'..='\u{2069}')
+}
+
+/// Strip bidi controls, trim and NFC-normalise a raw group name (D-14).
 ///
 /// Trim set is Unicode `White_Space` plus U+FEFF, identical to the TS mirror.
 pub fn normalize_group_name(raw: &str) -> String {
-    raw.trim_matches(|c: char| c.is_whitespace() || c == '\u{FEFF}')
+    let no_bidi: String = raw.chars().filter(|c| !is_bidi_control(*c)).collect();
+    no_bidi
+        .trim_matches(|c: char| c.is_whitespace() || c == '\u{FEFF}')
         .nfc()
         .collect()
 }
 
-/// Format characters ignored in the comparison key (identical list in TS).
+/// Invisible characters ignored in the comparison key (identical list in TS):
+/// format characters, bidi controls and blank "letters" that render as nothing.
 fn is_ignored_format_char(c: char) -> bool {
     matches!(
         c,
-        '\u{200B}'..='\u{200F}' | '\u{2060}'..='\u{2064}' | '\u{00AD}' | '\u{FEFF}'
+        '\u{00AD}'
+            | '\u{061C}'
+            | '\u{115F}'
+            | '\u{1160}'
+            | '\u{180E}'
+            | '\u{200B}'..='\u{200F}'
+            | '\u{202A}'..='\u{202E}'
+            | '\u{2060}'..='\u{2064}'
+            | '\u{2066}'..='\u{2069}'
+            | '\u{2800}'
+            | '\u{3164}'
+            | '\u{FEFF}'
+            | '\u{FFA0}'
     )
 }
 
