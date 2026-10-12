@@ -35,14 +35,14 @@ Declared values (multiples of 4):
 |-------|-------|-------|
 | xs | 4px | Menu item icon gap, `…` button inner padding, swatch-to-swatch gap |
 | sm | 8px | Popover and dialog button gap, menu item vertical padding, gap between input and swatch row |
-| md | 16px | Popover and dialog padding, gap between title, body and button row |
-| lg | 24px | Dialog body-to-buttons spacing |
+| md | 16px | Popover padding (Rename, Color, Create), gap between popover title, body and button row |
+| lg | 24px | Delete dialog padding, and body-to-buttons spacing inside the dialog |
 | xl | 32px | not used |
 | 2xl | 48px | not used |
 | 3xl | 64px | not used |
 
 Exceptions:
-- Swatch button: 24px square hit area containing a 16px color circle; selected swatch adds a 2px ring and a 12px `Check`. 8 swatches in one row: 8 x 24 + 7 x 4 = 220px, fits the 280px popover (248px content width).
+- Swatch button: 24px square hit area containing a 16px color circle; selected swatch adds a 2px ring (offset 2px) and a 12px `Check`. The 2px ring and 2px ring offset are stroke widths (border-like), not layout spacing, so they are exempt from the 4px-multiple scale and do not affect the 24px hit area or the 220px row width. 8 swatches in one row: 8 x 24 + 7 x 4 = 220px, fits the 280px popover (248px content width).
 - `…` button inside the tab: 20px square, 16px icon, placed after the count with 4px gap. Tab keeps the Phase 29 `max-w-[160px]` name truncation. The `…` slot is reserved on the active tab only (see Tab integration).
 - Menu: min-width 180px, 4px container padding.
 - Rename/Color popover width 280px (same as Create). Delete dialog max-width 400px.
@@ -55,12 +55,12 @@ No new sizes or weights (3 sizes, 2 weights, inherited from Phase 29).
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body (menu items, input text, dialog body, button text in dialog) | 14px | 400 | 1.5 |
-| Label (inline error, popover button text, live-region text is visually hidden) | 12px | 400 | 1.5 |
+| Body (menu items, input text, dialog body, all button text in popovers and dialog) | 14px | 400 | 1.5 |
+| Label (inline error, Create popover "Color" label; live-region text is visually hidden) | 12px | 400 | 1.5 |
 | Heading (popover titles "Rename group", "Change color"; dialog title) | 16px | 600 | 1.2 |
 | Display | not used | - | - |
 
-Weights: 400 and 600 only. Menu items are 400 (no semibold). Destructive menu item and Delete button text are 400 / 600 respectively as per the button component default; no third weight.
+Weights: 400 and 600 only. Menu items are 400 (no semibold). All buttons (Rename, Create, Cancel, Keep group, Delete group) use one weight: 400 at 14px. Emphasis for primary/destructive buttons comes from fill color, not weight. 600 is reserved for headings and the active tab name. No third weight.
 
 ---
 
@@ -75,9 +75,11 @@ Existing theme tokens; no changes.
 | Accent (10%) | `--color-brand` `#c02232` | See reserved list |
 | Destructive | `--color-destructive` `#dc2626` | "Delete group…" menu item text, Delete group confirm button, inline validation error |
 
-Accent reserved for: active tab bottom border, keyboard focus ring (`focus-visible:ring-brand`), primary Save button in Rename popover, primary Create button in Create popover. Menu highlight uses neutral `bg-brand-surface-hover`, never accent.
+Accent reserved for: active tab bottom border, keyboard focus ring (`focus-visible:ring-brand`), primary "Rename group" button in Rename popover, primary "Create group" button in Create popover.
 
-Group colors (`--color-group-*`) appear only as the 8px tab dot (Phase 29) and the 16px swatch circles. Swatches are filled via `groupColorVar(token)`; never raw stored strings. Selected state: 2px ring in `--color-brand-text` with offset 2px plus `Check` icon (white on dark fills is not guaranteed, so the check uses `--color-popover` stroke over a `--color-brand-text` 12px disc to keep 3:1). Non-color signals: ring, check, and the aria-label/tooltip color name.
+Focal points (visual hierarchy): tab strip - the active tab's accent underline spanning name + its `…` button is the single focal element; the `…` button is secondary (`text-brand-text-secondary`) until focused or hovered. Delete dialog - the red "Delete group" button is the focal point; "Keep group" is outline and holds initial focus. Rename/Create popovers - the primary accent button, with the name input as the first focus target. Menu highlight uses neutral `bg-brand-surface-hover`, never accent.
+
+Group colors (`--color-group-*`) appear only as the 8px tab dot (Phase 29) and the 16px swatch circles. Swatches are filled via `groupColorVar(token)`; never raw stored strings. Selected state: 2px ring (stroke) in `--color-brand-text` with offset 2px plus `Check` icon (white on dark fills is not guaranteed, so the check uses `--color-popover` stroke over a `--color-brand-text` 12px disc to keep 3:1). Non-color signals: ring, check, and the aria-label/tooltip color name.
 
 Destructive menu item: `text-destructive` with `focus:bg-destructive/10`. Delete confirm button: `bg-destructive text-white` (white on `#dc2626` is about 4.8:1, passes AA).
 
@@ -107,30 +109,30 @@ Order (D-03): `Rename…`, `Change color…`, separator, `Move left`, `Move righ
 
 - Anchored to the group tab wrapper, `align start`, width 280px, padding 16px, `--color-popover` background, `--color-brand-border` border.
 - Title "Rename group" (16px/600). Name `<input>` 14px, prefilled with the current name, **fully selected on open**, `aria-label` "Group name", `aria-describedby` to error line, `aria-invalid` on error. Inline error line identical to Create: 12px `text-destructive`, `AlertCircle` 12px, `role="alert"`, 16px reserved min-height.
-- Buttons right-aligned, 8px gap: Cancel (ghost/outline), Save (primary `bg-brand`). Enter submits when valid; Esc cancels.
-- Save disabled when: empty/whitespace, `duplicate`, `reserved`, `too_long`, unchanged (identical after trim + NFC, shows no message), or submitting. Duplicate check excludes the group's own name, so case-only/diacritic-only changes of its own name are valid (D-07).
-- Rust codes shown inline on submit exactly as Create (`duplicate`, `reserved`, `too_long`, `no_scope`, `internal`; `not_found` shows the rename `not_found` copy and keeps the popover open with Save disabled; user dismisses with Cancel).
+- Buttons right-aligned, 8px gap: Cancel (ghost/outline), "Rename group" (primary `bg-brand`). Enter submits when valid; Esc cancels.
+- "Rename group" button disabled when: empty/whitespace, `duplicate`, `reserved`, `too_long`, unchanged (identical after trim + NFC, shows no message), or submitting. Duplicate check excludes the group's own name, so case-only/diacritic-only changes of its own name are valid (D-07).
+- Rust codes shown inline on submit exactly as Create (`duplicate`, `reserved`, `too_long`, `no_scope`, `internal`; `not_found` shows the rename `not_found` copy and keeps the popover open with the primary button disabled; user dismisses with Cancel).
 - Success: close, focus the tab's `…` (or the tab button when it is inactive, D-08). Cancel: same focus return. State resets on each open; stale-response guards reused from Create.
 
 ### Change color popover (shared `GroupColorSwatches`)
 
 - Anchored to the tab wrapper, width 280px, padding 16px. Title "Change color" (16px/600). Below: one row of 8 swatches in `GROUP_COLOR_TOKENS` order.
 - Implemented as a Radix-friendly radiogroup: container `role="radiogroup"` with `aria-label` "Color"; each swatch `<button role="radio" aria-checked>` with `aria-label` and Tooltip carrying the translated color name (e.g. "Teal"). Roving tabindex: arrow keys move among swatches, Tab leaves the group; selected swatch is the tab stop. Space/Enter picks.
-- Picking a swatch calls `setGroupColor`, closes the popover (applies immediately; no Save button), and returns focus to `…` / tab button. Picking the already-current color just closes. Esc closes with no change.
+- Picking a swatch calls `setGroupColor`, closes the popover (applies immediately; no confirm button), and returns focus to `…` / tab button. Picking the already-current color just closes. Esc closes with no change.
 - The current color is pre-checked on open. No "in use" markers or warnings (D-11).
 - Failure (`not_found`/`internal`): close the popover and show a `sonner` toast with the error copy below.
 
 ### Create popover additions (D-10)
 
 - Under the name input, 8px gap, add label "Color" (12px/400 `text-brand-text-secondary`) and the same `GroupColorSwatches` row, preselected via `pickDefaultColor(groups)`. Selection is local state (not applied until Create); passed to `createGroup(name, color)`.
-- Tab order inside popover: name input, swatch group, Cancel, Create. Enter in the input still submits.
+- Tab order inside popover: name input, swatch group, Cancel, Create group. Enter in the input still submits.
 - Popover vertical order: title, input, error line (16px reserved), color label + swatches, buttons.
 
 ### Delete confirm dialog
 
-- Existing Radix Dialog with `role="alertdialog"` (`DialogContent role="alertdialog"`, `aria-describedby` to body). Centered modal with overlay, max-width 400px, padding 24px (use `lg`), 16px between sections.
+- Existing Radix Dialog with `role="alertdialog"` (`DialogContent role="alertdialog"`, `aria-describedby` to body). Centered modal with overlay, max-width 400px, padding 24px (`lg`, intentionally larger than the 16px popover padding because it is a modal), 16px (`md`) between title and body, 24px (`lg`) between body and button row.
 - Title (16px/600): `Delete “{{name}}”?` Body (14px/400, `text-brand-text-secondary`): count line, see Copywriting.
-- Buttons right-aligned, 8px gap: **Cancel** (outline, receives initial focus via `onOpenAutoFocus` on the Cancel ref), **Delete group** (destructive red). Enter on Cancel cancels; Esc cancels.
+- Buttons right-aligned, 8px gap: **Keep group** (outline, receives initial focus via `onOpenAutoFocus` on its ref), **Delete group** (destructive red, focal point). Enter on Keep group dismisses; Esc dismisses.
 - On confirm: call `deleteGroup`; on success close dialog. If the deleted group was active, `setCurrentTab('new')` explicitly (D-13). Focus after close (D-14): active deleted -> New core tab button; inactive deleted -> left neighbour group tab, or right neighbour if it was first; none left -> `＋`. Use `pendingFocusId` / refs; set it before the rehydrate.
 - While deleting: buttons disabled; on failure keep the dialog open and show an inline error line (12px, `text-destructive`, `role="alert"`) above the buttons.
 - The count is `memberCount` captured when the dialog opens (does not change while open).
@@ -147,9 +149,10 @@ All strings via i18next under `groups.*` with identical EN/SK key sets (Slovak p
 
 | Element | EN copy | SK copy |
 |---------|---------|---------|
-| Primary CTA (Rename popover) | Save | Uložiť |
-| Primary CTA (Create popover, unchanged) | Create | Vytvoriť |
-| Cancel | Cancel | Zrušiť |
+| Primary CTA (Rename popover) | Rename group | Premenovať skupinu |
+| Primary CTA (Create popover; changed from Phase 29 "Create") | Create group | Vytvoriť skupinu |
+| Dismiss (Rename and Create popovers) | Cancel | Zrušiť |
+| Dismiss (Delete dialog) | Keep group | Ponechať skupinu |
 | `…` button aria-label + tooltip | Group actions for {{name}} | Akcie skupiny {{name}} |
 | Menu: rename | Rename… | Premenovať… |
 | Menu: color | Change color… | Zmeniť farbu… |
@@ -174,7 +177,9 @@ All strings via i18next under `groups.*` with identical EN/SK key sets (Slovak p
 | Error `internal` delete | Could not delete the group. Try again. | Skupinu sa nepodarilo odstrániť. Skúste to znova. |
 | Validation errors (duplicate, reserved, too_long, no_scope) | Reuse Phase 29 strings | Reuse Phase 29 strings |
 | Empty state | not applicable (no new empty state; zero-group state unchanged from Phase 29) | - |
-| Destructive confirmation | Delete group: `Delete “{{name}}”?` with issue count and "The issues themselves are not affected." Cancel is default focus; no undo (GRP-F1 deferred) | as above |
+| Destructive confirmation | Delete group: `Delete “{{name}}”?` with issue count and "The issues themselves are not affected." Keep group is default focus; no undo (GRP-F1 deferred) | as above |
+
+Copy decisions: (1) Phase 29 Create CTA is renamed "Create group" / "Vytvoriť skupinu" because this phase edits the Create popover (adds swatches) and the i18n keys `groups.create.submit` (or equivalent) must be updated in both locales plus any tests asserting the old label. No other Phase 29 copy is changed. (2) Popover dismiss stays "Cancel" / "Zrušiť" as an explicit, justified exception: Cancel there only closes a non-destructive, reversible form and must match the shipped Phase 29 Create popover; the Delete dialog, where dismissal means preserving data, uses the context-specific "Keep group".
 
 Failures of move, color, and delete-after-dialog-closed use a `sonner` error toast with the matching `internal`/`not_found` string; rename and delete show errors inline. Slovak _few and _many bodies are separate keys with the wording above. Colors names must be verified by a native speaker in Phase 33.
 
@@ -183,10 +188,10 @@ Failures of move, color, and delete-after-dialog-closed use a `sonner` error toa
 ## Interaction & Accessibility Notes
 
 - No drag and drop. Reorder only via labelled Move left / Move right menu items. No hover-revealed controls: `…` is visible on the active tab at all times; right-click is a secondary shortcut to the same menu, never the sole path for the active tab. Inactive tabs are reachable via right-click or ContextMenu/Shift+F10, or by activating the tab first (then `…` appears).
-- Focus map: menu actions Move -> `…` of moved tab; Rename/Color Save/Cancel/pick -> `…` of that tab (tab button when inactive); Delete -> neighbour/New/`＋` per D-14.
+- Focus map: menu actions Move -> `…` of moved tab; Rename submit/Cancel/Color pick -> `…` of that tab (tab button when inactive); Delete -> neighbour/New/`＋` per D-14.
 - Menus, popovers and dialog trap focus per Radix defaults; Esc closes and restores focus to the trigger.
 - Color is never the sole signal: swatch name via aria-label/tooltip, selected ring + check; tab identified by name.
-- Touch/hit targets: `…` and swatch visual sizes are 20px/24px, inside a nav row of about 36px; acceptable for a desktop (Tauri) app.
+- Touch/hit targets: `…` and swatch visual sizes are 20px/24px, inside a 36px nav row (a multiple of 4: 9 x 4px); acceptable for a desktop (Tauri) app.
 - Reduced motion: no new animations; reuse `duration-150` transitions and Radix default fade; scroll-into-view uses `behavior: 'auto'` when `prefers-reduced-motion`.
 - Contrast: `…` icon uses `text-brand-text-secondary` (not `text-brand-muted`, which fails AA). Menu disabled items are exempt from AA but must remain legible (`opacity-50` on `text-brand-text`).
 - Zustand: no `?? []` in selectors; use `null` fallback.
