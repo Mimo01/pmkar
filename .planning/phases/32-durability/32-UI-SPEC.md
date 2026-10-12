@@ -1,10 +1,11 @@
 ---
 phase: 32
 slug: durability
-status: draft
+status: approved
 shadcn_initialized: true
 preset: none (components.json style "default", baseColor neutral, cssVariables, Tailwind v4 via src/index.css)
 created: 2026-10-12
+reviewed_at: 2026-10-12
 ---
 
 # Phase 32 — UI Design Contract
