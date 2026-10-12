@@ -1,14 +1,23 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ChangeColorPopover } from './ChangeColorPopover';
 import { CreateGroupPopover } from './CreateGroupPopover';
+import { DeleteGroupDialog, type DeleteGroupTarget } from './DeleteGroupDialog';
 import { GroupMenuItems } from './GroupMenuItems';
 import { GroupTab } from './GroupTab';
-import { canMove, positionOf } from './groupMoves';
+import { canMove, type DeleteFocusTarget, deleteFocusTarget, positionOf } from './groupMoves';
 import { useGroupStore } from './groupStore';
-import { computeOverflow, groupTabId, parseGroupTabId, type TabId } from './groupTabs';
+import {
+  computeOverflow,
+  focusCoreTab,
+  groupTabId,
+  parseGroupTabId,
+  type TabId,
+} from './groupTabs';
+import { RenameGroupPopover } from './RenameGroupPopover';
 
 const ARROW_CLASS =
   'flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2';
@@ -49,9 +58,22 @@ export function GroupTabStrip({
   const [moving, setMoving] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<PendingFocus>(null);
   const [pending, setPending] = useState<PendingAction>(null);
+  const returnFocusIdRef = useRef<number>(0);
+  const createTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteGroupTarget | null>(null);
+  const deleteCtxRef = useRef<{
+    id: number;
+    wasActive: boolean;
+    focus: DeleteFocusTarget;
+  } | null>(null);
   const [announcement, setAnnouncement] = useState('');
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const pendingGroup = useMemo(
+    () => (pending ? (groups.find((g) => g.id === pending.groupId) ?? null) : null),
+    [pending, groups],
+  );
 
   function updateOverflow() {
     const el = scrollerRef.current;
@@ -135,6 +157,7 @@ export function GroupTabStrip({
   );
 
   function focusGroupTrigger(id: number) {
+    if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
     setPendingFocus({
       id,
       target: activeTab === groupTabId(id) ? 'more' : 'tab',
@@ -187,7 +210,44 @@ export function GroupTabStrip({
       return;
     }
     anchorRef.current = wrapperRefs.current.get(intent.groupId) ?? null;
+    returnFocusIdRef.current = intent.groupId;
+    if (intent.kind === 'delete') {
+      const gs = useGroupStore.getState().groups;
+      const g = gs.find((x) => x.id === intent.groupId);
+      if (g) {
+        const wasActive = activeTab === groupTabId(g.id);
+        deleteCtxRef.current = {
+          id: g.id,
+          wasActive,
+          focus: deleteFocusTarget(gs, g.id, wasActive),
+        };
+        setDeleteTarget({ id: g.id, name: g.name, memberCount: g.memberCount });
+      }
+      return;
+    }
     setPending({ groupId: intent.groupId, kind: intent.kind });
+  }
+
+  function afterUnmount(fn: () => void) {
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(fn);
+    else setTimeout(fn, 0);
+  }
+
+  function handleDeleteReturnFocus(deleted: boolean) {
+    const ctx = deleteCtxRef.current;
+    deleteCtxRef.current = null;
+    if (!ctx) return;
+    if (!deleted) {
+      focusGroupTrigger(ctx.id);
+      return;
+    }
+    if (ctx.focus.kind === 'core-new') {
+      afterUnmount(() => focusCoreTab('new'));
+    } else if (ctx.focus.kind === 'group') {
+      setPendingFocus({ id: ctx.focus.id, target: 'tab', source: 'manage' });
+    } else {
+      afterUnmount(() => createTriggerRef.current?.focus());
+    }
   }
 
   function scrollByDir(dir: -1 | 1) {
@@ -303,8 +363,39 @@ export function GroupTabStrip({
           )}
         </div>
         <div className="shrink-0 ml-2">
-          <CreateGroupPopover onCreated={handleCreated} />
+          <CreateGroupPopover onCreated={handleCreated} triggerRef={createTriggerRef} />
         </div>
+        <RenameGroupPopover
+          group={pending?.kind === 'rename' ? pendingGroup : null}
+          open={pending?.kind === 'rename'}
+          anchorRef={anchorRef}
+          onOpenChange={(o) => {
+            if (!o) setPending(null);
+          }}
+          onReturnFocus={() => focusGroupTrigger(returnFocusIdRef.current)}
+        />
+        <ChangeColorPopover
+          group={pending?.kind === 'color' ? pendingGroup : null}
+          open={pending?.kind === 'color'}
+          anchorRef={anchorRef}
+          onOpenChange={(o) => {
+            if (!o) setPending(null);
+          }}
+          onReturnFocus={() => focusGroupTrigger(returnFocusIdRef.current)}
+        />
+        <DeleteGroupDialog
+          target={deleteTarget}
+          onOpenChange={(o) => {
+            if (!o) {
+              setDeleteTarget(null);
+              setPending(null);
+            }
+          }}
+          onDeleted={() => {
+            if (deleteCtxRef.current?.wasActive) onTabChange('new');
+          }}
+          onReturnFocus={handleDeleteReturnFocus}
+        />
       </div>
     </TooltipProvider>
   );
