@@ -232,16 +232,16 @@ describe('TicketListPage', () => {
     fireEvent.click(screen.getByText('Fetch Tickets'));
 
     await waitFor(() => {
-      expect(screen.getByText('No new tickets')).toBeInTheDocument();
+      expect(screen.getByText('No tickets match the current filter')).toBeInTheDocument();
     });
   });
 
-  it('auto-refetches when lastFetchedAt is set in fetch config', async () => {
+  it('does not auto-fetch on mount even when lastFetchedAt is set in fetch config', async () => {
     const fetchConfig = {
       jqlPreset: 'mine',
       jqlCustom: null,
       watchedUsers: [],
-      lastFetchedAt: '2024-06-01T12:00:00.000Z', // triggers auto-refetch
+      lastFetchedAt: '2024-06-01T12:00:00.000Z', // previously triggered auto-refetch
     };
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === 'get_triage_state') return Promise.resolve({});
@@ -257,9 +257,11 @@ describe('TicketListPage', () => {
 
     render(<TicketListPage />);
 
+    // Mount only hydrates local state; network fetches require explicit user action.
     await waitFor(() => {
-      expect(mockInvoke).toHaveBeenCalledWith('fetch_tickets', expect.anything());
+      expect(mockInvoke).toHaveBeenCalledWith('get_fetch_config');
     });
+    expect(mockInvoke).not.toHaveBeenCalledWith('fetch_tickets', expect.anything());
   });
 
   it('calls selectTicket and markSeen when a ticket card is clicked', async () => {

@@ -593,8 +593,8 @@ describe('SettingsPage — Domain Search sub-section', () => {
     });
   });
 
-  // Test 7: Privacy warning renders when cloudConn is set and results are empty
-  it('shows privacy warning banner when Cloud connection is set and results are empty', async () => {
+  // Test 7: Privacy warning renders when the Server domain search returns no users
+  it('shows privacy warning banner when domain search results are empty', async () => {
     mockInvoke.mockImplementation((cmd: string) => {
       if (cmd === 'search_jira_users_by_domain') return Promise.resolve([]);
       return Promise.resolve(undefined);
@@ -611,18 +611,14 @@ describe('SettingsPage — Domain Search sub-section', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
-      expect(screen.getByText(/email addresses are hidden/i)).toBeInTheDocument();
+      expect(screen.getByText(/email addresses may be hidden/i)).toBeInTheDocument();
     });
   });
 
-  // Test 8: Privacy warning does NOT render when cloudConn is null (Server-only)
-  it('does NOT show privacy warning when Cloud connection is null', async () => {
-    useConnectionStore.setState({
-      serverConnection: mockConnection,
-      cloudConnection: null,
-    });
+  // Test 8: Privacy warning does NOT render when the domain search finds users
+  it('does NOT show privacy warning when domain search returns users', async () => {
     mockInvoke.mockImplementation((cmd: string) => {
-      if (cmd === 'search_jira_users_by_domain') return Promise.resolve([]);
+      if (cmd === 'search_jira_users_by_domain') return Promise.resolve(mockDomainUsers);
       return Promise.resolve(undefined);
     });
     renderWithI18n(<SettingsPage onClose={noop} />);
@@ -636,9 +632,9 @@ describe('SettingsPage — Domain Search sub-section', () => {
     });
 
     await waitFor(() => {
-      // Should NOT show alert/privacy warning
-      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 
