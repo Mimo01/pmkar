@@ -1,7 +1,7 @@
 import './i18n/index';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
@@ -13,7 +13,13 @@ import type { ConnectionMeta, ConnectionType } from './features/connections/type
 import { GroupTabStrip } from './features/groups/GroupTabStrip';
 import { GroupViewPage } from './features/groups/GroupViewPage';
 import { useGroupStore } from './features/groups/groupStore';
-import { parseGroupTabId, resolveActiveTab, type TabId } from './features/groups/groupTabs';
+import {
+  groupTabId,
+  parseGroupTabId,
+  resolveActiveTab,
+  type TabId,
+} from './features/groups/groupTabs';
+import { NavigationContext } from './features/groups/NavigationContext';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { CopyPreviewPage } from './features/tickets/CopyPreviewPage';
@@ -150,6 +156,21 @@ function App() {
     useTicketStore.getState().selectTicket(null);
   }, []);
 
+  const [focusRequest, setFocusRequest] = useState<{ id: number; seq: number } | null>(null);
+
+  const navigateToGroup = useCallback((groupId: number) => {
+    setShowDetail(false);
+    setDetailTicketKey(null);
+    // Clear the selection so the selectedTicketKey effect does not re-open detail.
+    useTicketStore.getState().selectTicket(null);
+    setCurrentTab(groupTabId(groupId));
+    setFocusRequest((p) => ({ id: groupId, seq: (p?.seq ?? 0) + 1 }));
+  }, []);
+
+  const handleFocusRequestHandled = useCallback(() => setFocusRequest(null), []);
+
+  const navValue = useMemo(() => ({ navigateToGroup }), [navigateToGroup]);
+
   const handleOpenSettingsSection = useCallback((section: 'field-mapping') => {
     setShowDetail(false);
     setDetailTicketKey(null);
@@ -224,20 +245,22 @@ function App() {
   if (showDetail && detailTicketKey) {
     return (
       <ErrorBoundary>
-        <AppShell>
-          {copyPhase === 'loading_preview' ||
-          copyPhase === 'previewing' ||
-          copyPhase === 'copying' ||
-          copyPhase === 'result' ? (
+        <NavigationContext.Provider value={navValue}>
+          <AppShell>
+            {copyPhase === 'loading_preview' ||
+            copyPhase === 'previewing' ||
+            copyPhase === 'copying' ||
             copyPhase === 'result' ? (
-              <CopyResultPage />
+              copyPhase === 'result' ? (
+                <CopyResultPage />
+              ) : (
+                <CopyPreviewPage onOpenSettingsSection={handleOpenSettingsSection} />
+              )
             ) : (
-              <CopyPreviewPage onOpenSettingsSection={handleOpenSettingsSection} />
-            )
-          ) : (
-            <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
-          )}
-        </AppShell>
+              <TicketDetailPage issueKey={detailTicketKey} onBack={handleDetailBack} />
+            )}
+          </AppShell>
+        </NavigationContext.Provider>
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
         <Toaster />
@@ -249,31 +272,40 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AppShell
-        onGearClick={() => {
-          setShowDetail(false);
-          setDetailTicketKey(null);
-          useTicketStore.getState().selectTicket(null);
-          setShowSettings(true);
-        }}
-        activeTab={effectiveTab}
-        onTabChange={setCurrentTab}
-        navExtension={<GroupTabStrip activeTab={effectiveTab} onTabChange={setCurrentTab} />}
-        onAuditClick={() => {
-          setShowDetail(false);
-          setDetailTicketKey(null);
-          useTicketStore.getState().selectTicket(null);
-          setShowAuditLog(true);
-        }}
-      >
-        <ProbeStatusBanner />
-        {effectiveTab === 'new' && <TicketListPage />}
-        {effectiveTab === 'not-mine' && <IgnoredTicketsPage />}
-        {effectiveTab === 'linked' && <LinkedTicketsPage />}
-        {activeGroupId !== null && groups.some((g) => g.id === activeGroupId) && (
-          <GroupViewPage key={activeGroupId} groupId={activeGroupId} />
-        )}
-      </AppShell>
+      <NavigationContext.Provider value={navValue}>
+        <AppShell
+          onGearClick={() => {
+            setShowDetail(false);
+            setDetailTicketKey(null);
+            useTicketStore.getState().selectTicket(null);
+            setShowSettings(true);
+          }}
+          activeTab={effectiveTab}
+          onTabChange={setCurrentTab}
+          navExtension={
+            <GroupTabStrip
+              activeTab={effectiveTab}
+              onTabChange={setCurrentTab}
+              focusRequest={focusRequest}
+              onFocusRequestHandled={handleFocusRequestHandled}
+            />
+          }
+          onAuditClick={() => {
+            setShowDetail(false);
+            setDetailTicketKey(null);
+            useTicketStore.getState().selectTicket(null);
+            setShowAuditLog(true);
+          }}
+        >
+          <ProbeStatusBanner />
+          {effectiveTab === 'new' && <TicketListPage />}
+          {effectiveTab === 'not-mine' && <IgnoredTicketsPage />}
+          {effectiveTab === 'linked' && <LinkedTicketsPage />}
+          {activeGroupId !== null && groups.some((g) => g.id === activeGroupId) && (
+            <GroupViewPage key={activeGroupId} groupId={activeGroupId} />
+          )}
+        </AppShell>
+      </NavigationContext.Provider>
       <UpdateModal open={showUpdateModal} />
       <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       <Toaster />
