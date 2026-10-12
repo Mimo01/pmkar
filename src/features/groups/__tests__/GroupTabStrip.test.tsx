@@ -443,6 +443,12 @@ describe('GroupTabStrip', () => {
       await waitFor(() =>
         expect(toastErrorMock).toHaveBeenCalledWith('Could not move the group. Try again.'),
       );
+      // Focus is restored to the trigger even though the move failed.
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: 'Sprint 12, 3 issues' }),
+        ),
+      );
     });
 
     it('live region is always mounted, polite and atomic', () => {

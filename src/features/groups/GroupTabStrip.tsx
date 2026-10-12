@@ -189,10 +189,12 @@ export function GroupTabStrip({
       if (pos && name !== undefined) {
         announce(t('groups.move.announce', { name, position: pos.position, total: pos.total }));
       }
-      focusGroupTrigger(id);
     } finally {
       movingRef.current = false;
       setMoving(false);
+      // The menu's close auto-focus was prevented, so focus must be restored on every
+      // exit path (success, failure, or a vanished group). No-ops if the group is gone.
+      focusGroupTrigger(id);
     }
   }
 
