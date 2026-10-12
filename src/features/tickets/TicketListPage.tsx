@@ -9,9 +9,15 @@ import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { SkeletonCards, TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
+import {
+  filterTickets,
+  isNewCandidate,
+  type SortDirection,
+  sortTickets,
+  type TicketSortField,
+} from './ticketListUtils';
 import { useTicketStore } from './ticketStore';
 import type { FetchTicketsResult, JiraTicket, TriageEntry } from './types';
-import { isDoneTicket } from './utils';
 
 // --- Helpers ---
 
@@ -70,10 +76,8 @@ export function TicketListPage() {
   const { t } = useTranslation();
   const [searchText, setSearchText] = useState('');
   const [assigneeFilter, setAssigneeFilter] = useState('');
-  const [sortField, setSortField] = useState<
-    'updated' | 'key' | 'created' | 'priority' | 'status' | 'assignee'
-  >('updated');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField, setSortField] = useState<TicketSortField>('updated');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const tickets = useTicketStore((s) => s.tickets);
   const triageMap = useTicketStore((s) => s.triageMap);
   const fetchStatus = useTicketStore((s) => s.fetchStatus);
@@ -375,50 +379,14 @@ export function TicketListPage() {
     invoke('set_triage_state', { ticketKey: key, state: 'seen' }).catch(() => {});
   }
 
-  const candidateTickets = tickets.filter((t) => {
-    const s = triageMap[t.key]?.state;
-    return s !== 'ignored' && s !== 'copied' && s !== 'handled' && !isDoneTicket(t);
-  });
+  const candidateTickets = tickets.filter((t) => isNewCandidate(t, triageMap));
 
   const sortedCandidates = useMemo(() => {
-    let filtered = candidateTickets;
-    if (searchText.length > 0) {
-      const lower = searchText.toLowerCase();
-      filtered = filtered.filter((ticket) => ticket.key.toLowerCase().includes(lower));
-    }
-    if (assigneeFilter.length > 0) {
-      const assigneeLower = assigneeFilter.toLowerCase();
-      filtered = filtered.filter(
-        (ticket) => (ticket.fields.assignee?.displayName ?? '').toLowerCase() === assigneeLower,
-      );
-    }
-    return [...filtered].sort((a, b) => {
-      let diff: number;
-      if (sortField === 'key') {
-        const parse = (k: string) => {
-          const m = k.match(/^(.*)-(\d+)$/);
-          return m ? { proj: m[1], num: parseInt(m[2], 10) } : { proj: k, num: 0 };
-        };
-        const ka = parse(a.key);
-        const kb = parse(b.key);
-        diff = ka.proj !== kb.proj ? ka.proj.localeCompare(kb.proj) : ka.num - kb.num;
-      } else if (sortField === 'created') {
-        const ta = a.fields.created ?? a.fields.updated;
-        const tb = b.fields.created ?? b.fields.updated;
-        diff = new Date(ta).getTime() - new Date(tb).getTime();
-      } else if (sortField === 'priority') {
-        diff = parseInt(a.fields.priority.id, 10) - parseInt(b.fields.priority.id, 10);
-      } else if (sortField === 'status') {
-        diff = a.fields.status.name.localeCompare(b.fields.status.name);
-      } else if (sortField === 'assignee') {
-        diff = (a.fields.assignee?.displayName ?? '').localeCompare(
-          b.fields.assignee?.displayName ?? '',
-        );
-      } else {
-        diff = new Date(a.fields.updated).getTime() - new Date(b.fields.updated).getTime();
-      }
-      return sortDirection === 'asc' ? diff : -diff;
-    });
+    return sortTickets(
+      filterTickets(candidateTickets, searchText, assigneeFilter),
+      sortField,
+      sortDirection,
+    );
   }, [candidateTickets, searchText, assigneeFilter, sortField, sortDirection]);
 
   const hasTickets = sortedCandidates.length > 0;
@@ -443,7 +411,11 @@ export function TicketListPage() {
           {isLoading ? t('tickets.fetching') : t('tickets.fetchButton')}
         </button>
         {isLoading && batchesTotal > 0 && (
-          <span className="text-xs text-brand-muted" aria-live="polite" data-testid="fetch-progress">
+          <span
+            className="text-xs text-brand-muted"
+            aria-live="polite"
+            data-testid="fetch-progress"
+          >
             {t('tickets.fetchProgress', { done: batchesDone, total: batchesTotal })}
           </span>
         )}
@@ -502,9 +474,7 @@ export function TicketListPage() {
             {t('tickets.partialFetchWarning', { count: failedUserNames.length })}
           </p>
           <p className="text-xs text-brand-muted mt-1">
-            {failedUserNames
-              .map((n) => (n === 'mine' ? t('settings.preset.mine') : n))
-              .join(', ')}
+            {failedUserNames.map((n) => (n === 'mine' ? t('settings.preset.mine') : n)).join(', ')}
           </p>
         </div>
       )}
@@ -526,16 +496,24 @@ export function TicketListPage() {
       {/* Pre-fetch state: user has not fetched yet */}
       {showPreFetchState && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.prefetch.heading')}</p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.prefetch.body')}</p>
+          <p className="text-sm font-semibold text-brand-text mb-1">
+            {t('tickets.empty.prefetch.heading')}
+          </p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">
+            {t('tickets.empty.prefetch.body')}
+          </p>
         </div>
       )}
 
       {/* Empty state */}
       {showEmptyState && (
         <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text mb-1">{t('tickets.empty.noresults.heading')}</p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">{t('tickets.empty.noresults.body')}</p>
+          <p className="text-sm font-semibold text-brand-text mb-1">
+            {t('tickets.empty.noresults.heading')}
+          </p>
+          <p className="text-xs text-brand-muted text-center max-w-sm">
+            {t('tickets.empty.noresults.body')}
+          </p>
         </div>
       )}
 
