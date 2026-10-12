@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom/vitest';
+import { expect } from 'vitest';
+import * as axeMatchers from 'vitest-axe/matchers';
 import './i18n/index';
+
+// GQA-02: axe-core matcher (toHaveNoViolations) for group UI accessibility tests.
+expect.extend(axeMatchers);
 
 // jsdom lacks WebCrypto — polyfill using globalThis.crypto (available in Node 19+/jsdom)
 // In TypeScript 6 we use globalThis.crypto directly (Node 19+ has it natively)
