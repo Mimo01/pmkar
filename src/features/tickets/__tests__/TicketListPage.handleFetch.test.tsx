@@ -1249,6 +1249,67 @@ describe('TicketListPage — fetch completeness and snapshot refresh (D-12, D-13
     warn.mockRestore();
   });
 
+  async function startPendingFetch() {
+    const d = deferred<FetchTicketsResult>();
+    setup(() => d.promise);
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(mockInvoke.mock.calls.some(([cmd]) => cmd === 'fetch_tickets')).toBe(true),
+    );
+    return d;
+  }
+
+  async function settle(d: { resolve: (v: FetchTicketsResult) => void }) {
+    d.resolve(makeFetchResult(['AB-1']));
+    await waitFor(() => expect(useTicketStore.getState().tickets.length).toBe(1));
+  }
+
+  function switchConnection(patch: { baseUrl?: string; username?: string }) {
+    const cur = useConnectionStore.getState().serverConnection;
+    if (!cur) throw new Error('no connection');
+    useConnectionStore.setState({ serverConnection: { ...cur, ...patch } });
+  }
+
+  it('custom path: baseUrl switched mid-flight never refreshes snapshots', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    const d = await startPendingFetch();
+    switchConnection({ baseUrl: 'http://other.example.com' });
+    await settle(d);
+    expect(refreshCalls().length).toBe(0);
+  });
+
+  it('batch path: baseUrl switched mid-flight never refreshes snapshots', async () => {
+    const d = await startPendingFetch();
+    switchConnection({ baseUrl: 'http://other.example.com' });
+    await settle(d);
+    expect(refreshCalls().length).toBe(0);
+  });
+
+  it('batch path: username changed mid-flight never refreshes snapshots', async () => {
+    const d = await startPendingFetch();
+    switchConnection({ username: 'someoneelse' });
+    await settle(d);
+    expect(refreshCalls().length).toBe(0);
+  });
+
+  it('custom path: preset changed mid-flight never refreshes snapshots', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    const d = await startPendingFetch();
+    seed({ jqlPreset: 'mine' });
+    await settle(d);
+    expect(refreshCalls().length).toBe(0);
+  });
+
+  it('unchanged signature refreshes once with the fetching baseUrl', async () => {
+    const d = await startPendingFetch();
+    await settle(d);
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    expect((refreshCalls()[0][1] as { expectedBaseUrl: string }).expectedBaseUrl).toBe(
+      'http://server.example.com',
+    );
+  });
+
   it('never invokes remove_issues_from_group during a fetch (GDUR-01)', async () => {
     seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
     setup((n) => {

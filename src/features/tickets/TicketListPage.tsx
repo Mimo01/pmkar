@@ -143,6 +143,12 @@ export function TicketListPage() {
 
       // Capture the query signature at fetch start (not end) so mid-flight filter changes don't match.
       const fetchSig = computeFetchSignature(currentFetchSignatureInput(store, connState));
+      // CR-01: a server/connection/filter switch mid-fetch must not persist the old
+      // server's data into the new scope. Rust re-checks via expectedBaseUrl.
+      const isFetchStillCurrent = () =>
+        computeFetchSignature(
+          currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
+        ) === fetchSig;
 
       const preset = store.jqlPreset;
 
@@ -159,7 +165,9 @@ export function TicketListPage() {
           result.truncated,
           result.truncated ? null : fetchSig,
         );
-        void useGroupStore.getState().refreshSnapshots(result.issues);
+        if (isFetchStillCurrent()) {
+          void useGroupStore.getState().refreshSnapshots(result.issues, serverConn.baseUrl);
+        }
         const nowCustom = new Date().toISOString();
         store.setLastFetchedAt(nowCustom);
         store.setLastCheckedAt(nowCustom);
@@ -282,7 +290,9 @@ export function TicketListPage() {
         anyTruncated,
         localFailedUsers.length === 0 && !anyTruncated ? fetchSig : null,
       );
-      void useGroupStore.getState().refreshSnapshots(mergedIssues);
+      if (isFetchStillCurrent()) {
+        void useGroupStore.getState().refreshSnapshots(mergedIssues, serverConn.baseUrl);
+      }
       const now = new Date().toISOString();
       store.setLastFetchedAt(now);
       store.setLastCheckedAt(now);

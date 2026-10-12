@@ -146,12 +146,22 @@ pub fn remove_issues_from_group_inner(
 
 /// Refresh snapshots of existing members (D-15). Scope is derived in Rust and
 /// the triage lock is released before the groups lock is taken.
+///
+/// `expected_base_url` is the base URL the tickets were fetched from. It can
+/// only veto a write (CR-01): if its normalized form differs from the scope
+/// Rust derives from the current connection (e.g. the user switched servers
+/// between fetch start and refresh), nothing is written and `Ok(0)` is
+/// returned. It never selects the write scope.
 pub fn refresh_group_snapshots_inner(
     triage_db: &Arc<Mutex<TriageDb>>,
     groups_db: &Arc<Mutex<GroupsDb>>,
+    expected_base_url: &str,
     issues: &[NewMember],
 ) -> GroupResult<usize> {
     let scope = require_scope(triage_db)?;
+    if normalize_scope(expected_base_url) != Some(scope.clone()) {
+        return Ok(0);
+    }
     lock_groups(groups_db)?.refresh_snapshots(&scope, issues)
 }
 
@@ -253,9 +263,10 @@ pub fn remove_issues_from_group(
 pub fn refresh_group_snapshots(
     triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
     groups_db: tauri::State<'_, Arc<Mutex<GroupsDb>>>,
+    expected_base_url: String,
     issues: Vec<NewMember>,
 ) -> Result<usize, GroupError> {
-    refresh_group_snapshots_inner(&triage_db, &groups_db, &issues)
+    refresh_group_snapshots_inner(&triage_db, &groups_db, &expected_base_url, &issues)
 }
 
 #[cfg(test)]
@@ -324,7 +335,9 @@ mod tests {
             ticket_json: json.into(),
         };
         add_issues_to_group_inner(&t, &g, grp.id, &[item("{\"v\":1}")]).unwrap();
-        let n = refresh_group_snapshots_inner(&t, &g, &[item("{\"v\":2}")]).unwrap();
+        let n =
+            refresh_group_snapshots_inner(&t, &g, "https://a.example.com", &[item("{\"v\":2}")])
+                .unwrap();
         assert_eq!(n, 1);
         let members = get_group_members_inner(&t, &g, grp.id).unwrap();
         assert_eq!(members[0].ticket_json, "{\"v\":2}");
@@ -334,8 +347,57 @@ mod tests {
     #[test]
     fn refresh_group_snapshots_no_scope() {
         let (t, g) = dbs();
-        let err = refresh_group_snapshots_inner(&t, &g, &[]).unwrap_err();
+        let err = refresh_group_snapshots_inner(&t, &g, "https://a.example.com", &[]).unwrap_err();
         assert_eq!(err.code, GroupErrorCode::NoScope);
+    }
+
+    fn member(json: &str) -> NewMember {
+        NewMember {
+            issue_key: "AB-1".into(),
+            ticket_json: json.into(),
+        }
+    }
+
+    #[test]
+    fn refresh_group_snapshots_case_and_slash_insensitive_match() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://a.example.com", "u");
+        let grp = create_group_inner(&t, &g, "A", None).unwrap();
+        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        let n =
+            refresh_group_snapshots_inner(&t, &g, "https://A.example.com/", &[member("{\"v\":2}")])
+                .unwrap();
+        assert_eq!(n, 1);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members[0].ticket_json, "{\"v\":2}");
+    }
+
+    #[test]
+    fn refresh_group_snapshots_scope_mismatch_is_noop() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://b.example.com", "u");
+        let grp = create_group_inner(&t, &g, "B", None).unwrap();
+        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        let n =
+            refresh_group_snapshots_inner(&t, &g, "https://a.example.com", &[member("{\"v\":2}")])
+                .unwrap();
+        assert_eq!(n, 0);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members.len(), 1);
+        assert_eq!(members[0].ticket_json, "{\"v\":1}");
+    }
+
+    #[test]
+    fn refresh_group_snapshots_empty_expected_is_noop() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://a.example.com", "u");
+        let grp = create_group_inner(&t, &g, "A", None).unwrap();
+        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        let n = refresh_group_snapshots_inner(&t, &g, "", &[member("{\"v\":2}")]).unwrap();
+        assert_eq!(n, 0);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members[0].ticket_json, "{\"v\":1}");
+        assert!(t.try_lock().is_ok(), "triage lock must be released");
     }
 
     #[test]
