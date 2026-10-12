@@ -99,7 +99,10 @@ export function DeleteGroupDialog({
         <DialogDescription className="mt-4 text-sm text-brand-text-secondary">
           {count === 0 ? t('groups.delete.bodyEmpty') : t('groups.delete.body', { count })}
         </DialogDescription>
-        <p role="alert" className="mt-2 min-h-4 flex items-center gap-1 text-xs text-destructive">
+        <p
+          role="alert"
+          className="mt-2 min-h-4 flex items-center gap-1 text-xs text-destructive-text"
+        >
           {message && (
             <>
               <AlertCircle className="w-3 h-3" aria-hidden="true" />

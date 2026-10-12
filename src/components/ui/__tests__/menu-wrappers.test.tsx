@@ -78,7 +78,7 @@ describe('DropdownMenu wrapper', () => {
     screen.getByRole('button', { name: 'Open' }).focus();
     await user.keyboard('{Enter}');
     const item = await screen.findByRole('menuitem', { name: 'Third' });
-    expect(item).toHaveClass('text-destructive');
+    expect(item).toHaveClass('text-destructive-text');
     expect(item).not.toHaveAttribute('destructive');
   });
 });
@@ -98,7 +98,7 @@ describe('ContextMenu wrapper', () => {
     );
     fireEvent.contextMenu(screen.getByText('Area'));
     expect(await screen.findByRole('menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Remove' })).toHaveClass('text-destructive');
+    expect(screen.getByRole('menuitem', { name: 'Remove' })).toHaveClass('text-destructive-text');
 
     await user.click(screen.getByRole('menuitem', { name: 'Do it' }));
     expect(onSelect).toHaveBeenCalledTimes(1);
