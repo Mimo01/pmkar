@@ -189,7 +189,27 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A "Select" toggle in every list header reveals checkboxes with shift-click range selection; selection clears on tab change or leaving select mode
   5. The selection bar shows the count and adds all selected issues to a group atomically (with inline create); inside a group view it also offers "Remove from group"
 
-**Plans**: TBD
+**Plans:** 9 plans
+**Wave 1**
+
+- [ ] 31-01-PLAN.md — EN/SK strings for picker, chips, select mode, bar, toasts (Slovak plurals, D-18 check)
+- [ ] 31-02-PLAN.md — NavigationContext + App navigateToGroup + GroupTabStrip focusRequest
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 31-03-PLAN.md — useListSelection hook (shift range, prune, Esc) + Select toggle in TicketFilterBar
+- [ ] 31-04-PLAN.md — GroupPicker (checkbox + list modes, inline create) + membershipActions feedback helpers
+- [ ] 31-05-PLAN.md — Card group chips (max 2 + "+N") + TicketCard restructure with select mode
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 31-06-PLAN.md — SelectionBar (count live region, atomic Add, confirmed Remove)
+- [ ] 31-07-PLAN.md — Detail Groups row (picker, chips with × confirm, chip navigation, Esc guard)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 31-08-PLAN.md — GroupViewPage select mode + Remove from group + hide current-group chip
+- [ ] 31-09-PLAN.md — Core lists select mode + GMEM-01 regression + tab-change clearing
 **UI hint**: yes
 
 ### Phase 32: Durability
