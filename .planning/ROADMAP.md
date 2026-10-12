@@ -225,12 +225,12 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A group with missing members offers "Remove all missing", which asks for confirmation before removing
   5. Snapshots refresh after each successful fetch and are cleaned up once no group references the issue
 
-**Plans:** 7 plans
+**Plans:** 3/7 plans executed
 **Wave 1**
 
-- [ ] 32-01-PLAN.md — Rust UPDATE-only refresh_snapshots + refresh_group_snapshots command; GC regression tests (GDUR-01, GDUR-06)
-- [ ] 32-02-PLAN.md — Session-only completeness signature in ticketStore, computeFetchSignature, useHintsEligible (GDUR-04)
-- [ ] 32-03-PLAN.md — EN/SK missing-member copy, shared ConfirmRemovePopover, missing-removal helpers (GDUR-03, GDUR-05)
+- [x] 32-01-PLAN.md — Rust UPDATE-only refresh_snapshots + refresh_group_snapshots command; GC regression tests (GDUR-01, GDUR-06)
+- [x] 32-02-PLAN.md — Session-only completeness signature in ticketStore, computeFetchSignature, useHintsEligible (GDUR-04)
+- [x] 32-03-PLAN.md — EN/SK missing-member copy, shared ConfirmRemovePopover, missing-removal helpers (GDUR-03, GDUR-05)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -295,5 +295,5 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
-| 32. Durability | v0.5.0 | 0/TBD | Not started | - |
+| 32. Durability | v0.5.0 | 3/7 | In Progress|  |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
