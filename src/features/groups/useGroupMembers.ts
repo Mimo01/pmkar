@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { JiraTicket } from '../tickets/types';
+import { useHintsEligible } from '../tickets/useHintsEligible';
 import { useGroupStore } from './groupStore';
+import { computeMissingKeys } from './missingMembers';
 
 /**
  * Shape guard for tickets parsed from stored snapshots. TicketCard, filterTickets and
@@ -43,11 +45,18 @@ export function useGroupMembers(groupId: number): {
   error: boolean;
   /** Some members could not be shown (load failure or unreadable snapshot, no live ticket). */
   incomplete: boolean;
+  /**
+   * Members absent from the latest complete fetch (D-01). Empty when hints are not
+   * eligible (D-13). `members` still includes them (D-08).
+   */
+  missingKeys: ReadonlySet<string>;
   retry: () => void;
 } {
   // null fallback only: a fresh [] inside a selector causes an infinite re-render loop.
   const keys = useGroupStore((s) => s.memberKeysByGroup[groupId] ?? null);
   const tickets = useTicketStore((s) => s.tickets);
+  const snapshotRevision = useGroupStore((s) => s.snapshotRevision);
+  const eligible = useHintsEligible();
   // forKeys records which keys reference the snapshots were loaded for, so a stale
   // result (keys changed, refetch pending) is never reported as incomplete.
   const [result, setResult] = useState<{
@@ -58,7 +67,7 @@ export function useGroupMembers(groupId: number): {
   const [attempt, setAttempt] = useState(0);
   const snapshots = result?.map ?? null;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is a retry trigger
+  // biome-ignore lint/correctness/useExhaustiveDependencies: attempt is a retry trigger and snapshotRevision a silent reload trigger (result is kept until the new one lands)
   useEffect(() => {
     if (keys === null || keys.length === 0) return;
     let cancelled = false;
@@ -90,7 +99,7 @@ export function useGroupMembers(groupId: number): {
     return () => {
       cancelled = true;
     };
-  }, [groupId, keys, attempt]);
+  }, [groupId, keys, attempt, snapshotRevision]);
 
   const members = useMemo(() => {
     if (keys === null) return [];
@@ -105,6 +114,11 @@ export function useGroupMembers(groupId: number): {
     return out;
   }, [keys, tickets, snapshots]);
 
+  const missingKeys = useMemo(
+    () => computeMissingKeys(keys, new Set(tickets.map((t) => t.key)), eligible),
+    [keys, tickets, eligible],
+  );
+
   const loading =
     keys !== null && keys.length > 0 && snapshots === null && members.length < keys.length;
   const fresh = result !== null && keys !== null && result.forKeys === keys;
@@ -116,5 +130,5 @@ export function useGroupMembers(groupId: number): {
     setAttempt((a) => a + 1);
   }, []);
 
-  return { keys, members, loading, error, incomplete, retry };
+  return { keys, members, loading, error, incomplete, missingKeys, retry };
 }
