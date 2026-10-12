@@ -28,7 +28,11 @@ export function resolveActiveTab(
   return groups.some((g) => g.id === id) ? tab : 'new';
 }
 
-export function computeOverflow(m: { scrollLeft: number; clientWidth: number; scrollWidth: number }): {
+export function computeOverflow(m: {
+  scrollLeft: number;
+  clientWidth: number;
+  scrollWidth: number;
+}): {
   canScrollLeft: boolean;
   canScrollRight: boolean;
 } {

@@ -29,10 +29,14 @@ describe('groupBadgeKey', () => {
   it('open copied -> nav.linked', () => {
     expect(groupBadgeKey(open, triage('copied'))).toBe('nav.linked');
   });
-  it.each([undefined, 'new', 'seen', 'ignored', 'handled', 'copied'] as const)(
-    'done %s -> groups.badge.done',
-    (s) => {
-      expect(groupBadgeKey(done, triage(s))).toBe('groups.badge.done');
-    },
-  );
+  it.each([
+    undefined,
+    'new',
+    'seen',
+    'ignored',
+    'handled',
+    'copied',
+  ] as const)('done %s -> groups.badge.done', (s) => {
+    expect(groupBadgeKey(done, triage(s))).toBe('groups.badge.done');
+  });
 });
