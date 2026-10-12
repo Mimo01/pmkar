@@ -76,7 +76,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 - [x] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list (completed 2026-10-12)
 - [x] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right (completed 2026-10-12)
 - [x] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar (completed 2026-10-12)
-- [ ] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove
+- [x] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove (completed 2026-10-12)
 - [ ] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI
 
 ### Phase 28: Foundations
@@ -225,7 +225,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A group with missing members offers "Remove all missing", which asks for confirmation before removing
   5. Snapshots refresh after each successful fetch and are cleaned up once no group references the issue
 
-**Plans:** 7/9 plans complete (2 gap-closure plans pending)
+**Plans:** 9/9 plans complete
 **Wave 1**
 
 - [x] 32-01-PLAN.md — Rust UPDATE-only refresh_snapshots + refresh_group_snapshots command; GC regression tests (GDUR-01, GDUR-06)
@@ -244,8 +244,8 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Gap closure** *(parallel, wave 1)*
 
-- [ ] 32-08-PLAN.md — CR-01: gate snapshot refresh on unchanged fetch signature + Rust expected-scope check (GDUR-06)
-- [ ] 32-09-PLAN.md — WR-01: single-card Remove rechecks still-missing at confirm (GDUR-05)
+- [x] 32-08-PLAN.md — CR-01: gate snapshot refresh on unchanged fetch signature + Rust expected-scope check (GDUR-06)
+- [x] 32-09-PLAN.md — WR-01: single-card Remove rechecks still-missing at confirm (GDUR-05)
 **Research flag**: Check whether default JQL presets include done issues and pin down exact gating rules
 
 ### Phase 33: Polish & Verification
@@ -300,5 +300,5 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
-| 32. Durability | v0.5.0 | 7/7 | Gaps found | - |
+| 32. Durability | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
