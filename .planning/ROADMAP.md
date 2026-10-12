@@ -73,7 +73,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 <summary>🚧 v0.5.0 Custom Groups (Phases 28-33) — IN PROGRESS</summary>
 
 - [x] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels (completed 2026-10-12)
-- [ ] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list
+- [x] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list (completed 2026-10-12)
 - [ ] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right
 - [ ] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar
 - [ ] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove
@@ -121,7 +121,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Opening a group shows its members as one flat list with a New / Dismissed / Already Linked / Done badge (core tab labels) on each card; an empty group explains how to add issues
   4. User can search, filter, sort, open detail, copy, and dismiss/restore from a group view, and triage changes appear immediately in both the group view and core tabs
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 **Wave 1**
 
 - [x] 29-01-PLAN.md — Fix Phase 28 WR-01..WR-04: hydrate sequencing + keep last good state; TS/Rust trim and zero-width alignment with shared vectors
@@ -135,7 +135,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 29-06-PLAN.md — GroupTabStrip (divider, overflow scroll, arrows/fades, create-then-focus) wired into AppShell and App.tsx (GVIEW-01, GVIEW-02)
+- [x] 29-06-PLAN.md — GroupTabStrip (divider, overflow scroll, arrows/fades, create-then-focus) wired into AppShell and App.tsx (GVIEW-01, GVIEW-02)
 **UI hint**: yes
 
 ### Phase 30: Group Management & Reorder
@@ -234,7 +234,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
-| 29. Tab Strip & Group View | v0.5.0 | 5/6 | In Progress|  |
+| 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
