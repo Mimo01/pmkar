@@ -74,7 +74,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 - [x] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels (completed 2026-10-12)
 - [x] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list (completed 2026-10-12)
-- [ ] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right
+- [x] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right (completed 2026-10-12)
 - [ ] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar
 - [ ] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove
 - [ ] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI
@@ -150,7 +150,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Deleting a group asks for confirmation stating the issue count and that issues are not affected; if it was the active tab the app lands on a core tab
   4. User can reorder group tabs with "Move left / Move right" in the tab menu (mouse or keyboard); core tabs stay fixed, a screen reader announces the new position, and the order survives restart
 
-**Plans:** 6/7 plans executed
+**Plans:** 7/7 plans complete
 **Wave 1**
 
 - [x] 30-01-PLAN.md — Legitimacy gate + exact-pinned Radix dropdown/context menu packages, shadcn wrappers, jsdom stubs (checkpoint)
@@ -168,7 +168,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 30-07-PLAN.md — Strip wiring of rename/color/delete overlays, delete fallback to New and D-14 focus targets
+- [x] 30-07-PLAN.md — Strip wiring of rename/color/delete overlays, delete fallback to New and D-14 focus targets
 
 **UI hint**: yes
 
@@ -254,7 +254,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
-| 30. Group Management & Reorder | v0.5.0 | 6/7 | In Progress|  |
+| 30. Group Management & Reorder | v0.5.0 | 7/7 | Complete   | 2026-10-12 |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
