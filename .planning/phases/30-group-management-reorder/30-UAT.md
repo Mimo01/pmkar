@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 30-group-management-reorder
 source: [30-01-SUMMARY.md, 30-02-SUMMARY.md, 30-03-SUMMARY.md, 30-04-SUMMARY.md, 30-05-SUMMARY.md, 30-06-SUMMARY.md, 30-07-SUMMARY.md, 30-HUMAN-UAT.md]
 started: 2026-10-12T14:30:00Z
@@ -71,5 +71,18 @@ blocked: 0
   reason: "User reported: some colors are not rendering, some are. Other than that, works correctly"
   severity: major
   test: 1
-  artifacts: []
-  missing: []
+  root_cause: "Light-theme --color-group-* variables are declared inside Tailwind v4 @theme {} in src/index.css. Tailwind v4 only emits @theme variables whose names appear literally in scanned sources, but groupColorVar (colors.ts) builds `var(--color-group-${token})` at runtime. Only blue/amber/purple/slate survive (accidental literal mentions in tests and .planning docs); teal, green, orange and pink are stripped, so their swatches and tab dots render transparent in light theme. Dark theme (plain body.dark rule) has all 8."
+  artifacts:
+    - path: "src/index.css"
+      issue: "Light group palette (lines ~44-53) lives in @theme, which tree-shakes unreferenced variables"
+    - path: "src/features/groups/colors.ts"
+      issue: "groupColorVar builds the variable name dynamically, invisible to Tailwind's scanner"
+    - path: "src/features/groups/GroupColorSwatches.tsx"
+      issue: "Renders swatch via inline var(); affected consumer"
+    - path: "src/features/groups/GroupTab.tsx"
+      issue: "Renders tab dot via inline var() (line ~103); affected consumer"
+  missing:
+    - "Declare light-theme --color-group-* in a plain :root rule (like body.dark) or @theme static so all 8 are always emitted"
+    - "Update the existing colors.ts vs index.css consistency test to find values after the move"
+    - "Add regression test asserting the built/declared CSS defines all 8 light-theme group variables unconditionally"
+  debug_session: ".planning/debug/group-colors-not-rendering.md"
