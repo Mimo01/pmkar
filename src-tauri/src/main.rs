@@ -210,6 +210,7 @@ fn main() {
             groups_commands::delete_group,
             groups_commands::add_issues_to_group,
             groups_commands::remove_issues_from_group,
+            groups_commands::refresh_group_snapshots,
             commands::store_credential,
             commands::get_credential,
             commands::delete_credential,

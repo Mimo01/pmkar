@@ -144,6 +144,17 @@ pub fn remove_issues_from_group_inner(
     lock_groups(groups_db)?.remove_members(&scope, group_id, issue_keys)
 }
 
+/// Refresh snapshots of existing members (D-15). Scope is derived in Rust and
+/// the triage lock is released before the groups lock is taken.
+pub fn refresh_group_snapshots_inner(
+    triage_db: &Arc<Mutex<TriageDb>>,
+    groups_db: &Arc<Mutex<GroupsDb>>,
+    issues: &[NewMember],
+) -> GroupResult<usize> {
+    let scope = require_scope(triage_db)?;
+    lock_groups(groups_db)?.refresh_snapshots(&scope, issues)
+}
+
 #[tauri::command]
 pub fn list_groups(
     triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
@@ -238,6 +249,15 @@ pub fn remove_issues_from_group(
     remove_issues_from_group_inner(&triage_db, &groups_db, group_id, &issue_keys)
 }
 
+#[tauri::command]
+pub fn refresh_group_snapshots(
+    triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
+    groups_db: tauri::State<'_, Arc<Mutex<GroupsDb>>>,
+    issues: Vec<NewMember>,
+) -> Result<usize, GroupError> {
+    refresh_group_snapshots_inner(&triage_db, &groups_db, &issues)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -291,6 +311,30 @@ mod tests {
         let err = create_group_inner(&t, &g, "A", None).unwrap_err();
         assert_eq!(err.code, GroupErrorCode::NoScope);
         let err = get_group_members_inner(&t, &g, 1).unwrap_err();
+        assert_eq!(err.code, GroupErrorCode::NoScope);
+    }
+
+    #[test]
+    fn refresh_group_snapshots_uses_rust_scope() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://a.example.com", "u");
+        let grp = create_group_inner(&t, &g, "A", None).unwrap();
+        let item = |json: &str| NewMember {
+            issue_key: "AB-1".into(),
+            ticket_json: json.into(),
+        };
+        add_issues_to_group_inner(&t, &g, grp.id, &[item("{\"v\":1}")]).unwrap();
+        let n = refresh_group_snapshots_inner(&t, &g, &[item("{\"v\":2}")]).unwrap();
+        assert_eq!(n, 1);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members[0].ticket_json, "{\"v\":2}");
+        assert!(t.try_lock().is_ok(), "triage lock must be released");
+    }
+
+    #[test]
+    fn refresh_group_snapshots_no_scope() {
+        let (t, g) = dbs();
+        let err = refresh_group_snapshots_inner(&t, &g, &[]).unwrap_err();
         assert_eq!(err.code, GroupErrorCode::NoScope);
     }
 
