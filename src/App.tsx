@@ -10,6 +10,7 @@ import ProbeStatusBanner from './features/connections/ProbeStatusBanner';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
+import { useGroupStore } from './features/groups/groupStore';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { CopyPreviewPage } from './features/tickets/CopyPreviewPage';
@@ -74,6 +75,16 @@ function App() {
       .catch(() => {})
       .finally(() => setHydrated(true));
   }, []);
+
+  // Hydrate groups once persisted connection metas are loaded (Rust derives scope from them).
+  // Source changes re-hydrate via rehydrateAfter in SettingsPage/SetupWizard.
+  useEffect(() => {
+    if (!hydrated) return;
+    useGroupStore
+      .getState()
+      .hydrate()
+      .catch(() => {});
+  }, [hydrated]);
 
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<
