@@ -2,6 +2,9 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const toastErrorMock = vi.fn();
+vi.mock('sonner', () => ({ toast: { error: (...a: unknown[]) => toastErrorMock(...a) } }));
+
 const invokeMock = vi.fn();
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
@@ -55,6 +58,7 @@ beforeEach(() => {
   invokeMock.mockReset();
   scrollIntoViewMock.mockReset();
   scrollByMock.mockReset();
+  toastErrorMock.mockReset();
   invokeMock.mockImplementation(async () => null);
   seed([]);
 });
@@ -95,7 +99,7 @@ describe('GroupTabStrip', () => {
     renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
     const b = screen.getByRole('button', { name: 'QA, 1 issue' });
     expect(b).toHaveAttribute('aria-current', 'page');
-    expect(b.className).toContain('border-brand');
+    expect(b.parentElement?.className).toContain('border-brand');
     expect(b.className).toContain('font-semibold');
     expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).not.toHaveAttribute(
       'aria-current',
@@ -240,5 +244,259 @@ describe('GroupTabStrip', () => {
     });
     expect(screen.getByRole('button', { name: 'Ops, 0 issues' })).toBeInTheDocument();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  describe('group menu', () => {
+    const three = [sprint, qa, ops];
+
+    function mockServer(list: Array<Record<string, unknown>>, moveError?: string) {
+      let server = list.map((g) => ({ ...g }));
+      invokeMock.mockImplementation(async (cmd: string, args?: Record<string, unknown>) => {
+        if (cmd === 'move_group') {
+          if (moveError) throw { code: moveError };
+          const i = server.findIndex((g) => g.id === args?.groupId);
+          const j = args?.direction === 'left' ? i - 1 : i + 1;
+          if (i >= 0 && j >= 0 && j < server.length) {
+            const next = [...server];
+            [next[i], next[j]] = [next[j], next[i]];
+            server = next.map((g, k) => ({ ...g, position: k }));
+          }
+          return server;
+        }
+        if (cmd === 'list_groups') return server;
+        if (cmd === 'list_group_memberships') return [];
+        return null;
+      });
+    }
+
+    function tabOrder() {
+      return screen
+        .getAllByRole('button', { name: /, \d+ issues?$/ })
+        .map((b) => b.getAttribute('aria-label')?.split(',')[0]);
+    }
+
+    it('only the active tab has a focusable `…` button; others are hidden but laid out', () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      const more = screen.getByRole('button', { name: 'Group actions for QA' });
+      expect(more).toHaveAttribute('tabindex', '0');
+      expect(screen.queryByRole('button', { name: 'Group actions for Sprint 12' })).toBeNull();
+      const hidden = screen
+        .getByTestId('group-tab-scroller')
+        .querySelector('[aria-label="Group actions for Sprint 12"]') as HTMLElement;
+      expect(hidden).toHaveAttribute('aria-hidden', 'true');
+      expect(hidden).toHaveAttribute('tabindex', '-1');
+      expect(hidden.className).toContain('invisible');
+    });
+
+    it('`…` and tab button are siblings in one wrapper', () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      const tab = screen.getByRole('button', { name: 'QA, 1 issue' });
+      const more = screen.getByRole('button', { name: 'Group actions for QA' });
+      expect(tab.contains(more)).toBe(false);
+      expect(tab.parentElement).toBe(more.parentElement);
+      const inactive = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
+      expect(inactive.parentElement?.className).toContain('border-transparent');
+    });
+
+    it('keyboard Enter on `…` opens the menu', async () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      const more = screen.getByRole('button', { name: 'Group actions for QA' });
+      more.focus();
+      await userEvent.setup().keyboard('{Enter}');
+      expect(await screen.findByRole('menu')).toBeInTheDocument();
+      expect(screen.getAllByRole('menuitem')[0]).toHaveTextContent('Rename…');
+      expect(more).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('right-click opens the menu without switching tabs', async () => {
+      seed(three);
+      const spy = vi.fn();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={spy} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      expect(await screen.findByRole('menu')).toBeInTheDocument();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('Shift+F10 and ContextMenu key open the menu without switching tabs', async () => {
+      seed(three);
+      const spy = vi.fn();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={spy} />);
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }), {
+        key: 'F10',
+        shiftKey: true,
+      });
+      expect(await screen.findByRole('menu')).toBeInTheDocument();
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }), {
+        key: 'ContextMenu',
+      });
+      expect(await screen.findByRole('menu')).toBeInTheDocument();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('Move right from the active `…` menu reorders, announces, and refocuses', async () => {
+      seed(three);
+      mockServer(three);
+      const spy = vi.fn();
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={spy} />);
+      screen.getByRole('button', { name: 'Group actions for QA' }).focus();
+      await user.keyboard('{Enter}');
+      await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
+      await waitFor(() =>
+        expect(invokeMock).toHaveBeenCalledWith('move_group', { groupId: 2, direction: 'right' }),
+      );
+      expect(invokeMock.mock.calls.filter((c) => c[0] === 'move_group')).toHaveLength(1);
+      await waitFor(() => expect(tabOrder()).toEqual(['Sprint 12', 'Ops', 'QA']));
+      await waitFor(() =>
+        expect(screen.getByTestId('group-move-status')).toHaveTextContent(
+          '“QA” moved to position 3 of 3.',
+        ),
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: 'Group actions for QA' }),
+        ),
+      );
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('Move right from a right-clicked inactive tab focuses its tab button', async () => {
+      seed(three);
+      mockServer(three);
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
+      await waitFor(() => expect(tabOrder()).toEqual(['QA', 'Sprint 12', 'Ops']));
+      await waitFor(() =>
+        expect(screen.getByTestId('group-move-status')).toHaveTextContent(
+          '“Sprint 12” moved to position 2 of 3.',
+        ),
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(
+          screen.getByRole('button', { name: 'Sprint 12, 3 issues' }),
+        ),
+      );
+    });
+
+    it('disables Move left on the first group and Move right on the last', async () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      expect(await screen.findByRole('menuitem', { name: 'Move left' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      expect(screen.getByRole('menuitem', { name: 'Move right' })).not.toHaveAttribute(
+        'aria-disabled',
+      );
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Ops, 0 issues' }));
+      expect(await screen.findByRole('menuitem', { name: 'Move right' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('disables both moves for a single group', async () => {
+      seed([sprint]);
+      renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      expect(await screen.findByRole('menuitem', { name: 'Move left' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+      expect(screen.getByRole('menuitem', { name: 'Move right' })).toHaveAttribute(
+        'aria-disabled',
+        'true',
+      );
+    });
+
+    it('shows a not-found toast when the move fails with not_found, with no announcement', async () => {
+      seed(three);
+      mockServer(three, 'not_found');
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
+      await waitFor(() =>
+        expect(toastErrorMock).toHaveBeenCalledWith('This group no longer exists.'),
+      );
+      expect(screen.getByTestId('group-move-status')).toHaveTextContent('');
+    });
+
+    it('shows a generic toast for other move failures', async () => {
+      seed(three);
+      mockServer(three, 'boom');
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
+      await waitFor(() =>
+        expect(toastErrorMock).toHaveBeenCalledWith('Could not move the group. Try again.'),
+      );
+    });
+
+    it('live region is always mounted, polite and atomic', () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      const status = screen.getByTestId('group-move-status');
+      expect(status).toHaveAttribute('role', 'status');
+      expect(status).toHaveAttribute('aria-live', 'polite');
+      expect(status).toHaveAttribute('aria-atomic', 'true');
+    });
+
+    it('clears the announcement after 5 seconds', async () => {
+      seed(three);
+      mockServer(three);
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
+      await waitFor(() =>
+        expect(screen.getByTestId('group-move-status')).toHaveTextContent('moved to position'),
+      );
+      await waitFor(() => expect(screen.getByTestId('group-move-status')).toBeEmptyDOMElement(), {
+        timeout: 6500,
+      });
+    }, 10000);
+
+    it('Rename via right-click keeps the tab; a vanished group clears pending with a toast', async () => {
+      seed(three);
+      const spy = vi.fn();
+      const user = userEvent.setup();
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={spy} />);
+      fireEvent.contextMenu(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'Rename…' }));
+      await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+      expect(spy).not.toHaveBeenCalled();
+      act(() => {
+        useGroupStore.setState({ groups: [qa, ops] as never });
+      });
+      await waitFor(() =>
+        expect(toastErrorMock).toHaveBeenCalledWith('This group no longer exists.'),
+      );
+    });
+
+    it('Escape closing the `…` menu returns focus to the trigger', async () => {
+      seed(three);
+      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      const more = screen.getByRole('button', { name: 'Group actions for QA' });
+      more.focus();
+      const user = userEvent.setup();
+      await user.keyboard('{Enter}');
+      await screen.findByRole('menu');
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+      await waitFor(() => expect(document.activeElement).toBe(more));
+    });
   });
 });
