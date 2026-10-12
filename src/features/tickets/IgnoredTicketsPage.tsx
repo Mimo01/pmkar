@@ -1,4 +1,3 @@
-import { invoke } from '@tauri-apps/api/core';
 import { Info, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,14 +11,7 @@ import {
   type TicketSortField,
 } from './ticketListUtils';
 import { useTicketStore } from './ticketStore';
-
-function handleRestore(issueKey: string) {
-  invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
-  useTicketStore.getState().hydrateTriageMap({
-    ...useTicketStore.getState().triageMap,
-    [issueKey]: { state: 'seen', copiedKey: null },
-  });
-}
+import { restoreTicket } from './triageActions';
 
 export function IgnoredTicketsPage() {
   const { t } = useTranslation();
@@ -107,7 +99,7 @@ export function IgnoredTicketsPage() {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRestore(ticket.key);
+                      restoreTicket(ticket.key);
                     }}
                     className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
                   >
