@@ -190,4 +190,52 @@ describe('TicketCard', () => {
       'inset_3px_0_0',
     );
   });
+  describe('dimmed and footerSlot', () => {
+    it('adds no opacity-60 without dimmed', () => {
+      const { container } = setup();
+      expect(container.innerHTML).not.toContain('opacity-60');
+    });
+
+    it('dims content but not chips, checkbox or footer', () => {
+      const { container } = setup({
+        dimmed: true,
+        selectMode: true,
+        onToggleSelect: vi.fn(),
+        footerSlot: <button type="button">Footer btn</button>,
+      });
+      for (const text of ['P-1', 'Card summary']) {
+        expect(screen.getByText(text).className).toContain('opacity-60');
+      }
+      const unDimmed = [
+        screen.getByRole('button', { name: 'Go to group ‘Dev’' }),
+        screen.getByRole('checkbox', { name: 'Select P-1' }),
+        screen.getByRole('button', { name: 'Footer btn' }),
+      ];
+      for (const el of unDimmed) {
+        let node: HTMLElement | null = el;
+        while (node && node !== container) {
+          expect(node.className).not.toContain('opacity-60');
+          node = node.parentElement;
+        }
+      }
+      expect(screen.getByRole('button', { name: 'Footer btn' }).parentElement?.className).toContain(
+        'pl-14',
+      );
+    });
+
+    it('footer clicks do not trigger onClick and root has data-ticket-key', async () => {
+      const inner = vi.fn();
+      const { onClick, user, container } = setup({
+        footerSlot: (
+          <button type="button" onClick={inner}>
+            Footer btn
+          </button>
+        ),
+      });
+      await user.click(screen.getByRole('button', { name: 'Footer btn' }));
+      expect(inner).toHaveBeenCalled();
+      expect(onClick).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-ticket-key="P-1"]')).not.toBeNull();
+    });
+  });
 });

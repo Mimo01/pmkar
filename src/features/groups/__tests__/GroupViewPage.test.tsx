@@ -1,6 +1,8 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useConnectionStore } from '../../connections/connectionStore';
+import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
 import { isNewCandidate } from '../../tickets/ticketListUtils';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, TriageEntry } from '../../tickets/types';
@@ -394,5 +396,204 @@ describe('GroupViewPage selection', () => {
       state: 'seen',
     });
     expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+  });
+});
+
+describe('GroupViewPage missing members', () => {
+  const QA = { id: 7, name: 'QA', color: 'blue', position: 0, createdAt: 't', memberCount: 4 };
+  const A1 = mk('AB-1', '2026-01-01T10:00:00.000Z');
+  const A3 = mk('AB-3', '2026-01-03T10:00:00.000Z');
+  const M2 = mk('AB-2', '2026-01-02T10:00:00.000Z', { summary: 'Gone two alpha' });
+  const M4 = mk('AB-4', '2026-01-04T10:00:00.000Z', { summary: 'Gone four beta' });
+  let removeFails = false;
+  let memberKeys: string[] = [];
+
+  function makeEligible() {
+    useTicketStore.setState({
+      lastCompleteFetchSignature: computeFetchSignature(
+        currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
+      ),
+    });
+  }
+
+  function setup(opts: { eligible: boolean; keys: string[]; live: JiraTicket[] }) {
+    memberKeys = [...opts.keys];
+    useGroupStore.setState({
+      groups: [QA] as never,
+      memberKeysByGroup: { 7: opts.keys },
+      hydrated: true,
+    });
+    useTicketStore.setState({
+      tickets: opts.live,
+      triageMap: {},
+      selectedTicketKey: null,
+      lastCompleteFetchSignature: null,
+    });
+    if (opts.eligible) makeEligible();
+  }
+
+  const callsOf = (cmd: string) => mockInvoke.mock.calls.filter((c) => c[0] === cmd);
+  const order = () => screen.getAllByText(/^AB-\d$/).map((e) => e.textContent);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    removeFails = false;
+    Element.prototype.scrollIntoView = vi.fn();
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation((async (cmd: string, args: unknown) => {
+      switch (cmd) {
+        case 'get_group_members':
+          return [M2, M4].map((m) => ({
+            issueKey: m.key,
+            ticketJson: JSON.stringify(m),
+            addedAt: '',
+          }));
+        case 'list_groups':
+          return [QA];
+        case 'list_group_memberships':
+          return memberKeys.map((k) => ({ groupId: 7, issueKey: k }));
+        case 'remove_issues_from_group': {
+          if (removeFails) throw 'boom';
+          const rm = (args as { issueKeys: string[] }).issueKeys;
+          memberKeys = memberKeys.filter((k) => !rm.includes(k));
+          return rm.length;
+        }
+        default:
+          return [];
+      }
+    }) as never);
+  });
+
+  it('renders absent members undimmed with no missing UI when hints are gated off', async () => {
+    setup({ eligible: false, keys: ['AB-1', 'AB-2'], live: [A1] });
+    const { container } = render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    expect(container.innerHTML).not.toContain('opacity-60');
+    expect(screen.queryByText(/No longer in results/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Remove AB-2/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+
+  it('shows present first, then a labelled missing block; count includes missing', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    const region = screen.getByRole('group', { name: 'No longer in results (1)' });
+    expect(within(region).getByText('AB-2')).toBeInTheDocument();
+    expect(within(region).queryByText('AB-1')).not.toBeInTheDocument();
+    expect(within(cardFor('AB-2')).getByText('No longer in results')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove AB-2 from QA' })).toBeInTheDocument();
+    expect(screen.getByText(/^2 /)).toBeInTheDocument();
+  });
+
+  it('orders present then missing, each in the chosen sort', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-3', 'AB-4'], live: [A1, A3] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    expect(order()).toEqual(['AB-3', 'AB-1', 'AB-4', 'AB-2']);
+    fireEvent.click(screen.getByRole('button', { name: 'Sort ascending' }));
+    expect(order()).toEqual(['AB-1', 'AB-3', 'AB-2', 'AB-4']);
+  });
+
+  it('search narrows the missing block and its count', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-2' } });
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('No longer in results (1)');
+    expect(screen.queryByText('AB-4')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-1' } });
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+
+  it('a missing card is still clickable and opens detail', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    fireEvent.click(within(cardFor('AB-2')).getByRole('button', { name: 'Gone two alpha' }));
+    expect(useTicketStore.getState().selectedTicketKey).toBe('AB-2');
+  });
+
+  it('per-card Remove: Cancel does nothing, Remove calls once without success toast', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    expect(await screen.findByText('Remove ‘AB-2’ from ‘QA’?')).toBeInTheDocument();
+    const cancel = screen.getByRole('button', { name: 'Cancel' });
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    await userEvent.click(cancel);
+    expect(callsOf('remove_issues_from_group')).toHaveLength(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(callsOf('remove_issues_from_group')).toHaveLength(1));
+    expect(callsOf('remove_issues_from_group')[0][1]).toEqual({ groupId: 7, issueKeys: ['AB-2'] });
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('per-card Remove failure toasts and keeps the member', async () => {
+    removeFails = true;
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByText('AB-2')).toBeInTheDocument();
+  });
+
+  it('focus moves to the next missing card after a successful removal', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    // updated desc: missing order is AB-4, AB-2; remove AB-4, focus AB-2
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-4 from QA' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(cardFor('AB-2')).getByRole('button', { name: 'Gone two alpha' }),
+      ),
+    );
+  });
+
+  it('Remove all missing uses the group-wide count and one call', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-2' } });
+    await userEvent.click(screen.getByRole('button', { name: 'Remove all missing' }));
+    expect(
+      await screen.findByText('Remove 2 issues from ‘QA’? They are no longer in results.'),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(callsOf('remove_issues_from_group')).toHaveLength(1));
+    const args = callsOf('remove_issues_from_group')[0][1] as { issueKeys: string[] };
+    expect([...args.issueKeys].sort()).toEqual(['AB-2', 'AB-4']);
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+  });
+
+  it('Remove all missing removes nothing when gating flips off before confirm', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove all missing' }));
+    await screen.findByText(/It is no longer in results/);
+    act(() => useTicketStore.getState().markFetchIncomplete());
+    // The missing block (and its popover) unmounts when hints are no longer eligible.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument(),
+    );
+    expect(callsOf('remove_issues_from_group')).toHaveLength(0);
+  });
+
+  it('select mode: shift-range follows present-then-missing DOM order', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-3', 'AB-4'], live: [A1, A3] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Select' }));
+    // DOM order: AB-3, AB-1, AB-4, AB-2
+    await userEvent.click(within(cardFor('AB-1')).getByRole('checkbox'));
+    fireEvent.click(within(cardFor('AB-4')).getByRole('checkbox'), { shiftKey: true });
+    expect(screen.getByRole('status')).toHaveTextContent('2 selected');
   });
 });
