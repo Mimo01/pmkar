@@ -1,5 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const invokeMock = vi.fn();
@@ -249,5 +250,62 @@ describe('CreateGroupPopover', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument();
     expect(createCalls()).toHaveLength(0);
+  });
+
+  it('shows the swatch row preselected to the least-used color', async () => {
+    useGroupStore.setState({
+      groups: [
+        { ...sprint, color: 'blue' },
+        { ...sprint, id: 2, name: 'Ops', color: 'teal' },
+      ] as never,
+    });
+    await setup();
+    expect(screen.getByText('Color')).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Green' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('sends the default color to create_group', async () => {
+    useGroupStore.setState({
+      groups: [
+        { ...sprint, color: 'blue' },
+        { ...sprint, id: 2, name: 'Ops', color: 'teal' },
+      ] as never,
+    });
+    const { user, input } = await setup();
+    await user.type(input, 'Sprint2');
+    await user.click(createButton());
+    await waitFor(() => expect(createCalls()).toHaveLength(1));
+    expect(createCalls()[0][1]).toEqual({ name: 'Sprint2', color: 'green' });
+  });
+
+  it('sends the picked color to create_group', async () => {
+    const { user, input } = await setup();
+    await user.type(input, 'QA');
+    await user.click(screen.getByRole('radio', { name: 'Purple' }));
+    await user.click(createButton());
+    await waitFor(() => expect(createCalls()).toHaveLength(1));
+    expect(createCalls()[0][1]).toEqual({ name: 'QA', color: 'purple' });
+  });
+
+  it('tab order is input, checked swatch, Cancel, Create', async () => {
+    const { user, input } = await setup();
+    await user.type(input, 'QA');
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('radio', { checked: true }));
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }));
+    await user.tab();
+    expect(document.activeElement).toBe(createButton());
+  });
+
+  it('exposes the trigger through triggerRef', () => {
+    const ref = createRef<HTMLButtonElement>();
+    renderWithI18n(
+      <TooltipProvider>
+        <CreateGroupPopover onCreated={vi.fn()} triggerRef={ref} />
+      </TooltipProvider>,
+    );
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'New group' }));
   });
 });

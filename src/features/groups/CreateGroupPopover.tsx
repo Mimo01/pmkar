@@ -1,95 +1,47 @@
-import { AlertCircle, Plus } from 'lucide-react';
-import { useId, useMemo, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { type GroupColorToken, pickDefaultColor } from './colors';
+import { GroupColorSwatches } from './GroupColorSwatches';
+import { GroupNameForm, useGroupNameForm } from './GroupNameForm';
 import { useGroupStore } from './groupStore';
-import type { GroupErrorCode } from './types';
-import { validateGroupName } from './validation';
 
-function errorKey(code: GroupErrorCode): string {
-  switch (code) {
-    case 'duplicate':
-      return 'groups.error.duplicate';
-    case 'reserved':
-      return 'groups.error.reserved';
-    case 'too_long':
-      return 'groups.error.tooLong';
-    case 'no_scope':
-      return 'groups.error.noScope';
-    default:
-      return 'groups.error.internal';
-  }
-}
-
-export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number) => void }) {
+export function CreateGroupPopover({
+  onCreated,
+  triggerRef,
+}: {
+  onCreated: (groupId: number) => void;
+  triggerRef?: React.Ref<HTMLButtonElement>;
+}) {
   const { t } = useTranslation();
-  const inputId = useId();
-  const errorId = useId();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [submitError, setSubmitError] = useState<GroupErrorCode | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [color, setColor] = useState<GroupColorToken>('blue');
   const createdRef = useRef(false);
-  const inFlightRef = useRef(false);
-  // Incremented on every open; a create that settles after a reopen is stale.
-  const openSeq = useRef(0);
-  const groups = useGroupStore((s) => s.groups);
-
-  const v = useMemo(
-    () =>
-      validateGroupName(
-        name,
-        groups.map((g) => g.name),
-      ),
-    [name, groups],
-  );
-
-  let messageCode: GroupErrorCode | null = null;
-  if (submitError) messageCode = submitError;
-  else if (!v.ok && v.code !== 'empty') messageCode = v.code;
-  const message = messageCode ? t(errorKey(messageCode)) : null;
+  const form = useGroupNameForm({ action: 'create' });
 
   function handleOpenChange(next: boolean) {
     if (next) {
-      setName('');
-      setSubmitError(null);
+      form.reset('');
+      setColor(pickDefaultColor(useGroupStore.getState().groups.map((g) => g.color)));
       createdRef.current = false;
-      openSeq.current += 1;
-      // inFlightRef/submitting are deliberately not reset: a create started before
-      // Cancel/Esc may still be pending, and Create stays disabled until it settles.
     }
     setOpen(next);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.ok || submitting || inFlightRef.current) return;
-    inFlightRef.current = true;
-    setSubmitting(true);
-    const token = openSeq.current;
-    try {
-      const r = await useGroupStore.getState().createGroup(v.display);
-      // The popover was reopened while this request was pending; do not close or
-      // navigate under the user, and do not show a stale error.
-      if (token !== openSeq.current) return;
-      if (r.ok) {
-        // If the follow-up hydrate failed, the new group is not in the store yet, so
-        // its tab cannot be selected or focused. Close normally and let focus return
-        // to the trigger instead of dropping it to <body>.
-        const present = useGroupStore.getState().groups.some((g) => g.id === r.value.id);
-        createdRef.current = present;
-        setOpen(false);
-        if (present) onCreated(r.value.id);
-      } else {
-        setSubmitError(r.code);
-      }
-    } finally {
-      inFlightRef.current = false;
-      setSubmitting(false);
-    }
+    const r = await form.submit((d) => useGroupStore.getState().createGroup(d, color));
+    if (!r || !r.ok) return;
+    // If the follow-up hydrate failed, the new group is not in the store yet, so
+    // its tab cannot be selected or focused. Close normally and let focus return
+    // to the trigger instead of dropping it to <body>.
+    const present = useGroupStore.getState().groups.some((g) => g.id === r.value.id);
+    createdRef.current = present;
+    setOpen(false);
+    if (present) onCreated(r.value.id);
   }
 
   return (
@@ -98,6 +50,7 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
             <button
+              ref={triggerRef}
               type="button"
               aria-label={t('groups.new')}
               className="flex items-center justify-center w-7 h-7 text-brand-muted hover:text-brand-text rounded transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
@@ -114,47 +67,16 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
           if (createdRef.current) e.preventDefault();
         }}
       >
-        <form onSubmit={handleSubmit}>
-          <h2 className="text-base font-semibold text-brand-text mb-3">{t('groups.new')}</h2>
-          <label htmlFor={inputId} className="sr-only">
-            {t('groups.name.label')}
-          </label>
-          <input
-            id={inputId}
-            type="text"
-            // biome-ignore lint/a11y/noAutofocus: popover input must take focus on open (D-01)
-            autoFocus
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setSubmitError(null);
-            }}
-            placeholder={t('groups.name.label')}
-            aria-invalid={message ? true : undefined}
-            aria-describedby={errorId}
-            className="w-full rounded-md border border-brand-border bg-transparent px-2 py-1.5 text-sm text-brand-text outline-none focus:border-brand focus:ring-2 focus:ring-brand"
-          />
-          <p
-            id={errorId}
-            role="alert"
-            className="mt-1 min-h-4 flex items-center gap-1 text-xs text-destructive"
-          >
-            {message && (
-              <>
-                <AlertCircle className="w-3 h-3" aria-hidden="true" />
-                {message}
-              </>
-            )}
-          </p>
-          <div className="flex justify-end gap-2 mt-3">
-            <Button type="button" variant="ghost" size="sm" onClick={() => handleOpenChange(false)}>
-              {t('groups.cancel')}
-            </Button>
-            <Button type="submit" size="sm" disabled={!v.ok || submitting}>
-              {t('groups.create')}
-            </Button>
-          </div>
-        </form>
+        <GroupNameForm
+          title={t('groups.new')}
+          submitLabel={t('groups.create')}
+          form={form}
+          onSubmit={handleSubmit}
+          onCancel={() => handleOpenChange(false)}
+        >
+          <p className="mt-2 mb-1 text-xs text-brand-text-secondary">{t('groups.color.label')}</p>
+          <GroupColorSwatches value={color} onSelect={setColor} selectionFollowsFocus />
+        </GroupNameForm>
       </PopoverContent>
     </Popover>
   );
