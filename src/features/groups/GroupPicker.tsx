@@ -47,6 +47,7 @@ type BodyProps =
 
 export function GroupPicker(props: GroupPickerProps) {
   const { open, onOpenChange, children, side = 'bottom', align = 'start' } = props;
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const bodyProps: BodyProps =
@@ -72,6 +73,7 @@ export function GroupPicker(props: GroupPickerProps) {
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         className="w-70 p-2"
+        aria-label={t('groups.picker.searchLabel')}
         side={side}
         align={align}
         onOpenAutoFocus={(e) => {

@@ -61,6 +61,7 @@ export function ConfirmRemovePopover({
       {anchorRef && <PopoverAnchor virtualRef={anchorRef} />}
       <PopoverContent
         className="w-70 p-4"
+        aria-label={question}
         side={side}
         align={align}
         onOpenAutoFocus={(e) => {
