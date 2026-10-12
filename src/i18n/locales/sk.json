@@ -607,5 +607,6 @@
   "groups.missing.removeAllConfirm_other": "Odstrániť {{count}} úloh zo skupiny ‘{{name}}’? Už nie sú vo výsledkoch.",
   "groups.missing.removeError": "Nepodarilo sa odstrániť {{key}}. Skúste to znova.",
   "groups.missing.removeAllError": "Úlohy sa nepodarilo odstrániť. Nič sa nezmenilo. Skúste to znova.",
-  "groups.error.membership": "Skupinu sa nepodarilo aktualizovať. Skúste to znova."
+  "groups.error.membership": "Skupinu sa nepodarilo aktualizovať. Skúste to znova.",
+  "groups.error.scopeMismatch": "Tieto úlohy sú z iného servera, než je teraz pripojený. Znova načítajte úlohy a skúste to znova."
 }

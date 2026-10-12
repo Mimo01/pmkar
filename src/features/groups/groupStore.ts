@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
+import { useConnectionStore } from '../connections/connectionStore';
 import type { JiraTicket } from '../tickets/types';
 import { type GroupColorToken, isGroupColorToken } from './colors';
 import type {
@@ -17,6 +18,7 @@ const ERROR_CODES: readonly GroupErrorCode[] = [
   'duplicate',
   'reserved',
   'no_scope',
+  'scope_mismatch',
   'not_found',
   'invalid_color',
   'invalid_issue_key',
@@ -183,6 +185,8 @@ export const useGroupStore = create<GroupState>((set, get) => {
     addToGroup: (groupId, tickets) =>
       mutate<number>('add_issues_to_group', {
         groupId,
+        // CR-01: Rust vetoes the add when this does not match the current scope.
+        expectedBaseUrl: useConnectionStore.getState().serverConnection?.baseUrl ?? '',
         issues: tickets.map((t) => ({ issueKey: t.key, ticketJson: JSON.stringify(t) })),
       }),
     removeFromGroup: (groupId, issueKeys) =>

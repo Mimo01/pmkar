@@ -26,6 +26,7 @@ export type GroupErrorCode =
   | 'duplicate'
   | 'reserved'
   | 'no_scope'
+  | 'scope_mismatch'
   | 'not_found'
   | 'invalid_color'
   | 'invalid_issue_key'

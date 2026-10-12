@@ -6,7 +6,14 @@ import { readMissingKeysNow } from './missingMembers';
 import type { GroupErrorCode } from './types';
 
 export function membershipErrorKey(code: GroupErrorCode): string {
-  return code === 'not_found' ? 'groups.error.notFound' : 'groups.error.membership';
+  switch (code) {
+    case 'not_found':
+      return 'groups.error.notFound';
+    case 'scope_mismatch':
+      return 'groups.error.scopeMismatch';
+    default:
+      return 'groups.error.membership';
+  }
 }
 
 /** One atomic add for all tickets (D-16). Toasts the real inserted count. */
