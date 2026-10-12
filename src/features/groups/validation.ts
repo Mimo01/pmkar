@@ -8,12 +8,26 @@ import sk from '../../i18n/locales/sk.json';
 
 export const MAX_GROUP_NAME_CHARS = 40;
 
+/**
+ * Trim set shared with Rust: Unicode White_Space plus U+FEFF. JS `\s` already
+ * covers U+FEFF but not U+0085, which is added explicitly.
+ */
 export function normalizeGroupName(raw: string): string {
-  return raw.trim().normalize('NFC');
+  return raw.replace(/^[\s\u0085\uFEFF]+|[\s\u0085\uFEFF]+$/gu, '').normalize('NFC');
 }
 
+/**
+ * Comparison key: NFD, strip combining marks and the format characters
+ * U+200B..U+200F, U+2060..U+2064, U+00AD, U+FEFF (identical list in Rust),
+ * NFC, lower-case.
+ */
 export function groupNameKey(display: string): string {
-  return display.normalize('NFD').replace(/\p{M}/gu, '').normalize('NFC').toLowerCase();
+  return display
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[\u200B-\u200F\u2060-\u2064\u00AD\uFEFF]/gu, '')
+    .normalize('NFC')
+    .toLowerCase();
 }
 
 function buildReservedKeys(): ReadonlySet<string> {
@@ -44,6 +58,7 @@ export function validateGroupName(
   if (display.length === 0) return { ok: false, code: 'empty' };
   if ([...display].length > MAX_GROUP_NAME_CHARS) return { ok: false, code: 'too_long' };
   const key = groupNameKey(display);
+  if (key.length === 0) return { ok: false, code: 'empty' };
   if (RESERVED_NAME_KEYS.has(key)) return { ok: false, code: 'reserved' };
   const taken = existingNames.some((n) => groupNameKey(normalizeGroupName(n)) === key);
   if (taken) return { ok: false, code: 'duplicate' };
