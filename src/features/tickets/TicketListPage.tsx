@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
+import { SelectionBar } from '../groups/SelectionBar';
+import { useListSelection } from '../groups/useListSelection';
 import { SkeletonCards, TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import {
@@ -389,12 +391,20 @@ export function TicketListPage() {
     );
   }, [candidateTickets, searchText, assigneeFilter, sortField, sortDirection]);
 
+  const keys = useMemo(() => sortedCandidates.map((t) => t.key), [sortedCandidates]);
+  const sel = useListSelection(keys);
+  const selectedTickets = useMemo(
+    () => sortedCandidates.filter((t) => sel.selected.has(t.key)),
+    [sortedCandidates, sel.selected],
+  );
+
   const hasTickets = sortedCandidates.length > 0;
   const showEmptyState = hasFetchedThisSession && !hasTickets && fetchStatus === 'idle';
   const showPreFetchState = !hasFetchedThisSession && !isLoading && fetchStatus !== 'error';
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    // biome-ignore lint/a11y/noStaticElementInteractions: Esc handler for select mode; real controls are inside
+    <div className="flex-1 flex flex-col overflow-hidden" onKeyDown={sel.handleKeyDown}>
       {/* FetchBar */}
       <div className="flex items-center gap-4 px-4 py-3 border-b border-brand-border">
         <button
@@ -449,6 +459,10 @@ export function TicketListPage() {
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sortedCandidates.length}
+        selectMode={sel.selectMode}
+        onToggleSelectMode={sel.toggleSelectMode}
+        selectDisabled={sortedCandidates.length === 0 && !sel.selectMode}
+        selectToggleRef={sel.selectToggleRef}
       />
 
       {/* Truncation warning — backend pagination cap was hit (jira-fetch-pagination-50-cap) */}
@@ -490,46 +504,63 @@ export function TicketListPage() {
         </div>
       )}
 
-      {/* Loading skeleton */}
-      {isLoading && <SkeletonCards count={3} />}
+      <div className="relative flex-1 flex flex-col min-h-0">
+        {/* Loading skeleton */}
+        {isLoading && <SkeletonCards count={3} />}
 
-      {/* Pre-fetch state: user has not fetched yet */}
-      {showPreFetchState && (
-        <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text mb-1">
-            {t('tickets.empty.prefetch.heading')}
-          </p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">
-            {t('tickets.empty.prefetch.body')}
-          </p>
-        </div>
-      )}
+        {/* Pre-fetch state: user has not fetched yet */}
+        {showPreFetchState && (
+          <div className="flex flex-col items-center justify-center flex-1 py-16">
+            <p className="text-sm font-semibold text-brand-text mb-1">
+              {t('tickets.empty.prefetch.heading')}
+            </p>
+            <p className="text-xs text-brand-muted text-center max-w-sm">
+              {t('tickets.empty.prefetch.body')}
+            </p>
+          </div>
+        )}
 
-      {/* Empty state */}
-      {showEmptyState && (
-        <div className="flex flex-col items-center justify-center flex-1 py-16">
-          <p className="text-sm font-semibold text-brand-text mb-1">
-            {t('tickets.empty.noresults.heading')}
-          </p>
-          <p className="text-xs text-brand-muted text-center max-w-sm">
-            {t('tickets.empty.noresults.body')}
-          </p>
-        </div>
-      )}
+        {/* Empty state */}
+        {showEmptyState && (
+          <div className="flex flex-col items-center justify-center flex-1 py-16">
+            <p className="text-sm font-semibold text-brand-text mb-1">
+              {t('tickets.empty.noresults.heading')}
+            </p>
+            <p className="text-xs text-brand-muted text-center max-w-sm">
+              {t('tickets.empty.noresults.body')}
+            </p>
+          </div>
+        )}
 
-      {/* Card list */}
-      {hasTickets && !isLoading && (
-        <div className="flex-1 overflow-y-auto" ref={scrollRef}>
-          {sortedCandidates.map((ticket) => (
-            <TicketCard
-              key={ticket.key}
-              ticket={ticket}
-              triageEntry={triageMap[ticket.key]}
-              onClick={() => handleSelectTicket(ticket.key)}
-            />
-          ))}
-        </div>
-      )}
+        {/* Card list */}
+        {hasTickets && !isLoading && (
+          <div
+            className={cn('flex-1 overflow-y-auto', selectedTickets.length > 0 && 'pb-20')}
+            ref={scrollRef}
+          >
+            {sortedCandidates.map((ticket) => (
+              <TicketCard
+                key={ticket.key}
+                ticket={ticket}
+                triageEntry={triageMap[ticket.key]}
+                onClick={() => handleSelectTicket(ticket.key)}
+                selectMode={sel.selectMode}
+                selected={sel.isSelected(ticket.key)}
+                onToggleSelect={(shift) => sel.toggle(ticket.key, shift)}
+              />
+            ))}
+          </div>
+        )}
+        <SelectionBar
+          selectedTickets={selectedTickets}
+          group={null}
+          onClear={sel.clear}
+          onActionSucceeded={() => {
+            sel.exit();
+            sel.focusSelectToggle();
+          }}
+        />
+      </div>
     </div>
   );
 }

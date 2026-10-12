@@ -357,5 +357,107 @@ describe('App', () => {
       expect(screen.queryByText('No issues in this group yet')).not.toBeInTheDocument();
       unmount();
     });
+
+    function seedIssue() {
+      useCopyStore.getState().reset();
+      useTicketStore.setState({
+        tickets: [
+          {
+            id: '1',
+            key: 'P-1',
+            fields: {
+              summary: 'Summary P-1',
+              status: { name: 'Open', id: '1', statusCategory: { key: 'new' } } as never,
+              priority: { name: 'High', id: '2' },
+              assignee: null,
+              created: '2026-01-01T10:00:00.000Z',
+              updated: '2026-01-01T10:00:00.000Z',
+            },
+          },
+        ],
+        triageMap: {},
+        selectedTicketKey: null,
+      });
+    }
+
+    it('tab change clears selection and ends select mode (D-14)', async () => {
+      setupBothConnections();
+      seedIssue();
+      const { unmount } = await renderApp();
+      await screen.findByRole('button', { name: 'New' });
+      const selectBtn = await screen.findByRole('button', { name: 'Select' });
+      fireEvent.click(selectBtn);
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Select P-1' }));
+      expect(screen.getAllByText('1 selected').length).toBeGreaterThan(0);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Already Linked' }));
+      await screen.findByText('No linked tickets');
+      fireEvent.click(screen.getByRole('button', { name: 'New' }));
+
+      expect(await screen.findByRole('button', { name: 'Select' })).toHaveAttribute(
+        'aria-pressed',
+        'false',
+      );
+      expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+      unmount();
+    });
+
+    it('detail chip name closes detail, activates and focuses the group tab (D-06)', async () => {
+      setupBothConnections();
+      const base = mockInvoke.getMockImplementation() as (cmd: string, args?: unknown) => unknown;
+      mockInvoke.mockImplementation(((cmd: string, args?: unknown) => {
+        if (cmd === 'list_groups') {
+          return Promise.resolve([
+            { id: 2, name: 'QA', color: 'blue', position: 0, createdAt: 't', memberCount: 1 },
+          ]);
+        }
+        if (cmd === 'list_group_memberships') {
+          return Promise.resolve([{ groupId: 2, issueKey: 'P-1' }]);
+        }
+        if (cmd === 'fetch_ticket_detail') {
+          return Promise.resolve({
+            id: '1',
+            key: 'P-1',
+            fields: {
+              summary: 'Summary P-1',
+              status: { name: 'Open' },
+              priority: { name: 'High', id: '2' },
+              assignee: null,
+              reporter: null,
+              description: 'x',
+              labels: [],
+              components: [],
+              fixVersions: [],
+              comment: { comments: [] },
+              attachment: [],
+              subtasks: [],
+              issuelinks: [],
+              created: '2024-06-01T00:00:00.000Z',
+              updated: '2024-06-01T00:00:00.000Z',
+            },
+          });
+        }
+        return base(cmd, args);
+      }) as never);
+      seedIssue();
+      const { unmount } = await renderApp();
+      await screen.findByRole('button', { name: 'New' });
+      await screen.findByRole('button', { name: /^QA, / });
+
+      act(() => {
+        useTicketStore.getState().selectTicket('P-1');
+      });
+      const chip = await screen.findByRole('button', { name: 'Go to group ‘QA’' });
+      fireEvent.click(chip);
+
+      await waitFor(() => {
+        expect(screen.queryByRole('button', { name: 'Back to tickets' })).not.toBeInTheDocument();
+      });
+      expect(useTicketStore.getState().selectedTicketKey).toBeNull();
+      const qaTab = await screen.findByRole('button', { name: /^QA, / });
+      expect(qaTab).toHaveAttribute('aria-current', 'page');
+      await waitFor(() => expect(document.activeElement).toBe(qaTab));
+      unmount();
+    });
   });
 });

@@ -8,7 +8,12 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
 import { invoke } from '@tauri-apps/api/core';
+import { CORE_TICKETS, defineCoreSelectionCases } from './__tests__/coreListSelectionCases';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -114,4 +119,24 @@ describe('IgnoredTicketsPage', () => {
     expect(screen.queryByText('Seen ticket (not ignored)')).not.toBeInTheDocument();
     expect(screen.queryByText('TEST-3')).not.toBeInTheDocument();
   });
+
+  it('Restore still restores in select mode and does not toggle selection', () => {
+    render(<IgnoredTicketsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]);
+    expect(useTicketStore.getState().triageMap['TEST-2'].state).toBe('seen');
+    expect(screen.queryByText('1 selected')).toBeNull();
+  });
+});
+
+defineCoreSelectionCases('IgnoredTicketsPage', {
+  seed: () =>
+    useTicketStore.setState({
+      tickets: CORE_TICKETS,
+      triageMap: Object.fromEntries(
+        CORE_TICKETS.map((t) => [t.key, { state: 'ignored', copiedKey: null } as TriageEntry]),
+      ),
+      selectedTicketKey: null,
+    }),
+  page: () => <IgnoredTicketsPage />,
 });

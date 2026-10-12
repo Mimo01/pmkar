@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketListPage } from './TicketListPage';
 
@@ -10,7 +10,12 @@ vi.mock('@tauri-apps/api/event', () => ({
   listen: vi.fn(() => Promise.resolve(() => {})),
 }));
 
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
 import { invoke } from '@tauri-apps/api/core';
+import { CORE_TICKETS, defineCoreSelectionCases } from './__tests__/coreListSelectionCases';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -325,5 +330,56 @@ describe('TicketListPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
     });
+  });
+});
+
+const seedCore = () =>
+  useTicketStore.setState({
+    tickets: CORE_TICKETS,
+    triageMap: {},
+    selectedTicketKey: null,
+    fetchStatus: 'idle',
+  });
+
+defineCoreSelectionCases('TicketListPage', {
+  seed: seedCore,
+  page: () => <TicketListPage />,
+  baseInvoke: (cmd) => (cmd === 'get_triage_state' ? {} : undefined),
+});
+
+describe('TicketListPage selection extras', () => {
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'get_triage_state') return {};
+      if (cmd === 'list_groups') return [];
+      if (cmd === 'list_group_memberships') return [];
+      return undefined;
+    });
+    seedCore();
+  });
+
+  it('drops the selected count when the search filter hides a selected card', () => {
+    render(<TicketListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-1' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-2' }));
+    expect(screen.getAllByText('2 selected').length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByPlaceholderText('Filter by key...'), { target: { value: 'P-2' } });
+    expect(screen.getAllByText('1 selected').length).toBeGreaterThan(0);
+    expect(screen.queryByText('2 selected')).toBeNull();
+  });
+
+  it('keeps the selection bar live region mounted while loading', () => {
+    render(<TicketListPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-1' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-2' }));
+    act(() => {
+      useTicketStore.setState({ fetchStatus: 'loading' });
+    });
+    expect(screen.getByRole('status', { name: 'Loading tickets' })).toBeInTheDocument();
+    expect(screen.queryByTestId('ticket-card')).toBeNull();
+    expect(screen.getAllByText('2 selected').length).toBeGreaterThan(0);
   });
 });
