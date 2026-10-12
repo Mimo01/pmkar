@@ -71,19 +71,19 @@ describe('addIssuesWithFeedback', () => {
   it('toasts the added count', async () => {
     mutationResult = async () => 3;
     expect(await addIssuesWithFeedback(group, tickets(3), t)).toBe(true);
-    expect(toast.success).toHaveBeenCalledWith('Added 3 issues to ‘QA’');
+    expect(toast.success).toHaveBeenCalledWith('Added 3 issues to “QA”');
   });
 
   it('mentions skipped issues', async () => {
     mutationResult = async () => 3;
     expect(await addIssuesWithFeedback(group, tickets(5), t)).toBe(true);
-    expect(toast.success).toHaveBeenCalledWith('Added 3 issues to ‘QA’ (2 already in group)');
+    expect(toast.success).toHaveBeenCalledWith('Added 3 issues to “QA” (2 already in group)');
   });
 
   it('treats all-already-in as success with an info toast', async () => {
     mutationResult = async () => 0;
     expect(await addIssuesWithFeedback(group, tickets(2), t)).toBe(true);
-    expect(toast.info).toHaveBeenCalledWith('All selected issues are already in ‘QA’.');
+    expect(toast.info).toHaveBeenCalledWith('All selected issues are already in “QA”.');
   });
 
   it('reports not_found', async () => {
@@ -124,7 +124,7 @@ describe('removeIssuesWithFeedback', () => {
   it('toasts the removed count', async () => {
     mutationResult = async () => 4;
     expect(await removeIssuesWithFeedback(group, ['A-1', 'A-2', 'A-3', 'A-4'], t)).toBe(true);
-    expect(toast.success).toHaveBeenCalledWith('Removed 4 issues from ‘QA’');
+    expect(toast.success).toHaveBeenCalledWith('Removed 4 issues from “QA”');
     expect(invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group')).toHaveLength(
       1,
     );
@@ -209,7 +209,7 @@ describe('removeAllMissingWithFeedback', () => {
     expect(await removeAllMissingWithFeedback(group, ['A-1', 'A-2', 'A-3'], t)).toBe(true);
     const calls = invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group');
     expect(calls).toHaveLength(1);
-    expect(toast.success).toHaveBeenCalledWith('Removed 3 issues from ‘QA’');
+    expect(toast.success).toHaveBeenCalledWith('Removed 3 issues from “QA”');
   });
 
   it('does nothing for an empty list', async () => {

@@ -164,7 +164,7 @@ describe('GroupTabStrip remove all missing', () => {
     await openMoreMenu(user, 'Sprint 12');
     await user.click(await screen.findByRole('menuitem', { name: 'Remove all missing (1)' }));
     expect(
-      await screen.findByText('Remove 1 issue from ‘Sprint 12’? It is no longer in results.'),
+      await screen.findByText('Remove 1 issue from “Sprint 12”? It is no longer in results.'),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     await waitFor(() =>

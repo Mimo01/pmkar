@@ -133,7 +133,7 @@ export function defineCoreSelectionCases(
       const args = calls[0][1] as { groupId: number; issues: unknown[] };
       expect(args.groupId).toBe(2);
       expect(args.issues).toHaveLength(3);
-      expect(toast.success).toHaveBeenCalledWith('Added 1 issue to ‘QA’ (2 already in group)');
+      expect(toast.success).toHaveBeenCalledWith('Added 1 issue to “QA” (2 already in group)');
       expect(screen.queryByText('3 selected')).toBeNull();
       await waitFor(() => expect(document.activeElement).toBe(selectBtn()));
     });
@@ -144,7 +144,7 @@ export function defineCoreSelectionCases(
       selectAllThree();
       await addToQa();
       await waitFor(() =>
-        expect(toast.info).toHaveBeenCalledWith('All selected issues are already in ‘QA’.'),
+        expect(toast.info).toHaveBeenCalledWith('All selected issues are already in “QA”.'),
       );
       await waitFor(() => expect(selectBtn().getAttribute('aria-pressed')).toBe('false'));
     });

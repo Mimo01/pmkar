@@ -127,10 +127,10 @@ describe('DetailGroupsRow', () => {
       .map((b) => b.getAttribute('aria-label') ?? b.textContent);
     expect(names).toEqual([
       'Groups',
-      'Go to group ‘Sprint’',
-      'Remove from ‘Sprint’',
-      'Go to group ‘Docs’',
-      'Remove from ‘Docs’',
+      'Go to group “Sprint”',
+      'Remove from “Sprint”',
+      'Go to group “Docs”',
+      'Remove from “Docs”',
     ]);
   });
 
@@ -152,7 +152,7 @@ describe('DetailGroupsRow', () => {
     await waitFor(() => expect(addCalls()).toHaveLength(1));
     expect(addCalls()[0][1]).toMatchObject({ groupId: 2 });
     expect((addCalls()[0][1] as { issues: { issueKey: string }[] }).issues[0].issueKey).toBe('P-1');
-    expect(await screen.findByRole('button', { name: 'Remove from ‘QA’' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Remove from “QA”' })).toBeInTheDocument();
   });
 
   it('unchecking in the picker removes immediately without confirm', async () => {
@@ -162,31 +162,31 @@ describe('DetailGroupsRow', () => {
     await user.click(screen.getByRole('option', { name: /Sprint/ }));
     await waitFor(() => expect(removeCalls()).toHaveLength(1));
     expect(removeCalls()[0][1]).toEqual({ groupId: 1, issueKeys: ['P-1'] });
-    expect(screen.queryByText('Remove from ‘Sprint’?')).toBeNull();
+    expect(screen.queryByText('Remove from “Sprint”?')).toBeNull();
   });
 
   it('chip x opens confirm with Cancel focused; Cancel restores focus without invoking', async () => {
     const user = setup();
-    const x = screen.getByRole('button', { name: 'Remove from ‘Docs’' });
+    const x = screen.getByRole('button', { name: 'Remove from “Docs”' });
     await user.click(x);
-    expect(await screen.findByText('Remove from ‘Docs’?')).toBeInTheDocument();
+    expect(await screen.findByText('Remove from “Docs”?')).toBeInTheDocument();
     const cancel = screen.getByRole('button', { name: 'Cancel' });
     await waitFor(() => expect(cancel).toHaveFocus());
     await user.click(cancel);
-    await waitFor(() => expect(screen.queryByText('Remove from ‘Docs’?')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Remove from “Docs”?')).toBeNull());
     expect(removeCalls()).toHaveLength(0);
     await waitFor(() => expect(x).toHaveFocus());
   });
 
   it('confirming removes the chip and moves focus to Groups', async () => {
     const user = setup();
-    await user.click(screen.getByRole('button', { name: 'Remove from ‘Docs’' }));
-    await screen.findByText('Remove from ‘Docs’?');
+    await user.click(screen.getByRole('button', { name: 'Remove from “Docs”' }));
+    await screen.findByText('Remove from “Docs”?');
     await user.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(removeCalls()).toHaveLength(1));
     expect(removeCalls()[0][1]).toEqual({ groupId: 3, issueKeys: ['P-1'] });
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: 'Go to group ‘Docs’' })).toBeNull(),
+      expect(screen.queryByRole('button', { name: 'Go to group “Docs”' })).toBeNull(),
     );
     await waitFor(() => expect(screen.getByRole('button', { name: 'Groups' })).toHaveFocus());
   });
@@ -196,16 +196,16 @@ describe('DetailGroupsRow', () => {
       throw { code: 'not_found' };
     };
     const user = setup();
-    await user.click(screen.getByRole('button', { name: 'Remove from ‘Docs’' }));
-    await screen.findByText('Remove from ‘Docs’?');
+    await user.click(screen.getByRole('button', { name: 'Remove from “Docs”' }));
+    await screen.findByText('Remove from “Docs”?');
     await user.click(screen.getByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith('This group no longer exists.'));
-    await waitFor(() => expect(screen.queryByText('Remove from ‘Docs’?')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Remove from “Docs”?')).toBeNull());
   });
 
   it('chip name navigates to the group', async () => {
     const user = setup();
-    await user.click(screen.getByRole('button', { name: 'Go to group ‘Sprint’' }));
+    await user.click(screen.getByRole('button', { name: 'Go to group “Sprint”' }));
     expect(navigate).toHaveBeenCalledWith(1);
   });
 

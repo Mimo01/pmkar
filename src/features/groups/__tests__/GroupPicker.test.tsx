@@ -185,7 +185,7 @@ describe('GroupPicker checkbox mode', () => {
     expect((addCalls()[0][1] as { issues: { issueKey: string }[] }).issues).toHaveLength(1);
     expect((addCalls()[0][1] as { issues: { issueKey: string }[] }).issues[0].issueKey).toBe('P-1');
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
-    expect(screen.getByRole('status')).toHaveTextContent('Added to ‘Sprint 12’');
+    expect(screen.getByRole('status')).toHaveTextContent('Added to “Sprint 12”');
   });
 
   it('removes immediately without confirmation', async () => {
@@ -194,7 +194,7 @@ describe('GroupPicker checkbox mode', () => {
     await waitFor(() => expect(opt('QA')).toHaveAttribute('aria-selected', 'false'));
     const rm = invokeMock.mock.calls.find((c) => c[0] === 'remove_issues_from_group');
     expect(rm?.[1]).toEqual({ groupId: 3, issueKeys: ['P-1'] });
-    expect(screen.getByRole('status')).toHaveTextContent('Removed from ‘QA’');
+    expect(screen.getByRole('status')).toHaveTextContent('Removed from “QA”');
   });
 
   it('is not optimistic and guards double clicks per group', async () => {
@@ -276,7 +276,7 @@ describe('GroupPicker checkbox mode', () => {
     useGroupStore.setState({ groups: seedGroups() as never });
     const { user, input } = await setupCheckbox();
     await user.type(input, 'New');
-    expect(screen.getByText('No groups match ‘New’')).toBeInTheDocument();
+    expect(screen.getByText('No groups match “New”')).toBeInTheDocument();
   });
 });
 
@@ -284,7 +284,7 @@ describe('GroupPicker create row', () => {
   it('creates, adds the issue, stays open with the new group checked', async () => {
     const { user, input } = await setupCheckbox();
     await user.type(input, 'Release');
-    const create = screen.getByRole('option', { name: 'Create ‘Release’' });
+    const create = screen.getByRole('option', { name: 'Create “Release”' });
     expect(input).toHaveAttribute('aria-activedescendant', create.id);
     await user.keyboard('{ArrowDown}{Enter}');
     await waitFor(() => expect(opt('Release')).toHaveAttribute('aria-selected', 'true'));
