@@ -362,8 +362,11 @@ describe('ticketStore', () => {
     it('A to B clears list state and leaves unrelated state', () => {
       useConnectionStore.setState({ serverConnection: meta('http://a') });
       seed();
+      const genBefore = useTicketStore.getState().fetchGeneration;
       useConnectionStore.getState().setServerConnection(meta('http://b'));
       const s = useTicketStore.getState();
+      // WR-07: the switch revokes the in-flight fetch's ownership and settles its status
+      expect(s.fetchGeneration).toBe(genBefore + 1);
       expect(s.tickets).toEqual([]);
       expect(s.triageMap).toEqual({});
       expect(s.selectedTicketKey).toBeNull();
@@ -374,7 +377,24 @@ describe('ticketStore', () => {
       expect(s.hasFetchedThisSession).toBe(false);
       expect(s.unseenChanges).toEqual({ 'AB-1': ['summary'] });
       expect(s.jqlPreset).toBe('mine');
-      expect(s.fetchStatus).toBe('loading');
+      expect(s.fetchStatus).toBe('idle');
+    });
+
+    it('WR-07: reset leaves a non-loading status (e.g. error) alone', () => {
+      useTicketStore.setState({ fetchStatus: 'error', fetchError: 'boom' });
+      useTicketStore.getState().resetForServerSwitch();
+      expect(useTicketStore.getState().fetchStatus).toBe('error');
+      expect(useTicketStore.getState().fetchError).toBe('boom');
+    });
+
+    it('WR-07: beginFetch bumps the generation and sets loading', () => {
+      useTicketStore.setState({ fetchError: 'old' });
+      const before = useTicketStore.getState().fetchGeneration;
+      const gen = useTicketStore.getState().beginFetch();
+      expect(gen).toBe(before + 1);
+      expect(useTicketStore.getState().fetchGeneration).toBe(gen);
+      expect(useTicketStore.getState().fetchStatus).toBe('loading');
+      expect(useTicketStore.getState().fetchError).toBeNull();
     });
 
     it('null to A (startup hydration) does not clear', () => {

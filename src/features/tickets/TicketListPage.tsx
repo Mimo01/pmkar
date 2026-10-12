@@ -130,7 +130,10 @@ export function TicketListPage() {
     fetchInFlightRef.current = true;
 
     const store = useTicketStore.getState();
-    store.setFetchStatus('loading');
+    // WR-07: ownership is global, not per-instance. A newer fetch (e.g. from a remounted page after
+    // the Settings round-trip) or a server switch revokes it; the orphan then writes nothing.
+    const gen = store.beginFetch();
+    const owns = () => useTicketStore.getState().fetchGeneration === gen;
 
     // Reset batch progress and prior failure state (Pitfall 3)
     setFailedUserNames([]);
@@ -160,6 +163,7 @@ export function TicketListPage() {
           now !== null && now.baseUrl === serverConn.baseUrl && now.username === serverConn.username
         );
       };
+      // Only called while owns() holds, so the status being reset is this fetch's own.
       const discardStaleResult = () => {
         const ts = useTicketStore.getState();
         ts.markFetchIncomplete();
@@ -176,6 +180,7 @@ export function TicketListPage() {
           baseUrl: serverConn.baseUrl,
           jql: store.jqlCustom,
         });
+        if (!owns()) return;
         if (!isSameServerAsFetch()) {
           discardStaleResult();
           return;
@@ -197,6 +202,7 @@ export function TicketListPage() {
 
         // Change-detection loop for custom preset
         for (const ticket of result.issues) {
+          if (!owns()) return; // IN-08: stop writing unseen markers once ownership is lost
           try {
             // NOTE: Tauri command `fetch_ticket_detail` takes Rust param `issue_key`,
             // which Tauri exposes to JS as `issueKey`. Passing the wrong key (e.g.
@@ -213,7 +219,7 @@ export function TicketListPage() {
               ticketKey: ticket.key,
               responseJson: JSON.stringify(detail),
             });
-            if (changes.length > 0) {
+            if (changes.length > 0 && owns()) {
               store.setUnseenChange(
                 ticket.key,
                 changes.map((c) => c.field),
@@ -261,6 +267,7 @@ export function TicketListPage() {
 
       // Sequential loop — D-05 (no concurrent fetch primitives)
       for (const batch of batches) {
+        if (!owns()) break; // ownership lost: stop issuing requests against the old server
         try {
           const result = await invoke<FetchTicketsResult>('fetch_tickets', {
             baseUrl: serverConn.baseUrl,
@@ -288,6 +295,7 @@ export function TicketListPage() {
         setBatchesDone((n) => n + 1);
       }
 
+      if (!owns()) return;
       if (!isSameServerAsFetch()) {
         discardStaleResult();
         return;
@@ -329,6 +337,7 @@ export function TicketListPage() {
       // Change-detection loop over mergedIssues (not individual batch result — Pitfall 2)
       // Also hydrate unseen changes for frontend indicators (Phase 15)
       for (const ticket of mergedIssues) {
+        if (!owns()) return; // IN-08: stop writing unseen markers once ownership is lost
         try {
           // NOTE: Tauri command `fetch_ticket_detail` takes Rust param `issue_key`,
           // which Tauri exposes to JS as `issueKey`. Passing the wrong key (e.g.
@@ -345,7 +354,7 @@ export function TicketListPage() {
             ticketKey: ticket.key,
             responseJson: JSON.stringify(detail),
           });
-          if (changes.length > 0) {
+          if (changes.length > 0 && owns()) {
             store.setUnseenChange(
               ticket.key,
               changes.map((c) => c.field),
@@ -376,6 +385,8 @@ export function TicketListPage() {
       // Reset progress counter after fetch completes (Pitfall 6)
       setBatchesTotal(0);
     } catch (err) {
+      // WR-07: an orphaned fetch's failure must not paint an error over another fetch's state.
+      if (!owns()) return;
       useTicketStore.getState().markFetchIncomplete();
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
     } finally {

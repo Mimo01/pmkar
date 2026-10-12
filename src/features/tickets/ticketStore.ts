@@ -27,6 +27,13 @@ interface TicketState {
    * no error). null = no missing-member hints. Session-only: never persisted or hydrated (GDUR-04).
    */
   lastCompleteFetchSignature: string | null;
+  /**
+   * WR-07: global fetch ownership token. Bumped by every fetch start and by a server switch.
+   * A fetch may only write terminal state (status, error, hint eligibility, tickets) while the
+   * generation it started with is still current. Per-instance refs cannot do this, because the
+   * Settings round-trip unmounts TicketListPage and leaves the old fetch running as an orphan.
+   */
+  fetchGeneration: number;
 
   // Polling state (D-04, D-13, D-15)
   pollFrequency: string; // "off" | "5m" | "15m" | "30m" | "1h"
@@ -47,10 +54,13 @@ interface TicketState {
   ) => void;
   /** Clears hint eligibility (partial/failed fetch). Tickets are left untouched. */
   markFetchIncomplete: () => void;
+  /** WR-07: takes fetch ownership (++fetchGeneration), sets 'loading', returns the new generation. */
+  beginFetch: () => number;
   /**
    * CR-01: drops the previous server's live list, selection and hint eligibility.
-   * Deliberately leaves unseenChanges (hydrated from SQLite independently), fetch config,
-   * poll state and fetchStatus alone; an in-flight fetch settles fetchStatus itself.
+   * Deliberately leaves unseenChanges (hydrated from SQLite independently), fetch config and
+   * poll state alone. WR-07: also revokes ownership from any in-flight fetch (++fetchGeneration)
+   * and settles a 'loading' status to 'idle' itself, since the orphaned fetch will no longer write.
    */
   resetForServerSwitch: () => void;
   selectTicket: (key: string | null) => void;
@@ -99,6 +109,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
   newCount: 0,
   truncated: false,
   lastCompleteFetchSignature: null,
+  fetchGeneration: 0,
 
   pollFrequency: 'off',
   lastCheckedAt: null,
@@ -129,8 +140,18 @@ export const useTicketStore = create<TicketState>((set, get) => ({
 
   markFetchIncomplete: () => set({ lastCompleteFetchSignature: null }),
 
+  beginFetch: () => {
+    const gen = get().fetchGeneration + 1;
+    set({ fetchGeneration: gen, fetchStatus: 'loading', fetchError: null });
+    return gen;
+  },
+
   resetForServerSwitch: () =>
-    set({
+    set((state) => ({
+      fetchGeneration: state.fetchGeneration + 1,
+      ...(state.fetchStatus === 'loading'
+        ? { fetchStatus: 'idle' as const, fetchError: null }
+        : {}),
       tickets: [],
       triageMap: {},
       selectedTicketKey: null,
@@ -139,7 +160,7 @@ export const useTicketStore = create<TicketState>((set, get) => ({
       truncated: false,
       lastCompleteFetchSignature: null,
       hasFetchedThisSession: false,
-    }),
+    })),
 
   selectTicket: (key) => set({ selectedTicketKey: key }),
 

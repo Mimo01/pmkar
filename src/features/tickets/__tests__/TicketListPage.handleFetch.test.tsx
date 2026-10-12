@@ -1325,6 +1325,56 @@ describe('TicketListPage — fetch completeness and snapshot refresh (D-12, D-13
     );
   });
 
+  it('WR-07: orphaned fetch rejecting after a server switch does not touch the new state', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    const d = await startPendingFetch();
+    switchConnection({ baseUrl: 'http://other.example.com' });
+    // resetForServerSwitch settles the orphan's 'loading' itself
+    expect(useTicketStore.getState().fetchStatus).toBe('idle');
+    seed({ lastCompleteFetchSignature: 'b-complete-sig' });
+    d.reject(new Error('timeout talking to A'));
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    const s = useTicketStore.getState();
+    expect(s.fetchStatus).toBe('idle');
+    expect(s.fetchError).toBeNull();
+    expect(s.lastCompleteFetchSignature).toBe('b-complete-sig');
+  });
+
+  it('WR-07: fetch orphaned by unmount cannot clobber a newer fetch from the remounted page', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    const d1 = deferred<FetchTicketsResult>();
+    const d2 = deferred<FetchTicketsResult>();
+    setup((n) => (n === 1 ? d1.promise : d2.promise));
+    const first = render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(mockInvoke.mock.calls.filter(([c]) => c === 'fetch_tickets').length).toBe(1),
+    );
+    first.unmount(); // Settings round-trip: switch A -> B, then back to the list
+    switchConnection({ baseUrl: 'http://other.example.com' });
+
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(mockInvoke.mock.calls.filter(([c]) => c === 'fetch_tickets').length).toBe(2),
+    );
+
+    // A's orphan settles first: must neither apply its list nor end B's loading state.
+    d1.resolve(makeFetchResult(['OLD-1']));
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(useTicketStore.getState().fetchStatus).toBe('loading');
+    expect(useTicketStore.getState().tickets.some((t) => t.key === 'OLD-1')).toBe(false);
+
+    d2.resolve(makeFetchResult(['AB-1']));
+    await waitFor(() =>
+      expect(useTicketStore.getState().tickets.map((t) => t.key)).toEqual(['AB-1']),
+    );
+    expect(useTicketStore.getState().fetchStatus).toBe('idle');
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBe(sigNow());
+  });
+
   it('custom path: preset changed mid-flight never refreshes snapshots', async () => {
     seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
     const d = await startPendingFetch();
