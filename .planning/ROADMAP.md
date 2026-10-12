@@ -121,12 +121,12 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Opening a group shows its members as one flat list with a New / Dismissed / Already Linked / Done badge (core tab labels) on each card; an empty group explains how to add issues
   4. User can search, filter, sort, open detail, copy, and dismiss/restore from a group view, and triage changes appear immediately in both the group view and core tabs
 
-**Plans:** 6 plans
+**Plans:** 3/6 plans executed
 **Wave 1**
 
-- [ ] 29-01-PLAN.md — Fix Phase 28 WR-01..WR-04: hydrate sequencing + keep last good state; TS/Rust trim and zero-width alignment with shared vectors
-- [ ] 29-02-PLAN.md — Tab-id helpers + active-group fallback + overflow math, triage pill mapping, shared restoreTicket, all groups.* EN/SK strings
-- [ ] 29-03-PLAN.md — Automated legitimacy check and exact-pinned install of @radix-ui/react-popover; shadcn Popover primitive
+- [x] 29-01-PLAN.md — Fix Phase 28 WR-01..WR-04: hydrate sequencing + keep last good state; TS/Rust trim and zero-width alignment with shared vectors
+- [x] 29-02-PLAN.md — Tab-id helpers + active-group fallback + overflow math, triage pill mapping, shared restoreTicket, all groups.* EN/SK strings
+- [x] 29-03-PLAN.md — Automated legitimacy check and exact-pinned install of @radix-ui/react-popover; shadcn Popover primitive
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -234,7 +234,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
-| 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
+| 29. Tab Strip & Group View | v0.5.0 | 3/6 | In Progress|  |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
