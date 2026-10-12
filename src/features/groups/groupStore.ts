@@ -61,7 +61,11 @@ export const useGroupStore = create<GroupState>((set, get) => {
     try {
       value = await invoke<T>(command, args);
     } catch (err) {
-      return { ok: false, code: toGroupErrorCode(err) };
+      const code = toGroupErrorCode(err);
+      // The group is already gone on the backend: refresh so its stale tab disappears
+      // (and pending rename/color actions on it are dropped) instead of staying interactive.
+      if (code === 'not_found') await get().hydrate();
+      return { ok: false, code };
     }
     await get().hydrate();
     return { ok: true, value };

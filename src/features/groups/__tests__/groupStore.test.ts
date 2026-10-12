@@ -9,6 +9,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 import type { JiraTicket } from '../../tickets/types';
 import { selectGroupIdsForIssue, toGroupErrorCode, useGroupStore } from '../groupStore';
+import type { Group } from '../types';
 
 const initial = useGroupStore.getState();
 const g = (id: number, position: number, color = 'blue') => ({
@@ -262,6 +263,25 @@ describe('groupStore', () => {
     const r = await useGroupStore.getState().createGroup('X');
     expect(r).toEqual({ ok: false, code: 'duplicate' });
     expect(useGroupStore.getState().hydrated).toBe(false);
+  });
+
+  it('not_found failure re-hydrates so the stale group is dropped', async () => {
+    useGroupStore.setState({ groups: [g(1, 0), g(2, 1)] as Group[], hydrated: true });
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'delete_group') throw { code: 'not_found' };
+      if (cmd === 'list_groups') return [g(2, 1)];
+      if (cmd === 'list_group_memberships') return [];
+      return null;
+    });
+    const r = await useGroupStore.getState().deleteGroup(1);
+    expect(r).toEqual({ ok: false, code: 'not_found' });
+    expect(useGroupStore.getState().groups.map((x) => x.id)).toEqual([2]);
+  });
+
+  it('other failures do not re-hydrate', async () => {
+    invokeMock.mockRejectedValue({ code: 'internal' });
+    await useGroupStore.getState().renameGroup(1, 'X');
+    expect(invokeMock).not.toHaveBeenCalledWith('list_groups');
   });
 
   it('toGroupErrorCode maps', () => {
