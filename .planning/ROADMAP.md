@@ -189,7 +189,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A "Select" toggle in every list header reveals checkboxes with shift-click range selection; selection clears on tab change or leaving select mode
   5. The selection bar shows the count and adds all selected issues to a group atomically (with inline create); inside a group view it also offers "Remove from group"
 
-**Plans:** 5/9 plans executed
+**Plans:** 7/9 plans executed
 **Wave 1**
 
 - [x] 31-01-PLAN.md — EN/SK strings for picker, chips, select mode, bar, toasts (Slovak plurals, D-18 check)
@@ -203,8 +203,8 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 31-06-PLAN.md — SelectionBar (count live region, atomic Add, confirmed Remove)
-- [ ] 31-07-PLAN.md — Detail Groups row (picker, chips with × confirm, chip navigation, Esc guard)
+- [x] 31-06-PLAN.md — SelectionBar (count live region, atomic Add, confirmed Remove)
+- [x] 31-07-PLAN.md — Detail Groups row (picker, chips with × confirm, chip navigation, Esc guard)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -279,6 +279,6 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
-| 31. Membership Entry Points | v0.5.0 | 5/9 | In Progress|  |
+| 31. Membership Entry Points | v0.5.0 | 7/9 | In Progress|  |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
