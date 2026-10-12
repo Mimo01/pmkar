@@ -87,6 +87,7 @@ export function GroupTab({
               <button
                 type="button"
                 ref={buttonRef}
+                data-nav-tab=""
                 onClick={onSelect}
                 onKeyDown={handleKeyDown}
                 aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}

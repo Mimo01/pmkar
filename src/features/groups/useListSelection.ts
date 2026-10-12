@@ -102,6 +102,14 @@ export function useListSelection(visibleKeys: readonly string[]): ListSelection 
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      // Esc inside a text field belongs to that field (clear/dismiss), never to select mode
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+      )
+        return;
       if (e.key === 'Escape' && !e.defaultPrevented && selectMode) {
         e.preventDefault();
         exit();
