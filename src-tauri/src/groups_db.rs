@@ -25,6 +25,7 @@ pub enum GroupErrorCode {
     Duplicate,
     Reserved,
     NoScope,
+    ScopeMismatch,
     NotFound,
     InvalidColor,
     InvalidIssueKey,

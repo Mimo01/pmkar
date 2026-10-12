@@ -7,6 +7,7 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: (...args: unknown[]) => invokeMock(...args),
 }));
 
+import { useConnectionStore } from '../../connections/connectionStore';
 import type { JiraTicket } from '../../tickets/types';
 import { selectGroupIdsForIssue, toGroupErrorCode, useGroupStore } from '../groupStore';
 import type { Group } from '../types';
@@ -293,11 +294,43 @@ describe('groupStore', () => {
   it('addToGroup maps tickets', async () => {
     mockLists([], []);
     const t = { key: 'A-1', summary: 's' } as unknown as JiraTicket;
+    useConnectionStore.setState({
+      serverConnection: {
+        baseUrl: 'http://server.example.com',
+        username: 'u',
+        serverVersion: '9',
+        lastTestedAt: '',
+        status: 'ok',
+      },
+    });
     await useGroupStore.getState().addToGroup(1, [t]);
     expect(invokeMock).toHaveBeenCalledWith('add_issues_to_group', {
       groupId: 1,
+      expectedBaseUrl: 'http://server.example.com',
       issues: [{ issueKey: 'A-1', ticketJson: JSON.stringify(t) }],
     });
+    useConnectionStore.setState({ serverConnection: null });
+  });
+
+  it('addToGroup sends empty expectedBaseUrl without a connection', async () => {
+    mockLists([], []);
+    useConnectionStore.setState({ serverConnection: null });
+    const t = { key: 'A-1', summary: 's' } as unknown as JiraTicket;
+    await useGroupStore.getState().addToGroup(1, [t]);
+    expect(invokeMock).toHaveBeenCalledWith(
+      'add_issues_to_group',
+      expect.objectContaining({ expectedBaseUrl: '' }),
+    );
+  });
+
+  it('addToGroup maps scope_mismatch rejection', async () => {
+    invokeMock.mockImplementation(async () => {
+      throw { code: 'scope_mismatch' };
+    });
+    const t = { key: 'A-1', summary: 's' } as unknown as JiraTicket;
+    const r = await useGroupStore.getState().addToGroup(1, [t]);
+    expect(r).toEqual({ ok: false, code: 'scope_mismatch' });
+    expect(invokeMock).not.toHaveBeenCalledWith('list_groups');
   });
 
   it('moveGroup invokes move_group', async () => {

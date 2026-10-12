@@ -62,6 +62,7 @@ beforeEach(() => {
 describe('membershipErrorKey', () => {
   it('maps not_found and everything else', () => {
     expect(membershipErrorKey('not_found')).toBe('groups.error.notFound');
+    expect(membershipErrorKey('scope_mismatch')).toBe('groups.error.scopeMismatch');
     expect(membershipErrorKey('internal')).toBe('groups.error.membership');
   });
 });
@@ -91,6 +92,15 @@ describe('addIssuesWithFeedback', () => {
     };
     expect(await addIssuesWithFeedback(group, tickets(1), t)).toBe(false);
     expect(toast.error).toHaveBeenCalledWith('This group no longer exists.');
+  });
+
+  it('reports scope_mismatch', async () => {
+    mutationResult = async () => {
+      throw { code: 'scope_mismatch' };
+    };
+    expect(await addIssuesWithFeedback(group, tickets(1), t)).toBe(false);
+    expect(toast.error).toHaveBeenCalledWith(t('groups.error.scopeMismatch'));
+    expect(t('groups.error.scopeMismatch')).toContain('different server');
   });
 
   it('reports internal errors', async () => {
