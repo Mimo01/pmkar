@@ -1,5 +1,5 @@
 ---
-status: diagnosed
+status: resolved
 trigger: "group-colors-not-rendering: some of the 8 group color swatches do not render their color"
 created: 2026-10-12
 updated: 2026-10-12

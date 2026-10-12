@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 30-group-management-reorder
 source: [30-01-SUMMARY.md, 30-02-SUMMARY.md, 30-03-SUMMARY.md, 30-04-SUMMARY.md, 30-05-SUMMARY.md, 30-06-SUMMARY.md, 30-07-SUMMARY.md, 30-HUMAN-UAT.md]
 started: 2026-10-12T14:30:00Z
-updated: 2026-10-12T15:00:00Z
+updated: 2026-10-12T16:45:00Z
 ---
 
 ## Current Test
@@ -67,7 +67,8 @@ blocked: 0
 ## Gaps
 
 - truth: "All 8 group color swatches render their color in the Create popover, and the created tab shows the chosen color"
-  status: failed
+  status: resolved
+  resolved_by: "30-08 (light palette moved to :root; user re-confirmed light-theme colors 2026-10-12)"
   reason: "User reported: some colors are not rendering, some are. Other than that, works correctly"
   severity: major
   test: 1
@@ -85,4 +86,4 @@ blocked: 0
     - "Declare light-theme --color-group-* in a plain :root rule (like body.dark) or @theme static so all 8 are always emitted"
     - "Update the existing colors.ts vs index.css consistency test to find values after the move"
     - "Add regression test asserting the built/declared CSS defines all 8 light-theme group variables unconditionally"
-  debug_session: ".planning/debug/group-colors-not-rendering.md"
+  debug_session: ".planning/debug/resolved/group-colors-not-rendering.md"

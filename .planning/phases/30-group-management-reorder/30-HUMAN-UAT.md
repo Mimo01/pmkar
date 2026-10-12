@@ -1,5 +1,5 @@
 ---
-status: partial
+status: complete
 phase: 30-group-management-reorder
 source: [30-VERIFICATION.md]
 started: 2026-10-12T13:46:12Z
@@ -8,7 +8,7 @@ updated: 2026-10-12T16:30:00Z
 
 ## Current Test
 
-[awaiting human testing — test 6 added after 30-08 gap closure]
+[testing complete — test 6 confirmed after 30-08 gap closure]
 
 ## Tests
 
@@ -35,14 +35,14 @@ result: pass
 
 ### 6. Light theme: check group colors after the 30-08 fix
 expected: Teal, green, orange and pink swatches (Create/Change color popovers) and tab dots render in color in light theme, like blue/amber/purple/slate
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 6
-passed: 4
+passed: 5
 issues: 0
-pending: 1
+pending: 0
 skipped: 1
 blocked: 0
 

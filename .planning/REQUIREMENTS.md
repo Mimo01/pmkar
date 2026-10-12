@@ -10,10 +10,10 @@
 ### Group Management (GRP)
 
 - [ ] **GRP-01**: User can create a named group from a `＋` control at the end of the tab bar; empty and whitespace-only names keep Create disabled; duplicate (case- and diacritic-aware) and reserved core-tab names are rejected with an inline message
-- [ ] **GRP-02**: User can rename a group from the group tab's "…" menu, with the same validation as create
-- [ ] **GRP-03**: User can pick a group color from a fixed palette (~8 colors, WCAG AA legible in light and dark); a new group gets the next unused color by default
-- [ ] **GRP-04**: User can delete a group after a confirmation dialog that states the issue count and that issues themselves are not affected; if the deleted group was the active tab, the app falls back to a core tab
-- [ ] **GRP-05**: User can reorder group tabs via "Move left / Move right" actions in the tab's "…" menu (keyboard accessible, new position announced to screen readers); core tabs stay fixed
+- [x] **GRP-02**: User can rename a group from the group tab's "…" menu, with the same validation as create
+- [x] **GRP-03**: User can pick a group color from a fixed palette (~8 colors, WCAG AA legible in light and dark); a new group gets the next unused color by default
+- [x] **GRP-04**: User can delete a group after a confirmation dialog that states the issue count and that issues themselves are not affected; if the deleted group was the active tab, the app falls back to a core tab
+- [x] **GRP-05**: User can reorder group tabs via "Move left / Move right" actions in the tab's "…" menu (keyboard accessible, new position announced to screen readers); core tabs stay fixed
 - [x] **GRP-06**: Groups, their names, colors, order and memberships persist across app restarts in local storage
 
 ### Navigation & Group View (GVIEW)
@@ -82,10 +82,10 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | GRP-01 | Phase 29 | Pending |
-| GRP-02 | Phase 30 | Pending |
-| GRP-03 | Phase 30 | Pending |
-| GRP-04 | Phase 30 | Pending |
-| GRP-05 | Phase 30 | Pending |
+| GRP-02 | Phase 30 | Complete |
+| GRP-03 | Phase 30 | Complete |
+| GRP-04 | Phase 30 | Complete |
+| GRP-05 | Phase 30 | Complete |
 | GRP-06 | Phase 28 | Complete |
 | GVIEW-01 | Phase 29 | Pending |
 | GVIEW-02 | Phase 29 | Pending |
