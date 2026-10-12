@@ -7,8 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
+import { useGroupStore } from '../groups/groupStore';
 import { SelectionBar } from '../groups/SelectionBar';
 import { useListSelection } from '../groups/useListSelection';
+import { computeFetchSignature, currentFetchSignatureInput } from './fetchSignature';
 import { SkeletonCards, TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import {
@@ -139,6 +141,9 @@ export function TicketListPage() {
       const serverConn = connState.serverConnection;
       if (!serverConn) throw new Error('No server connection');
 
+      // Capture the query signature at fetch start (not end) so mid-flight filter changes don't match.
+      const fetchSig = computeFetchSignature(currentFetchSignatureInput(store, connState));
+
       const preset = store.jqlPreset;
 
       // Fast path: custom JQL — single invoke, no batching (Pitfall 4)
@@ -147,7 +152,14 @@ export function TicketListPage() {
           baseUrl: serverConn.baseUrl,
           jql: store.jqlCustom,
         });
-        store.setTickets(result.issues, result.triageMap, result.total, result.truncated);
+        store.setTickets(
+          result.issues,
+          result.triageMap,
+          result.total,
+          result.truncated,
+          result.truncated ? null : fetchSig,
+        );
+        void useGroupStore.getState().refreshSnapshots(result.issues);
         const nowCustom = new Date().toISOString();
         store.setLastFetchedAt(nowCustom);
         store.setLastCheckedAt(nowCustom);
@@ -249,6 +261,7 @@ export function TicketListPage() {
       // WR-01: if every batch failed, preserve existing tickets and show an error banner.
       // Do not set failedUserNames here — only the error state is appropriate.
       if (localFailedUsers.length === batches.length) {
+        store.markFetchIncomplete();
         store.setFetchStatus(
           'error',
           `All ${batches.length} batch(es) failed. Check your connection.`,
@@ -262,7 +275,14 @@ export function TicketListPage() {
       }
 
       // Single setTickets call after loop — D-03 (avoids fetchStatus reset mid-loop, Pitfall 1)
-      store.setTickets(mergedIssues, mergedTriageMap, totalCount, anyTruncated);
+      store.setTickets(
+        mergedIssues,
+        mergedTriageMap,
+        totalCount,
+        anyTruncated,
+        localFailedUsers.length === 0 && !anyTruncated ? fetchSig : null,
+      );
+      void useGroupStore.getState().refreshSnapshots(mergedIssues);
       const now = new Date().toISOString();
       store.setLastFetchedAt(now);
       store.setLastCheckedAt(now);
@@ -319,6 +339,7 @@ export function TicketListPage() {
       // Reset progress counter after fetch completes (Pitfall 6)
       setBatchesTotal(0);
     } catch (err) {
+      useTicketStore.getState().markFetchIncomplete();
       store.setFetchStatus('error', err instanceof Error ? err.message : String(err));
     } finally {
       // Always release the in-flight lock so subsequent fetches (user-initiated or poll-triggered)

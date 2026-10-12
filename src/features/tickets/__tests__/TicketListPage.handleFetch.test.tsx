@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 vi.mock('@tauri-apps/api/event', () => ({
@@ -8,6 +8,8 @@ vi.mock('@tauri-apps/api/event', () => ({
 
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../../connections/connectionStore';
+import { useGroupStore } from '../../groups/groupStore';
+import { computeFetchSignature, currentFetchSignatureInput } from '../fetchSignature';
 import { TicketListPage } from '../TicketListPage';
 import { useTicketStore } from '../ticketStore';
 import type { FetchTicketsResult, JiraTicket } from '../types';
@@ -981,5 +983,281 @@ describe('TicketListPage — change detection over merged list (Pitfall 2 + regr
     const detailCalls = mockInvoke.mock.calls.filter(([cmd]) => cmd === 'fetch_ticket_detail');
     expect(detailCalls[0][1]).toHaveProperty('issueKey');
     expect(detailCalls[0][1]).not.toHaveProperty('ticketKey');
+  });
+});
+
+describe('TicketListPage — fetch completeness and snapshot refresh (D-12, D-13, D-15, GDUR-01)', () => {
+  type FetchImpl = (n: number) => FetchTicketsResult | Promise<FetchTicketsResult>;
+  let refreshImpl: () => Promise<number>;
+
+  function setup(impl: FetchImpl) {
+    let fetchCount = 0;
+    const cfg = useTicketStore.getState();
+    const fetchConfig = {
+      jqlPreset: cfg.jqlPreset,
+      jqlCustom: cfg.jqlCustom,
+      watchedUsers: cfg.watchedUsers,
+      lastFetchedAt: null,
+    };
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'get_triage_state') return {};
+      if (cmd === 'get_fetch_config') return fetchConfig;
+      if (cmd === 'get_unseen_change_keys') return [];
+      if (cmd === 'fetch_tickets') {
+        fetchCount += 1;
+        return impl(fetchCount);
+      }
+      if (cmd === 'refresh_group_snapshots') return refreshImpl();
+      if (cmd === 'fetch_ticket_detail') return {};
+      if (cmd === 'check_ticket_changes') return [];
+      return null;
+    });
+  }
+
+  function seed(partial: Record<string, unknown>) {
+    useTicketStore.setState(partial as unknown as Parameters<typeof useTicketStore.setState>[0]);
+  }
+
+  async function clickFetch() {
+    fireEvent.click(await screen.findByTitle('Refresh (F5)'));
+  }
+
+  function sigNow() {
+    return computeFetchSignature(
+      currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
+    );
+  }
+
+  function refreshCalls() {
+    return mockInvoke.mock.calls.filter(([cmd]) => cmd === 'refresh_group_snapshots');
+  }
+
+  beforeEach(() => {
+    mockInvoke.mockReset();
+    refreshImpl = async () => 1;
+    useConnectionStore.setState({
+      serverConnection: {
+        baseUrl: 'http://server.example.com',
+        username: 'testuser',
+        serverVersion: '9.0.0',
+        lastTestedAt: '2024-01-01T00:00:00.000Z',
+        status: 'ok',
+      },
+      cloudConnection: null,
+    });
+    seed({
+      tickets: [],
+      triageMap: {},
+      selectedTicketKey: null,
+      fetchStatus: 'idle',
+      fetchError: null,
+      lastFetchedAt: null,
+      lastCheckedAt: null,
+      pollFrequency: 'off',
+      totalCount: 0,
+      newCount: 0,
+      truncated: false,
+      jqlPreset: 'mine',
+      jqlCustom: null,
+      watchedUsers: [],
+      unseenChanges: {},
+      lastCompleteFetchSignature: null,
+    });
+    useGroupStore.setState({ groupIdsByIssue: { 'AB-1': [1] } } as unknown as Parameters<
+      typeof useGroupStore.setState
+    >[0]);
+  });
+
+  afterEach(() => {
+    useGroupStore.setState({ groupIdsByIssue: {} } as unknown as Parameters<
+      typeof useGroupStore.setState
+    >[0]);
+    seed({ lastCompleteFetchSignature: null });
+  });
+
+  it('custom JQL not truncated records the fetch-start signature', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    setup(() => makeFetchResult(['AB-1']));
+    const expected = sigNow();
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe(expected),
+    );
+  });
+
+  it('custom JQL truncated leaves signature null but still refreshes snapshots', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    setup(() => makeFetchResult(['AB-1'], true));
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+  });
+
+  it('all_watched with all batches ok sets the signature', async () => {
+    seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
+    setup((n) => makeFetchResult(n === 1 ? ['AB-1'] : ['U1-1']));
+    const expected = sigNow();
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe(expected),
+    );
+  });
+
+  it('partial batch failure leaves signature null and still refreshes members', async () => {
+    seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
+    setup((n) => {
+      if (n === 2) throw new Error('boom');
+      return makeFetchResult(['AB-1']);
+    });
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+    expect(useTicketStore.getState().tickets.map((t) => t.key)).toEqual(['AB-1']);
+  });
+
+  it('any truncated batch leaves signature null', async () => {
+    seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
+    setup((n) => makeFetchResult(n === 1 ? ['AB-1'] : ['U1-1'], n === 2));
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(useTicketStore.getState().tickets.length).toBe(2));
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+  });
+
+  it('all batches failing clears a previously set signature and keeps tickets', async () => {
+    seed({
+      jqlPreset: 'all_watched',
+      watchedUsers: [u1],
+      tickets: [makeTicket('OLD-1')],
+      lastCompleteFetchSignature: 'previous',
+    });
+    setup(() => {
+      throw new Error('down');
+    });
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(useTicketStore.getState().fetchStatus).toBe('error'));
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+    expect(useTicketStore.getState().tickets.map((t) => t.key)).toEqual(['OLD-1']);
+  });
+
+  it('custom JQL invoke throwing clears the signature', async () => {
+    seed({
+      jqlPreset: 'custom',
+      jqlCustom: 'project = X',
+      lastCompleteFetchSignature: 'previous',
+    });
+    setup(() => {
+      throw new Error('bad jql');
+    });
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(useTicketStore.getState().fetchStatus).toBe('error'));
+    expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull();
+  });
+
+  it('complete fetch followed by partial fetch goes from set to null', async () => {
+    seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
+    let failSecondBatch = false;
+    setup((n) => {
+      if (failSecondBatch && n % 2 === 0) throw new Error('boom');
+      return makeFetchResult(['AB-1']);
+    });
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(useTicketStore.getState().lastCompleteFetchSignature).not.toBeNull(),
+    );
+    await waitFor(() => expect(useTicketStore.getState().fetchStatus).toBe('idle'));
+    failSecondBatch = true;
+    fireEvent.click(await screen.findByTitle('Refresh (F5)'));
+    await waitFor(() => expect(useTicketStore.getState().lastCompleteFetchSignature).toBeNull());
+  });
+
+  it('preset changed mid-flight stores the fetch-start signature', async () => {
+    seed({ jqlPreset: 'custom', jqlCustom: 'project = X' });
+    const d = deferred<FetchTicketsResult>();
+    setup(() => d.promise);
+    const startSig = sigNow();
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() =>
+      expect(mockInvoke.mock.calls.some(([cmd]) => cmd === 'fetch_tickets')).toBe(true),
+    );
+    seed({ jqlPreset: 'mine' });
+    d.resolve(makeFetchResult(['AB-1']));
+    await waitFor(() =>
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe(startSig),
+    );
+    expect(useTicketStore.getState().lastCompleteFetchSignature).not.toBe(sigNow());
+  });
+
+  it('poll-complete triggered fetch with all batches ok sets the signature', async () => {
+    const { listen } = await import('@tauri-apps/api/event');
+    let handler: ((e: { payload: unknown }) => void) | undefined;
+    vi.mocked(listen).mockImplementation(((name: string, cb: (e: { payload: unknown }) => void) => {
+      if (name === 'poll-complete') handler = cb;
+      return Promise.resolve(() => {});
+    }) as unknown as typeof listen);
+    setup(() => makeFetchResult(['AB-1']));
+    const expected = sigNow();
+    render(<TicketListPage />);
+    await waitFor(() => expect(handler).toBeDefined());
+    handler?.({
+      payload: { changedKeys: ['AB-1'], checkedAt: '2024-01-01T00:00:00Z', hadError: false },
+    });
+    await waitFor(() =>
+      expect(useTicketStore.getState().lastCompleteFetchSignature).toBe(expected),
+    );
+    vi.mocked(listen).mockImplementation((() =>
+      Promise.resolve(() => {})) as unknown as typeof listen);
+  });
+
+  it('refresh_group_snapshots is not invoked when no fetched ticket is a member', async () => {
+    setup(() => makeFetchResult(['ZZ-9']));
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(useTicketStore.getState().tickets.length).toBe(1));
+    expect(refreshCalls().length).toBe(0);
+  });
+
+  it('refresh_group_snapshots only receives member tickets', async () => {
+    setup(() => makeFetchResult(['AB-1', 'ZZ-9']));
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    const payload = refreshCalls()[0][1] as { issues: { issueKey: string }[] };
+    expect(payload.issues.map((i) => i.issueKey)).toEqual(['AB-1']);
+  });
+
+  it('refresh_group_snapshots rejecting does not change fetch status or toast', async () => {
+    refreshImpl = async () => {
+      throw new Error('refresh failed');
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    setup(() => makeFetchResult(['AB-1']));
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    await waitFor(() => expect(warn).toHaveBeenCalled());
+    expect(useTicketStore.getState().fetchStatus).toBe('idle');
+    expect(useTicketStore.getState().fetchError).toBeNull();
+    warn.mockRestore();
+  });
+
+  it('never invokes remove_issues_from_group during a fetch (GDUR-01)', async () => {
+    seed({ jqlPreset: 'all_watched', watchedUsers: [u1] });
+    setup((n) => {
+      if (n === 2) throw new Error('boom');
+      return makeFetchResult(['AB-1']);
+    });
+    render(<TicketListPage />);
+    await clickFetch();
+    await waitFor(() => expect(refreshCalls().length).toBe(1));
+    expect(mockInvoke.mock.calls.some(([cmd]) => cmd === 'remove_issues_from_group')).toBe(false);
   });
 });
