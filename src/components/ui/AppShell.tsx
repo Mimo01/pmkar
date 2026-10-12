@@ -1,14 +1,16 @@
 import { Settings, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { CoreTab, TabId } from '../../features/groups/groupTabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 interface AppShellProps {
   children: ReactNode;
   onGearClick?: () => void;
-  activeTab?: 'new' | 'not-mine' | 'linked';
-  onTabChange?: (tab: 'new' | 'not-mine' | 'linked') => void;
+  activeTab?: TabId;
+  onTabChange?: (tab: TabId) => void;
   onAuditClick?: () => void;
+  navExtension?: ReactNode;
 }
 
 export function AppShell({
@@ -17,10 +19,11 @@ export function AppShell({
   activeTab,
   onTabChange,
   onAuditClick,
+  navExtension,
 }: AppShellProps) {
   const { t } = useTranslation();
 
-  const NAV_TABS: { id: 'new' | 'not-mine' | 'linked'; label: string }[] = [
+  const NAV_TABS: { id: CoreTab; label: string }[] = [
     { id: 'new', label: t('nav.new') },
     { id: 'not-mine', label: t('nav.notMine') },
     { id: 'linked', label: t('nav.linked') },
@@ -74,7 +77,7 @@ export function AppShell({
       </header>
       {onTabChange && (
         <nav
-          className="flex px-4 bg-brand-surface border-b border-brand-border"
+          className="flex items-stretch px-4 bg-brand-surface border-b border-brand-border"
           aria-label="Main navigation"
         >
           {NAV_TABS.map((tab) => (
@@ -82,7 +85,7 @@ export function AppShell({
               key={tab.id}
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
+              className={`shrink-0 text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${
                 activeTab === tab.id
                   ? 'text-brand-text font-semibold border-brand'
                   : 'text-brand-muted font-normal hover:text-brand-text border-transparent'
@@ -92,6 +95,7 @@ export function AppShell({
               {tab.label}
             </button>
           ))}
+          {navExtension}
         </nav>
       )}
       <main className="flex-1 flex flex-col overflow-hidden">{children}</main>

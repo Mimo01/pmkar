@@ -10,7 +10,10 @@ import ProbeStatusBanner from './features/connections/ProbeStatusBanner';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
+import { GroupTabStrip } from './features/groups/GroupTabStrip';
+import { GroupViewPage } from './features/groups/GroupViewPage';
 import { useGroupStore } from './features/groups/groupStore';
+import { parseGroupTabId, resolveActiveTab, type TabId } from './features/groups/groupTabs';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
 import { CopyPreviewPage } from './features/tickets/CopyPreviewPage';
@@ -101,7 +104,13 @@ function App() {
     | undefined
   >(undefined);
   const [editStep, setEditStep] = useState<ConnectionType | null>(null);
-  const [currentTab, setCurrentTab] = useState<'new' | 'not-mine' | 'linked'>('new');
+  const [currentTab, setCurrentTab] = useState<TabId>('new');
+  const groupsHydrated = useGroupStore((s) => s.hydrated);
+  const groups = useGroupStore((s) => s.groups);
+  const effectiveTab = resolveActiveTab(currentTab, groups, groupsHydrated);
+  useEffect(() => {
+    if (effectiveTab !== currentTab) setCurrentTab(effectiveTab);
+  }, [effectiveTab, currentTab]);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
@@ -237,6 +246,8 @@ function App() {
     );
   }
 
+  const activeGroupId = parseGroupTabId(effectiveTab);
+
   return (
     <ErrorBoundary>
       <AppShell
@@ -246,8 +257,9 @@ function App() {
           useTicketStore.getState().selectTicket(null);
           setShowSettings(true);
         }}
-        activeTab={currentTab}
+        activeTab={effectiveTab}
         onTabChange={setCurrentTab}
+        navExtension={<GroupTabStrip activeTab={effectiveTab} onTabChange={setCurrentTab} />}
         onAuditClick={() => {
           setShowDetail(false);
           setDetailTicketKey(null);
@@ -256,9 +268,12 @@ function App() {
         }}
       >
         <ProbeStatusBanner />
-        {currentTab === 'new' && <TicketListPage />}
-        {currentTab === 'not-mine' && <IgnoredTicketsPage />}
-        {currentTab === 'linked' && <LinkedTicketsPage />}
+        {effectiveTab === 'new' && <TicketListPage />}
+        {effectiveTab === 'not-mine' && <IgnoredTicketsPage />}
+        {effectiveTab === 'linked' && <LinkedTicketsPage />}
+        {activeGroupId !== null && groups.some((g) => g.id === activeGroupId) && (
+          <GroupViewPage key={activeGroupId} groupId={activeGroupId} />
+        )}
       </AppShell>
       <UpdateModal open={showUpdateModal} />
       <AboutModal open={showAbout} onOpenChange={setShowAbout} />

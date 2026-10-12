@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
@@ -9,6 +9,7 @@ vi.mock('@tauri-apps/plugin-updater', () => ({ check: vi.fn() }));
 
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../features/connections/connectionStore';
+import { useGroupStore } from '../features/groups/groupStore';
 import { useCopyStore } from '../features/tickets/copyStore';
 import { useTicketStore } from '../features/tickets/ticketStore';
 
@@ -47,6 +48,20 @@ function setupBothConnections() {
         lastFetchedAt: null,
       });
     }
+    if (cmd === 'list_groups') {
+      return Promise.resolve([
+        {
+          id: 1,
+          name: 'Sprint 12',
+          color: 'blue',
+          position: 0,
+          createdAt: 't',
+          memberCount: 0,
+        },
+      ]);
+    }
+    if (cmd === 'list_group_memberships') return Promise.resolve([]);
+    if (cmd === 'get_group_members') return Promise.resolve([]);
     return Promise.resolve(null);
   });
 }
@@ -55,6 +70,13 @@ describe('App', () => {
   beforeEach(() => {
     mockInvoke.mockReset();
     useConnectionStore.setState({ serverConnection: null, cloudConnection: null });
+    useGroupStore.setState({
+      groups: [],
+      memberKeysByGroup: {},
+      groupIdsByIssue: {},
+      hydrated: false,
+      hydrateError: false,
+    });
     useTicketStore.setState({
       tickets: [],
       triageMap: {},
@@ -300,5 +322,40 @@ describe('App', () => {
       expect(screen.getByRole('button', { name: /^Source$/i })).toBeInTheDocument();
     });
     unmount();
+  });
+  describe('group tabs', () => {
+    it('starts on New, opens a group tab, and falls back to New when the group vanishes', async () => {
+      setupBothConnections();
+      const { unmount } = await renderApp();
+      const newTab = await screen.findByRole('button', { name: 'New' });
+      expect(newTab).toHaveAttribute('aria-current', 'page');
+
+      const groupTab = await screen.findByRole('button', { name: 'Sprint 12, 0 issues' });
+      fireEvent.click(groupTab);
+      await waitFor(() => {
+        expect(screen.getByText('No issues in this group yet')).toBeInTheDocument();
+      });
+      expect(screen.getByRole('button', { name: 'Sprint 12, 0 issues' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'New' }));
+      await waitFor(() => {
+        expect(screen.queryByText('No issues in this group yet')).not.toBeInTheDocument();
+      });
+      expect(screen.getByRole('button', { name: 'New' })).toHaveAttribute('aria-current', 'page');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Sprint 12, 0 issues' }));
+      await screen.findByText('No issues in this group yet');
+      act(() => {
+        useGroupStore.setState({ groups: [] });
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: 'New' })).toHaveAttribute('aria-current', 'page');
+      });
+      expect(screen.queryByText('No issues in this group yet')).not.toBeInTheDocument();
+      unmount();
+    });
   });
 });
