@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
+}));
+
 import { LinkedTicketsPage } from '../LinkedTicketsPage';
 import { useTicketStore } from '../ticketStore';
 import type { JiraTicket, TriageEntry } from '../types';
+import { CORE_TICKETS, defineCoreSelectionCases } from './coreListSelectionCases';
 
 const makeTicket = (key: string, updated = '2024-01-01T00:00:00.000Z'): JiraTicket => ({
   id: key,
@@ -84,4 +91,16 @@ describe('LinkedTicketsPage', () => {
     expect(summaries[0].textContent).toBe('Summary for PROJ-2');
     expect(summaries[1].textContent).toBe('Summary for PROJ-1');
   });
+});
+
+defineCoreSelectionCases('LinkedTicketsPage', {
+  seed: () =>
+    useTicketStore.setState({
+      tickets: CORE_TICKETS,
+      triageMap: Object.fromEntries(
+        CORE_TICKETS.map((t) => [t.key, { state: 'copied', copiedKey: 'CLOUD-1' } as TriageEntry]),
+      ),
+      selectedTicketKey: null,
+    }),
+  page: () => <LinkedTicketsPage />,
 });

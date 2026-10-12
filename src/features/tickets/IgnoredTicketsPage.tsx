@@ -1,6 +1,9 @@
 import { Info, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
+import { SelectionBar } from '../groups/SelectionBar';
+import { useListSelection } from '../groups/useListSelection';
 import { TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import {
@@ -36,12 +39,20 @@ export function IgnoredTicketsPage() {
     );
   }, [ignoredTickets, searchText, assigneeFilter, sortField, sortDirection]);
 
+  const keys = useMemo(() => sorted.map((t) => t.key), [sorted]);
+  const sel = useListSelection(keys);
+  const selectedTickets = useMemo(
+    () => sorted.filter((t) => sel.selected.has(t.key)),
+    [sorted, sel.selected],
+  );
+
   function handleSelectTicket(key: string) {
     useTicketStore.getState().selectTicket(key);
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    // biome-ignore lint/a11y/noStaticElementInteractions: Esc handler for select mode; real controls are inside
+    <div className="flex-1 flex flex-col overflow-hidden" onKeyDown={sel.handleKeyDown}>
       {/* Filter bar */}
       <TicketFilterBar
         searchText={searchText}
@@ -53,6 +64,10 @@ export function IgnoredTicketsPage() {
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sorted.length}
+        selectMode={sel.selectMode}
+        onToggleSelectMode={sel.toggleSelectMode}
+        selectDisabled={sorted.length === 0 && !sel.selectMode}
+        selectToggleRef={sel.selectToggleRef}
       />
 
       {/* Empty state */}
@@ -81,34 +96,48 @@ export function IgnoredTicketsPage() {
 
       {/* Card list */}
       {ignoredTickets.length > 0 && (
-        <div className="flex-1 overflow-y-auto">
-          {sorted.map((ticket) => (
-            <TicketCard
-              key={ticket.key}
-              ticket={ticket}
-              triageEntry={triageMap[ticket.key]}
-              onClick={() => handleSelectTicket(ticket.key)}
-              actionSlot={
-                <div className="flex items-center gap-2">
-                  {triageMap[ticket.key]?.state === 'handled' && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
-                      {t('tickets.card.handledBadge')}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      restoreTicket(ticket.key);
-                    }}
-                    className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
-                  >
-                    {t('ignored.restore')}
-                  </button>
-                </div>
-              }
-            />
-          ))}
+        <div className="relative flex-1 flex flex-col min-h-0">
+          <div className={cn('flex-1 overflow-y-auto', selectedTickets.length > 0 && 'pb-20')}>
+            {sorted.map((ticket) => (
+              <TicketCard
+                key={ticket.key}
+                ticket={ticket}
+                triageEntry={triageMap[ticket.key]}
+                onClick={() => handleSelectTicket(ticket.key)}
+                selectMode={sel.selectMode}
+                selected={sel.isSelected(ticket.key)}
+                onToggleSelect={(shift) => sel.toggle(ticket.key, shift)}
+                actionSlot={
+                  <div className="flex items-center gap-2">
+                    {triageMap[ticket.key]?.state === 'handled' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
+                        {t('tickets.card.handledBadge')}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        restoreTicket(ticket.key);
+                      }}
+                      className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
+                    >
+                      {t('ignored.restore')}
+                    </button>
+                  </div>
+                }
+              />
+            ))}
+          </div>
+          <SelectionBar
+            selectedTickets={selectedTickets}
+            group={null}
+            onClear={sel.clear}
+            onActionSucceeded={() => {
+              sel.exit();
+              sel.focusSelectToggle();
+            }}
+          />
         </div>
       )}
     </div>
