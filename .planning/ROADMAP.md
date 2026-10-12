@@ -150,7 +150,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Deleting a group asks for confirmation stating the issue count and that issues are not affected; if it was the active tab the app lands on a core tab
   4. User can reorder group tabs with "Move left / Move right" in the tab menu (mouse or keyboard); core tabs stay fixed, a screen reader announces the new position, and the order survives restart
 
-**Plans:** 7/7 plans complete
+**Plans:** 7/8 plans complete
 **Wave 1**
 
 - [x] 30-01-PLAN.md — Legitimacy gate + exact-pinned Radix dropdown/context menu packages, shadcn wrappers, jsdom stubs (checkpoint)
@@ -169,6 +169,10 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 **Wave 4** *(blocked on Wave 3 completion)*
 
 - [x] 30-07-PLAN.md — Strip wiring of rename/color/delete overlays, delete fallback to New and D-14 focus targets
+
+**Gap closure** *(UAT Test 1)*
+
+- [ ] 30-08-PLAN.md — Move light --color-group-* palette out of Tailwind @theme into :root so all 8 colors are emitted; parity + regression tests, build check
 
 **UI hint**: yes
 
