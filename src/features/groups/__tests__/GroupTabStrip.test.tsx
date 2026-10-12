@@ -200,4 +200,39 @@ describe('GroupTabStrip', () => {
       expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Ops, 0 issues' })),
     );
   });
+
+  it('create with failed follow-up hydrate does not switch tabs or steal focus later', async () => {
+    seed([sprint, qa]);
+    let created = false;
+    let listFails = true;
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'create_group') {
+        created = true;
+        return ops;
+      }
+      if (cmd === 'list_groups') {
+        if (created && listFails) throw new Error('hydrate failed');
+        return created ? [sprint, qa, ops] : [sprint, qa];
+      }
+      if (cmd === 'list_group_memberships') return [];
+      return null;
+    });
+    const spy = vi.fn();
+    const user = userEvent.setup();
+    renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={spy} />);
+    const trigger = screen.getByRole('button', { name: 'New group' });
+    await user.click(trigger);
+    await user.type(await screen.findByLabelText('Group name'), 'Ops{Enter}');
+    await waitFor(() => expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument());
+    expect(spy).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
+
+    // A later successful hydrate that includes the group must not pull focus onto it.
+    listFails = false;
+    await act(async () => {
+      await useGroupStore.getState().hydrate();
+    });
+    expect(screen.getByRole('button', { name: 'Ops, 0 issues' })).toBeInTheDocument();
+    expect(document.activeElement).toBe(trigger);
+  });
 });

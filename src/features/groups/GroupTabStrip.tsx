@@ -69,6 +69,12 @@ export function GroupTabStrip({
     tabRefs.current.get(id)?.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
   }, [activeTab, groups]);
 
+  // Drop a pending focus request once the user navigates away from that group, so a
+  // later unrelated hydrate can never pull focus onto it.
+  useEffect(() => {
+    setPendingFocusId((p) => (p !== null && activeTab !== groupTabId(p) ? null : p));
+  }, [activeTab]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: wait for the new group to render
   useEffect(() => {
     if (pendingFocusId === null) return;
@@ -85,6 +91,8 @@ export function GroupTabStrip({
   }
 
   function handleCreated(id: number) {
+    // Only honour focus/tab switch for a group the store actually has.
+    if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
     setPendingFocusId(id);
     onTabChange(groupTabId(id));
   }

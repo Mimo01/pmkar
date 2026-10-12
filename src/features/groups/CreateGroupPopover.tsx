@@ -69,9 +69,13 @@ export function CreateGroupPopover({ onCreated }: { onCreated: (groupId: number)
     try {
       const r = await useGroupStore.getState().createGroup(v.display);
       if (r.ok) {
-        createdRef.current = true;
+        // If the follow-up hydrate failed, the new group is not in the store yet, so
+        // its tab cannot be selected or focused. Close normally and let focus return
+        // to the trigger instead of dropping it to <body>.
+        const present = useGroupStore.getState().groups.some((g) => g.id === r.value.id);
+        createdRef.current = present;
         setOpen(false);
-        onCreated(r.value.id);
+        if (present) onCreated(r.value.id);
       } else {
         setSubmitError(r.code);
       }

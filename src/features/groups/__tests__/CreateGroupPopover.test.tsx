@@ -23,6 +23,8 @@ const sprint = {
 };
 
 let createBehavior: () => Promise<unknown>;
+let createdGroup: unknown = null;
+let listBehavior: () => Promise<unknown>;
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -38,9 +40,15 @@ beforeAll(() => {
 beforeEach(() => {
   invokeMock.mockReset();
   createBehavior = async () => ({ ...sprint, id: 5, name: 'QA' });
+  createdGroup = null;
+  listBehavior = async () => (createdGroup ? [sprint, createdGroup] : [sprint]);
   invokeMock.mockImplementation(async (cmd: string) => {
-    if (cmd === 'create_group') return createBehavior();
-    if (cmd === 'list_groups') return [sprint];
+    if (cmd === 'create_group') {
+      const g = await createBehavior();
+      createdGroup = g;
+      return g;
+    }
+    if (cmd === 'list_groups') return listBehavior();
     if (cmd === 'list_group_memberships') return [];
     return null;
   });
@@ -135,6 +143,19 @@ describe('CreateGroupPopover', () => {
     );
     expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument();
     expect(document.activeElement).not.toBe(trigger);
+  });
+
+  it('create succeeds but follow-up hydrate fails: no onCreated, focus returns to trigger', async () => {
+    listBehavior = async () => {
+      if (createdGroup) throw new Error('hydrate failed');
+      return [sprint];
+    };
+    const { user, input, onCreated, trigger } = await setup();
+    await user.type(input, 'QA{Enter}');
+    await waitFor(() => expect(screen.queryByLabelText('Group name')).not.toBeInTheDocument());
+    expect(useGroupStore.getState().hydrateError).toBe(true);
+    expect(onCreated).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
   it('double Enter invokes create_group once', async () => {
