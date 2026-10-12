@@ -72,7 +72,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 <details open>
 <summary>🚧 v0.5.0 Custom Groups (Phases 28-33) — IN PROGRESS</summary>
 
-- [ ] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels
+- [x] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels (completed 2026-10-12)
 - [ ] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list
 - [ ] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right
 - [ ] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar
@@ -91,7 +91,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. A test fails if the Rust side emits a copy step id that has no translation key
   4. Existing New / Not mine / Linked lists filter and sort exactly as before after the shared list utilities extraction
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 **Wave 1**
 
 - [x] 28-01-PLAN.md — Characterize then extract New/Not mine/Linked filter+sort into ticketListUtils (SC4)
@@ -105,7 +105,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 28-06-PLAN.md — useGroupStore, TS validation mirror, App hydration on startup and source change
+- [x] 28-06-PLAN.md — useGroupStore, TS validation mirror, App hydration on startup and source change
 
 **Research flag**: Decide identity scope column, snapshot table shape (issue_snapshot with ticket_json) and INTEGER AUTOINCREMENT group id; verify Slovak plural key set against the installed i18next version
 
@@ -219,7 +219,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 25. Preview-Time Resolution of wiki_to_adf and User Fields | v0.4.8 | 2/2 | Complete | 2026-05-05 |
 | 26. Batch Ticket Fetching per Watched User | v0.4.8 | 1/1 | Complete | 2026-05-06 |
 | 27. Static Value Mapping | v0.4.8 | 4/4 | Complete | 2026-05-20 |
-| 28. Foundations | v0.5.0 | 5/6 | In Progress|  |
+| 28. Foundations | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 0/TBD | Not started | - |
 | 30. Group Management & Reorder | v0.5.0 | 0/TBD | Not started | - |
 | 31. Membership Entry Points | v0.5.0 | 0/TBD | Not started | - |
