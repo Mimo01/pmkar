@@ -25,6 +25,7 @@ import {
   FieldMappingSection,
   FieldMappingSectionHeader,
 } from '../field-mapping/FieldMappingSection';
+import { useGroupStore } from '../groups/groupStore';
 import { type ThemeMode, useThemeStore } from '../theme/themeStore';
 import { useTicketStore } from '../tickets/ticketStore';
 import type { FetchConfig, JqlPreset, WatchedUser } from '../tickets/types';
@@ -554,7 +555,7 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
       }).catch(() => {});
     }
 
-    invoke('set_connection_meta', {
+    const persisted = invoke('set_connection_meta', {
       meta: {
         connectionType: connectionType === 'server' ? 'server' : 'cloud',
         baseUrl: credentials.baseUrl,
@@ -564,6 +565,8 @@ export function SettingsPage({ onClose, onEdit: _onEdit, initialSection }: Setti
         status: 'ok',
       },
     }).catch(() => {});
+    // Group scope is server-only (D-01); re-hydrate after persistence settles.
+    if (connectionType === 'server') void useGroupStore.getState().rehydrateAfter(persisted);
 
     setEditingConnection(null);
   }

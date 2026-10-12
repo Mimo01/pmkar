@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useGroupStore } from '../groups/groupStore';
 import { useConnectionStore } from './connectionStore';
 import { SetupWizard } from './SetupWizard';
 
@@ -140,6 +141,48 @@ describe('SetupWizard', () => {
 
     await waitFor(() => {
       expect(onComplete).toHaveBeenCalledOnce();
+    });
+  });
+});
+
+describe('SetupWizard — group re-hydration ordering', () => {
+  it('invokes list_groups only after set_connection_meta settles', async () => {
+    let resolveMeta!: () => void;
+    const metaPending = new Promise<null>((r) => {
+      resolveMeta = () => r(null);
+    });
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'test_jira_server_connection') return serverSuccessResult;
+      if (cmd === 'set_connection_meta') return metaPending;
+      if (cmd === 'list_groups' || cmd === 'list_group_memberships') return [];
+      return null;
+    });
+    act(() => {
+      useConnectionStore.getState().clearConnections();
+      useGroupStore.setState({ groups: [], memberKeysByGroup: {}, groupIdsByIssue: {} });
+    });
+
+    render(<SetupWizard />);
+    fillServerForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
+
+    await waitFor(() => {
+      expect(mockInvoke.mock.calls.map((c) => c[0])).toContain('set_connection_meta');
+    });
+    // Give any (incorrect) eager hydration a chance to run.
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('list_groups');
+
+    await act(async () => {
+      resolveMeta();
+    });
+    await waitFor(() => {
+      const cmds = mockInvoke.mock.calls.map((c) => c[0]);
+      expect(cmds).toContain('list_groups');
+      expect(cmds.indexOf('list_groups')).toBeGreaterThan(cmds.indexOf('set_connection_meta'));
     });
   });
 });

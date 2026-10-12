@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../../i18n/index';
 import { useLanguageStore } from '../../../i18n/languageStore';
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
+import { useGroupStore } from '../../groups/groupStore';
 import { useThemeStore } from '../../theme/themeStore';
 import { useTicketStore } from '../../tickets/ticketStore';
 import { useConnectionStore } from '../connectionStore';
@@ -638,5 +639,86 @@ describe('SettingsPage — Domain Search sub-section', () => {
       // Should NOT show alert/privacy warning
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('SettingsPage — group re-hydration on source change', () => {
+  const serverSuccessResult = {
+    success: true,
+    username: 'jdoe',
+    serverVersion: '8.20.0',
+    errorKind: null,
+    retryAfterSecs: null,
+  };
+
+  function setup(metaPending: Promise<unknown>) {
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation(async (cmd: string) => {
+      if (cmd === 'test_jira_server_connection' || cmd === 'test_jira_cloud_connection')
+        return serverSuccessResult;
+      if (cmd === 'set_connection_meta') return metaPending;
+      if (cmd === 'list_groups' || cmd === 'list_group_memberships') return [];
+      return [];
+    });
+    useConnectionStore.setState({
+      serverConnection: mockConnection,
+      cloudConnection: mockConnection,
+    });
+    useGroupStore.setState({ groups: [], memberKeysByGroup: {}, groupIdsByIssue: {} });
+    useLanguageStore.setState({ language: 'en' });
+    i18n.changeLanguage('en');
+  }
+
+  const cmds = () => mockInvoke.mock.calls.map((c) => c[0]);
+
+  it('server edit: list_groups runs only after set_connection_meta settles', async () => {
+    let resolveMeta!: () => void;
+    setup(
+      new Promise<void>((r) => {
+        resolveMeta = r;
+      }),
+    );
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Edit$/i }));
+    const urlInput = screen.getByLabelText('Base URL');
+    fireEvent.change(urlInput, { target: { value: 'https://other.example.com' } });
+    fireEvent.blur(urlInput);
+    fireEvent.change(screen.getByLabelText('Personal Access Token'), {
+      target: { value: 'pat' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
+
+    await waitFor(() => expect(cmds()).toContain('set_connection_meta'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(cmds()).not.toContain('list_groups');
+
+    await act(async () => {
+      resolveMeta();
+    });
+    await waitFor(() => {
+      expect(cmds()).toContain('list_groups');
+      expect(cmds().indexOf('list_groups')).toBeGreaterThan(cmds().indexOf('set_connection_meta'));
+    });
+  });
+
+  it('cloud edit does not invoke list_groups', async () => {
+    setup(Promise.resolve());
+    renderWithI18n(<SettingsPage onClose={noop} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Destination$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Edit$/i }));
+    const urlInput = screen.getByLabelText('Base URL');
+    fireEvent.change(urlInput, { target: { value: 'https://other.atlassian.net' } });
+    fireEvent.blur(urlInput);
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'a@b.com' } });
+    fireEvent.change(screen.getByLabelText('API Token'), { target: { value: 'tok' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Test Connection' }));
+
+    await waitFor(() => expect(cmds()).toContain('set_connection_meta'));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(cmds()).not.toContain('list_groups');
   });
 });

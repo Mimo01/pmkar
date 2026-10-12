@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useGroupStore } from '../groups/groupStore';
 import { ConnectionForm } from './ConnectionForm';
 import { useConnectionStore } from './connectionStore';
 import { StepProgress } from './StepProgress';
@@ -59,16 +60,19 @@ export function SetupWizard({ initialStep = 1, onComplete }: SetupWizardProps) {
       status: 'ok',
     };
     setServerConnection(meta);
-    invoke('set_connection_meta', {
-      meta: {
-        connectionType: 'server',
-        baseUrl,
-        username,
-        serverVersion,
-        lastTestedAt: meta.lastTestedAt,
-        status: 'ok',
-      },
-    }).catch((err) => console.error('Failed to persist server connection meta:', err));
+    // Re-hydrate groups only after Rust has the new scope persisted (D-01, D-21).
+    void useGroupStore.getState().rehydrateAfter(
+      invoke('set_connection_meta', {
+        meta: {
+          connectionType: 'server',
+          baseUrl,
+          username,
+          serverVersion,
+          lastTestedAt: meta.lastTestedAt,
+          status: 'ok',
+        },
+      }).catch((err) => console.error('Failed to persist server connection meta:', err)),
+    );
     setTestPassed(true);
   }
 
