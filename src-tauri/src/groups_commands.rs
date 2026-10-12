@@ -124,13 +124,24 @@ pub fn delete_group_inner(
     lock_groups(groups_db)?.delete_group(&scope, group_id)
 }
 
+/// Add issues to a group.
+///
+/// `expected_base_url` is the base URL the frontend believes it is connected
+/// to (CR-01): the frontend may hold another server's ticket, and the upsert
+/// would overwrite that server's snapshot. It can only veto, never select the
+/// write scope. Unlike refresh (silent `Ok(0)`), this is a user action, so a
+/// mismatch fails loudly with `ScopeMismatch` before the groups lock is taken.
 pub fn add_issues_to_group_inner(
     triage_db: &Arc<Mutex<TriageDb>>,
     groups_db: &Arc<Mutex<GroupsDb>>,
     group_id: i64,
+    expected_base_url: &str,
     issues: &[NewMember],
 ) -> GroupResult<usize> {
     let scope = require_scope(triage_db)?;
+    if normalize_scope(expected_base_url).as_deref() != Some(scope.as_str()) {
+        return Err(GroupError::new(GroupErrorCode::ScopeMismatch));
+    }
     lock_groups(groups_db)?.add_members(&scope, group_id, issues)
 }
 
@@ -244,9 +255,16 @@ pub fn add_issues_to_group(
     triage_db: tauri::State<'_, Arc<Mutex<TriageDb>>>,
     groups_db: tauri::State<'_, Arc<Mutex<GroupsDb>>>,
     group_id: i64,
+    expected_base_url: String,
     issues: Vec<NewMember>,
 ) -> Result<usize, GroupError> {
-    add_issues_to_group_inner(&triage_db, &groups_db, group_id, &issues)
+    add_issues_to_group_inner(
+        &triage_db,
+        &groups_db,
+        group_id,
+        &expected_base_url,
+        &issues,
+    )
 }
 
 #[tauri::command]
@@ -334,7 +352,14 @@ mod tests {
             issue_key: "AB-1".into(),
             ticket_json: json.into(),
         };
-        add_issues_to_group_inner(&t, &g, grp.id, &[item("{\"v\":1}")]).unwrap();
+        add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://a.example.com",
+            &[item("{\"v\":1}")],
+        )
+        .unwrap();
         let n =
             refresh_group_snapshots_inner(&t, &g, "https://a.example.com", &[item("{\"v\":2}")])
                 .unwrap();
@@ -363,7 +388,14 @@ mod tests {
         let (t, g) = dbs();
         set_meta(&t, "server", "https://a.example.com", "u");
         let grp = create_group_inner(&t, &g, "A", None).unwrap();
-        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://a.example.com",
+            &[member("{\"v\":1}")],
+        )
+        .unwrap();
         let n =
             refresh_group_snapshots_inner(&t, &g, "https://A.example.com/", &[member("{\"v\":2}")])
                 .unwrap();
@@ -377,7 +409,14 @@ mod tests {
         let (t, g) = dbs();
         set_meta(&t, "server", "https://b.example.com", "u");
         let grp = create_group_inner(&t, &g, "B", None).unwrap();
-        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://b.example.com",
+            &[member("{\"v\":1}")],
+        )
+        .unwrap();
         let n =
             refresh_group_snapshots_inner(&t, &g, "https://a.example.com", &[member("{\"v\":2}")])
                 .unwrap();
@@ -392,12 +431,107 @@ mod tests {
         let (t, g) = dbs();
         set_meta(&t, "server", "https://a.example.com", "u");
         let grp = create_group_inner(&t, &g, "A", None).unwrap();
-        add_issues_to_group_inner(&t, &g, grp.id, &[member("{\"v\":1}")]).unwrap();
+        add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://a.example.com",
+            &[member("{\"v\":1}")],
+        )
+        .unwrap();
         let n = refresh_group_snapshots_inner(&t, &g, "", &[member("{\"v\":2}")]).unwrap();
         assert_eq!(n, 0);
         let members = get_group_members_inner(&t, &g, grp.id).unwrap();
         assert_eq!(members[0].ticket_json, "{\"v\":1}");
         assert!(t.try_lock().is_ok(), "triage lock must be released");
+    }
+
+    #[test]
+    fn add_issues_to_group_case_and_slash_insensitive_match() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://a.example.com", "u");
+        let grp = create_group_inner(&t, &g, "A", None).unwrap();
+        let n = add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://A.example.com/",
+            &[member("{\"v\":1}")],
+        )
+        .unwrap();
+        assert_eq!(n, 1);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members[0].ticket_json, "{\"v\":1}");
+    }
+
+    #[test]
+    fn add_issues_to_group_scope_mismatch_errors() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://b.example.com", "u");
+        let grp = create_group_inner(&t, &g, "B", None).unwrap();
+        add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://b.example.com",
+            &[member("{\"v\":1}")],
+        )
+        .unwrap();
+        let err = add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://a.example.com",
+            &[member("{\"v\":2}")],
+        )
+        .unwrap_err();
+        assert_eq!(err.code, GroupErrorCode::ScopeMismatch);
+        let members = get_group_members_inner(&t, &g, grp.id).unwrap();
+        assert_eq!(members.len(), 1);
+        assert_eq!(members[0].ticket_json, "{\"v\":1}");
+        assert!(t.try_lock().is_ok(), "triage lock must be released");
+    }
+
+    #[test]
+    fn add_issues_to_group_scope_mismatch_new_key_not_added() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://b.example.com", "u");
+        let grp = create_group_inner(&t, &g, "B", None).unwrap();
+        let err = add_issues_to_group_inner(
+            &t,
+            &g,
+            grp.id,
+            "https://a.example.com",
+            &[member("{\"v\":2}")],
+        )
+        .unwrap_err();
+        assert_eq!(err.code, GroupErrorCode::ScopeMismatch);
+        assert!(get_group_members_inner(&t, &g, grp.id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn add_issues_to_group_empty_expected_errors() {
+        let (t, g) = dbs();
+        set_meta(&t, "server", "https://a.example.com", "u");
+        let grp = create_group_inner(&t, &g, "A", None).unwrap();
+        let err =
+            add_issues_to_group_inner(&t, &g, grp.id, "", &[member("{\"v\":1}")]).unwrap_err();
+        assert_eq!(err.code, GroupErrorCode::ScopeMismatch);
+        assert!(get_group_members_inner(&t, &g, grp.id).unwrap().is_empty());
+    }
+
+    #[test]
+    fn add_issues_to_group_no_scope_still_no_scope() {
+        let (t, g) = dbs();
+        let err = add_issues_to_group_inner(&t, &g, 1, "https://a.example.com", &[member("{}")])
+            .unwrap_err();
+        assert_eq!(err.code, GroupErrorCode::NoScope);
+    }
+
+    #[test]
+    fn scope_mismatch_error_serialises_as_code() {
+        let v = serde_json::to_value(GroupError::new(GroupErrorCode::ScopeMismatch)).unwrap();
+        assert_eq!(v, serde_json::json!({"code": "scope_mismatch"}));
     }
 
     #[test]
