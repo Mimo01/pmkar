@@ -75,7 +75,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 - [x] **Phase 28: Foundations** - Durable groups storage and store, shared list utilities, palette, and translated copy-step labels (completed 2026-10-12)
 - [x] **Phase 29: Tab Strip & Group View** - Create groups from the tab bar and browse each group as a flat triage-badged list (completed 2026-10-12)
 - [x] **Phase 30: Group Management & Reorder** - Rename, recolor, delete, and reorder groups via Move left/right (completed 2026-10-12)
-- [ ] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar
+- [x] **Phase 31: Membership Entry Points** - Add/remove issues via detail picker, card chips, and multi-select with selection bar (completed 2026-10-12)
 - [ ] **Phase 32: Durability** - Snapshots keep grouped issues visible; gated "No longer in results" hint with explicit remove
 - [ ] **Phase 33: Polish & Verification** - EN/SK parity with Slovak plurals and WCAG AA verification across all new UI
 
@@ -189,7 +189,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   4. A "Select" toggle in every list header reveals checkboxes with shift-click range selection; selection clears on tab change or leaving select mode
   5. The selection bar shows the count and adds all selected issues to a group atomically (with inline create); inside a group view it also offers "Remove from group"
 
-**Plans:** 7/9 plans executed
+**Plans:** 9/9 plans complete
 **Wave 1**
 
 - [x] 31-01-PLAN.md — EN/SK strings for picker, chips, select mode, bar, toasts (Slovak plurals, D-18 check)
@@ -208,8 +208,8 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 31-08-PLAN.md — GroupViewPage select mode + Remove from group + hide current-group chip
-- [ ] 31-09-PLAN.md — Core lists select mode + GMEM-01 regression + App-level tab-change clearing and detail chip navigation
+- [x] 31-08-PLAN.md — GroupViewPage select mode + Remove from group + hide current-group chip
+- [x] 31-09-PLAN.md — Core lists select mode + GMEM-01 regression + App-level tab-change clearing and detail chip navigation
 **UI hint**: yes
 
 ### Phase 32: Durability
@@ -279,6 +279,6 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 | 28. Foundations | v0.5.0 | 6/6 | Complete    | 2026-10-12 |
 | 29. Tab Strip & Group View | v0.5.0 | 6/6 | Complete   | 2026-10-12 |
 | 30. Group Management & Reorder | v0.5.0 | 8/8 | Complete    | 2026-10-12 |
-| 31. Membership Entry Points | v0.5.0 | 7/9 | In Progress|  |
+| 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 0/TBD | Not started | - |
 | 33. Polish & Verification | v0.5.0 | 0/TBD | Not started | - |
