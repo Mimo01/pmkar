@@ -610,5 +610,7 @@
   "groups.missing.removeAllError": "Úlohy sa nepodarilo odstrániť. Nič sa nezmenilo. Skúste to znova.",
   "groups.missing.refreshing": "Výsledky sa obnovujú… Odstrániť bude možné po dokončení načítania.",
   "groups.error.membership": "Skupinu sa nepodarilo aktualizovať. Skúste to znova.",
-  "groups.error.scopeMismatch": "Pripojený server sa zmenil alebo nie je zosynchronizovaný. Znova otvorte zoznam úloh a skúste to znova. Ak sa to opakuje, znova uložte pripojenie k serveru v Nastaveniach."
+  "groups.error.scopeMismatch": "Pripojený server sa zmenil alebo nie je zosynchronizovaný. Znova otvorte zoznam úloh a skúste to znova. Ak sa to opakuje, znova uložte pripojenie k serveru v Nastaveniach.",
+  "tickets.loadingAria": "Načítavajú sa úlohy",
+  "nav.mainAria": "Hlavná navigácia"
 }
