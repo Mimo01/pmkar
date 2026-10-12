@@ -107,6 +107,73 @@ describe('groupStore', () => {
     expect(useGroupStore.getState().groups.map((x) => x.id)).toEqual([2]);
   });
 
+  it('superseded hydrate resolves only after the latest hydrate has applied', async () => {
+    let resolveSecond: (v: unknown[]) => void = () => {};
+    let call = 0;
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'list_groups') {
+        call += 1;
+        if (call === 1) return [g(1, 0)];
+        return new Promise<unknown[]>((r) => (resolveSecond = r));
+      }
+      return [];
+    });
+    let firstDone = false;
+    const first = useGroupStore
+      .getState()
+      .hydrate()
+      .then(() => {
+        firstDone = true;
+      });
+    const second = useGroupStore.getState().hydrate();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(firstDone).toBe(false);
+    resolveSecond([g(1, 0), g(2, 1)]);
+    await first;
+    expect(useGroupStore.getState().groups.map((x) => x.id)).toEqual([1, 2]);
+    await second;
+  });
+
+  it('createGroup resolves with the new group present despite a concurrent hydrate', async () => {
+    let resolveCreateList: (v: unknown[]) => void = () => {};
+    let resolveConcurrent: (v: unknown[]) => void = () => {};
+    let listCalls = 0;
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'create_group') return g(7, 0);
+      if (cmd === 'list_groups') {
+        listCalls += 1;
+        if (listCalls === 1) return [];
+        // Second list (from createGroup) is superseded by a third one.
+        if (listCalls === 2) return new Promise<unknown[]>((r) => (resolveCreateList = r));
+        return new Promise<unknown[]>((r) => (resolveConcurrent = r));
+      }
+      return [];
+    });
+    await useGroupStore.getState().hydrate();
+    let createdDone = false;
+    const created = useGroupStore
+      .getState()
+      .createGroup('G7')
+      .then((r) => {
+        createdDone = true;
+        return r;
+      });
+    // Let createGroup's invoke settle and its hydrate start, then start a newer hydrate.
+    await new Promise((r) => setTimeout(r, 0));
+    expect(listCalls).toBe(2);
+    const concurrent = useGroupStore.getState().hydrate();
+    resolveCreateList([g(7, 0)]);
+    await new Promise((r) => setTimeout(r, 0));
+    // The superseded read was dropped; createGroup must not resolve yet.
+    expect(createdDone).toBe(false);
+    expect(useGroupStore.getState().groups).toEqual([]);
+    resolveConcurrent([g(7, 0)]);
+    const r = await created;
+    expect(r.ok).toBe(true);
+    expect(useGroupStore.getState().groups.map((x) => x.id)).toEqual([7]);
+    await concurrent;
+  });
+
   it('stale rejection does not flag error', async () => {
     let rejectFirst: (e: unknown) => void = () => {};
     let call = 0;

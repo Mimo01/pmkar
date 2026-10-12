@@ -68,6 +68,44 @@ export const useGroupStore = create<GroupState>((set, get) => {
   }
 
   let hydrateSeq = 0;
+  // Promise returned by the most recently started hydrate(). A superseded hydrate
+  // chains onto it so callers never resolve before the store reflects the latest read.
+  let latestHydrate: Promise<void> = Promise.resolve();
+
+  async function load(seq: number): Promise<void> {
+    try {
+      const [rawGroups, rawMemberships] = await Promise.all([
+        invoke<Group[]>('list_groups'),
+        invoke<GroupMembership[]>('list_group_memberships'),
+      ]);
+      // A newer hydrate started; drop this stale response.
+      if (seq !== hydrateSeq) return;
+      if (!Array.isArray(rawGroups) || !Array.isArray(rawMemberships)) {
+        throw new Error('unexpected group payload');
+      }
+      const groups = rawGroups
+        .map((g) => ({
+          ...g,
+          color: isGroupColorToken(g.color) ? g.color : ('slate' as GroupColorToken),
+        }))
+        .sort((a, b) => a.position - b.position);
+      const memberKeysByGroup: Record<number, string[]> = {};
+      const groupIdsByIssue: Record<string, number[]> = {};
+      const knownIds = new Set(groups.map((g) => g.id));
+      for (const m of rawMemberships) {
+        if (!knownIds.has(m.groupId)) continue;
+        if (!memberKeysByGroup[m.groupId]) memberKeysByGroup[m.groupId] = [];
+        memberKeysByGroup[m.groupId].push(m.issueKey);
+        if (!groupIdsByIssue[m.issueKey]) groupIdsByIssue[m.issueKey] = [];
+        groupIdsByIssue[m.issueKey].push(m.groupId);
+      }
+      set({ groups, memberKeysByGroup, groupIdsByIssue, hydrated: true, hydrateError: false });
+    } catch {
+      if (seq !== hydrateSeq) return;
+      // Keep the last good state so tabs never vanish on a transient failure.
+      set({ hydrated: true, hydrateError: true });
+    }
+  }
 
   return {
     groups: [],
@@ -85,40 +123,13 @@ export const useGroupStore = create<GroupState>((set, get) => {
       await get().hydrate();
     },
 
-    hydrate: async () => {
+    hydrate: () => {
       const seq = ++hydrateSeq;
-      try {
-        const [rawGroups, rawMemberships] = await Promise.all([
-          invoke<Group[]>('list_groups'),
-          invoke<GroupMembership[]>('list_group_memberships'),
-        ]);
-        // A newer hydrate started; drop this stale response.
-        if (seq !== hydrateSeq) return;
-        if (!Array.isArray(rawGroups) || !Array.isArray(rawMemberships)) {
-          throw new Error('unexpected group payload');
-        }
-        const groups = rawGroups
-          .map((g) => ({
-            ...g,
-            color: isGroupColorToken(g.color) ? g.color : ('slate' as GroupColorToken),
-          }))
-          .sort((a, b) => a.position - b.position);
-        const memberKeysByGroup: Record<number, string[]> = {};
-        const groupIdsByIssue: Record<string, number[]> = {};
-        const knownIds = new Set(groups.map((g) => g.id));
-        for (const m of rawMemberships) {
-          if (!knownIds.has(m.groupId)) continue;
-          if (!memberKeysByGroup[m.groupId]) memberKeysByGroup[m.groupId] = [];
-          memberKeysByGroup[m.groupId].push(m.issueKey);
-          if (!groupIdsByIssue[m.issueKey]) groupIdsByIssue[m.issueKey] = [];
-          groupIdsByIssue[m.issueKey].push(m.groupId);
-        }
-        set({ groups, memberKeysByGroup, groupIdsByIssue, hydrated: true, hydrateError: false });
-      } catch {
-        if (seq !== hydrateSeq) return;
-        // Keep the last good state so tabs never vanish on a transient failure.
-        set({ hydrated: true, hydrateError: true });
-      }
+      // If a newer hydrate starts while this one is in flight, wait for it (and,
+      // transitively, any hydrate that supersedes it) instead of resolving early.
+      const result = load(seq).then(() => (seq === hydrateSeq ? undefined : latestHydrate));
+      latestHydrate = result;
+      return result;
     },
 
     createGroup: (name, color) => mutate<Group>('create_group', { name, color }),

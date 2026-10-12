@@ -107,10 +107,9 @@ function App() {
   const [currentTab, setCurrentTab] = useState<TabId>('new');
   const groupsHydrated = useGroupStore((s) => s.hydrated);
   const groups = useGroupStore((s) => s.groups);
+  // Derive the rendered tab only; never write the fallback back into currentTab, so a
+  // transient absence of the selected group does not destroy the user's selection.
   const effectiveTab = resolveActiveTab(currentTab, groups, groupsHydrated);
-  useEffect(() => {
-    if (effectiveTab !== currentTab) setCurrentTab(effectiveTab);
-  }, [effectiveTab, currentTab]);
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
