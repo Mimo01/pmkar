@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { isNewCandidate } from '../../tickets/ticketListUtils';
 import { useTicketStore } from '../../tickets/ticketStore';
@@ -7,8 +8,10 @@ import { GroupViewPage } from '../GroupViewPage';
 import { useGroupStore } from '../groupStore';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() } }));
 
 import { invoke } from '@tauri-apps/api/core';
+import { toast } from 'sonner';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -195,5 +198,201 @@ describe('GroupViewPage', () => {
     seed({ 1: ['T-1'] });
     render(<GroupViewPage groupId={1} />);
     expect(screen.queryByRole('button', { name: /fetch/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('GroupViewPage selection', () => {
+  const QA = { id: 7, name: 'QA', color: 'blue', position: 0, createdAt: 't', memberCount: 5 };
+  const SPRINT = {
+    id: 8,
+    name: 'Sprint',
+    color: 'green',
+    position: 1,
+    createdAt: 't',
+    memberCount: 1,
+  };
+  let removeFails = false;
+
+  function memberships() {
+    return [
+      ...['T-1', 'T-2', 'T-3', 'T-4', 'T-5'].map((k) => ({ groupId: 7, issueKey: k })),
+      { groupId: 8, issueKey: 'T-1' },
+    ];
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    removeFails = false;
+    Element.prototype.scrollIntoView = vi.fn();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    mockInvoke.mockReset();
+    mockInvoke.mockImplementation((async (cmd: string) => {
+      switch (cmd) {
+        case 'list_groups':
+          return [QA, SPRINT];
+        case 'list_group_memberships':
+          return memberships();
+        case 'remove_issues_from_group':
+          if (removeFails) throw 'boom';
+          return 3;
+        case 'add_issues_to_group':
+          return 3;
+        default:
+          return [];
+      }
+    }) as never);
+    useGroupStore.setState({
+      groups: [QA, SPRINT] as never,
+      memberKeysByGroup: { 7: ['T-1', 'T-2', 'T-3', 'T-4', 'T-5'], 8: ['T-1'] },
+      groupIdsByIssue: { 'T-1': [7, 8], 'T-2': [7], 'T-3': [7], 'T-4': [7], 'T-5': [7] },
+      hydrated: true,
+    });
+    useTicketStore.setState({
+      tickets: [T1, T2, T3, T4, T5],
+      triageMap: {},
+      selectedTicketKey: null,
+    });
+  });
+
+  const selectBtn = () => screen.getByRole('button', { name: 'Select' });
+  const cardBody = (key: string) =>
+    within(cardFor(key)).getByRole('button', { name: `Summary ${key}` });
+  const callsOf = (cmd: string) => mockInvoke.mock.calls.filter((c) => c[0] === cmd);
+
+  async function selectT1toT3() {
+    await userEvent.click(selectBtn());
+    await userEvent.click(cardBody('T-1'));
+    fireEvent.click(cardBody('T-3'), { shiftKey: true });
+    await screen.findByText('3 selected', { selector: '[aria-hidden="true"]' });
+  }
+
+  it('shows Select toggle, hides own group chip and keeps other chips', () => {
+    render(<GroupViewPage groupId={7} />);
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'false');
+    expect(within(cardFor('T-1')).getByText('Sprint')).toBeInTheDocument();
+    expect(within(cardFor('T-1')).queryByText('QA')).not.toBeInTheDocument();
+  });
+
+  it('selects with click and shift-range without opening detail', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await userEvent.click(selectBtn());
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getAllByRole('checkbox')).toHaveLength(5);
+    await userEvent.click(cardBody('T-1'));
+    expect(screen.getByRole('status')).toHaveTextContent('1 selected');
+    expect(useTicketStore.getState().selectedTicketKey).toBeNull();
+    fireEvent.click(cardBody('T-3'), { shiftKey: true });
+    expect(screen.getByRole('status')).toHaveTextContent('3 selected');
+  });
+
+  it('offers Remove and an Add picker that excludes the current group', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    expect(screen.getByRole('button', { name: 'Remove from group' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /Add to group/ }));
+    expect(await screen.findByRole('option', { name: 'Sprint' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'QA' })).not.toBeInTheDocument();
+  });
+
+  it('removes the confirmed selection in one call and ends select mode', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove from group' }));
+    expect(callsOf('remove_issues_from_group')).toHaveLength(0);
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(callsOf('remove_issues_from_group')).toHaveLength(1));
+    const args = callsOf('remove_issues_from_group')[0][1] as {
+      groupId: number;
+      issueKeys: string[];
+    };
+    expect(args.groupId).toBe(7);
+    expect(args.issueKeys).toHaveLength(3);
+    await waitFor(() => expect(selectBtn()).toHaveAttribute('aria-pressed', 'false'));
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+    expect(toast.success).toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(selectBtn()));
+  });
+
+  it('keeps the selection when remove fails', async () => {
+    removeFails = true;
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove from group' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByRole('status')).toHaveTextContent('3 selected');
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('adds the selection to another group and ends select mode', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    await userEvent.click(screen.getByRole('button', { name: /Add to group/ }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Sprint' }));
+    await waitFor(() => expect(callsOf('add_issues_to_group')).toHaveLength(1));
+    const args = callsOf('add_issues_to_group')[0][1] as { groupId: number; issues: unknown[] };
+    expect(args.groupId).toBe(8);
+    expect(args.issues).toHaveLength(3);
+    await waitFor(() => expect(selectBtn()).toHaveAttribute('aria-pressed', 'false'));
+  });
+
+  it('drops selected issues hidden by a search', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    fireEvent.change(screen.getByLabelText('Filter tickets by key'), {
+      target: { value: 'T-1' },
+    });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 selected'));
+  });
+
+  it('Esc on a card checkbox exits select mode and focuses the toggle', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await userEvent.click(selectBtn());
+    screen.getAllByRole('checkbox')[0].focus();
+    await userEvent.keyboard('{Escape}');
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'false');
+    await waitFor(() => expect(document.activeElement).toBe(selectBtn()));
+  });
+
+  it('Esc inside the Remove confirm only closes it', async () => {
+    render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    await userEvent.click(screen.getByRole('button', { name: 'Remove from group' }));
+    await screen.findByRole('button', { name: 'Remove' });
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Remove' })).not.toBeInTheDocument(),
+    );
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('3 selected');
+  });
+
+  it('discards the selection on remount', async () => {
+    const { unmount } = render(<GroupViewPage groupId={7} />);
+    await selectT1toT3();
+    unmount();
+    render(<GroupViewPage groupId={7} />);
+    expect(selectBtn()).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
+  });
+
+  it('Restore in select mode does not toggle selection', async () => {
+    useTicketStore.setState({ triageMap: triage });
+    render(<GroupViewPage groupId={7} />);
+    await userEvent.click(selectBtn());
+    await userEvent.click(within(cardFor('T-2')).getByRole('button', { name: 'Restore' }));
+    expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'T-2',
+      state: 'seen',
+    });
+    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
   });
 });

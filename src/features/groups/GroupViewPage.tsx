@@ -2,6 +2,7 @@ import { AlertCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { SkeletonCards, TicketCard } from '../tickets/TicketCard';
 import { TicketFilterBar } from '../tickets/TicketFilterBar';
 import {
@@ -13,7 +14,10 @@ import {
 import { useTicketStore } from '../tickets/ticketStore';
 import { restoreTicket } from '../tickets/triageActions';
 import { groupBadgeKey } from './groupBadge';
+import { useGroupStore } from './groupStore';
+import { SelectionBar } from './SelectionBar';
 import { useGroupMembers } from './useGroupMembers';
+import { useListSelection } from './useListSelection';
 
 export function GroupViewPage({ groupId }: { groupId: number }) {
   const { t } = useTranslation();
@@ -30,12 +34,21 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
     [members, searchText, assigneeFilter, sortField, sortDirection],
   );
 
+  const visibleKeys = useMemo(() => sorted.map((t) => t.key), [sorted]);
+  const sel = useListSelection(visibleKeys);
+  const selectedTickets = useMemo(
+    () => sorted.filter((t) => sel.selected.has(t.key)),
+    [sorted, sel.selected],
+  );
+  const group = useGroupStore((s) => s.groups.find((g) => g.id === groupId));
+
   const isEmpty = keys === null || keys.length === 0;
   // Members exist and loaded, but the search/assignee filter excludes all of them.
   const noResults = !isEmpty && !loading && members.length > 0 && sorted.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
+    // biome-ignore lint/a11y/noStaticElementInteractions: Esc handler for select mode
+    <div className="flex-1 flex flex-col overflow-hidden" onKeyDown={sel.handleKeyDown}>
       <TicketFilterBar
         searchText={searchText}
         onSearchChange={setSearchText}
@@ -46,6 +59,10 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
         sortDirection={sortDirection}
         onToggleSort={() => setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
         resultCount={sorted.length}
+        selectMode={sel.selectMode}
+        onToggleSelectMode={sel.toggleSelectMode}
+        selectDisabled={sorted.length === 0 && !sel.selectMode}
+        selectToggleRef={sel.selectToggleRef}
       />
 
       {isEmpty && (
@@ -90,50 +107,65 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
       )}
 
       {!isEmpty && !loading && !noResults && (
-        <div className="flex-1 overflow-y-auto">
-          {sorted.map((ticket) => {
-            const badge = groupBadgeKey(ticket, triageMap);
-            const entry = triageMap[ticket.key];
-            return (
-              <TicketCard
-                key={ticket.key}
-                ticket={ticket}
-                triageEntry={entry}
-                onClick={() => useTicketStore.getState().selectTicket(ticket.key)}
-                actionSlot={
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs px-1.5 py-0.5 rounded border border-brand-border-subtle bg-brand-surface-hover text-brand-text-secondary">
-                      {t(badge)}
-                    </span>
-                    {badge === 'nav.notMine' && (
-                      <>
-                        {entry?.state === 'handled' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
-                            {t('tickets.card.handledBadge')}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            restoreTicket(ticket.key);
-                          }}
-                          className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
-                        >
-                          {t('ignored.restore')}
-                        </button>
-                      </>
-                    )}
-                    {badge === 'nav.linked' && entry?.copiedKey && (
-                      <Badge variant="outline" className="text-xs font-mono">
-                        {entry.copiedKey}
-                      </Badge>
-                    )}
-                  </div>
-                }
-              />
-            );
-          })}
+        <div className="relative flex-1 flex flex-col min-h-0">
+          <div className={cn('flex-1 overflow-y-auto', selectedTickets.length > 0 && 'pb-20')}>
+            {sorted.map((ticket) => {
+              const badge = groupBadgeKey(ticket, triageMap);
+              const entry = triageMap[ticket.key];
+              return (
+                <TicketCard
+                  key={ticket.key}
+                  ticket={ticket}
+                  triageEntry={entry}
+                  onClick={() => useTicketStore.getState().selectTicket(ticket.key)}
+                  hideGroupId={groupId}
+                  selectMode={sel.selectMode}
+                  selected={sel.isSelected(ticket.key)}
+                  onToggleSelect={(shift) => sel.toggle(ticket.key, shift)}
+                  actionSlot={
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs px-1.5 py-0.5 rounded border border-brand-border-subtle bg-brand-surface-hover text-brand-text-secondary">
+                        {t(badge)}
+                      </span>
+                      {badge === 'nav.notMine' && (
+                        <>
+                          {entry?.state === 'handled' && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand/10 text-brand font-semibold">
+                              {t('tickets.card.handledBadge')}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              restoreTicket(ticket.key);
+                            }}
+                            className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150"
+                          >
+                            {t('ignored.restore')}
+                          </button>
+                        </>
+                      )}
+                      {badge === 'nav.linked' && entry?.copiedKey && (
+                        <Badge variant="outline" className="text-xs font-mono">
+                          {entry.copiedKey}
+                        </Badge>
+                      )}
+                    </div>
+                  }
+                />
+              );
+            })}
+          </div>
+          <SelectionBar
+            selectedTickets={selectedTickets}
+            group={group ?? null}
+            onClear={sel.clear}
+            onActionSucceeded={() => {
+              sel.exit();
+              sel.focusSelectToggle();
+            }}
+          />
         </div>
       )}
     </div>
