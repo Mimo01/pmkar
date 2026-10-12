@@ -126,6 +126,15 @@ describe('GroupMenuItems', () => {
     expect(h.onRemoveMissing).toHaveBeenCalledTimes(1);
   });
 
+  it('WR-08: disables Remove all missing with a hint while a fetch is loading', async () => {
+    const h = renderDropdown({ missingCount: 2, removeMissingDisabledReason: 'Refreshing' });
+    const item = screen.getByRole('menuitem', { name: 'Remove all missing (2)' });
+    expect(item).toHaveAttribute('aria-disabled', 'true');
+    expect(item).toHaveAttribute('title', 'Refreshing');
+    await userEvent.setup().click(item);
+    expect(h.onRemoveMissing).not.toHaveBeenCalled();
+  });
+
   it('shows the item for exactly one missing member', () => {
     renderDropdown({ missingCount: 1 });
     expect(screen.getByRole('menuitem', { name: 'Remove all missing (1)' })).toBeInTheDocument();

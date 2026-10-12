@@ -36,6 +36,15 @@ export function useHintsEligible(): boolean {
 }
 
 /**
+ * WR-08: true while a fetch is in flight. Removal triggers and confirm buttons are disabled
+ * for this window, because readHintsEligibleNow() aborts every removal while loading and a
+ * clickable-but-inert destructive button would be a silent no-op.
+ */
+export function useRemovalBlockedByFetch(): boolean {
+  return useTicketStore((s) => s.fetchStatus === 'loading');
+}
+
+/**
  * Non-hook reader for confirm-time checks. While a fetch is in flight the last list is
  * not authoritative, so this returns false and every removal recheck aborts (WR-06,
  * T-32-23).

@@ -428,6 +428,7 @@ describe('GroupViewPage missing members', () => {
       triageMap: {},
       selectedTicketKey: null,
       lastCompleteFetchSignature: null,
+      fetchStatus: 'idle',
     });
     if (opts.eligible) makeEligible();
   }
@@ -570,6 +571,41 @@ describe('GroupViewPage missing members', () => {
     const args = callsOf('remove_issues_from_group')[0][1] as { issueKeys: string[] };
     expect([...args.issueKeys].sort()).toEqual(['AB-2', 'AB-4']);
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
+  });
+
+  it('WR-08: while a fetch is loading, Remove triggers stay visible but disabled with a hint', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    act(() => useTicketStore.setState({ fetchStatus: 'loading' }));
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    const hint = 'Refreshing results… Remove is available when the fetch finishes.';
+    const perCard = screen.getByRole('button', { name: 'Remove AB-2 from QA' });
+    const all = screen.getByRole('button', { name: 'Remove all missing' });
+    expect(perCard).toBeDisabled();
+    expect(perCard).toHaveAttribute('title', hint);
+    expect(all).toBeDisabled();
+    expect(all).toHaveAttribute('title', hint);
+    act(() => useTicketStore.setState({ fetchStatus: 'idle' }));
+    expect(screen.getByRole('button', { name: 'Remove AB-2 from QA' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Remove all missing' })).toBeEnabled();
+  });
+
+  it('WR-08: a fetch starting while the confirm is open disables Remove instead of a silent no-op', async () => {
+    setup({ eligible: true, keys: ['AB-1', 'AB-2'], live: [A1] });
+    render(<GroupViewPage groupId={7} />);
+    await screen.findByText('AB-2');
+    await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
+    await screen.findByText('Remove ‘AB-2’ from ‘QA’?');
+    act(() => useTicketStore.setState({ fetchStatus: 'loading' }));
+    expect(screen.getByText(/Refreshing results/)).toBeInTheDocument();
+    const remove = screen.getByRole('button', { name: 'Remove' });
+    expect(remove).toBeDisabled();
+    await userEvent.click(remove);
+    expect(callsOf('remove_issues_from_group')).toHaveLength(0);
+    // Popover stays open; once the fetch settles the user can confirm.
+    act(() => useTicketStore.setState({ fetchStatus: 'idle' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(callsOf('remove_issues_from_group')).toHaveLength(1));
   });
 
   it('Remove all missing removes nothing when gating flips off before confirm', async () => {

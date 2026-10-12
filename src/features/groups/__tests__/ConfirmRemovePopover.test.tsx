@@ -36,6 +36,32 @@ function TriggerHarness({ onConfirm }: { onConfirm: () => Promise<unknown> }) {
 }
 
 describe('ConfirmRemovePopover (trigger)', () => {
+  it('WR-08: confirmDisabledReason disables Remove and explains why', async () => {
+    const onConfirm = vi.fn(async () => {});
+    const user = userEvent.setup();
+    function Harness() {
+      const [open, setOpen] = useState(false);
+      return (
+        <ConfirmRemovePopover
+          open={open}
+          onOpenChange={setOpen}
+          question="Remove it?"
+          onConfirm={onConfirm}
+          confirmDisabledReason="Busy refreshing"
+          trigger={<button type="button">open</button>}
+        />
+      );
+    }
+    renderWithI18n(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'open' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Busy refreshing');
+    const remove = screen.getByRole('button', { name: 'Remove' });
+    expect(remove).toBeDisabled();
+    await user.click(remove);
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByText('Remove it?')).toBeTruthy();
+  });
+
   it('opens with Cancel focused; Cancel does not confirm', async () => {
     const onConfirm = vi.fn(async () => {});
     const user = userEvent.setup();

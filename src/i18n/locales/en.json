@@ -607,6 +607,7 @@
   "groups.missing.removeAllConfirm_other": "Remove {{count}} issues from ‘{{name}}’? They are no longer in results.",
   "groups.missing.removeError": "Couldn't remove {{key}}. Try again.",
   "groups.missing.removeAllError": "Couldn't remove the issues. Nothing was changed. Try again.",
+  "groups.missing.refreshing": "Refreshing results… Remove is available when the fetch finishes.",
   "groups.error.membership": "Could not update the group. Try again.",
   "groups.error.scopeMismatch": "These tickets are from a different server than the one now connected. Fetch tickets again, then retry."
 }

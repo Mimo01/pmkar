@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useRemovalBlockedByFetch } from '../tickets/useHintsEligible';
 
 import { ConfirmRemovePopover } from './ConfirmRemovePopover';
 import { removeAllMissingWithFeedback } from './membershipActions';
@@ -21,6 +22,7 @@ export function RemoveMissingPopover({
 }) {
   const { t } = useTranslation();
   const missingByGroup = useMissingKeysByGroup();
+  const fetching = useRemovalBlockedByFetch();
   if (!group) return null;
   const count = missingByGroup.get(group.id)?.size ?? 0;
 
@@ -32,6 +34,7 @@ export function RemoveMissingPopover({
       align="start"
       onReturnFocus={onReturnFocus}
       question={t('groups.missing.removeAllConfirm', { count, name: group.name })}
+      confirmDisabledReason={fetching ? t('groups.missing.refreshing') : null}
       onConfirm={async () => {
         // Race guard (T-32-23): recompute at confirm time; nothing missing means no removal.
         const keys = readMissingKeysNow(group.id);

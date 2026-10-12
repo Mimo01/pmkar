@@ -13,6 +13,8 @@ export interface GroupMenuItemsProps {
   onMoveRight: () => void;
   missingCount: number;
   onRemoveMissing: () => void;
+  /** WR-08: set while a fetch is in flight; the item stays visible but disabled with this hint. */
+  removeMissingDisabledReason?: string | null;
   onDelete: () => void;
 }
 
@@ -27,6 +29,7 @@ export function GroupMenuItems({
   onMoveRight,
   missingCount,
   onRemoveMissing,
+  removeMissingDisabledReason = null,
   onDelete,
 }: GroupMenuItemsProps) {
   const { t } = useTranslation();
@@ -53,7 +56,11 @@ export function GroupMenuItems({
       </Item>
       <Separator />
       {missingCount > 0 && (
-        <Item onSelect={onRemoveMissing}>
+        <Item
+          disabled={removeMissingDisabledReason !== null}
+          title={removeMissingDisabledReason ?? undefined}
+          onSelect={onRemoveMissing}
+        >
           <ListX className="h-4 w-4" aria-hidden="true" />
           {t('groups.menu.removeMissing', { count: missingCount })}
         </Item>

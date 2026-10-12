@@ -15,6 +15,7 @@ import {
 import { useTicketStore } from '../tickets/ticketStore';
 import { restoreTicket } from '../tickets/triageActions';
 import type { JiraTicket } from '../tickets/types';
+import { useRemovalBlockedByFetch } from '../tickets/useHintsEligible';
 import { ConfirmRemovePopover } from './ConfirmRemovePopover';
 import { groupBadgeKey } from './groupBadge';
 import { useGroupStore } from './groupStore';
@@ -58,6 +59,9 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
     [ordered, sel.selected],
   );
   const group = useGroupStore((s) => s.groups.find((g) => g.id === groupId));
+  // WR-08: removals abort while a fetch is in flight, so say so instead of failing silently.
+  const fetching = useRemovalBlockedByFetch();
+  const refreshingHint = fetching ? t('groups.missing.refreshing') : null;
 
   const headingId = useId();
   const [confirmKey, setConfirmKey] = useState<string | null>(null);
@@ -114,11 +118,14 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                 open={confirmKey === ticket.key}
                 onOpenChange={(o) => setConfirmKey(o ? ticket.key : null)}
                 question={t('groups.missing.removeConfirm', { key: ticket.key, name: group.name })}
+                confirmDisabledReason={refreshingHint}
                 trigger={
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    disabled={fetching}
+                    title={refreshingHint ?? undefined}
                     aria-label={t('groups.missing.removeAria', {
                       key: ticket.key,
                       name: group.name,
@@ -257,8 +264,16 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                       count: missingKeys.size,
                       name: group.name,
                     })}
+                    confirmDisabledReason={refreshingHint}
                     trigger={
-                      <Button ref={removeAllRef} type="button" variant="outline" size="sm">
+                      <Button
+                        ref={removeAllRef}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={fetching}
+                        title={refreshingHint ?? undefined}
+                      >
                         {t('groups.missing.removeAll')}
                       </Button>
                     }

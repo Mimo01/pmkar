@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useRemovalBlockedByFetch } from '../tickets/useHintsEligible';
 import { ChangeColorPopover } from './ChangeColorPopover';
 import { CreateGroupPopover } from './CreateGroupPopover';
 import { DeleteGroupDialog, type DeleteGroupTarget } from './DeleteGroupDialog';
@@ -54,6 +55,7 @@ export function GroupTabStrip({
   const { t } = useTranslation();
   const groups = useGroupStore((s) => s.groups);
   const missingByGroup = useMissingKeysByGroup();
+  const fetching = useRemovalBlockedByFetch();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const [overflow, setOverflow] = useState({ canScrollLeft: false, canScrollRight: false });
@@ -336,6 +338,7 @@ export function GroupTabStrip({
                     onMoveRight={() => recordIntent(g.id, 'move-right')}
                     missingCount={missingByGroup.get(g.id)?.size ?? 0}
                     onRemoveMissing={() => recordIntent(g.id, 'remove-missing')}
+                    removeMissingDisabledReason={fetching ? t('groups.missing.refreshing') : null}
                     onDelete={() => recordIntent(g.id, 'delete')}
                   />
                 )}

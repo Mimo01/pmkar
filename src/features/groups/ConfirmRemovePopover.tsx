@@ -9,6 +9,11 @@ interface ConfirmRemovePopoverProps {
   onOpenChange: (open: boolean) => void;
   question: string;
   onConfirm: () => Promise<unknown>;
+  /**
+   * WR-08: when set, the destructive button is disabled and this reason is shown under the
+   * question (e.g. a fetch is in flight, so the confirm-time recheck would abort).
+   */
+  confirmDisabledReason?: string | null;
   /** Trigger-anchored variant. */
   trigger?: React.ReactNode;
   /** Virtual-anchor variant (no trigger element). */
@@ -25,6 +30,7 @@ export function ConfirmRemovePopover({
   onOpenChange,
   question,
   onConfirm,
+  confirmDisabledReason = null,
   trigger,
   anchorRef,
   onReturnFocus,
@@ -37,7 +43,7 @@ export function ConfirmRemovePopover({
   const [busy, setBusy] = useState(false);
 
   async function handleConfirm() {
-    if (inFlightRef.current) return;
+    if (inFlightRef.current || confirmDisabledReason) return;
     inFlightRef.current = true;
     setBusy(true);
     try {
@@ -71,6 +77,11 @@ export function ConfirmRemovePopover({
         }
       >
         <p className="text-sm font-semibold text-brand-text mb-3">{question}</p>
+        {confirmDisabledReason && (
+          <p role="status" className="text-xs text-brand-text-secondary mb-3">
+            {confirmDisabledReason}
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           <Button
             ref={cancelRef}
@@ -86,7 +97,7 @@ export function ConfirmRemovePopover({
             variant="destructive"
             size="sm"
             className="text-white"
-            disabled={busy}
+            disabled={busy || confirmDisabledReason !== null}
             onClick={handleConfirm}
           >
             {t('groups.confirm.remove')}
