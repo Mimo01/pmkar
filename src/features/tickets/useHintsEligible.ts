@@ -8,6 +8,9 @@ import { useTicketStore } from './ticketStore';
  * True only when the latest fetch was complete AND the current query signature still
  * equals the signature that fetch used. Selectors return primitives or stable store refs
  * only (never `?? []`) to avoid render loops.
+ *
+ * It intentionally ignores fetchStatus, so the missing block does not flicker on
+ * background polls; removal safety during loading comes from readHintsEligibleNow (WR-06).
  */
 export function useHintsEligible(): boolean {
   const stored = useTicketStore((s) => s.lastCompleteFetchSignature);
@@ -32,12 +35,16 @@ export function useHintsEligible(): boolean {
   }, [stored, jqlPreset, jqlCustom, watchedUsers, baseUrl, username, sourceProjectKey]);
 }
 
-/** Non-hook reader for confirm-time checks. */
+/**
+ * Non-hook reader for confirm-time checks. While a fetch is in flight the last list is
+ * not authoritative, so this returns false and every removal recheck aborts (WR-06,
+ * T-32-23).
+ */
 export function readHintsEligibleNow(): boolean {
-  const stored = useTicketStore.getState().lastCompleteFetchSignature;
-  if (stored === null) return false;
+  const s = useTicketStore.getState();
+  if (s.fetchStatus === 'loading' || s.lastCompleteFetchSignature === null) return false;
   const current = computeFetchSignature(
-    currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
+    currentFetchSignatureInput(s, useConnectionStore.getState()),
   );
-  return stored === current;
+  return s.lastCompleteFetchSignature === current;
 }

@@ -27,7 +27,11 @@ function makeEligible() {
 
 beforeEach(() => {
   useGroupStore.setState({ memberKeysByGroup: { 1: ['A', 'B'], 2: ['A'] } });
-  useTicketStore.setState({ tickets: [tk('A')], lastCompleteFetchSignature: null });
+  useTicketStore.setState({
+    tickets: [tk('A')],
+    lastCompleteFetchSignature: null,
+    fetchStatus: 'idle',
+  });
 });
 
 describe('computeMissingKeys', () => {
@@ -63,5 +67,13 @@ describe('readMissingKeysNow', () => {
     makeEligible();
     expect([...readMissingKeysNow(1)]).toEqual(['B']);
     expect(readMissingKeysNow(99)).toBe(EMPTY_MISSING);
+  });
+  it('is empty while loading and recovers once idle', () => {
+    makeEligible();
+    expect([...readMissingKeysNow(1)]).toEqual(['B']);
+    useTicketStore.getState().setFetchStatus('loading');
+    expect(readMissingKeysNow(1)).toBe(EMPTY_MISSING);
+    useTicketStore.getState().setFetchStatus('idle');
+    expect([...readMissingKeysNow(1)]).toEqual(['B']);
   });
 });

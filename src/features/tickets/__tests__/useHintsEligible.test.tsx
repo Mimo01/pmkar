@@ -28,6 +28,7 @@ describe('useHintsEligible', () => {
       jqlCustom: null,
       watchedUsers: [],
       lastCompleteFetchSignature: null,
+      fetchStatus: 'idle',
     });
   });
 
@@ -88,6 +89,30 @@ describe('useHintsEligible', () => {
     completeFetch();
     act(() => useTicketStore.getState().markFetchIncomplete());
     expect(result.current).toBe(false);
+  });
+
+  it('readHintsEligibleNow is false while loading and true again once idle', () => {
+    completeFetch();
+    expect(readHintsEligibleNow()).toBe(true);
+    act(() => useTicketStore.getState().setFetchStatus('loading'));
+    expect(readHintsEligibleNow()).toBe(false);
+    act(() => useTicketStore.getState().setFetchStatus('idle'));
+    expect(readHintsEligibleNow()).toBe(true);
+  });
+
+  it('readHintsEligibleNow stays true on error with a matching signature (not loading)', () => {
+    completeFetch();
+    act(() => useTicketStore.getState().setFetchStatus('error', 'boom'));
+    expect(readHintsEligibleNow()).toBe(true);
+  });
+
+  it('hook stays true across loading (no flicker on background polls)', () => {
+    const { result } = renderHook(() => useHintsEligible());
+    completeFetch();
+    expect(result.current).toBe(true);
+    act(() => useTicketStore.getState().setFetchStatus('loading'));
+    expect(result.current).toBe(true);
+    expect(readHintsEligibleNow()).toBe(false);
   });
 
   it('does not loop on rerender', () => {
