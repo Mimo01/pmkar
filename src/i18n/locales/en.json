@@ -174,6 +174,7 @@
   "ignored.empty": "No dismissed tickets",
   "ignored.empty.hint": "Tickets you dismiss will appear here.",
   "ignored.restore": "Restore",
+  "ignored.restoreFailed": "Could not restore the ticket. Try again.",
   "ignored.col.key": "Key",
   "ignored.col.summary": "Summary",
   "ignored.col.status": "Status",
