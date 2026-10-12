@@ -624,6 +624,35 @@ impl GroupsDb {
         Ok(removed)
     }
 
+    /// Refresh stored snapshots of existing members only (D-15). Never inserts,
+    /// never deletes, never touches `group_member`. Returns rows actually changed.
+    pub fn refresh_snapshots(&self, scope: &str, items: &[NewMember]) -> GroupResult<usize> {
+        for item in items {
+            if !is_valid_issue_key(&item.issue_key) {
+                return Err(GroupError::new(GroupErrorCode::InvalidIssueKey));
+            }
+            match serde_json::from_str::<serde_json::Value>(&item.ticket_json) {
+                Ok(serde_json::Value::Object(_)) => {}
+                _ => return Err(GroupError::new(GroupErrorCode::InvalidTicket)),
+            }
+        }
+        if items.is_empty() {
+            return Ok(0);
+        }
+        let now = chrono::Utc::now().to_rfc3339();
+        let tx = self.conn.unchecked_transaction()?;
+        let mut changed = 0usize;
+        for item in items {
+            changed += tx.execute(
+                "UPDATE issue_snapshot SET ticket_json = ?3, updated_at = ?4
+                 WHERE scope = ?1 AND issue_key = ?2 AND ticket_json != ?3",
+                params![scope, item.issue_key, item.ticket_json, now],
+            )?;
+        }
+        tx.commit()?;
+        Ok(changed)
+    }
+
     /// Remove snapshots no membership references (D-20).
     fn gc_snapshots(tx: &rusqlite::Transaction<'_>, scope: &str) -> GroupResult<()> {
         tx.execute(
@@ -890,6 +919,128 @@ mod tests {
             .unwrap();
         assert_eq!(rows, 0);
         // AB-1 orphaned and collected; AB-2 still referenced by B
+        assert_eq!(snapshot_count(&db), 1);
+        assert_eq!(db.get_group_members(S, b.id).unwrap().len(), 1);
+    }
+
+    fn changed(key: &str) -> NewMember {
+        NewMember {
+            issue_key: key.to_string(),
+            ticket_json: format!("{{\"key\":\"{key}\",\"v\":2}}"),
+        }
+    }
+
+    fn member_row_count(db: &GroupsDb) -> i64 {
+        db.conn
+            .query_row("SELECT COUNT(*) FROM group_member", [], |r| r.get(0))
+            .unwrap()
+    }
+
+    #[test]
+    fn refresh_snapshots_updates_members_only() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1")]).unwrap();
+        let n = db
+            .refresh_snapshots(S, &[changed("AB-1"), changed("AB-9")])
+            .unwrap();
+        assert_eq!(n, 1);
+        let got = db.get_group_members(S, a.id).unwrap();
+        assert_eq!(got[0].ticket_json, changed("AB-1").ticket_json);
+        assert_eq!(snapshot_count(&db), 1);
+    }
+
+    #[test]
+    fn refresh_snapshots_unchanged_json_returns_zero() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1")]).unwrap();
+        assert_eq!(db.refresh_snapshots(S, &[member("AB-1")]).unwrap(), 0);
+    }
+
+    #[test]
+    fn refresh_snapshots_never_changes_membership() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1"), member("AB-2")])
+            .unwrap();
+        let before = member_row_count(&db);
+        db.refresh_snapshots(S, &[changed("AB-1")]).unwrap();
+        assert_eq!(member_row_count(&db), before);
+        assert_eq!(db.list_groups(S).unwrap()[0].member_count, 2);
+        assert_eq!(snapshot_count(&db), 2);
+    }
+
+    #[test]
+    fn refresh_snapshots_scope_isolated() {
+        let db = new_db();
+        let other = "https://b.example.com";
+        let a = db.create_group(S, "A", None).unwrap();
+        let b = db.create_group(other, "B", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1")]).unwrap();
+        db.add_members(other, b.id, &[member("AB-1")]).unwrap();
+        assert_eq!(db.refresh_snapshots(S, &[changed("AB-1")]).unwrap(), 1);
+        assert_eq!(
+            db.get_group_members(S, a.id).unwrap()[0].ticket_json,
+            changed("AB-1").ticket_json
+        );
+        assert_eq!(
+            db.get_group_members(other, b.id).unwrap()[0].ticket_json,
+            member("AB-1").ticket_json
+        );
+    }
+
+    #[test]
+    fn refresh_snapshots_rejects_invalid_input() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1")]).unwrap();
+        assert_eq!(
+            db.refresh_snapshots(S, &[changed("AB-1"), member("bad key")])
+                .unwrap_err()
+                .code,
+            GroupErrorCode::InvalidIssueKey
+        );
+        let arr = NewMember {
+            issue_key: "AB-2".into(),
+            ticket_json: "[]".into(),
+        };
+        assert_eq!(
+            db.refresh_snapshots(S, &[changed("AB-1"), arr])
+                .unwrap_err()
+                .code,
+            GroupErrorCode::InvalidTicket
+        );
+        assert_eq!(
+            db.get_group_members(S, a.id).unwrap()[0].ticket_json,
+            member("AB-1").ticket_json
+        );
+    }
+
+    #[test]
+    fn refresh_snapshots_empty_is_noop() {
+        assert_eq!(new_db().refresh_snapshots(S, &[]).unwrap(), 0);
+    }
+
+    #[test]
+    fn remove_all_members_gcs_all_snapshots() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1"), member("AB-2")])
+            .unwrap();
+        let keys = vec!["AB-1".to_string(), "AB-2".to_string()];
+        assert_eq!(db.remove_members(S, a.id, &keys).unwrap(), 2);
+        assert_eq!(snapshot_count(&db), 0);
+    }
+
+    #[test]
+    fn remove_keeps_snapshot_referenced_elsewhere() {
+        let db = new_db();
+        let a = db.create_group(S, "A", None).unwrap();
+        let b = db.create_group(S, "B", None).unwrap();
+        db.add_members(S, a.id, &[member("AB-1")]).unwrap();
+        db.add_members(S, b.id, &[member("AB-1")]).unwrap();
+        db.remove_members(S, a.id, &["AB-1".to_string()]).unwrap();
         assert_eq!(snapshot_count(&db), 1);
         assert_eq!(db.get_group_members(S, b.id).unwrap().len(), 1);
     }
