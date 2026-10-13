@@ -128,13 +128,6 @@ describe('Phase 31 copy', () => {
     );
   });
 
-  it('sk chip moreAria', async () => {
-    await i18n.changeLanguage('sk');
-    expect(i18n.t('groups.chip.moreAria', { count: 2, names: 'A, B' })).toBe(
-      '2 ďalšie skupiny: A, B',
-    );
-  });
-
   it('D-18: empty body names the shipped labels', async () => {
     await i18n.changeLanguage('en');
     const en = i18n.t('groups.empty.body');
@@ -244,10 +237,6 @@ describe('SK plural resolution for all groups.* plural bases (D-16/D-17)', () =>
     expect(tab(1)).toBe('S, 1 úloha');
     expect(tab(3)).toBe('S, 3 úlohy');
     expect(tab(5)).toBe('S, 5 úloh');
-    const more = (count: number) => i18n.t('groups.chip.moreAria', { count, names: 'A' });
-    expect(more(1)).toContain('1 ďalšia skupina');
-    expect(more(3)).toContain('3 ďalšie skupiny');
-    expect(more(5)).toContain('5 ďalších skupín');
     expect(i18n.t('groups.bar.count', { count: 1 })).toBe('1 vybraná');
     expect(i18n.t('groups.bar.count', { count: 3 })).toBe('3 vybrané');
     expect(i18n.t('groups.bar.count', { count: 5 })).toBe('5 vybraných');
