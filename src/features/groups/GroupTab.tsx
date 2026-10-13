@@ -92,7 +92,7 @@ export function GroupTab({
                 onKeyDown={handleKeyDown}
                 aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-1 text-sm py-2 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
+                className={`flex items-center gap-1 text-sm px-1 py-2 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                   active
                     ? 'text-brand-text font-semibold border-(--group-color)'
                     : 'text-brand-text-secondary font-normal hover:text-brand-text border-(--group-color)/35 hover:border-(--group-color)/70'
