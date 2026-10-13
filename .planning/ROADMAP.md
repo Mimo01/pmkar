@@ -267,7 +267,7 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
   3. Group colors are never the only signal (names, counts, text accompany them) and palette contrast passes WCAG AA in light and dark themes
   4. With about 25 groups the tab bar and cards remain usable and uncluttered
 
-**Plans:** 10/10 plans complete
+**Plans:** 10/12 plans complete
 **UI hint**: yes
 
 **Wave 1**
@@ -297,6 +297,11 @@ Full details: [milestones/v0.4.8-ROADMAP.md](milestones/v0.4.8-ROADMAP.md)
 **Wave 6** *(blocked on Wave 5 completion)*
 
 - [x] 33-10-PLAN.md — Consolidated v0.5.0 milestone UAT (phases 29-33) with mock-scenario steps
+
+**Gap closure** *(wave 1, parallel)*
+
+- [ ] 33-11-PLAN.md — WR-02/WR-04: dim only the summary on missing cards (>= 4.5:1 composited), anchored readVar
+- [ ] 33-12-PLAN.md — CR-01/WR-01/WR-03: preventScroll arrow focus handoff, activeTab ref, Esc on checkbox/radio
 
 </details>
 
