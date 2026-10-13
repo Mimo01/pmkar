@@ -351,7 +351,7 @@ None yet.
 | 260520-m42 | Add static value support for issuetype field in mapping | 2026-05-20 | 0330821 | Approved | [260520-m42-i-want-to-be-able-to-in-my-mapping-set-s](./quick/260520-m42-i-want-to-be-able-to-in-my-mapping-set-s/) |
 | 260520-p66 | release version 0.4.8 | 2026-05-20 | c4d9cb4 | | [260520-p66-release-version-0-4-8](./quick/260520-p66-release-version-0-4-8/) |
 | 261013-e6u | Restyle group coloring (tinted chips, group-colored tab underline) and count pills | 2026-10-13 | 8d2e260 | Approved | [261013-e6u-restyle-custom-group-coloring-and-count-](./quick/261013-e6u-restyle-custom-group-coloring-and-count-/) |
-| 261013-f6r | Remove +N group badge in tasks list, always list all groups | 2026-10-13 | 848b98c | Needs Review | [261013-f6r-remove-n-group-badge-in-tasks-list-alway](./quick/261013-f6r-remove-n-group-badge-in-tasks-list-alway/) |
+| 261013-f6r | Remove +N group badge in tasks list, always list all groups | 2026-10-13 | 848b98c | Approved | [261013-f6r-remove-n-group-badge-in-tasks-list-alway](./quick/261013-f6r-remove-n-group-badge-in-tasks-list-alway/) |
 
 ## Session Continuity
 
