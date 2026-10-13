@@ -8,7 +8,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { groupColorVar } from './colors';
+import { CountPill } from './CountPill';
+import { groupColorStyle } from './colors';
 import type { Group } from './types';
 
 interface GroupTabProps {
@@ -78,8 +79,9 @@ export function GroupTab({
       <ContextMenuTrigger asChild>
         <div
           ref={setWrapper}
-          className={`shrink-0 inline-flex items-center gap-1 mr-4 border-b-2 transition-colors duration-150 ${
-            active ? 'border-brand' : 'border-transparent'
+          style={groupColorStyle(group.color)}
+          className={`shrink-0 inline-flex items-center gap-1 mr-4 px-1.5 rounded-t border-b-2 transition-colors duration-150 hover:bg-(--group-color)/8 ${
+            active ? 'border-(--group-color)' : 'border-transparent'
           }`}
         >
           <Tooltip>
@@ -98,11 +100,6 @@ export function GroupTab({
                     : 'text-brand-text-secondary font-normal hover:text-brand-text'
                 }`}
               >
-                <span
-                  aria-hidden="true"
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: groupColorVar(group.color) }}
-                />
                 <span className="grid max-w-[160px]">
                   <span
                     aria-hidden="true"
@@ -112,7 +109,7 @@ export function GroupTab({
                   </span>
                   <span className="col-start-1 row-start-1 truncate">{group.name}</span>
                 </span>
-                <span className="text-xs text-brand-text-secondary">{group.memberCount}</span>
+                <CountPill active={active}>{group.memberCount}</CountPill>
               </button>
             </TooltipTrigger>
             <TooltipContent aria-hidden="true">{group.name}</TooltipContent>

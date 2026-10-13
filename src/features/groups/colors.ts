@@ -5,15 +5,22 @@
  * Consumers must validate stored strings with `isGroupColorToken` and render
  * via `groupColorVar`; never interpolate raw stored strings into styles.
  *
- * Rendering rule (D-07): the color is shown as an 8px dot beside neutral text,
- * never as a tinted background or colored text. Every value reaches >= 3:1
- * non-text contrast against the card surface and page background of its theme.
+ * Rendering rule (D-07, revised by quick task 261013-e6u): the color is exposed
+ * as the `--group-color` custom property via `groupColorStyle`. Chips and
+ * picker names use a soft (~12%) tint background with a stronger (~45%)
+ * group-color border; the active group tab uses a solid group-color underline
+ * and tabs get a faint tint on hover. Text always stays neutral
+ * (text-brand-text), never colored, and color is never the only signal (the
+ * name is always shown). Every value reaches >= 3:1 non-text contrast against
+ * the card surface and page background of its theme.
  *
  * The hex values here are mirrored as --color-group-* variables in the plain
  * :root (light) and body.dark (dark) rules of src/index.css; a test keeps them
  * in sync. They must not be moved into @theme: Tailwind v4 would drop the ones
  * not named literally in source.
  */
+
+import type { CSSProperties } from 'react';
 
 export const GROUP_COLOR_TOKENS = [
   'blue',
@@ -45,6 +52,15 @@ export function isGroupColorToken(value: unknown): value is GroupColorToken {
 
 export function groupColorVar(token: GroupColorToken): string {
   return `var(--color-group-${token})`;
+}
+
+/**
+ * Inline style exposing the group color as `--group-color`, consumed by
+ * Tailwind classes like `bg-(--group-color)/12`. The value only flows through
+ * groupColorVar; stored strings are never interpolated.
+ */
+export function groupColorStyle(token: GroupColorToken): CSSProperties {
+  return { '--group-color': groupColorVar(token) } as CSSProperties;
 }
 
 /**

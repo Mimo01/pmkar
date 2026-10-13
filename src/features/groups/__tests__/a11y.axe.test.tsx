@@ -336,19 +336,27 @@ describe('group UI axe (D-01 key states)', () => {
   });
 });
 
+function expectNoDotsAndNamedColor() {
+  expect(document.body.querySelectorAll('[style*="background-color"]').length).toBe(0);
+  const colored = document.body.querySelectorAll<HTMLElement>('[style*="--group-color"]');
+  expect(colored.length).toBeGreaterThan(0);
+  for (const el of colored) {
+    expect(`${el.getAttribute('aria-label') ?? ''}${el.textContent ?? ''}`.trim()).not.toBe('');
+  }
+}
+
 describe('group colour is never the only signal', () => {
-  it('tab accessible name contains name and count; colour dots are aria-hidden', () => {
+  it('tab accessible name contains name and count; no colour dots, colour carriers show the name', () => {
     renderWithI18n(<TabStripHarness initialTab="group:1" />);
     for (const g of groupsSeed) {
       const tab = screen.getByRole('button', { name: new RegExp(`^${g.name},`) });
       expect(tab.getAttribute('aria-label') ?? tab.textContent).toContain(g.name);
       expect(tab.getAttribute('aria-label') ?? tab.textContent).toMatch(/\d/);
     }
-    const dots = document.body.querySelectorAll<HTMLElement>('[style*="background-color"]');
-    for (const dot of dots) expect(dot.getAttribute('aria-hidden')).toBe('true');
+    expectNoDotsAndNamedColor();
   });
 
-  it('chips: colour dots are aria-hidden and buttons carry the group name', () => {
+  it('chips: no colour dots, colour carriers show the name and buttons carry the group name', () => {
     seedStore({ groupIdsByIssue: { 'P-1': [1, 3] } });
     renderWithI18n(
       <NavigationContext.Provider value={{ navigateToGroup: vi.fn() }}>
@@ -357,11 +365,10 @@ describe('group colour is never the only signal', () => {
     );
     expect(screen.getByRole('button', { name: 'Go to group “Sprint 12”' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to group “Ops”' })).toBeInTheDocument();
-    const dots = document.body.querySelectorAll<HTMLElement>('[style*="background-color"]');
-    for (const dot of dots) expect(dot.getAttribute('aria-hidden')).toBe('true');
+    expectNoDotsAndNamedColor();
   });
 
-  it('picker rows: dots are aria-hidden and option names contain the group name', async () => {
+  it('picker rows: no dots and option names contain the group name', async () => {
     renderWithI18n(
       <GroupPicker
         mode="list"
@@ -376,8 +383,7 @@ describe('group colour is never the only signal', () => {
     for (const g of groupsSeed) {
       expect(await screen.findByRole('option', { name: new RegExp(g.name) })).toBeInTheDocument();
     }
-    const dots = document.body.querySelectorAll<HTMLElement>('[style*="background-color"]');
-    for (const dot of dots) expect(dot.getAttribute('aria-hidden')).toBe('true');
+    expectNoDotsAndNamedColor();
     await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThan(0));
   });
 });

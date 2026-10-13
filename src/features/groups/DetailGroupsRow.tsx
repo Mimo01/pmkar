@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { JiraTicketDetail } from '../tickets/types';
+import { groupColorStyle } from './colors';
 import { resolveTicketForIssue } from './detailToTicket';
-import { GroupChipLabel } from './GroupChip';
+import { GroupChipLabel, groupChipClass } from './GroupChip';
 import { GroupPicker } from './GroupPicker';
 import { selectGroupIdsForIssue, useGroupStore } from './groupStore';
 import { membershipErrorKey } from './membershipActions';
@@ -79,7 +80,8 @@ export function DetailGroupsRow({
         {chips.map((g) => (
           <span
             key={g.id}
-            className="inline-flex items-center h-5 rounded border border-brand-border-subtle text-xs text-brand-text-secondary"
+            style={groupColorStyle(g.color)}
+            className={`inline-flex items-center h-5 rounded text-xs ${groupChipClass}`}
           >
             <button
               type="button"

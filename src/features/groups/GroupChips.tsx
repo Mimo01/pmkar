@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CardGroupChip, GroupChipLabel } from './GroupChip';
+import { countPillClass } from './CountPill';
+import { groupColorStyle } from './colors';
+import { CardGroupChip, GroupChipLabel, groupChipClass } from './GroupChip';
 import { selectGroupIdsForIssue, useGroupStore } from './groupStore';
 
 const MAX_VISIBLE = 2;
@@ -34,15 +36,21 @@ export function GroupChips({ issueKey, hideGroupId }: { issueKey: string; hideGr
                   names: rest.map((g) => g.name).join(', '),
                 })}
                 onClick={(e) => e.stopPropagation()}
-                className="relative z-10 text-xs text-brand-text-secondary cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
+                className={`${countPillClass()} relative z-10 cursor-pointer hover:text-brand-text focus-visible:outline-2 focus-visible:outline-focus-ring`}
               >
                 {t('groups.chip.more', { count: rest.length })}
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col items-start gap-1">
                 {rest.map((g) => (
-                  <GroupChipLabel key={g.id} group={g} />
+                  <span
+                    key={g.id}
+                    style={groupColorStyle(g.color)}
+                    className={`inline-flex items-center h-5 px-1.5 rounded text-xs ${groupChipClass}`}
+                  >
+                    <GroupChipLabel group={g} />
+                  </span>
                 ))}
               </div>
             </TooltipContent>
