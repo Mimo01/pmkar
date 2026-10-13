@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import type { JiraTicket } from '../tickets/types';
-import { groupColorVar, pickDefaultColor } from './colors';
+import { groupColorStyle, pickDefaultColor } from './colors';
+import { groupChipClass } from './GroupChip';
 import { groupNameErrorKey } from './GroupNameForm';
 import { selectGroupIdsForIssue, useGroupStore } from './groupStore';
 import { addIssuesWithFeedback, membershipErrorKey } from './membershipActions';
@@ -382,12 +383,12 @@ function GroupPickerBody(props: BodyProps) {
                 </span>
               )}
               <span
-                aria-hidden="true"
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: groupColorVar(g.color) }}
-              />
-              <span className="truncate" title={g.name}>
-                {g.name}
+                style={groupColorStyle(g.color)}
+                className={`inline-flex min-w-0 items-center h-5 px-1.5 rounded text-xs ${groupChipClass}`}
+              >
+                <span className="truncate" title={g.name}>
+                  {g.name}
+                </span>
               </span>
             </div>
           );

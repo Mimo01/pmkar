@@ -138,11 +138,22 @@ describe('GroupChips', () => {
     expect(nameEl).toHaveClass('truncate');
   });
 
-  it('renders the dot with the group color var and aria-hidden', () => {
+  it('renders a tinted chip with the group color var and no dot', () => {
     seed({ 'P-1': [1] }, [g(1, 'A', 'green')]);
     const { container } = render(<GroupChips issueKey="P-1" />);
-    const dot = container.querySelector('[aria-hidden="true"]') as HTMLElement;
-    expect(dot).toBeTruthy();
-    expect(dot.style.backgroundColor).toBe(groupColorVar('green'));
+    const chip = screen.getByRole('button', { name: /A/ });
+    expect(chip.style.getPropertyValue('--group-color')).toBe(groupColorVar('green'));
+    const classes = chip.className.split(/\s+/);
+    expect(classes).toContain('bg-(--group-color)/12');
+    expect(classes).toContain('border-(--group-color)/45');
+    expect(container.querySelector('[style*="background-color"]')).toBeNull();
+  });
+
+  it('renders the +N overflow trigger as a counter pill', () => {
+    seed({ 'P-1': [1, 2, 3, 4] });
+    render(<GroupChips issueKey="P-1" />);
+    const more = screen.getByText('+2');
+    expect(more).toHaveClass('tabular-nums');
+    expect(more).toHaveClass('rounded-full');
   });
 });
