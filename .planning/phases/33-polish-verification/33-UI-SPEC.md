@@ -110,7 +110,7 @@ All behavior below already exists or was decided in Phases 29-32. This phase ver
 | Missing block | "Remove" and "Remove all missing" are visible labelled buttons (never hover-revealed) |
 
 Scroll arrows (D-09, Claude's discretion resolved):
-- Shown only while the strip overflows. At a scroll end the corresponding arrow is hidden (not disabled), and its fade is hidden too, so no dead control is focusable. If an arrow has focus when it reaches its end, move focus to the active tab.
+- Shown only while the strip overflows. At a scroll end the corresponding arrow is hidden (not disabled), and its fade is hidden too, so no dead control is focusable. If an arrow has focus when it reaches its end, move focus to the opposite arrow (which is visible because the strip still overflows). Only when the strip no longer overflows at all, move focus to the active tab with preventScroll. Focus must never land on a tab clipped by the scroller (WCAG 2.4.7).
 - Scroll step: 80% of the strip viewport width (replaces fixed 200px), `behavior: 'auto'` under `prefers-reduced-motion`.
 - Arrows are `<button type="button">` with `aria-label` from `groups.scrollLeft` / `groups.scrollRight`, in tab order, `tabIndex` default (0), and are NOT part of the roving tabindex group.
 - Arrows and fades are `pointer-events` safe: fades `pointer-events-none`.

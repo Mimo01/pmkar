@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const toastErrorMock = vi.fn();
 vi.mock('sonner', () => ({ toast: { error: (...a: unknown[]) => toastErrorMock(...a) } }));
@@ -67,6 +67,38 @@ beforeEach(() => {
   invokeMock.mockImplementation(async () => null);
   seed([]);
 });
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  for (const el of document.body.querySelectorAll(':scope > [data-tab-id]')) el.remove();
+});
+
+function mockRect(el: Element, left: number, right: number) {
+  vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+    left,
+    right,
+    top: 0,
+    bottom: 32,
+    width: right - left,
+    height: 32,
+    x: left,
+    y: 0,
+    toJSON: () => ({}),
+  } as DOMRect);
+}
+
+function expectFocusVisible(scroller: HTMLElement) {
+  const focused = document.activeElement;
+  const leftArrow = screen.queryByRole('button', { name: 'Scroll tabs left' });
+  const rightArrow = screen.queryByRole('button', { name: 'Scroll tabs right' });
+  if (focused !== null && (focused === leftArrow || focused === rightArrow)) return;
+  expect(focused).not.toBeNull();
+  expect(focused).not.toBe(document.body);
+  const f = (focused as Element).getBoundingClientRect();
+  const r = scroller.getBoundingClientRect();
+  expect(f.left).toBeGreaterThanOrEqual(r.left);
+  expect(f.right).toBeLessThanOrEqual(r.right);
+}
 
 function setOverflowMetrics(scrollWidth: number, clientWidth: number, scrollLeft: number) {
   const scroller = screen.getByTestId('group-tab-scroller');
@@ -162,36 +194,72 @@ describe('GroupTabStrip', () => {
     expect(scrollByMock).toHaveBeenCalledWith(expect.objectContaining({ left: -160 }));
   });
 
-  it('moves focus to the active group tab when the focused arrow disappears', () => {
-    seed([sprint, qa]);
-    renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
-    const scroller = setOverflowMetrics(600, 200, 0);
-    fireEvent.scroll(scroller);
-    const arrow = screen.getByRole('button', { name: 'Scroll tabs right' });
-    arrow.focus();
-    expect(arrow).toHaveFocus();
-    scroller.scrollLeft = 400;
-    fireEvent.scroll(scroller);
-    expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
-  });
-
-  it('hands focus to the active group tab without scrolling the strip', () => {
+  function setupRightEndHandoff() {
     seed([sprint, qa]);
     renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
     const scroller = setOverflowMetrics(600, 200, 0);
     fireEvent.scroll(scroller);
+    mockRect(scroller, 0, 200);
     screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
-    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    mockRect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }), -400, -320);
+    mockRect(screen.getByRole('button', { name: 'QA, 1 issue' }), -320, -240);
     scroller.scrollLeft = 400;
+    return scroller;
+  }
+
+  it('hands focus to the left arrow when the focused right arrow disappears at the right end', () => {
+    const scroller = setupRightEndHandoff();
     fireEvent.scroll(scroller);
-    expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).toHaveFocus();
-    expect(scroller.scrollLeft).toBe(400);
-    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
-    spy.mockRestore();
+    expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Scroll tabs left' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).not.toHaveFocus();
+    expectFocusVisible(scroller);
   });
 
-  it('hands focus to a core active tab without scrolling the strip', () => {
+  it('hands focus to the right arrow when the focused left arrow disappears at the left end', () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 400);
+    fireEvent.scroll(scroller);
+    mockRect(scroller, 0, 200);
+    screen.getByRole('button', { name: 'Scroll tabs left' }).focus();
+    mockRect(screen.getByRole('button', { name: 'QA, 1 issue' }), 520, 600);
+    scroller.scrollLeft = 0;
+    fireEvent.scroll(scroller);
+    expect(screen.queryByRole('button', { name: 'Scroll tabs left' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Scroll tabs right' })).toHaveFocus();
+    expectFocusVisible(scroller);
+  });
+
+  it('focuses the opposite arrow with preventScroll', () => {
+    const scroller = setupRightEndHandoff();
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    fireEvent.scroll(scroller);
+    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
+    expect(spy.mock.contexts[spy.mock.contexts.length - 1]).toBe(
+      screen.getByRole('button', { name: 'Scroll tabs left' }),
+    );
+  });
+
+  it('falls back to the current active group tab when overflow vanishes on resize', () => {
+    seed([sprint, qa]);
+    const view = renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+    view.rerender(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
+    setOverflowMetrics(200, 200, 0);
+    mockRect(scroller, 0, 200);
+    mockRect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' }), 0, 80);
+    mockRect(screen.getByRole('button', { name: 'QA, 1 issue' }), 80, 160);
+    act(() => resizeCallback?.());
+    expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Scroll tabs left' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
+    expectFocusVisible(scroller);
+  });
+
+  it('falls back to a core active tab when overflow vanishes on resize', () => {
     seed([sprint, qa]);
     const core = document.createElement('button');
     core.setAttribute('data-tab-id', 'new');
@@ -200,26 +268,11 @@ describe('GroupTabStrip', () => {
     const scroller = setOverflowMetrics(600, 200, 0);
     fireEvent.scroll(scroller);
     screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
+    setOverflowMetrics(200, 200, 0);
     const spy = vi.spyOn(HTMLElement.prototype, 'focus');
-    scroller.scrollLeft = 400;
-    fireEvent.scroll(scroller);
-    expect(core).toHaveFocus();
-    expect(scroller.scrollLeft).toBe(400);
-    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
-    spy.mockRestore();
-    core.remove();
-  });
-
-  it('ResizeObserver update focuses the current active tab after a tab change', () => {
-    seed([sprint, qa]);
-    const view = renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
-    view.rerender(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
-    const scroller = setOverflowMetrics(600, 200, 0);
-    fireEvent.scroll(scroller);
-    screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
-    scroller.scrollLeft = 400;
     act(() => resizeCallback?.());
-    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
+    expect(core).toHaveFocus();
+    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
   });
 
   it('does not steal focus when an unfocused arrow disappears', () => {
