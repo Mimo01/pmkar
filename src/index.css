@@ -50,15 +50,11 @@
 :root {
   --color-group-blue: #0a6cff;
   --color-group-teal: #00968a;
-  --color-group-green: #0f9d3a;
-  --color-group-amber: #c26a00;
+  --color-group-green: #1a9e2e;
+  --color-group-yellow: #ad8b00;
   --color-group-orange: #f05a00;
   --color-group-purple: #8b3dff;
   --color-group-pink: #e8178a;
-  --color-group-indigo: #4f46e5;
-  --color-group-cyan: #0891b2;
-  --color-group-lime: #4d8c00;
-  --color-group-fuchsia: #c026d3;
   --color-group-slate: #5b6b82;
 }
 
@@ -108,16 +104,12 @@ body.dark {
 
   /* Group palette dark values */
   --color-group-blue: #4d9bff;
-  --color-group-teal: #14d9c0;
-  --color-group-green: #34e07a;
-  --color-group-amber: #ffc21a;
+  --color-group-teal: #2dd4c4;
+  --color-group-green: #4ade5a;
+  --color-group-yellow: #facc15;
   --color-group-orange: #ff8a3d;
   --color-group-purple: #b083ff;
   --color-group-pink: #ff5cb0;
-  --color-group-indigo: #8b8dff;
-  --color-group-cyan: #22d3ee;
-  --color-group-lime: #a3e635;
-  --color-group-fuchsia: #e879f9;
   --color-group-slate: #9fb0c8;
 }
 

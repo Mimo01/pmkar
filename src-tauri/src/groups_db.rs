@@ -10,9 +10,8 @@ use std::sync::OnceLock;
 use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 /// Palette token names stored in the `color` column (D-05, D-06).
-pub const GROUP_COLORS: [&str; 12] = [
-    "blue", "teal", "green", "amber", "orange", "purple", "pink", "indigo", "cyan", "lime",
-    "fuchsia", "slate",
+pub const GROUP_COLORS: [&str; 8] = [
+    "blue", "teal", "green", "yellow", "orange", "purple", "pink", "slate",
 ];
 
 /// Maximum group name length in chars, counted after NFC (D-14).
@@ -277,6 +276,8 @@ const CREATE_GROUPS_SCHEMA: &str = "
         FOREIGN KEY(scope, issue_key) REFERENCES issue_snapshot(scope, issue_key)
     );
     CREATE INDEX IF NOT EXISTS idx_group_member_issue ON group_member(scope, issue_key);
+    -- 'amber' was renamed to 'yellow' when the palette was retuned.
+    UPDATE custom_group SET color = 'yellow' WHERE color = 'amber';
 ";
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

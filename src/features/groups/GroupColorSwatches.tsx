@@ -63,11 +63,7 @@ export function GroupColorSwatches({
   }
 
   return (
-    <div
-      role="radiogroup"
-      aria-label={t('groups.color.label')}
-      className="grid w-fit grid-cols-6 gap-1"
-    >
+    <div role="radiogroup" aria-label={t('groups.color.label')} className="flex gap-1">
       {GROUP_COLOR_TOKENS.map((token, index) => {
         const checked = token === value;
         const label = t(`groups.color.${token}`);

@@ -19,20 +19,7 @@ beforeAll(() => {
   );
 });
 
-const NAMES = [
-  'Blue',
-  'Teal',
-  'Green',
-  'Amber',
-  'Orange',
-  'Purple',
-  'Pink',
-  'Indigo',
-  'Cyan',
-  'Lime',
-  'Fuchsia',
-  'Slate',
-];
+const NAMES = ['Blue', 'Teal', 'Green', 'Yellow', 'Orange', 'Purple', 'Pink', 'Slate'];
 
 function Harness({
   initial = 'blue',
@@ -62,7 +49,7 @@ function Harness({
 }
 
 describe('GroupColorSwatches', () => {
-  it('renders a named radiogroup with 12 radios in palette order', () => {
+  it('renders a named radiogroup with 8 radios in palette order', () => {
     renderWithI18n(<Harness follows={false} />);
     expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeInTheDocument();
     const radios = screen.getAllByRole('radio');

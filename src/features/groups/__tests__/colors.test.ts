@@ -20,19 +20,15 @@ import {
 const count = (block: string) => (block.match(/--color-group-[a-z]+\s*:/g) ?? []).length;
 
 describe('palette', () => {
-  it('has the twelve tokens in order', () => {
+  it('has the eight tokens in order', () => {
     expect([...GROUP_COLOR_TOKENS]).toEqual([
       'blue',
       'teal',
       'green',
-      'amber',
+      'yellow',
       'orange',
       'purple',
       'pink',
-      'indigo',
-      'cyan',
-      'lime',
-      'fuchsia',
       'slate',
     ]);
   });
@@ -89,14 +85,10 @@ describe('pickDefaultColor', () => {
         'blue',
         'teal',
         'green',
-        'amber',
+        'yellow',
         'orange',
         'purple',
         'pink',
-        'indigo',
-        'cyan',
-        'lime',
-        'fuchsia',
         'slate',
       ]),
     ).toBe('teal');
@@ -117,14 +109,14 @@ describe('isGroupColorToken', () => {
 
 describe('groupColorVar', () => {
   it('returns the css var reference', () => {
-    expect(groupColorVar('amber')).toBe('var(--color-group-amber)');
+    expect(groupColorVar('yellow')).toBe('var(--color-group-yellow)');
   });
 });
 
 describe('css parity', () => {
-  it('declares exactly twelve group variables in each block', () => {
-    expect(count(rootBlock)).toBe(12);
-    expect(count(darkBlock)).toBe(12);
+  it('declares exactly eight group variables in each block', () => {
+    expect(count(rootBlock)).toBe(8);
+    expect(count(darkBlock)).toBe(8);
   });
 
   for (const t of GROUP_COLOR_TOKENS) {

@@ -26,14 +26,10 @@ export const GROUP_COLOR_TOKENS = [
   'blue',
   'teal',
   'green',
-  'amber',
+  'yellow',
   'orange',
   'purple',
   'pink',
-  'indigo',
-  'cyan',
-  'lime',
-  'fuchsia',
   'slate',
 ] as const;
 
@@ -41,16 +37,12 @@ export type GroupColorToken = (typeof GROUP_COLOR_TOKENS)[number];
 
 export const GROUP_COLOR_HEX: Readonly<Record<GroupColorToken, { light: string; dark: string }>> = {
   blue: { light: '#0a6cff', dark: '#4d9bff' },
-  teal: { light: '#00968a', dark: '#14d9c0' },
-  green: { light: '#0f9d3a', dark: '#34e07a' },
-  amber: { light: '#c26a00', dark: '#ffc21a' },
+  teal: { light: '#00968a', dark: '#2dd4c4' },
+  green: { light: '#1a9e2e', dark: '#4ade5a' },
+  yellow: { light: '#ad8b00', dark: '#facc15' },
   orange: { light: '#f05a00', dark: '#ff8a3d' },
   purple: { light: '#8b3dff', dark: '#b083ff' },
   pink: { light: '#e8178a', dark: '#ff5cb0' },
-  indigo: { light: '#4f46e5', dark: '#8b8dff' },
-  cyan: { light: '#0891b2', dark: '#22d3ee' },
-  lime: { light: '#4d8c00', dark: '#a3e635' },
-  fuchsia: { light: '#c026d3', dark: '#e879f9' },
   slate: { light: '#5b6b82', dark: '#9fb0c8' },
 };
 
