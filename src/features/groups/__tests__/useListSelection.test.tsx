@@ -163,6 +163,30 @@ describe('useListSelection', () => {
     expect(r.result.current.selectMode).toBe(true);
   });
 
+  it('Escape from a checkbox or radio input exits select mode', () => {
+    for (const type of ['checkbox', 'radio']) {
+      const r = setup();
+      on(r);
+      const input = document.createElement('input');
+      input.type = type;
+      const ev = key({ target: input } as never);
+      act(() => r.result.current.handleKeyDown(ev));
+      expect(r.result.current.selectMode).toBe(false);
+      expect((ev as { preventDefault: () => void }).preventDefault).toHaveBeenCalled();
+    }
+  });
+
+  it('Escape from search input or textarea does not exit select mode', () => {
+    const search = document.createElement('input');
+    search.type = 'search';
+    for (const target of [search, document.createElement('textarea')]) {
+      const r = setup();
+      on(r);
+      act(() => r.result.current.handleKeyDown(key({ target } as never)));
+      expect(r.result.current.selectMode).toBe(true);
+    }
+  });
+
   it('Escape while off does nothing', () => {
     const r = setup();
     const ev = key({});
