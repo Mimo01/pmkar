@@ -28,3 +28,16 @@ None. Discretion choice: inactive tabs have no at-rest underline hint.
 - Manual light/dark/WebView2 visual check left to milestone UAT
 
 ## Self-Check: PASSED
+
+## Follow-up iterations (user feedback, 2026-10-13)
+
+| Commit | Change |
+|--------|--------|
+| 61c1723 | Group tabs mirror core tab structure; group-color underline always visible (faint at rest, full when active); StatusBadge-style chips and count pills |
+| be6f681 | Underline moved onto tab button (symmetric); ticket chips rounded-md with vivid tint (20% bg / 70% border) |
+| 0d5e5c1 | Underline extends slightly past the text |
+| 1764d93 | Inactive `…` no longer reserves space; spacing aligned to core tabs |
+| f5a49a6 | Core and group tabs share underline overhang (px-1.5) and spacing (mr-3) |
+| 8d2e260 | Removed group tab `…` button; actions via right-click / Shift+F10 / ContextMenu key; focus returns to tab |
+
+**Final status:** Approved by user after visual review. Full suite: 1660 tests passing, tsc + biome clean.
