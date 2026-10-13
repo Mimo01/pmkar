@@ -23,6 +23,22 @@ describe('groups.tab.aria plurals', () => {
   });
 });
 
+describe('groups.tab.menuHint', () => {
+  afterEach(async () => {
+    await i18n.changeLanguage('en');
+  });
+
+  it('en', async () => {
+    await i18n.changeLanguage('en');
+    expect(i18n.t('groups.tab.menuHint')).toBe('Right-click for options');
+  });
+
+  it('sk', async () => {
+    await i18n.changeLanguage('sk');
+    expect(i18n.t('groups.tab.menuHint')).toBe('Pravým kliknutím zobrazíte možnosti');
+  });
+});
+
 describe('Phase 30 copy', () => {
   afterEach(async () => {
     await i18n.changeLanguage('en');

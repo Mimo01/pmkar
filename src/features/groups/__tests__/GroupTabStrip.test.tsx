@@ -157,7 +157,7 @@ describe('GroupTabStrip', () => {
     expect(spy).toHaveBeenCalledWith('group:1');
   });
 
-  it('truncates long names and shows full name in a tooltip on focus', async () => {
+  it('truncates long names and shows name, count and right-click hint in a tooltip', async () => {
     seed([sprint]);
     renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
     const tab = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
@@ -168,7 +168,10 @@ describe('GroupTabStrip', () => {
     expect(nameEl.parentElement?.className).toContain('max-w-[160px]');
     await userEvent.setup().tab();
     await userEvent.setup().hover(tab);
-    await waitFor(() => expect(screen.getAllByText('Sprint 12').length).toBeGreaterThan(1));
+    await waitFor(() =>
+      expect(screen.getAllByText('Right-click for options').length).toBeGreaterThan(0),
+    );
+    expect(screen.getAllByText('Sprint 12, 3 issues').length).toBeGreaterThan(0);
   });
 
   it('shows the right arrow when overflowing right, left arrow after scrolling', () => {
