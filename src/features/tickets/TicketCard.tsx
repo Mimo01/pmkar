@@ -146,7 +146,7 @@ export function TicketCard({
               </span>
             )}
           </span>
-          <span className="pointer-events-auto relative z-10 ml-auto min-w-0">
+          <span className="pointer-events-auto relative z-10 ml-auto flex-1 min-w-0 flex justify-end">
             <GroupChips issueKey={ticket.key} hideGroupId={hideGroupId} />
           </span>
         </div>
