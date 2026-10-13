@@ -48,14 +48,18 @@
    Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
    and these are referenced only via a runtime-built var() name in colors.ts. */
 :root {
-  --color-group-blue: #2563eb;
-  --color-group-teal: #0d9488;
-  --color-group-green: #16a34a;
-  --color-group-amber: #b45309;
-  --color-group-orange: #ea580c;
-  --color-group-purple: #7c3aed;
-  --color-group-pink: #db2777;
-  --color-group-slate: #64748b;
+  --color-group-blue: #0a6cff;
+  --color-group-teal: #00968a;
+  --color-group-green: #0f9d3a;
+  --color-group-amber: #c26a00;
+  --color-group-orange: #f05a00;
+  --color-group-purple: #8b3dff;
+  --color-group-pink: #e8178a;
+  --color-group-indigo: #4f46e5;
+  --color-group-cyan: #0891b2;
+  --color-group-lime: #4d8c00;
+  --color-group-fuchsia: #c026d3;
+  --color-group-slate: #5b6b82;
 }
 
 /* Light theme body defaults */
@@ -103,14 +107,18 @@ body.dark {
   --color-destructive-text: #f87171;
 
   /* Group palette dark values */
-  --color-group-blue: #60a5fa;
-  --color-group-teal: #2dd4bf;
-  --color-group-green: #4ade80;
-  --color-group-amber: #fbbf24;
-  --color-group-orange: #fb923c;
-  --color-group-purple: #a78bfa;
-  --color-group-pink: #f472b6;
-  --color-group-slate: #94a3b8;
+  --color-group-blue: #4d9bff;
+  --color-group-teal: #14d9c0;
+  --color-group-green: #34e07a;
+  --color-group-amber: #ffc21a;
+  --color-group-orange: #ff8a3d;
+  --color-group-purple: #b083ff;
+  --color-group-pink: #ff5cb0;
+  --color-group-indigo: #8b8dff;
+  --color-group-cyan: #22d3ee;
+  --color-group-lime: #a3e635;
+  --color-group-fuchsia: #e879f9;
+  --color-group-slate: #9fb0c8;
 }
 
 ::-webkit-scrollbar {

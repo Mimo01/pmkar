@@ -7,7 +7,7 @@
  *
  * Rendering rule (D-07, revised by quick task 261013-e6u): the color is exposed
  * as the `--group-color` custom property via `groupColorStyle`. Chips and
- * picker names are button-like (rounded-md) chips with a ~20% tint background
+ * picker names are button-like (rounded-md) chips with a ~30% tint background
  * and a ~70% group-color border. Every group tab carries a group-color
  * underline: faint at rest, full strength when active. Text always stays neutral
  * (text-brand-text), never colored, and color is never the only signal (the
@@ -30,20 +30,28 @@ export const GROUP_COLOR_TOKENS = [
   'orange',
   'purple',
   'pink',
+  'indigo',
+  'cyan',
+  'lime',
+  'fuchsia',
   'slate',
 ] as const;
 
 export type GroupColorToken = (typeof GROUP_COLOR_TOKENS)[number];
 
 export const GROUP_COLOR_HEX: Readonly<Record<GroupColorToken, { light: string; dark: string }>> = {
-  blue: { light: '#2563eb', dark: '#60a5fa' },
-  teal: { light: '#0d9488', dark: '#2dd4bf' },
-  green: { light: '#16a34a', dark: '#4ade80' },
-  amber: { light: '#b45309', dark: '#fbbf24' },
-  orange: { light: '#ea580c', dark: '#fb923c' },
-  purple: { light: '#7c3aed', dark: '#a78bfa' },
-  pink: { light: '#db2777', dark: '#f472b6' },
-  slate: { light: '#64748b', dark: '#94a3b8' },
+  blue: { light: '#0a6cff', dark: '#4d9bff' },
+  teal: { light: '#00968a', dark: '#14d9c0' },
+  green: { light: '#0f9d3a', dark: '#34e07a' },
+  amber: { light: '#c26a00', dark: '#ffc21a' },
+  orange: { light: '#f05a00', dark: '#ff8a3d' },
+  purple: { light: '#8b3dff', dark: '#b083ff' },
+  pink: { light: '#e8178a', dark: '#ff5cb0' },
+  indigo: { light: '#4f46e5', dark: '#8b8dff' },
+  cyan: { light: '#0891b2', dark: '#22d3ee' },
+  lime: { light: '#4d8c00', dark: '#a3e635' },
+  fuchsia: { light: '#c026d3', dark: '#e879f9' },
+  slate: { light: '#5b6b82', dark: '#9fb0c8' },
 };
 
 export function isGroupColorToken(value: unknown): value is GroupColorToken {

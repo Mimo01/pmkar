@@ -20,7 +20,7 @@ import {
 const count = (block: string) => (block.match(/--color-group-[a-z]+\s*:/g) ?? []).length;
 
 describe('palette', () => {
-  it('has the eight tokens in order', () => {
+  it('has the twelve tokens in order', () => {
     expect([...GROUP_COLOR_TOKENS]).toEqual([
       'blue',
       'teal',
@@ -29,6 +29,10 @@ describe('palette', () => {
       'orange',
       'purple',
       'pink',
+      'indigo',
+      'cyan',
+      'lime',
+      'fuchsia',
       'slate',
     ]);
   });
@@ -89,6 +93,10 @@ describe('pickDefaultColor', () => {
         'orange',
         'purple',
         'pink',
+        'indigo',
+        'cyan',
+        'lime',
+        'fuchsia',
         'slate',
       ]),
     ).toBe('teal');
@@ -114,9 +122,9 @@ describe('groupColorVar', () => {
 });
 
 describe('css parity', () => {
-  it('declares exactly eight group variables in each block', () => {
-    expect(count(rootBlock)).toBe(8);
-    expect(count(darkBlock)).toBe(8);
+  it('declares exactly twelve group variables in each block', () => {
+    expect(count(rootBlock)).toBe(12);
+    expect(count(darkBlock)).toBe(12);
   });
 
   for (const t of GROUP_COLOR_TOKENS) {
@@ -149,7 +157,7 @@ describe('tint text contrast', () => {
   const darkSurface = readVar(darkBlock, '--color-brand-surface');
   for (const t of GROUP_COLOR_TOKENS) {
     it(`${t} tint keeps neutral text at 4.5:1 in dark`, () => {
-      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.2);
+      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.3);
       expect(contrast(darkText, bg)).toBeGreaterThanOrEqual(4.5);
     });
   }

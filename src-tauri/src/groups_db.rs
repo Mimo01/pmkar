@@ -10,8 +10,9 @@ use std::sync::OnceLock;
 use unicode_normalization::{char::is_combining_mark, UnicodeNormalization};
 
 /// Palette token names stored in the `color` column (D-05, D-06).
-pub const GROUP_COLORS: [&str; 8] = [
-    "blue", "teal", "green", "amber", "orange", "purple", "pink", "slate",
+pub const GROUP_COLORS: [&str; 12] = [
+    "blue", "teal", "green", "amber", "orange", "purple", "pink", "indigo", "cyan", "lime",
+    "fuchsia", "slate",
 ];
 
 /// Maximum group name length in chars, counted after NFC (D-14).

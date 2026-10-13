@@ -84,11 +84,11 @@ beforeEach(() => {
 });
 
 describe('ChangeColorPopover', () => {
-  it('shows 8 swatches with the current color checked and focused', async () => {
+  it('shows 12 swatches with the current color checked and focused', async () => {
     renderWithI18n(<Harness />);
     expect(await screen.findByRole('heading', { name: 'Change color' })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'Color' })).toBeInTheDocument();
-    expect(screen.getAllByRole('radio')).toHaveLength(8);
+    expect(screen.getAllByRole('radio')).toHaveLength(12);
     const blue = screen.getByRole('radio', { name: 'Blue' });
     expect(blue).toHaveAttribute('aria-checked', 'true');
     await waitFor(() => expect(blue).toHaveFocus());
