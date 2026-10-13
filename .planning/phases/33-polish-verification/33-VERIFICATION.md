@@ -1,83 +1,95 @@
 ---
 phase: 33-polish-verification
-verified: 2026-10-12T00:00:00Z
+verified: 2026-10-13T00:00:00Z
 status: gaps_found
-score: 2/4 must-haves verified (SC1, SC4 verified; SC2, SC3 partial)
+score: 3/4 must-haves verified (SC1, SC3, SC4 verified; SC2 partial)
+re_verification:
+  previous_status: gaps_found
+  previous_score: 2/4
+  gaps_closed:
+    - "SC3 / WR-02: dimmed missing-card text below 4.5:1"
+    - "CR-01 (original defect): overflow-arrow fallback scrolled the strip back"
+    - "WR-01: stale activeTab in the ResizeObserver closure"
+    - "WR-03: Esc ignored on checkbox and radio inputs"
+    - "WR-04: unanchored readVar"
+  gaps_remaining:
+    - "SC2: focus handoff from the vanishing overflow arrow lands on an off-screen tab"
+  regressions: []
 gaps:
-  - truth: "SC3: palette contrast passes WCAG AA in light and dark themes (all new group UI text)"
+  - truth: "SC2: tabs and tab menus are fully operable by keyboard alone (focus visible, WCAG 2.4.7), including the overflow case with about 25 groups (SC4)"
     status: partial
-    reason: "Missing-card issue key (text-xs, 12px) and meta row use text-brand-text-secondary at opacity-70, compositing to about 3.4:1 on surface, below the 4.5:1 AA minimum for normal text. contrast.test.ts asserts only >= 3 for this case, so the suite passes while the criterion fails. Confirmed in code: TicketCard.tsx line 52 uses opacity-70, and contrast.test.ts asserts toBeGreaterThanOrEqual(3) for the secondary text."
-    artifacts:
-      - path: "src/features/tickets/TicketCard.tsx"
-        issue: "opacity-70 on secondary text for missing cards (lines ~51-53, 81-83, 112-114)"
-      - path: "src/features/groups/__tests__/contrast.test.ts"
-        issue: "Threshold lowered to 3:1 for the dimmed secondary text, locking in the non-compliance"
-    missing:
-      - "Dim via a token or summary-only opacity so key and meta stay at 4.5:1 or more in both themes"
-      - "Raise the test assertion to >= 4.5"
-  - truth: "SC2: tabs and tab menus are fully operable by keyboard alone"
-    status: partial
-    reason: "CR-01 confirmed. GroupTabStrip.updateOverflow calls .focus() without preventScroll when the focused scroll arrow disappears (lines ~99-104). Focus moves to the active tab and the browser scrolls the strip back to it. A keyboard user scrolling toward the end of an overflowing strip, with the active tab off-screen, is snapped back. The tests check focus only, not scrollLeft, so jsdom hides the bug. This is a real keyboard-operability defect in the overflow case, which matters for SC4 (about 25 groups)."
+    reason: "The CR-01 fix (GroupTabStrip.tsx:101-111) passes preventScroll: true, so the strip is no longer snapped back. But focus is still sent to the ACTIVE tab. When the user scrolls to the end via the overflow arrow and the active tab is off-screen, focus lands on an element the user cannot see (the scroller clips it). The focus indicator is invisible, which fails WCAG 2.4.7 (GQA-02 requires AA). The next Tab press goes to the off-screen More button and the browser scrolls the strip back, so the original symptom is deferred by one keystroke rather than removed. I confirmed this by reading the code: the fallback target is activeTabRef.current, with no visibility check. jsdom cannot reproduce it, and the new tests assert only the preventScroll argument (the scrollLeft assertions are vacuous in jsdom, per IN-04 in 33-REVIEW.md)."
     artifacts:
       - path: "src/features/groups/GroupTabStrip.tsx"
-        issue: "focus() without { preventScroll: true } in the arrow-disappearing fallback"
+        issue: "updateOverflow fallback focuses the active tab even when it is scrolled out of view"
     missing:
-      - "Use focus({ preventScroll: true }), or move focus to the opposite arrow or a visible tab"
-      - "Add a test asserting scrollLeft is unchanged after the fallback"
-      - "Optionally fix WR-03 (Esc ignored on checkbox and radio inputs, useListSelection.ts lines 105-112) and WR-01 (stale activeTab in the ResizeObserver closure)"
+      - "Hand focus to a control that is visible: the opposite arrow (which has just appeared), or the nearest fully visible tab"
+      - "Add a test asserting the focused element is the opposite arrow or lies inside the scroller rect"
 human_verification:
   - test: "Consolidated milestone UAT, 27 pending tests in 33-UAT.md"
     expected: "Real-app checks pass in WKWebView: Slovak strings and plurals, keyboard-only operation with focus return, both themes, 25-group tab bar and cards"
-    why_human: "Visual appearance, real keyboard and focus behavior, scroll behavior and theme rendering cannot be verified by grep or jsdom"
+    why_human: "Visual appearance, real focus and scroll behavior, and theme rendering cannot be verified by grep or jsdom"
 ---
 
-# Phase 33: Polish & Verification Report
+# Phase 33: Polish & Verification Report (Re-verification)
 
 **Phase Goal:** All new group UI is fully bilingual and meets WCAG AA in both themes
+**Verified:** 2026-10-13
 **Status:** gaps_found
-**Re-verification:** No, initial verification
+**Re-verification:** Yes, after gap closure plans 33-11 and 33-12
 
-## Observable Truths (ROADMAP success criteria)
+## Gap Closure Check
+
+| Prior gap | Status | Evidence in code |
+|-----------|--------|------------------|
+| WR-02 dimmed-card contrast (SC3) | CLOSED | TicketCard.tsx:56 applies `opacity-70` through `dimClass`. It is applied only to the brand-text summary (lines ~129-134). Key, dates and assignee are undimmed. The review's independent composited numbers are 5.6 to 7.1:1 in both themes. The test asserts >= 4.5 with the opacity read from the source. |
+| CR-01 snap-back | CLOSED for the original defect | `focus({ preventScroll: true })` is used for both tab and core-tab fallbacks. `focusCoreTab` forwards the options. |
+| CR-01 follow-up (new, WR-01 in the fresh review) | OPEN | See the gap above. |
+| WR-01 stale activeTab | CLOSED | `activeTabRef` is assigned on each render and read in `updateOverflow`. |
+| WR-03 Esc on checkbox/radio | CLOSED | useListSelection.ts:116-123: the Escape and selectMode check comes first, and only text-entry fields are excluded. |
+| WR-04 readVar | CLOSED | Anchored and escaped in src/test-utils/contrast.ts, with regression tests. |
+
+## Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Slovak shows no untranslated strings; correct Slovak plurals | VERIFIED (visual pass pending UAT) | en.json and sk.json key sets are identical (0 missing in each direction, checked by script). noLiteralStrings.test.ts and groupLocale.test.ts exist as static guards. The one non-group literal ("Refresh (F5)") is exempted by name and documented in deferred-items.md under D-03. Minor: IN-02, the `_many` form is unreachable for integer counts. |
-| 2 | Tabs, menus, picker, selection mode/bar and dialogs are keyboard operable; focus returns to trigger | PARTIAL | a11y.keyboard.test.tsx, AppShell.navKeys.test.tsx, menu-wrappers.test.tsx and GroupPicker tests exist and pass. Focus return is handled via afterUnmount and focusSelectToggle. Defect CR-01: the overflow-arrow focus fallback scrolls the strip back. WR-03: Esc is ignored on checkbox and radio inputs. |
-| 3 | Color is never the only signal; palette contrast passes AA in both themes | PARTIAL | Contrast tests and a groupTokenUsage guard exist, and the group palette and tokens are checked in both themes. Missing-card key and meta text is about 3.4:1 against a 4.5:1 requirement (WR-02). The test accepts 3:1, so the suite is green while the criterion is not met. WR-04: the readVar helper is unanchored, so the tests may read the wrong token if declarations are reordered. |
-| 4 | About 25 groups remain usable and uncluttered | VERIFIED (visual pass pending UAT) | groupScale.test.tsx and the GroupTabStrip overflow arrows exist. The overflow keyboard path is affected by CR-01, which should be fixed before this is treated as fully verified. |
+| 1 | Slovak shows no untranslated strings; correct plurals | VERIFIED (visual pass pending UAT) | Locale parity, the literal guard and the plural guards are unchanged since the previous verification. No regressions. Only the minor IN-02 (`_many` unreachable) remains. |
+| 2 | Tabs, menus, picker, selection mode/bar and dialogs are keyboard operable; focus returns to the trigger | PARTIAL | The snap-back is fixed and the Esc guard is fixed. The overflow-arrow handoff can leave focus invisible (gap above). Dialog focus return and the other paths are unchanged. |
+| 3 | Color is never the only signal; AA contrast in both themes | VERIFIED | WR-02 is fixed and the tests now enforce 4.5:1 with the correct token reads. |
+| 4 | About 25 groups remain usable and uncluttered | VERIFIED functionally (the keyboard overflow edge case is tracked under SC2) | groupScale tests and overflow arrows exist. |
 
-**Score:** 2/4 (SC2 and SC3 have confirmed defects)
+**Score:** 3/4
+
+## Assessment of the new finding
+
+It affects SC2 directly and SC4 only through the overflow path. It does not undo the CR-01 closure of the original symptom (the strip no longer snaps back during the scroll), but the fix is incomplete: the user can scroll, yet loses a visible focus. The review rates it Warning. I classify it as a gap (BLOCKER for SC2) rather than UNCERTAIN, because GQA-02 explicitly demands WCAG AA, 2.4.7 is an AA criterion, and the defect is deterministic from the code (focus() on a clipped element with preventScroll). It is also a narrow fix. The impact is limited to keyboard users who have an overflowing strip, an active tab outside the viewport and the arrow button focused at the scroll end. If the owner prefers to ship it and accept the risk, record an override. I am not suggesting one, because an alternative implementation that gives the same guarantee does not exist.
 
 ## Requirements Coverage
 
-| Requirement | Source Plans | Status | Evidence |
-|-------------|--------------|--------|----------|
-| GQA-01 (EN/SK strings, SK plurals) | 33-01, 33-03, 33-06, 33-10 | SATISFIED | Locale parity holds; plural and literal guards exist. Human UAT for the visual check remains. |
-| GQA-02 (WCAG AA: keyboard, focus return, color not sole signal, contrast in both themes) | 33-02 to 33-10 | BLOCKED (partial) | CR-01 and WR-02 above. |
+| Requirement | Plans | Status | Evidence |
+|-------------|-------|--------|----------|
+| GQA-01 | 33-01, 33-03, 33-06, 33-10 | SATISFIED (visual UAT pending) | Locale parity and guards pass. |
+| GQA-02 | 33-02 to 33-12 | PARTIAL | Contrast is fixed; focus visibility in the overflow handoff is open. |
 
-No orphaned requirements: REQUIREMENTS.md maps only GQA-01 and GQA-02 to Phase 33, and both are claimed by the plans. Both are still unchecked in REQUIREMENTS.md.
+No orphaned requirements: REQUIREMENTS.md maps only GQA-01 and GQA-02 to Phase 33, and the plans claim both. Both checkboxes are still unchecked in REQUIREMENTS.md and the traceability table says Pending; update them after closure.
 
 ## Anti-Patterns
 
-No TBD, FIXME or XXX markers found in src/features/groups, src/test-utils or src/i18n/__tests__. Code review warnings and info items not listed as gaps (WR-01, WR-04, IN-01 to IN-06) are non-blocking, but should be tracked.
+No TBD, FIXME or XXX markers were introduced. The Info items in 33-REVIEW.md (IN-01 to IN-06) are non-blocking: the key-search field has no Escape handler, `_many` is unreachable, duplicate contrast test, vacuous jsdom scroll assertions that can leak a stub button, a first-match opacity regex, and a misplaced JSDoc.
 
 ## Behavioral Checks
 
-The orchestrator reported that the full suites pass (1635 vitest, 321 cargo, build OK). I did not re-run them. Their green status is weak evidence for SC2 and SC3, because the relevant assertions are loose (focus-only, 3:1).
+I did not re-run the suites. I relied on the orchestrator's report (125 files, 1649 tests, build OK) and the review's targeted run (156 tests). jsdom cannot cover focus visibility, so green tests do not clear the gap above.
 
 ## Human Verification Required
 
-All 27 tests in 33-UAT.md are pending. Items to prioritize: Slovak plural forms in the running app, keyboard-only walkthrough including the overflow arrows with an off-screen active tab, dark and light theme contrast, and the 25-group layout.
+The 27 tests in 33-UAT.md are still pending. Prioritize the keyboard walkthrough of the overflow arrows with the active tab scrolled off-screen, and the Slovak plurals.
 
 ## Gaps Summary
 
-Two gaps block the phase goal.
-1. WR-02: dimmed missing-card text fails AA at about 3.4:1. The test was loosened to match, which is an objective failure of SC3.
-2. CR-01: the keyboard overflow-arrow fallback undoes its own scroll, affecting SC2 and SC4.
-
-Both are small fixes (a token or opacity change plus a threshold change; one `preventScroll` option plus a test). Run `/gsd:plan-phase --gaps`. After the fixes, SC1 and SC4 are likely to pass, and the remaining items are the human UAT.
+One gap remains, narrow: change the fallback target in `updateOverflow` (GroupTabStrip.tsx:101-111) to a visible control (the opposite arrow, or the nearest visible tab) and add a test. Run `/gsd:plan-phase 33 --gaps`. All other prior gaps are closed with no regressions.
 
 ---
 
-_Verified: 2026-10-12_
+_Verified: 2026-10-13_
 _Verifier: Claude (gsd-verifier)_
