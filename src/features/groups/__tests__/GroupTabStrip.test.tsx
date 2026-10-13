@@ -510,7 +510,7 @@ describe('GroupTabStrip', () => {
         .querySelector('[aria-label="Group actions for Sprint 12"]') as HTMLElement;
       expect(hidden).toHaveAttribute('aria-hidden', 'true');
       expect(hidden).toHaveAttribute('tabindex', '-1');
-      expect(hidden.className).toContain('invisible');
+      expect(hidden.className).toContain('hidden');
     });
 
     it('`…` and tab button are siblings in one wrapper', () => {
