@@ -156,15 +156,23 @@ function App() {
     useTicketStore.getState().selectTicket(null);
   }, []);
 
-  const [focusRequest, setFocusRequest] = useState<{ id: number; seq: number } | null>(null);
+  const [focusRequest, setFocusRequest] = useState<{
+    id: number;
+    seq: number;
+    focus: boolean;
+  } | null>(null);
 
-  const navigateToGroup = useCallback((groupId: number) => {
+  const navigateToGroup = useCallback((groupId: number, options?: { focusTab?: boolean }) => {
     setShowDetail(false);
     setDetailTicketKey(null);
     // Clear the selection so the selectedTicketKey effect does not re-open detail.
     useTicketStore.getState().selectTicket(null);
     setCurrentTab(groupTabId(groupId));
-    setFocusRequest((p) => ({ id: groupId, seq: (p?.seq ?? 0) + 1 }));
+    setFocusRequest((p) => ({
+      id: groupId,
+      seq: (p?.seq ?? 0) + 1,
+      focus: options?.focusTab ?? true,
+    }));
   }, []);
 
   const handleFocusRequestHandled = useCallback(() => setFocusRequest(null), []);

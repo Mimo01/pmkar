@@ -62,7 +62,7 @@ describe('GroupChips', () => {
       </NavigationContext.Provider>,
     );
     await user.click(screen.getByRole('button', { name: 'Go to group “D”' }));
-    expect(spy).toHaveBeenCalledWith(4);
+    expect(spy).toHaveBeenCalledWith(4, { focusTab: false });
     expect(parent).not.toHaveBeenCalled();
   });
 
@@ -123,15 +123,15 @@ describe('GroupChips', () => {
     );
     const chip = screen.getByRole('button', { name: 'Go to group “C”' });
     await user.click(chip);
-    expect(spy).toHaveBeenCalledWith(3);
+    expect(spy).toHaveBeenCalledWith(3, { focusTab: false });
     expect(parent).not.toHaveBeenCalled();
     spy.mockClear();
     chip.focus();
     await user.keyboard('{Enter}');
-    expect(spy).toHaveBeenCalledWith(3);
+    expect(spy).toHaveBeenCalledWith(3, { focusTab: true });
     spy.mockClear();
     await user.keyboard(' ');
-    expect(spy).toHaveBeenCalledWith(3);
+    expect(spy).toHaveBeenCalledWith(3, { focusTab: true });
   });
 
   it('truncates long names and keeps the full name in the DOM', () => {

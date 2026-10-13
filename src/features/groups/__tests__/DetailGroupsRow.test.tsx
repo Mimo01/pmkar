@@ -206,7 +206,7 @@ describe('DetailGroupsRow', () => {
   it('chip name navigates to the group', async () => {
     const user = setup();
     await user.click(screen.getByRole('button', { name: 'Go to group “Sprint”' }));
-    expect(navigate).toHaveBeenCalledWith(1);
+    expect(navigate).toHaveBeenCalledWith(1, { focusTab: false });
   });
 
   it('sends a renderable snapshot when the issue is not in the ticket store', async () => {

@@ -148,7 +148,7 @@ describe('membership regression (GMEM-01, D-20)', () => {
       </NavigationContext.Provider>,
     );
     fireEvent.click(within(cardFor('P-1')).getByRole('button', { name: 'Go to group “QA”' }));
-    expect(spy).toHaveBeenCalledWith(2);
+    expect(spy).toHaveBeenCalledWith(2, expect.anything());
     expect(useTicketStore.getState().selectedTicketKey).toBeNull();
   });
 });

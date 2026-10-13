@@ -47,6 +47,8 @@ type MenuIntent = {
 type PendingFocus = {
   id: number;
   source: 'create' | 'manage';
+  /** false: only scroll the tab into view (pointer navigation), never focus it. */
+  focus?: boolean;
 } | null;
 
 export function GroupTabStrip({
@@ -57,7 +59,7 @@ export function GroupTabStrip({
 }: {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
-  focusRequest?: { id: number; seq: number } | null;
+  focusRequest?: { id: number; seq: number; focus?: boolean } | null;
   onFocusRequestHandled?: () => void;
 }) {
   const { t } = useTranslation();
@@ -190,7 +192,7 @@ export function GroupTabStrip({
   useEffect(() => {
     if (focusRequest == null) return;
     if (useGroupStore.getState().groups.some((g) => g.id === focusRequest.id)) {
-      setPendingFocus({ id: focusRequest.id, source: 'manage' });
+      setPendingFocus({ id: focusRequest.id, source: 'manage', focus: focusRequest.focus });
     }
     onFocusRequestHandled?.();
   }, [focusRequest, onFocusRequestHandled]);
@@ -201,7 +203,7 @@ export function GroupTabStrip({
     const el = tabRefs.current.get(pendingFocus.id);
     if (!el) return;
     el.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
-    el.focus();
+    if (pendingFocus.focus !== false) el.focus();
     setPendingFocus(null);
   }, [pendingFocus, groups]);
 

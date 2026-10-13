@@ -437,6 +437,22 @@ describe('GroupTabStrip', () => {
       expect(handled).toHaveBeenCalledTimes(1);
     });
 
+    it('pointer requests (focus: false) report handled without focusing the tab', async () => {
+      seed([sprint, qa]);
+      const handled = vi.fn();
+      renderWithI18n(
+        <GroupTabStrip
+          activeTab="group:2"
+          onTabChange={vi.fn()}
+          focusRequest={{ id: 2, seq: 1, focus: false }}
+          onFocusRequestHandled={handled}
+        />,
+      );
+      const b = screen.getByRole('button', { name: 'QA, 1 issue' });
+      await waitFor(() => expect(handled).toHaveBeenCalledTimes(1));
+      expect(document.activeElement).not.toBe(b);
+    });
+
     it('ignores unknown groups but still reports handled', () => {
       seed([sprint, qa]);
       const handled = vi.fn();

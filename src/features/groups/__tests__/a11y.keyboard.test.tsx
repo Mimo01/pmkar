@@ -334,7 +334,7 @@ describe('Escape and focus return: detail picker and chips', () => {
     const user = setupDetail();
     screen.getByRole('button', { name: 'Go to group “Sprint”' }).focus();
     await user.keyboard(keys);
-    expect(navigate).toHaveBeenCalledWith(1);
+    expect(navigate).toHaveBeenCalledWith(1, { focusTab: true });
   });
 
   it.each([

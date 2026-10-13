@@ -82,7 +82,7 @@ export function DetailGroupsRow({
             <button
               type="button"
               aria-label={t('groups.chip.goTo', { name: g.name })}
-              onClick={() => navigateToGroup(g.id)}
+              onClick={(e) => navigateToGroup(g.id, { focusTab: e.detail === 0 })}
               className="inline-flex items-center px-1 hover:underline cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
             >
               <GroupChipLabel group={g} />

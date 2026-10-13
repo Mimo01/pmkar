@@ -42,7 +42,8 @@ export function CardGroupChip({ group }: { group: Group }) {
       aria-label={t('groups.chip.goTo', { name: group.name })}
       onClick={(e) => {
         e.stopPropagation();
-        navigateToGroup(group.id);
+        // detail is 0 for keyboard activation; only then hand focus to the tab.
+        navigateToGroup(group.id, { focusTab: e.detail === 0 });
       }}
       style={groupColorStyle(group.color)}
       className={`relative z-10 pl-1.5 pr-2 ${groupChipClass} hover:group-chip-hover cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}

@@ -75,7 +75,7 @@ describe('TicketCard', () => {
   it('chip click navigates and does not open detail', async () => {
     const { onClick, navigateToGroup, user } = setup();
     await user.click(screen.getByRole('button', { name: 'Go to group “QA”' }));
-    expect(navigateToGroup).toHaveBeenCalledWith(2);
+    expect(navigateToGroup).toHaveBeenCalledWith(2, { focusTab: false });
     expect(onClick).not.toHaveBeenCalled();
   });
 
@@ -168,7 +168,7 @@ describe('TicketCard', () => {
     const onToggleSelect = vi.fn();
     const { navigateToGroup, user } = setup({ selectMode: true, onToggleSelect });
     await user.click(screen.getByRole('button', { name: 'Go to group “Dev”' }));
-    expect(navigateToGroup).toHaveBeenCalledWith(1);
+    expect(navigateToGroup).toHaveBeenCalledWith(1, { focusTab: false });
     expect(onToggleSelect).not.toHaveBeenCalled();
   });
 
