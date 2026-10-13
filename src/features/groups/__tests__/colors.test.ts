@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { contrast, darkBlock, readVar, rootBlock, themeBlock } from '../../../test-utils/contrast';
+import {
+  contrast,
+  darkBlock,
+  mix,
+  readVar,
+  rootBlock,
+  themeBlock,
+} from '../../../test-utils/contrast';
 import {
   GROUP_COLOR_HEX,
   GROUP_COLOR_TOKENS,
+  groupColorStyle,
   groupColorVar,
   isGroupColorToken,
   pickDefaultColor,
@@ -126,4 +134,23 @@ describe('light palette emission', () => {
   it('keeps group variables out of @theme so Tailwind cannot tree-shake them', () => {
     expect(count(themeBlock)).toBe(0);
   });
+});
+
+describe('groupColorStyle', () => {
+  it('sets --group-color to the css var reference', () => {
+    expect((groupColorStyle('blue') as Record<string, string>)['--group-color']).toBe(
+      'var(--color-group-blue)',
+    );
+  });
+});
+
+describe('tint text contrast', () => {
+  const darkText = readVar(darkBlock, '--color-brand-text');
+  const darkSurface = readVar(darkBlock, '--color-brand-surface');
+  for (const t of GROUP_COLOR_TOKENS) {
+    it(`${t} tint keeps neutral text at 4.5:1 in dark`, () => {
+      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.12);
+      expect(contrast(darkText, bg)).toBeGreaterThanOrEqual(4.5);
+    });
+  }
 });
