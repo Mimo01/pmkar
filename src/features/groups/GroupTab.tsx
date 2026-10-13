@@ -80,7 +80,7 @@ export function GroupTab({
         <div
           ref={setWrapper}
           style={groupColorStyle(group.color)}
-          className="shrink-0 inline-flex items-center gap-0.5 mr-1"
+          className="shrink-0 inline-flex items-center gap-0.5 mr-3"
         >
           <Tooltip>
             <TooltipTrigger asChild>

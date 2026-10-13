@@ -110,7 +110,7 @@ export function AppShell({
               data-nav-tab=""
               type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`shrink-0 text-sm py-2 mr-4 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
+              className={`shrink-0 text-sm px-1.5 py-2 mr-3 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                 activeTab === tab.id
                   ? 'text-brand-text font-semibold border-brand'
                   : 'text-brand-text-secondary font-normal hover:text-brand-text border-transparent'
