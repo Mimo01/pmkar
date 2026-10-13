@@ -237,7 +237,7 @@ describe('GroupTabStrip overlays', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Change color updates the dot and refocuses `…`', async () => {
+  it('Change color updates the tab color and refocuses `…`', async () => {
     const { user } = setup('group:2');
     await openMoreMenu(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Change color…' }));
@@ -246,8 +246,9 @@ describe('GroupTabStrip overlays', () => {
       expect(invokeMock).toHaveBeenCalledWith('set_group_color', { groupId: 2, color: 'purple' }),
     );
     await waitFor(() => {
-      const dot = tabButton('QA').querySelector('span[aria-hidden="true"]') as HTMLElement;
-      expect(dot.style.backgroundColor).toContain('--color-group-purple');
+      expect(tabButton('QA').parentElement?.style.getPropertyValue('--group-color')).toBe(
+        'var(--color-group-purple)',
+      );
     });
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Group actions for QA' })).toHaveFocus(),

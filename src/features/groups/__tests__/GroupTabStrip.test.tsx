@@ -120,15 +120,21 @@ describe('GroupTabStrip', () => {
     expect(screen.queryByTestId('group-tab-scroller')?.children.length).toBe(0);
   });
 
-  it('renders tabs in order with dot color and count', () => {
+  it('renders tabs in order with group color and count pill', () => {
     seed([sprint, qa]);
     renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
     const a = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
     const b = screen.getByRole('button', { name: 'QA, 1 issue' });
     expect(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const dot = a.querySelector('span[aria-hidden="true"]') as HTMLElement;
-    expect(dot.style.backgroundColor).toBe('var(--color-group-blue)');
-    expect(a).toHaveTextContent('3');
+    expect(a.parentElement?.style.getPropertyValue('--group-color')).toBe(
+      'var(--color-group-blue)',
+    );
+    expect(a.querySelector('[style*="background-color"]')).toBeNull();
+    const pill = Array.from(a.querySelectorAll('span[aria-hidden="true"]')).find(
+      (el) => el.textContent === '3',
+    );
+    expect(pill).toBeTruthy();
+    expect(pill?.className).toContain('tabular-nums');
   });
 
   it('marks the active tab with aria-current and brand styling', () => {
@@ -136,7 +142,7 @@ describe('GroupTabStrip', () => {
     renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
     const b = screen.getByRole('button', { name: 'QA, 1 issue' });
     expect(b).toHaveAttribute('aria-current', 'page');
-    expect(b.parentElement?.className).toContain('border-brand');
+    expect(b.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)');
     expect(b.className).toContain('font-semibold');
     expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).not.toHaveAttribute(
       'aria-current',
