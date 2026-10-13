@@ -93,7 +93,7 @@ export function GroupTab({
                 className={`flex items-center gap-1 text-sm px-1.5 py-2 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                   active
                     ? 'text-brand-text font-semibold border-(--group-color)'
-                    : 'text-brand-text-secondary font-normal hover:text-brand-text border-(--group-color)/50 hover:border-(--group-color)/70'
+                    : 'text-brand-text-secondary font-normal hover:text-brand-text border-(--group-color)/60 hover:border-(--group-color)/80'
                 }`}
               >
                 <span className="grid max-w-[160px]">

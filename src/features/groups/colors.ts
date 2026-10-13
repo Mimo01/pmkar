@@ -1,23 +1,21 @@
 /**
- * Group color palette (Phase 28, D-05..D-08).
+ * Group color palette (Phase 28, D-05..D-08; vivid fills since quick fast 261013).
  *
  * Groups persist a color TOKEN NAME (e.g. "teal"), never a hex value (D-06).
  * Consumers must validate stored strings with `isGroupColorToken` and render
  * via `groupColorVar`; never interpolate raw stored strings into styles.
  *
- * Rendering rule (D-07, revised by quick task 261013-e6u): the color is exposed
- * as the `--group-color` custom property via `groupColorStyle`. Chips and
- * picker names are button-like (rounded-md) chips with a ~30% tint background
- * and a ~70% group-color border. Every group tab carries a group-color
- * underline: faint at rest, full strength when active. Text always stays neutral
- * (text-brand-text), never colored, and color is never the only signal (the
- * name is always shown). Every value reaches >= 3:1 non-text contrast against
- * the card surface and page background of its theme.
+ * Rendering rule: `groupColorStyle` exposes the fill as `--group-color` and a
+ * matching label color as `--group-fg`. Chips and picker names are solid
+ * group-color fills with `--group-fg` text (>= 4.5:1). Every group tab carries
+ * a group-color underline: softer at rest, full strength when active. Color is
+ * never the only signal (the name is always shown). Fills are identical in both
+ * themes.
  *
- * The hex values here are mirrored as --color-group-* variables in the plain
- * :root (light) and body.dark (dark) rules of src/index.css; a test keeps them
- * in sync. They must not be moved into @theme: Tailwind v4 would drop the ones
- * not named literally in source.
+ * The hex values here are mirrored as --color-group-* and --color-group-*-fg
+ * variables in the plain :root rule of src/index.css; a test keeps them in sync.
+ * They must not be moved into @theme: Tailwind v4 would drop the ones not named
+ * literally in source.
  */
 
 import type { CSSProperties } from 'react';
@@ -35,15 +33,15 @@ export const GROUP_COLOR_TOKENS = [
 
 export type GroupColorToken = (typeof GROUP_COLOR_TOKENS)[number];
 
-export const GROUP_COLOR_HEX: Readonly<Record<GroupColorToken, { light: string; dark: string }>> = {
-  blue: { light: '#0a6cff', dark: '#4d9bff' },
-  teal: { light: '#00968a', dark: '#2dd4c4' },
-  green: { light: '#1a9e2e', dark: '#4ade5a' },
-  yellow: { light: '#ad8b00', dark: '#facc15' },
-  orange: { light: '#f05a00', dark: '#ff8a3d' },
-  purple: { light: '#8b3dff', dark: '#b083ff' },
-  pink: { light: '#e8178a', dark: '#ff5cb0' },
-  slate: { light: '#5b6b82', dark: '#9fb0c8' },
+export const GROUP_COLOR_HEX: Readonly<Record<GroupColorToken, { fill: string; text: string }>> = {
+  blue: { fill: '#1f6feb', text: '#ffffff' },
+  teal: { fill: '#14b8a6', text: '#1c1917' },
+  green: { fill: '#22c55e', text: '#1c1917' },
+  yellow: { fill: '#facc15', text: '#1c1917' },
+  orange: { fill: '#f97316', text: '#1c1917' },
+  purple: { fill: '#9333ea', text: '#ffffff' },
+  pink: { fill: '#db2777', text: '#ffffff' },
+  slate: { fill: '#64748b', text: '#ffffff' },
 };
 
 export function isGroupColorToken(value: unknown): value is GroupColorToken {
@@ -55,12 +53,15 @@ export function groupColorVar(token: GroupColorToken): string {
 }
 
 /**
- * Inline style exposing the group color as `--group-color`, consumed by
- * Tailwind classes like `bg-(--group-color)/12`. The value only flows through
+ * Inline style exposing the group fill as `--group-color` and its label color
+ * as `--group-fg`, consumed by Tailwind classes like `bg-(--group-color)`. The value only flows through
  * groupColorVar; stored strings are never interpolated.
  */
 export function groupColorStyle(token: GroupColorToken): CSSProperties {
-  return { '--group-color': groupColorVar(token) } as CSSProperties;
+  return {
+    '--group-color': groupColorVar(token),
+    '--group-fg': `var(--color-group-${token}-fg)`,
+  } as CSSProperties;
 }
 
 /**

@@ -509,7 +509,7 @@ describe('GroupTabStrip', () => {
       const tab = screen.getByRole('button', { name: 'QA, 1 issue' });
       const inactive = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
       // Inactive tabs keep a faint group-color underline so colors read at a glance.
-      expect(inactive.className.split(/\s+/)).toContain('border-(--group-color)/50');
+      expect(inactive.className.split(/\s+/)).toContain('border-(--group-color)/60');
       expect(tab.className.split(/\s+/)).toContain('border-(--group-color)');
     });
 

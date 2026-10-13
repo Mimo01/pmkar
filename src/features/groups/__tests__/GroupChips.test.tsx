@@ -143,14 +143,14 @@ describe('GroupChips', () => {
     expect(nameEl).toHaveClass('truncate');
   });
 
-  it('renders a tinted chip with the group color var and no dot', () => {
+  it('renders a filled chip with the group color var and no dot', () => {
     seed({ 'P-1': [1] }, [g(1, 'A', 'green')]);
     const { container } = render(<GroupChips issueKey="P-1" />);
     const chip = screen.getByRole('button', { name: /A/ });
     expect(chip.style.getPropertyValue('--group-color')).toBe(groupColorVar('green'));
     const classes = chip.className.split(/\s+/);
-    expect(classes).toContain('bg-(--group-color)/30');
-    expect(classes).toContain('border-(--group-color)/70');
+    expect(classes).toContain('bg-(--group-color)');
+    expect(classes).toContain('text-(--group-fg)');
     expect(classes).toContain('rounded-md');
     expect(container.querySelector('[style*="background-color"]')).toBeNull();
   });

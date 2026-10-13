@@ -44,18 +44,26 @@
   --radius: 0.5rem;
 }
 
-/* Group palette (Phase 28, D-05..D-07): exposed via --group-color as soft tints, borders and tab underlines; text stays neutral.
+/* Group palette (Phase 28, D-05..D-07): solid fills via --group-color with --group-fg label text, plus tab underlines. Same in both themes.
    Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
    and these are referenced only via a runtime-built var() name in colors.ts. */
 :root {
-  --color-group-blue: #0a6cff;
-  --color-group-teal: #00968a;
-  --color-group-green: #1a9e2e;
-  --color-group-yellow: #ad8b00;
-  --color-group-orange: #f05a00;
-  --color-group-purple: #8b3dff;
-  --color-group-pink: #e8178a;
-  --color-group-slate: #5b6b82;
+  --color-group-blue: #1f6feb;
+  --color-group-blue-fg: #ffffff;
+  --color-group-teal: #14b8a6;
+  --color-group-teal-fg: #1c1917;
+  --color-group-green: #22c55e;
+  --color-group-green-fg: #1c1917;
+  --color-group-yellow: #facc15;
+  --color-group-yellow-fg: #1c1917;
+  --color-group-orange: #f97316;
+  --color-group-orange-fg: #1c1917;
+  --color-group-purple: #9333ea;
+  --color-group-purple-fg: #ffffff;
+  --color-group-pink: #db2777;
+  --color-group-pink-fg: #ffffff;
+  --color-group-slate: #64748b;
+  --color-group-slate-fg: #ffffff;
 }
 
 /* Light theme body defaults */
@@ -101,16 +109,6 @@ body.dark {
   --color-ring: #e5484d;
   --color-focus-ring: #e5484d;
   --color-destructive-text: #f87171;
-
-  /* Group palette dark values */
-  --color-group-blue: #4d9bff;
-  --color-group-teal: #2dd4c4;
-  --color-group-green: #4ade5a;
-  --color-group-yellow: #facc15;
-  --color-group-orange: #ff8a3d;
-  --color-group-purple: #b083ff;
-  --color-group-pink: #ff5cb0;
-  --color-group-slate: #9fb0c8;
 }
 
 ::-webkit-scrollbar {

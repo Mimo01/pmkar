@@ -1,12 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  contrast,
-  darkBlock,
-  mix,
-  readVar,
-  rootBlock,
-  themeBlock,
-} from '../../../test-utils/contrast';
+import { contrast, darkBlock, readVar, rootBlock, themeBlock } from '../../../test-utils/contrast';
 import {
   GROUP_COLOR_HEX,
   GROUP_COLOR_TOKENS,
@@ -33,11 +26,11 @@ describe('palette', () => {
     ]);
   });
 
-  it('has a hex pair for every token', () => {
+  it('has a fill and label color for every token', () => {
     expect(Object.keys(GROUP_COLOR_HEX)).toEqual([...GROUP_COLOR_TOKENS]);
     for (const t of GROUP_COLOR_TOKENS) {
-      expect(GROUP_COLOR_HEX[t].light).toMatch(/^#[0-9a-f]{6}$/);
-      expect(GROUP_COLOR_HEX[t].dark).toMatch(/^#[0-9a-f]{6}$/);
+      expect(GROUP_COLOR_HEX[t].fill).toMatch(/^#[0-9a-f]{6}$/);
+      expect(GROUP_COLOR_HEX[t].text).toMatch(/^#[0-9a-f]{6}$/);
     }
   });
 
@@ -45,25 +38,16 @@ describe('palette', () => {
     const forbidden = ['#c02232', '#dc2626', '#d4354a', '#a01c2a'];
     for (const t of GROUP_COLOR_TOKENS) {
       expect(t).not.toContain('red');
-      expect(forbidden).not.toContain(GROUP_COLOR_HEX[t].light);
-      expect(forbidden).not.toContain(GROUP_COLOR_HEX[t].dark);
+      expect(forbidden).not.toContain(GROUP_COLOR_HEX[t].fill);
     }
   });
 });
 
 describe('contrast', () => {
-  const lightSurface = readVar(themeBlock, '--color-brand-surface');
-  const lightBg = readVar(themeBlock, '--color-brand-bg');
-  const darkSurface = readVar(darkBlock, '--color-brand-surface');
-  const darkBg = readVar(darkBlock, '--color-brand-bg');
-
   for (const t of GROUP_COLOR_TOKENS) {
-    it(`${t} reaches 3:1 in both themes`, () => {
-      const { light, dark } = GROUP_COLOR_HEX[t];
-      expect(contrast(light, lightSurface)).toBeGreaterThanOrEqual(3);
-      expect(contrast(light, lightBg)).toBeGreaterThanOrEqual(3);
-      expect(contrast(dark, darkSurface)).toBeGreaterThanOrEqual(3);
-      expect(contrast(dark, darkBg)).toBeGreaterThanOrEqual(3);
+    it(`${t} label reaches 4.5:1 on its fill`, () => {
+      const { fill, text } = GROUP_COLOR_HEX[t];
+      expect(contrast(text, fill)).toBeGreaterThanOrEqual(4.5);
     });
   }
 });
@@ -114,15 +98,15 @@ describe('groupColorVar', () => {
 });
 
 describe('css parity', () => {
-  it('declares exactly eight group variables in each block', () => {
+  it('declares the eight group fills in :root only (same in both themes)', () => {
     expect(count(rootBlock)).toBe(8);
-    expect(count(darkBlock)).toBe(8);
+    expect(count(darkBlock)).toBe(0);
   });
 
   for (const t of GROUP_COLOR_TOKENS) {
-    it(`${t} matches colors.ts in both themes`, () => {
-      expect(readVar(rootBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].light.toLowerCase());
-      expect(readVar(darkBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].dark.toLowerCase());
+    it(`${t} matches colors.ts`, () => {
+      expect(readVar(rootBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].fill);
+      expect(readVar(rootBlock, `--color-group-${t}-fg`)).toBe(GROUP_COLOR_HEX[t].text);
     });
   }
 });
@@ -137,20 +121,9 @@ describe('light palette emission', () => {
 });
 
 describe('groupColorStyle', () => {
-  it('sets --group-color to the css var reference', () => {
-    expect((groupColorStyle('blue') as Record<string, string>)['--group-color']).toBe(
-      'var(--color-group-blue)',
-    );
+  it('sets --group-color and --group-fg to css var references', () => {
+    const style = groupColorStyle('blue') as Record<string, string>;
+    expect(style['--group-color']).toBe('var(--color-group-blue)');
+    expect(style['--group-fg']).toBe('var(--color-group-blue-fg)');
   });
-});
-
-describe('tint text contrast', () => {
-  const darkText = readVar(darkBlock, '--color-brand-text');
-  const darkSurface = readVar(darkBlock, '--color-brand-surface');
-  for (const t of GROUP_COLOR_TOKENS) {
-    it(`${t} tint keeps neutral text at 4.5:1 in dark`, () => {
-      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.3);
-      expect(contrast(darkText, bg)).toBeGreaterThanOrEqual(4.5);
-    });
-  }
 });
