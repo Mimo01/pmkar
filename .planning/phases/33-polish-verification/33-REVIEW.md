@@ -51,12 +51,12 @@ files_reviewed_list:
 findings:
   critical: 0
   warning: 1
-  info: 6
-  total: 7
+  info: 8
+  total: 9
 status: issues_found
 ---
 
-# Phase 33: Code Review Report (re-review after gap closure 33-11 / 33-12)
+# Phase 33: Code Review Report (re-review after gap closure 33-13)
 
 **Reviewed:** 2026-10-13
 **Depth:** standard
@@ -65,96 +65,113 @@ status: issues_found
 
 ## Summary
 
-This is a re-review after gap-closure plans 33-11 (dimmed-card contrast, `readVar` anchoring) and 33-12 (overflow-arrow focus handoff, stale `activeTab`, Esc guard). Since the previous review, ten source files changed (`git diff eda6d1a..HEAD`). All five earlier CR/WR items are fixed in code. Each fix has a regression test that fails against the old code. The six affected test files pass (156 tests).
+This re-review follows gap-closure plan 33-13, which changed how focus moves when an overflow arrow disappears. Since the previous review (`f2aed21`), only two source files changed: `src/features/groups/GroupTabStrip.tsx` and `src/features/groups/__tests__/GroupTabStrip.test.tsx`. The other 42 files are byte-identical, so their earlier assessment and line references still hold.
 
-I checked the composited contrast numbers independently:
-- **Dimmed summary** (`brand-text` at 0.7 opacity):
-  - light: 6.03 on surface, 5.63 on surface-hover
-  - dark: 7.09 on surface, 6.49 on surface-hover
-- **Focused destructive menu item** (`destructive-text` on `destructive/10`): 5.54 in light, 5.63 in dark.
+The new logic works as follows. When the focused arrow disappears and the strip still overflows the other way, `updateOverflow` sets `arrowHandoff`. A layout effect then focuses the opposite arrow with `preventScroll`. Focus falls back to the active tab only when overflow is gone entirely, and in that case the active tab is guaranteed to be visible.
 
-One new Warning remains, and it comes from how CR-01 was fixed. Focus is no longer snapped back, but it now goes to a tab that may be scrolled out of view, so keyboard users cannot see where focus is. The remaining items are Info-level: test-reliability nits and carried-over items that the gap plans did not cover.
+I traced the batching. `setArrowHandoff` and `setOverflow` are queued in the same handler, so the target arrow is mounted and its ref is attached before the layout effect runs. That holds even when the left arrow mounts in the same commit after a single-step scroll. The new tests assert that the opposite arrow has focus, and they would fail against the 33-12 code. `GroupTabStrip.test.tsx`, `groupScale.test.tsx` and `a11y.keyboard.test.tsx` pass (68 tests).
+
+**Prior WR-01 is resolved.** The handoff target is now the opposite arrow, which sits in an absolutely positioned overlay outside the clipped scroller and is always visible. Prior IN-04 (test cleanup leaks and vacuous `scrollLeft` assertions) is also resolved.
+
+The new handoff has two side effects:
+- **Tooltip (one Warning).** The arrows are Radix tooltip triggers, so moving focus programmatically opens a tooltip nobody asked for. On Chromium-based webviews this also affects mouse users.
+- **Held Enter (Info).** Holding Enter on the right arrow reverses direction once the strip reaches its end.
 
 ## Previous findings status
 
 | ID | Title | Status | Evidence |
 |----|-------|--------|----------|
-| CR-01 | Focus fallback undoes the scroll that triggered it | **Resolved** (with follow-up WR-01 below) | `GroupTabStrip.tsx:109-110` passes `{ preventScroll: true }`; `focusCoreTab` forwards `FocusOptions` (`groupTabs.ts:11-14`); the spy-based tests at `GroupTabStrip.test.tsx:179-207` would fail on the old code |
-| WR-01 | ResizeObserver callback reads a stale `activeTab` | **Resolved** | `activeTabRef` (`GroupTabStrip.tsx:85-86`) is read in `updateOverflow`; the test at `GroupTabStrip.test.tsx:213-223` exercises the captured observer callback after a rerender |
-| WR-02 | Dimmed issue keys and metadata fail WCAG 1.4.3 | **Resolved** | Only the `brand-text` summary is dimmed (`TicketCard.tsx:129-134`); key, dates and assignee are undimmed (`TicketCard.tsx:85, 114, 139`); the contrast test asserts at least 4.5:1 on all three backgrounds, using the opacity read from source |
-| WR-03 | `useListSelection` text-field guard too broad | **Resolved** | The Escape / defaultPrevented / selectMode check now runs first (`useListSelection.ts:116`); non-text input types are excluded (`:35-44, 119-123`); tests cover checkbox, radio, search and textarea |
-| WR-04 | `readVar` regex unanchored | **Resolved** | Anchored on `(?:^|[\s;{])` with the name escaped (`contrast.ts:26-28`); four regression tests (`contrast.test.ts:94-113`) |
-| IN-01 | Key-search field has no Escape handling | **Open** | `TicketFilterBar.tsx:145-152` is unchanged (carried as IN-01) |
-| IN-02 | SK `_many` contradicts CLDR | **Open** | Unchanged (carried as IN-02) |
-| IN-03 / IN-04 / IN-05 | Mock-server scenario items | **Not re-reviewed** | `src-tauri/*` is outside this re-review's file scope and was not touched by 33-11/33-12 |
-| IN-06 | Redundant duplicate contrast test / `scrollIntoView` | **Open** | `contrast.test.ts:65-69` and `AppShell.tsx:50-51` are unchanged (carried as IN-03) |
+| WR-01 | Overflow-arrow focus handoff leaves focus on an off-screen tab | **Resolved** | `GroupTabStrip.tsx:109-112` hands off to the opposite arrow; the active-tab fallback (`:113-117`) runs only when `!canScrollLeft && !canScrollRight`; the layout effect at `:137-142` focuses the arrow with `preventScroll`. Tests at `GroupTabStrip.test.tsx:210-241` assert the opposite arrow has focus (they fail on the 33-12 code). |
+| IN-01 | Key-search field has no Escape handling | **Open** | Unchanged (carried as IN-01) |
+| IN-02 | SK `_many === _other` contradicts CLDR | **Open** | Unchanged (carried as IN-02) |
+| IN-03 | Redundant contrast test / redundant `scrollIntoView` | **Open** | Unchanged (carried as IN-03) |
+| IN-04 | Vacuous `scrollLeft` assertions, leaking DOM and spies | **Resolved** | `scrollLeft).toBe(...)` assertions removed; `afterEach` (`GroupTabStrip.test.tsx:71-74`) runs `vi.restoreAllMocks()` and removes stray `[data-tab-id]` nodes |
+| IN-05 | Contrast test opacity regex takes the first `opacity-NN` | **Open** | Unchanged (carried as IN-04) |
+| IN-06 | Hook JSDoc attached to `NON_TEXT_INPUT_TYPES` | **Open** | Unchanged (carried as IN-05) |
+
+## Narrative Findings (AI reviewer)
 
 ## Warnings
 
-### WR-01: The overflow-arrow focus handoff can leave focus on a tab that is off-screen
+### WR-01: The arrow handoff opens the "Scroll tabs …" tooltip without the user asking, including for mouse users on Chromium webviews
 
-**File:** `src/features/groups/GroupTabStrip.tsx:101-111`
-**Issue:** The CR-01 fix stops the browser from scrolling, but it still sends focus to the *active* tab. In the exact scenario CR-01 described, that tab is scrolled out of view: the active tab sits on the left and the user presses "Scroll tabs right" until the strip reaches its end. After the fix:
+**File:** `src/features/groups/GroupTabStrip.tsx:137-142` (target buttons at `:386-399` and `:407-420`)
+**Issue:** Both arrows are wrapped in Radix `TooltipTrigger`. In `@radix-ui/react-tooltip` 1.2.8, the trigger's `onFocus` calls `context.onOpen()` unless `isPointerDownRef` is set (`dist/index.mjs:202-203`). `onOpen` opens the tooltip immediately; the provider's `delayDuration=300` applies only to pointer-enter. The handoff calls `.focus()` on an arrow that never received a pointerdown, so the opposite arrow's tooltip always pops open at the far end of the strip.
 
-- Focus goes to an element the user cannot see. The focus indicator is hidden inside the `overflow-x-auto` scroller. This fails WCAG 2.4.7 (Focus Visible) and the intent of 2.4.11 (Focus Not Obscured), in a phase whose goal is GQA compliance.
-- The next Tab press moves to the active tab's "More" button (`tabIndex=0`), which is also off-screen. The browser scrolls it into view, so the strip snaps back one keystroke later. The bug CR-01 reported is postponed, not fixed.
+- **Keyboard users:** this is tolerable, though the first Escape is then consumed by the tooltip rather than reaching any outer handler. `a11y.keyboard.test.tsx:410` already notes this pitfall for another trigger.
+- **Mouse users:** Chromium focuses a `<button>` on click. That covers WebView2 on Windows, and `tauri.conf.json` bundles `"targets": "all"`. So a mouse user who clicks "Scroll tabs right" until the end now sees focus jump to the left arrow and a "Scroll tabs left" tooltip appear away from the pointer. The tooltip stays open until the next blur, because a focus-opened Radix tooltip does not close on pointer-leave. With the 33-12 code, nothing visible happened. (WKWebView on macOS does not focus buttons on click, so macOS is unaffected; I have not checked this at runtime on Windows or Linux.)
 
-The 33-12 summary records this choice ("Focus fallback still targets the active tab but with preventScroll"). The previous review recommended moving focus to the opposite arrow or to the first/last visible tab, and that recommendation still stands.
-
-**Fix:** Move focus to a control that is visible once the arrow disappears. When the right arrow vanishes because the strip reached its end, the left arrow is the natural target, because it just appeared. It is rendered conditionally, so focus it after the state update:
+**Fix:** Hand off only when the arrow was focused via the keyboard. For pointer-initiated focus, let it drop (or keep the old active-tab fallback), since mouse users do not need the handoff:
 ```tsx
-const [arrowHandoff, setArrowHandoff] = useState<'left' | 'right' | null>(null);
-// in updateOverflow, instead of focusing the active tab:
-if (focused === rightArrowRef.current && !next.canScrollRight) {
-  setArrowHandoff(next.canScrollLeft ? 'left' : null);
-  if (!next.canScrollLeft) focusActiveTab(); // no overflow at all: active tab is visible
-}
-// mirror for the left arrow
-useLayoutEffect(() => {
-  if (arrowHandoff === 'left') leftArrowRef.current?.focus();
-  else if (arrowHandoff === 'right') rightArrowRef.current?.focus();
-  if (arrowHandoff) setArrowHandoff(null);
-}, [arrowHandoff, overflow]);
+const keyboardFocused = focused instanceof HTMLElement && focused.matches(':focus-visible');
+if (focusedRightGone && next.canScrollLeft) {
+  if (keyboardFocused) setArrowHandoff('left');
+} else if (focusedLeftGone && next.canScrollRight) {
+  if (keyboardFocused) setArrowHandoff('right');
+} else if (focusedLeftGone || focusedRightGone) { /* existing active-tab fallback */ }
 ```
-Another option is to focus the last fully visible tab, measured with `getBoundingClientRect()` against the scroller rect. Either way, add a test asserting that the focused element's rect falls within the scroller's rect, or that the opposite arrow has focus.
+If `:focus-visible` is unreliable in jsdom, track a `lastArrowPointerRef` set in the arrows' `onPointerDown` and cleared on `keydown`. Optionally suppress the tooltip on the handed-off focus by making the `Tooltip` `open` controlled for one tick. Add a test: pointer-click the right arrow, reach the end, and assert that no `role="tooltip"` is rendered.
 
 ## Info
 
 ### IN-01: The key-search field still has no Escape handling (carried over)
 
 **File:** `src/features/tickets/TicketFilterBar.tsx:145-152`; `src/features/groups/useListSelection.ts:117`
-**Issue:** The guard comment says Esc "belongs to that field (clear/dismiss)". The key-search `<input type="text">` has no `onKeyDown`, so in select mode Escape there does nothing: it neither clears the field nor exits select mode. Only the assignee combobox (`TicketFilterBar.tsx:129-134`) handles Escape.
-**Fix:** Add `onKeyDown={(e) => { if (e.key === 'Escape' && searchText) { e.preventDefault(); onSearchChange(''); } }}`. This lets an empty field fall through to select-mode exit if the guard is later relaxed. Alternatively, reword the comment.
+**Issue:** The guard comment says Esc "belongs to that field (clear/dismiss)". The key-search input has no `onKeyDown`, so in select mode Escape there does nothing.
+**Fix:** Add `onKeyDown={(e) => { if (e.key === 'Escape' && searchText) { e.preventDefault(); onSearchChange(''); } }}`, or reword the comment.
 
 ### IN-02: SK `_many === _other` contradicts CLDR (carried over)
 
 **File:** `src/i18n/locales/sk.json:499, 535, 561, 568`; `src/i18n/__tests__/groupLocale.test.ts:43-50`
-**Issue:** In Slovak CLDR, `many` covers non-integer counts and takes the genitive singular. The test enforces the plural `other` form. This cannot be reached with integer counts.
+**Issue:** In Slovak CLDR, `many` covers non-integer counts. The test enforces the plural `other` form. This cannot be reached with integer counts.
 **Fix:** Add a comment in the test noting that `_many` is unreachable for integer counts, or revert to the `_few` form.
 
 ### IN-03: Redundant contrast test and redundant `scrollIntoView` (carried over)
 
 **File:** `src/features/groups/__tests__/contrast.test.ts:65-69`; `src/components/ui/AppShell.tsx:50-51`
-**Issue:** The "unchecked checkbox boundary >= 3" test checks the same pair as the ">= 4.5" test at lines 45-49, so it can never fail on its own. In `handleNavKeyDown`, `focus()` already scrolls the element into view.
+**Issue:** The ">= 3" checkbox-boundary test checks the same pair as the ">= 4.5" test, so it can never fail on its own. In `handleNavKeyDown`, `focus()` already scrolls the element into view.
 **Fix:** Drop the duplicate test. Use `focus({ preventScroll: true })` followed by `scrollIntoView({ inline: 'nearest' })` if the explicit scroll is intended.
 
-### IN-04: The new "without scrolling" assertions are vacuous in jsdom, and the tests can leak DOM
-
-**File:** `src/features/groups/__tests__/GroupTabStrip.test.tsx:179-207`
-**Issue:** `expect(scroller.scrollLeft).toBe(400)` always passes, because jsdom never scrolls on `focus()`. Only the `spy` assertion actually guards CR-01, so the test names overstate what is checked. Also, the core-tab test appends a `<button data-tab-id="new">` to `document.body`, and both tests install a prototype `focus` spy. Cleanup (`core.remove()`, `spy.mockRestore()`) runs only after the assertions. If an assertion fails, the stray button and the prototype spy leak into later tests in the file, and later `focusCoreTab('new')` calls hit the wrong element.
-**Fix:** Delete the `scrollLeft` assertions, or label them as documentation. Move cleanup into `try/finally` or `afterEach` (`vi.restoreAllMocks()`, and remove the `[data-tab-id]` nodes).
-
-### IN-05: The opacity extraction in the contrast test takes the first `opacity-NN` anywhere in TicketCard.tsx
+### IN-04: The opacity extraction in the contrast test takes the first `opacity-NN` anywhere in TicketCard.tsx (carried over)
 
 **File:** `src/features/groups/__tests__/contrast.test.ts:19-21`
-**Issue:** `/opacity-(\d+)/` matches the first occurrence anywhere in the file. A later edit that adds `disabled:opacity-50`, `hover:opacity-100` or similar above `dimClass` would make the test check the wrong opacity and still pass or fail misleadingly. The check also does not confirm that the opacity applies to a `brand-text` element.
-**Fix:** Export the dim opacity from `TicketCard.tsx` as a constant (for example `export const MISSING_DIM_CLASS = 'opacity-70 …'`) and parse that. Alternatively, anchor the regex to the `dimClass` declaration: `/const dimClass = dimmed\s*\?\s*'opacity-(\d+)/`.
+**Issue:** `/opacity-(\d+)/` matches the first occurrence anywhere in the file. A later `hover:opacity-100` placed above `dimClass` would make the test check the wrong opacity.
+**Fix:** Export the dim class as a constant from `TicketCard.tsx` and parse that, or anchor the regex to the `dimClass` declaration.
 
-### IN-06: The hook's JSDoc is now attached to `NON_TEXT_INPUT_TYPES`
+### IN-05: The hook's JSDoc is attached to `NON_TEXT_INPUT_TYPES` (carried over)
 
 **File:** `src/features/groups/useListSelection.ts:29-46`
-**Issue:** The new constant was inserted between the `useListSelection` JSDoc block and the function. Editors and doc tooling now attach the "Per-page selection state…" doc to the constant, and the hook has no documentation. Separately, `<select>` and `type="image"` are not covered: Escape on an open native `<select>` both closes the dropdown and exits select mode. This is minor.
-**Fix:** Move `NON_TEXT_INPUT_TYPES` above the JSDoc block. Optionally add `'image'` to the set and treat `HTMLSelectElement` as a field that owns Escape.
+**Issue:** The constant sits between the `useListSelection` JSDoc and the function, so doc tooling attaches the hook's documentation to the constant. Native `<select>` is not treated as a field that owns Escape.
+**Fix:** Move the constant above the JSDoc block. Optionally treat `HTMLSelectElement` as a field that owns Escape.
+
+### IN-06: Holding Enter on the right arrow reverses scrolling once it reaches the end
+
+**File:** `src/features/groups/GroupTabStrip.tsx:109-110, 392, 413`
+**Issue:** Enter activates a `<button>` on every auto-repeated keydown. A keyboard user holding Enter on "Scroll tabs right" reaches the end. Focus then moves to "Scroll tabs left", and the remaining repeat keydowns click that arrow, so the strip scrolls back left. Depending on repeat rate and smooth-scroll timing, it can bounce. This is an inherent cost of handing focus to the opposite arrow. It is minor, but it was not covered by the plan or the tests.
+**Fix:** Ignore repeated activations on the arrows, for example `onKeyDown={(e) => { if (e.repeat && (e.key === 'Enter' || e.key === ' ')) e.preventDefault(); }}`. Alternatively, ignore clicks on the handed-off arrow until the next `keyup`.
+
+### IN-07: A pending handoff is silently dropped if the target arrow is not mounted, and the biome-ignore rationale is inaccurate
+
+**File:** `src/features/groups/GroupTabStrip.tsx:136-142`
+**Issue:** The effect calls `leftArrowRef.current?.focus(...)` and then always calls `setArrowHandoff(null)`. If the ref were ever null, the handoff would be cleared on that run: the `overflow` dependency does not "re-run after the arrow mounts" as the comment claims, because there is nothing left to retry. Focus would then fall to `<body>`. Today this cannot happen, because both state updates are batched in one commit. But the comment describes a guarantee the code does not provide, and a future refactor (for example, deferring `setOverflow`) would break focus without failing any test.
+**Fix:** Clear the handoff only once it has been honoured, and fall back otherwise:
+```tsx
+const target = arrowHandoff === 'left' ? leftArrowRef.current : rightArrowRef.current;
+if (!target) return; // wait for the overflow-driven re-render
+target.focus({ preventScroll: true });
+setArrowHandoff(null);
+```
+Then remove the `overflow` dependency from the biome-ignore comment, or keep it with an accurate comment.
+
+### IN-08: `expectFocusVisible` is a no-op in both handoff tests, and its rect checks only compare hand-set mocks
+
+**File:** `src/features/groups/__tests__/GroupTabStrip.test.tsx:90-101, 196-232, 243-260`
+**Issue:**
+- The helper returns early whenever an arrow is focused. In the two arrow-handoff tests it therefore asserts nothing, and the `mockRect` calls for the tabs in `setupRightEndHandoff` (`:202-204`) and at `:225` are dead setup.
+- In the resize-fallback test, the rects passed to the bounds check are values the test itself chose to lie inside the scroller, so that check is tautological.
+
+The real guard in these tests is the `toHaveFocus` assertion, which is enough. But the helper's name and the "rect-based focus-visibility tests" wording in the commit message overstate what is verified.
+**Fix:** Drop the unused `mockRect` calls in the handoff tests and call `expectFocusVisible` only in the fallback test. Alternatively, assert directly that the focused arrow sits outside the scroller element (`expect(scroller.contains(document.activeElement)).toBe(false)`), which is the actual visibility argument for the arrows.
 
 ---
 
