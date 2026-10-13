@@ -234,11 +234,11 @@ describe('25-group scale', () => {
     expect(names).toEqual([SK_NAMES[0]]);
   });
 
-  it('chips show at most 2 groups plus a +N overflow', () => {
+  it('chips show every group without overflow', () => {
     seed(make25(), { 'P-1': [1, 2, 3, 4, 5] });
     render(<GroupChips issueKey="P-1" />);
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(3);
-    expect(screen.getByText('+3')).toBeInTheDocument();
+    expect(buttons).toHaveLength(5);
+    expect(screen.queryByText('+3')).not.toBeInTheDocument();
   });
 });

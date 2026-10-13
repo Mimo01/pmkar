@@ -31,10 +31,24 @@ describe('GroupChips', () => {
     render(<GroupChips issueKey="P-1" />);
     const names = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
     expect(names).toEqual(['Go to group “A”', 'Go to group “C”']);
-    expect(screen.queryByText('+1')).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\+\d/)).not.toBeInTheDocument();
   });
 
-  it('shows two chips plus a +N button with aria-label listing the rest', async () => {
+  it('renders every group chip in tab order with no +N pill', () => {
+    seed({ 'P-1': [1, 2, 3, 4] });
+    render(<GroupChips issueKey="P-1" />);
+    const names = screen.getAllByRole('button').map((btn) => btn.getAttribute('aria-label'));
+    expect(names).toEqual([
+      'Go to group “A”',
+      'Go to group “B”',
+      'Go to group “C”',
+      'Go to group “D”',
+    ]);
+    expect(screen.queryByText(/^\+\d/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /more group/ })).not.toBeInTheDocument();
+  });
+
+  it('navigates from a previously hidden chip without bubbling', async () => {
     seed({ 'P-1': [1, 2, 3, 4] });
     const spy = vi.fn();
     const parent = vi.fn();
@@ -47,27 +61,18 @@ describe('GroupChips', () => {
         </div>
       </NavigationContext.Provider>,
     );
-    expect(screen.getByRole('button', { name: 'Go to group “A”' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Go to group “B”' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Go to group “C”' })).not.toBeInTheDocument();
-    const more = screen.getByRole('button', { name: '2 more groups: C, D' });
-    expect(more).toHaveTextContent('+2');
-    await user.click(more);
-    expect(spy).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Go to group “D”' }));
+    expect(spy).toHaveBeenCalledWith(4);
     expect(parent).not.toHaveBeenCalled();
   });
 
-  it('shows a tooltip listing remaining groups on focus', async () => {
+  it('wraps chips right-aligned instead of shrinking', () => {
     seed({ 'P-1': [1, 2, 3, 4] });
-    const user = userEvent.setup();
     render(<GroupChips issueKey="P-1" />);
-    await user.tab();
-    await user.tab();
-    await user.tab();
-    expect(screen.getByRole('button', { name: '2 more groups: C, D' })).toHaveFocus();
-    const tip = await screen.findByRole('tooltip');
-    expect(tip).toHaveTextContent('C');
-    expect(tip).toHaveTextContent('D');
+    const container = screen.getByRole('button', { name: 'Go to group “A”' }).parentElement;
+    expect(container).toHaveClass('flex-wrap');
+    expect(container).toHaveClass('justify-end');
+    expect(container).not.toHaveClass('shrink-0');
   });
 
   it('hides the current group and does not count it', () => {
@@ -148,13 +153,5 @@ describe('GroupChips', () => {
     expect(classes).toContain('border-(--group-color)/70');
     expect(classes).toContain('rounded-md');
     expect(container.querySelector('[style*="background-color"]')).toBeNull();
-  });
-
-  it('renders the +N overflow trigger as a counter pill', () => {
-    seed({ 'P-1': [1, 2, 3, 4] });
-    render(<GroupChips issueKey="P-1" />);
-    const more = screen.getByText('+2');
-    expect(more).toHaveClass('tabular-nums');
-    expect(more).toHaveClass('rounded-full');
   });
 });
