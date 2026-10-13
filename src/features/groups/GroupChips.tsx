@@ -47,7 +47,7 @@ export function GroupChips({ issueKey, hideGroupId }: { issueKey: string; hideGr
                   <span
                     key={g.id}
                     style={groupColorStyle(g.color)}
-                    className={`inline-flex items-center h-5 px-1.5 rounded text-xs ${groupChipClass}`}
+                    className={`px-2 ${groupChipClass}`}
                   >
                     <GroupChipLabel group={g} />
                   </span>

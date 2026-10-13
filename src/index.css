@@ -44,7 +44,7 @@
   --radius: 0.5rem;
 }
 
-/* Group palette (Phase 28, D-05..D-07): exposed via --group-color as soft tints, borders and the active tab underline; text stays neutral.
+/* Group palette (Phase 28, D-05..D-07): exposed via --group-color as soft tints, borders and tab underlines; text stays neutral.
    Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
    and these are referenced only via a runtime-built var() name in colors.ts. */
 :root {

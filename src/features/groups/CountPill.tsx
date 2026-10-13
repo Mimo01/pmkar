@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  * a tab never changes width when it becomes active.
  */
 export function countPillClass(active = false): string {
-  return `inline-flex items-center justify-center h-4 min-w-4 px-1.5 rounded-full text-xs font-medium tabular-nums leading-none bg-brand-surface-hover ${
+  return `inline-flex items-center justify-center h-4 min-w-4 px-1.5 rounded-full border border-brand-border text-xs font-medium tabular-nums leading-none bg-brand-surface-hover ${
     active ? 'text-brand-text' : 'text-brand-text-secondary'
   }`;
 }

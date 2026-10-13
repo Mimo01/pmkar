@@ -80,8 +80,10 @@ export function GroupTab({
         <div
           ref={setWrapper}
           style={groupColorStyle(group.color)}
-          className={`shrink-0 inline-flex items-center gap-1 mr-4 px-1.5 rounded-t border-b-2 transition-colors duration-150 hover:bg-(--group-color)/8 ${
-            active ? 'border-(--group-color)' : 'border-transparent'
+          className={`shrink-0 inline-flex items-center gap-1 mr-4 border-b-2 transition-colors duration-150 ${
+            active
+              ? 'border-(--group-color)'
+              : 'border-(--group-color)/35 hover:border-(--group-color)/70'
           }`}
         >
           <Tooltip>

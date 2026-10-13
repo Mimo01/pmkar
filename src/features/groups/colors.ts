@@ -7,9 +7,9 @@
  *
  * Rendering rule (D-07, revised by quick task 261013-e6u): the color is exposed
  * as the `--group-color` custom property via `groupColorStyle`. Chips and
- * picker names use a soft (~12%) tint background with a stronger (~45%)
- * group-color border; the active group tab uses a solid group-color underline
- * and tabs get a faint tint on hover. Text always stays neutral
+ * picker names are StatusBadge-style pills with a soft (~10%) tint background
+ * and a (~40%) group-color border. Every group tab carries a group-color
+ * underline: faint at rest, full strength when active. Text always stays neutral
  * (text-brand-text), never colored, and color is never the only signal (the
  * name is always shown). Every value reaches >= 3:1 non-text contrast against
  * the card surface and page background of its theme.

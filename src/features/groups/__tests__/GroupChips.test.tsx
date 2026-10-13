@@ -144,8 +144,9 @@ describe('GroupChips', () => {
     const chip = screen.getByRole('button', { name: /A/ });
     expect(chip.style.getPropertyValue('--group-color')).toBe(groupColorVar('green'));
     const classes = chip.className.split(/\s+/);
-    expect(classes).toContain('bg-(--group-color)/12');
-    expect(classes).toContain('border-(--group-color)/45');
+    expect(classes).toContain('bg-(--group-color)/10');
+    expect(classes).toContain('border-(--group-color)/40');
+    expect(classes).toContain('rounded-full');
     expect(container.querySelector('[style*="background-color"]')).toBeNull();
   });
 

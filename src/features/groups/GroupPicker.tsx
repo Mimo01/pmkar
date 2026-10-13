@@ -382,10 +382,7 @@ function GroupPickerBody(props: BodyProps) {
                   {selected && <Check className="h-3 w-3" />}
                 </span>
               )}
-              <span
-                style={groupColorStyle(g.color)}
-                className={`inline-flex min-w-0 items-center h-5 px-1.5 rounded text-xs ${groupChipClass}`}
-              >
+              <span style={groupColorStyle(g.color)} className={`min-w-0 px-2 ${groupChipClass}`}>
                 <span className="truncate" title={g.name}>
                   {g.name}
                 </span>

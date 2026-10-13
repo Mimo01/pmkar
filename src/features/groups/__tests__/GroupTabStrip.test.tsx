@@ -521,7 +521,9 @@ describe('GroupTabStrip', () => {
       expect(tab.contains(more)).toBe(false);
       expect(tab.parentElement).toBe(more.parentElement);
       const inactive = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
-      expect(inactive.parentElement?.className).toContain('border-transparent');
+      // Inactive tabs keep a faint group-color underline so colors read at a glance.
+      expect(inactive.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)/35');
+      expect(tab.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)');
     });
 
     it('keyboard Enter on `…` opens the menu', async () => {
