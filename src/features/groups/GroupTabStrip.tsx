@@ -62,6 +62,7 @@ export function GroupTabStrip({
   const leftArrowRef = useRef<HTMLButtonElement | null>(null);
   const rightArrowRef = useRef<HTMLButtonElement | null>(null);
   const [overflow, setOverflow] = useState({ canScrollLeft: false, canScrollRight: false });
+  const [arrowHandoff, setArrowHandoff] = useState<'left' | 'right' | null>(null);
   const wrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const moreRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -99,11 +100,17 @@ export function GroupTabStrip({
       scrollWidth: el.scrollWidth,
     });
     const focused = document.activeElement;
-    if (
-      focused !== null &&
-      ((focused === leftArrowRef.current && !next.canScrollLeft) ||
-        (focused === rightArrowRef.current && !next.canScrollRight))
-    ) {
+    const focusedLeftGone =
+      focused !== null && focused === leftArrowRef.current && !next.canScrollLeft;
+    const focusedRightGone =
+      focused !== null && focused === rightArrowRef.current && !next.canScrollRight;
+    // Hand focus to the opposite arrow: the active tab may be clipped by the scroller
+    // (WCAG 2.4.7, 33-VERIFICATION SC2).
+    if (focusedRightGone && next.canScrollLeft) {
+      setArrowHandoff('left');
+    } else if (focusedLeftGone && next.canScrollRight) {
+      setArrowHandoff('right');
+    } else if (focusedLeftGone || focusedRightGone) {
       const current = activeTabRef.current;
       const id = parseGroupTabId(current);
       if (id !== null) tabRefs.current.get(id)?.focus({ preventScroll: true });
@@ -125,6 +132,14 @@ export function GroupTabStrip({
     ro.observe(el);
     return () => ro.disconnect();
   }, [groups]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: overflow re-runs after the arrow mounts
+  useLayoutEffect(() => {
+    if (arrowHandoff === null) return;
+    if (arrowHandoff === 'left') leftArrowRef.current?.focus({ preventScroll: true });
+    else rightArrowRef.current?.focus({ preventScroll: true });
+    setArrowHandoff(null);
+  }, [arrowHandoff, overflow]);
 
   useEffect(() => {
     const el = scrollerRef.current;
