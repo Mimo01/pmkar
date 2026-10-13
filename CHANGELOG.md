@@ -1,4 +1,30 @@
 
+## [0.5.0]
+
+Custom Groups — collect tickets into your own named, colored groups that live alongside the core tabs.
+
+### Features
+
+- **Custom groups** — create named groups with one of 8 distinct colors; groups are stored locally per Jira server and user and restored at startup
+- **Group tabs** — each group gets its own tab next to the core tabs, with a group-colored underline, a member-count pill and overflow scrolling with arrow buttons
+- **Group management** — rename, change color, delete (with confirmation) and reorder groups via Move left / Move right, all from the tab's right-click menu
+- **Group view** — open a group to see its tickets with the same triage pills and actions as the core lists
+- **Add tickets to groups** — new opt-in Select mode on the New, Not mine, Linked and group lists, with range selection and a floating selection bar for bulk add and remove
+- **Groups row in ticket detail** — see a ticket's groups, add it to more groups with the group picker, or remove it with a confirmed chip action
+- **Group chips on ticket cards** — every group a ticket belongs to is shown as a tinted chip; clicking a chip opens the group
+- **Missing tickets** — tickets that no longer come back from Jira are dimmed in the group view and can be removed one by one or all at once; cached snapshots keep their summary visible
+- **Accessibility** — keyboard navigation in the tab strip (arrows, Home, End), visible focus rings, accessible names on group dialogs and WCAG 4.5:1 contrast tokens across the groups UI
+- Slovak translations for all group features (uses "tiket" terminology)
+
+### Bug Fixes
+
+- Fetch results are discarded when the server changes mid-request, and group membership changes are rejected if the server scope no longer matches
+- Escape in the assignee autocomplete no longer exits Select mode
+- Bulk actions and the Select toggle are disabled while the list is refreshing
+- Restored "Changed" badge tooltip on ticket cards
+- Fixed an infinite re-render in the static value issue-type selector
+- Copy result screens now show translated step labels
+
 ## [0.4.8]
 
 ### Bug Fixes
@@ -43,6 +69,7 @@
 
 ### Miscellaneous
 
+- bump version to 0.4.8
 - merge quick task worktree (worktree-agent-ad03469766201a120)
 - merge executor worktree (worktree-agent-aeed1eeb99f6d8916)
 - merge executor worktree (worktree-agent-ae76977b32c7c09fb)
