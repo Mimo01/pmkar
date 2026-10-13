@@ -32,6 +32,17 @@ const EMPTY: ReadonlySet<string> = new Set<string>();
  * Shift-toggle ADDS the contiguous range between the anchor and the clicked
  * key (never removes). There is intentionally no bulk "select everything" API.
  */
+const NON_TEXT_INPUT_TYPES = new Set([
+  'checkbox',
+  'radio',
+  'button',
+  'submit',
+  'reset',
+  'range',
+  'color',
+  'file',
+]);
+
 export function useListSelection(visibleKeys: readonly string[]): ListSelection {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<ReadonlySet<string>>(EMPTY);
@@ -102,19 +113,17 @@ export function useListSelection(visibleKeys: readonly string[]): ListSelection 
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // Esc inside a text field belongs to that field (clear/dismiss), never to select mode
+      if (e.key !== 'Escape' || e.defaultPrevented || !selectMode) return;
+      // Esc inside a text-entry field belongs to that field (clear/dismiss), never to select mode
       const target = e.target as HTMLElement | null;
-      if (
-        target?.tagName === 'INPUT' ||
-        target?.tagName === 'TEXTAREA' ||
-        target?.isContentEditable
-      )
-        return;
-      if (e.key === 'Escape' && !e.defaultPrevented && selectMode) {
-        e.preventDefault();
-        exit();
-        focusSelectToggle();
-      }
+      const isTextField =
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable === true ||
+        (target instanceof HTMLInputElement && !NON_TEXT_INPUT_TYPES.has(target.type));
+      if (isTextField) return;
+      e.preventDefault();
+      exit();
+      focusSelectToggle();
     },
     [selectMode, exit, focusSelectToggle],
   );

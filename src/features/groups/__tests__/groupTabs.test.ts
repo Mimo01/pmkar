@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   computeOverflow,
   focusCoreTab,
@@ -14,6 +14,15 @@ describe('focusCoreTab', () => {
     document.body.appendChild(btn);
     expect(focusCoreTab('new')).toBe(true);
     expect(document.activeElement).toBe(btn);
+    btn.remove();
+  });
+  it('forwards focus options', () => {
+    const btn = document.createElement('button');
+    btn.setAttribute('data-tab-id', 'new');
+    document.body.appendChild(btn);
+    const spy = vi.spyOn(btn, 'focus');
+    expect(focusCoreTab('new', { preventScroll: true })).toBe(true);
+    expect(spy).toHaveBeenCalledWith({ preventScroll: true });
     btn.remove();
   });
   it('returns false when absent', () => {

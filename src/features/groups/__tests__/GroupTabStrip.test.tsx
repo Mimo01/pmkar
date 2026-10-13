@@ -28,11 +28,15 @@ const ops = { id: 3, name: 'Ops', color: 'slate', position: 2, createdAt: 't', m
 
 const scrollIntoViewMock = vi.fn();
 const scrollByMock = vi.fn();
+let resizeCallback: (() => void) | null = null;
 
 beforeAll(() => {
   vi.stubGlobal(
     'ResizeObserver',
     class {
+      constructor(cb: () => void) {
+        resizeCallback = cb;
+      }
       observe() {}
       unobserve() {}
       disconnect() {}
@@ -55,6 +59,7 @@ function seed(groups: unknown[]) {
 }
 
 beforeEach(() => {
+  resizeCallback = null;
   invokeMock.mockReset();
   scrollIntoViewMock.mockReset();
   scrollByMock.mockReset();
@@ -168,6 +173,52 @@ describe('GroupTabStrip', () => {
     scroller.scrollLeft = 400;
     fireEvent.scroll(scroller);
     expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
+  });
+
+  it('hands focus to the active group tab without scrolling the strip', () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).toHaveFocus();
+    expect(scroller.scrollLeft).toBe(400);
+    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
+    spy.mockRestore();
+  });
+
+  it('hands focus to a core active tab without scrolling the strip', () => {
+    seed([sprint, qa]);
+    const core = document.createElement('button');
+    core.setAttribute('data-tab-id', 'new');
+    document.body.appendChild(core);
+    renderWithI18n(<GroupTabStrip activeTab="new" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
+    const spy = vi.spyOn(HTMLElement.prototype, 'focus');
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(core).toHaveFocus();
+    expect(scroller.scrollLeft).toBe(400);
+    expect(spy).toHaveBeenLastCalledWith(expect.objectContaining({ preventScroll: true }));
+    spy.mockRestore();
+    core.remove();
+  });
+
+  it('ResizeObserver update focuses the current active tab after a tab change', () => {
+    seed([sprint, qa]);
+    const view = renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+    view.rerender(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    screen.getByRole('button', { name: 'Scroll tabs right' }).focus();
+    scroller.scrollLeft = 400;
+    act(() => resizeCallback?.());
     expect(screen.getByRole('button', { name: 'QA, 1 issue' })).toHaveFocus();
   });
 
