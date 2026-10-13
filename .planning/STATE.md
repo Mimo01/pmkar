@@ -353,18 +353,16 @@ None yet.
 | 261013-e6u | Restyle group coloring (tinted chips, group-colored tab underline) and count pills | 2026-10-13 | 8d2e260 | Approved | [261013-e6u-restyle-custom-group-coloring-and-count-](./quick/261013-e6u-restyle-custom-group-coloring-and-count-/) |
 | 261013-f6r | Remove +N group badge in tasks list, always list all groups | 2026-10-13 | 848b98c | Approved | [261013-f6r-remove-n-group-badge-in-tasks-list-alway](./quick/261013-f6r-remove-n-group-badge-in-tasks-list-alway/) |
 | 261013-foy | Richer nav group tooltips: count, right-click hint, consistent with app | 2026-10-13 | 636c62e | Approved | [261013-foy-richer-nav-group-tooltips-count-right-cl](./quick/261013-foy-richer-nav-group-tooltips-count-right-cl/) |
+| fast | Vivid 8-hue group palette, amber renamed to yellow (DB migration) | 2026-10-13 | d52e8ed | Approved | — |
+| fast | Group chips: solid fills, then unified dark label (superseded) | 2026-10-13 | 735d472 | Superseded | — |
+| fast | Group chips: sheen pills, then neutral chip (superseded) | 2026-10-13 | cf14615 | Superseded | — |
+| fast | Group chips: tinted surface + border with filled group-color tag (F1) | 2026-10-13 | c6e6663 | Approved | — |
+| fast | Remove tooltips from group chips | 2026-10-13 | 0abf651 | Approved | — |
+| fast | Pointer chip click no longer focuses group tab (no stray nav tooltip) | 2026-10-13 | 41e4733 | Approved | — |
 
 ## Session Continuity
 
-Last activity: 2026-10-13 - Completed quick task 261013-foy: Richer nav group tooltips: count, right-click hint, consistent with app
+Last activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
 Last session: 2026-10-12T19:21:03.934Z
 Stopped at: Phase 33 UI-SPEC approved
 Resume file: .planning/phases/33-polish-verification/33-UI-SPEC.md
-| 2026-10-13 | fast | Vivid 8-hue group palette: amber→yellow, stronger tints | ✅ |
-| 2026-10-13 | fast | Solid vivid group chip fills with per-color label text | ✅ |
-| 2026-10-13 | fast | Unified dark chip label on brighter group fills | ✅ |
-| 2026-10-13 | fast | Group chips restyled as sheen pills with tag glyph | ✅ |
-| 2026-10-13 | fast | Group chips: neutral surface chip with group-color filled tag | ✅ |
-| 2026-10-13 | fast | Group chips: group-tinted surface + border with filled tag | ✅ |
-| 2026-10-13 | fast | Remove tooltips from group chips | ✅ |
-| 2026-10-13 | fast | Chip click no longer focuses group tab (no nav tooltip) | ✅ |
