@@ -26,6 +26,7 @@ export function GroupTab({
   onMenuCloseAutoFocus,
 }: GroupTabProps) {
   const { t } = useTranslation();
+  const summary = t('groups.tab.aria', { name: group.name, count: group.memberCount });
   const localWrapperRef = useRef<HTMLDivElement | null>(null);
   const localButtonRef = useRef<HTMLButtonElement | null>(null);
   // The context menu's trigger is the (unfocusable) wrapper, so a menu opened from the
@@ -86,7 +87,7 @@ export function GroupTab({
                 data-nav-tab=""
                 onClick={onSelect}
                 onKeyDown={handleKeyDown}
-                aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
+                aria-label={summary}
                 aria-current={active ? 'page' : undefined}
                 className={`flex items-center gap-1 text-sm px-1.5 py-2 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                   active
@@ -106,7 +107,10 @@ export function GroupTab({
                 <CountPill active={active}>{group.memberCount}</CountPill>
               </button>
             </TooltipTrigger>
-            <TooltipContent aria-hidden="true">{group.name}</TooltipContent>
+            <TooltipContent aria-hidden="true">
+              <span className="block">{summary}</span>
+              <span className="block">{t('groups.tab.menuHint')}</span>
+            </TooltipContent>
           </Tooltip>
         </div>
       </ContextMenuTrigger>

@@ -498,6 +498,7 @@
   "groups.tab.aria_few": "{{name}}, {{count}} úlohy",
   "groups.tab.aria_many": "{{name}}, {{count}} úloh",
   "groups.tab.aria_other": "{{name}}, {{count}} úloh",
+  "groups.tab.menuHint": "Pravým kliknutím zobrazíte možnosti",
   "groups.error.duplicate": "Skupina s týmto názvom už existuje",
   "groups.error.reserved": "Tento názov je vyhradený pre vstavanú kartu",
   "groups.error.tooLong": "Názov môže mať najviac 40 znakov",
