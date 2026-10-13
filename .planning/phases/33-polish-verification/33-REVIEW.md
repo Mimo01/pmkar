@@ -1,16 +1,26 @@
 ---
 phase: 33-polish-verification
-reviewed: 2026-10-12T00:00:00Z
+reviewed: 2026-10-13T00:00:00Z
 depth: standard
-files_reviewed: 42
+files_reviewed: 44
 files_reviewed_list:
-  - package.json
-  - src-tauri/src/fixtures.rs
-  - src-tauri/src/mock_server.rs
-  - src-tauri/tests/mock_server_scenarios.rs
+  - src/components/ui/__tests__/AppShell.navKeys.test.tsx
+  - src/components/ui/__tests__/menu-wrappers.test.tsx
   - src/components/ui/AppShell.tsx
   - src/components/ui/context-menu.tsx
   - src/components/ui/dropdown-menu.tsx
+  - src/features/groups/__tests__/a11y.axe.test.tsx
+  - src/features/groups/__tests__/a11y.keyboard.test.tsx
+  - src/features/groups/__tests__/colors.test.ts
+  - src/features/groups/__tests__/contrast.test.ts
+  - src/features/groups/__tests__/groupI18n.test.ts
+  - src/features/groups/__tests__/GroupMenuItems.test.tsx
+  - src/features/groups/__tests__/groupScale.test.tsx
+  - src/features/groups/__tests__/groupTabs.test.ts
+  - src/features/groups/__tests__/GroupTabStrip.test.tsx
+  - src/features/groups/__tests__/groupTokenUsage.test.ts
+  - src/features/groups/__tests__/GroupViewPage.test.tsx
+  - src/features/groups/__tests__/useListSelection.test.tsx
   - src/features/groups/ChangeColorPopover.tsx
   - src/features/groups/ConfirmRemovePopover.tsx
   - src/features/groups/CreateGroupPopover.tsx
@@ -22,150 +32,132 @@ files_reviewed_list:
   - src/features/groups/GroupNameForm.tsx
   - src/features/groups/GroupPicker.tsx
   - src/features/groups/GroupTab.tsx
+  - src/features/groups/groupTabs.ts
   - src/features/groups/GroupTabStrip.tsx
   - src/features/groups/GroupViewPage.tsx
   - src/features/groups/RenameGroupPopover.tsx
   - src/features/groups/SelectionBar.tsx
   - src/features/groups/useListSelection.ts
+  - src/features/tickets/__tests__/TicketCard.test.tsx
   - src/features/tickets/TicketCard.tsx
+  - src/i18n/__tests__/groupLocale.test.ts
+  - src/i18n/__tests__/noLiteralStrings.test.ts
   - src/i18n/locales/en.json
   - src/i18n/locales/sk.json
   - src/index.css
   - src/test-setup.ts
   - src/test-utils/contrast.ts
   - src/vitest-axe.d.ts
-  - src/i18n/__tests__/noLiteralStrings.test.ts
-  - src/i18n/__tests__/groupLocale.test.ts
-  - src/features/groups/__tests__/a11y.axe.test.tsx
-  - src/features/groups/__tests__/a11y.keyboard.test.tsx
-  - src/features/groups/__tests__/contrast.test.ts
-  - src/features/groups/__tests__/groupTokenUsage.test.ts
-  - src/features/groups/__tests__/groupScale.test.tsx
-  - src/features/groups/__tests__/GroupTabStrip.test.tsx
-  - src/features/groups/__tests__/useListSelection.test.tsx
-  - src/components/ui/__tests__/AppShell.navKeys.test.tsx
-  - src/components/ui/__tests__/menu-wrappers.test.tsx
-  - src/features/tickets/__tests__/TicketCard.test.tsx
 findings:
-  critical: 1
-  warning: 4
+  critical: 0
+  warning: 1
   info: 6
-  total: 11
+  total: 7
 status: issues_found
 ---
 
-# Phase 33: Code Review Report
+# Phase 33: Code Review Report (re-review after gap closure 33-11 / 33-12)
 
-**Reviewed:** 2026-10-12
+**Reviewed:** 2026-10-13
 **Depth:** standard
-**Files Reviewed:** 42
+**Files Reviewed:** 44
 **Status:** issues_found
 
 ## Summary
 
-Phase 33 is mostly mechanical polish: contrast token swaps, popover aria-labels, i18n quote and plural fixes, nav arrow-key focus, mock-server scenarios, plus a large set of new a11y and static-guard tests. Most of the token and label changes are correct. The real defects are in the new behaviour this phase added:
+This is a re-review after gap-closure plans 33-11 (dimmed-card contrast, `readVar` anchoring) and 33-12 (overflow-arrow focus handoff, stale `activeTab`, Esc guard). Since the previous review, ten source files changed (`git diff eda6d1a..HEAD`). All five earlier CR/WR items are fixed in code. Each fix has a regression test that fails against the old code. The six affected test files pass (156 tests).
 
-- The fallback in `GroupTabStrip.updateOverflow` that moves focus off a disappearing scroll arrow scrolls the strip back to the active tab. Keyboard users who press the right arrow to reach the end of the strip get snapped back.
-- The contrast decision for dimmed "missing" cards accepts about 3.4:1 for 12px issue keys. That fails WCAG 1.4.3, in a phase whose goal is WCAG compliance.
-- The `useListSelection` text-field guard is broader than its comment says, and the key-search field it refers to has no Escape handling.
-- The `readVar` contrast helper is not anchored, so it can read the wrong CSS variable.
+I checked the composited contrast numbers independently:
+- **Dimmed summary** (`brand-text` at 0.7 opacity):
+  - light: 6.03 on surface, 5.63 on surface-hover
+  - dark: 7.09 on surface, 6.49 on surface-hover
+- **Focused destructive menu item** (`destructive-text` on `destructive/10`): 5.54 in light, 5.63 in dark.
 
-## Critical Issues
+One new Warning remains, and it comes from how CR-01 was fixed. Focus is no longer snapped back, but it now goes to a tab that may be scrolled out of view, so keyboard users cannot see where focus is. The remaining items are Info-level: test-reliability nits and carried-over items that the gap plans did not cover.
 
-### CR-01: Focus fallback undoes the scroll that triggered it
+## Previous findings status
 
-**File:** `src/features/groups/GroupTabStrip.tsx:99-108`
-**Issue:** When the focused scroll arrow is about to disappear (`!next.canScrollRight` / `!next.canScrollLeft`), the code calls `tabRefs.current.get(id)?.focus()` or `focusCoreTab(...)` (which calls `el.focus()` in `groupTabs.ts:14`). Neither passes `preventScroll`. Focusing an element scrolls it into view inside its scroll container. Example: a keyboard user activates "Scroll tabs right" until the strip reaches its end, while the active tab sits off-screen on the left. Focus then jumps to the active tab, and the browser scrolls the scroller back to show it. That brings the right arrow back and hides the tabs the user just scrolled to. So the arrow cannot reveal the end of the strip for a keyboard user whenever the active tab is far away. The new tests (`GroupTabStrip.test.tsx`, "moves focus to the active group tab when the focused arrow disappears") check only `toHaveFocus` and never assert `scrollLeft`, so jsdom hides the bug.
-**Fix:** Move focus without scrolling. Better still, move focus to the opposite arrow or to the last/first visible tab, which is where the user's attention is:
-```tsx
-const target =
-  id !== null
-    ? tabRefs.current.get(id)
-    : document.querySelector<HTMLElement>(`[data-tab-id="${activeTab}"]`);
-target?.focus({ preventScroll: true });
-```
-Also add a test that asserts `scroller.scrollLeft` is unchanged after the fallback fires (stub `HTMLElement.prototype.focus` to record the options it receives).
+| ID | Title | Status | Evidence |
+|----|-------|--------|----------|
+| CR-01 | Focus fallback undoes the scroll that triggered it | **Resolved** (with follow-up WR-01 below) | `GroupTabStrip.tsx:109-110` passes `{ preventScroll: true }`; `focusCoreTab` forwards `FocusOptions` (`groupTabs.ts:11-14`); the spy-based tests at `GroupTabStrip.test.tsx:179-207` would fail on the old code |
+| WR-01 | ResizeObserver callback reads a stale `activeTab` | **Resolved** | `activeTabRef` (`GroupTabStrip.tsx:85-86`) is read in `updateOverflow`; the test at `GroupTabStrip.test.tsx:213-223` exercises the captured observer callback after a rerender |
+| WR-02 | Dimmed issue keys and metadata fail WCAG 1.4.3 | **Resolved** | Only the `brand-text` summary is dimmed (`TicketCard.tsx:129-134`); key, dates and assignee are undimmed (`TicketCard.tsx:85, 114, 139`); the contrast test asserts at least 4.5:1 on all three backgrounds, using the opacity read from source |
+| WR-03 | `useListSelection` text-field guard too broad | **Resolved** | The Escape / defaultPrevented / selectMode check now runs first (`useListSelection.ts:116`); non-text input types are excluded (`:35-44, 119-123`); tests cover checkbox, radio, search and textarea |
+| WR-04 | `readVar` regex unanchored | **Resolved** | Anchored on `(?:^|[\s;{])` with the name escaped (`contrast.ts:26-28`); four regression tests (`contrast.test.ts:94-113`) |
+| IN-01 | Key-search field has no Escape handling | **Open** | `TicketFilterBar.tsx:145-152` is unchanged (carried as IN-01) |
+| IN-02 | SK `_many` contradicts CLDR | **Open** | Unchanged (carried as IN-02) |
+| IN-03 / IN-04 / IN-05 | Mock-server scenario items | **Not re-reviewed** | `src-tauri/*` is outside this re-review's file scope and was not touched by 33-11/33-12 |
+| IN-06 | Redundant duplicate contrast test / `scrollIntoView` | **Open** | `contrast.test.ts:65-69` and `AppShell.tsx:50-51` are unchanged (carried as IN-03) |
 
 ## Warnings
 
-### WR-01: ResizeObserver callback reads a stale `activeTab`
+### WR-01: The overflow-arrow focus handoff can leave focus on a tab that is off-screen
 
-**File:** `src/features/groups/GroupTabStrip.tsx:115-123`
-**Issue:** The `ResizeObserver` is created in a `useLayoutEffect` with deps `[groups]`, so it captures the `updateOverflow` closure (and its `activeTab`) from that render. Since this phase, `updateOverflow` also moves focus based on `activeTab`. If the user switches tabs without `groups` changing and then resizes the window while a scroll arrow is focused, focus goes to the previously active tab.
-**Fix:** Keep `activeTab` in a ref (`activeTabRef.current = activeTab` on each render) and read it from the ref inside `updateOverflow`. Alternatively, have the observer call through a ref to the latest `updateOverflow`.
+**File:** `src/features/groups/GroupTabStrip.tsx:101-111`
+**Issue:** The CR-01 fix stops the browser from scrolling, but it still sends focus to the *active* tab. In the exact scenario CR-01 described, that tab is scrolled out of view: the active tab sits on the left and the user presses "Scroll tabs right" until the strip reaches its end. After the fix:
 
-### WR-02: Dimmed issue keys and metadata fail WCAG 1.4.3 AA
+- Focus goes to an element the user cannot see. The focus indicator is hidden inside the `overflow-x-auto` scroller. This fails WCAG 2.4.7 (Focus Visible) and the intent of 2.4.11 (Focus Not Obscured), in a phase whose goal is GQA compliance.
+- The next Tab press moves to the active tab's "More" button (`tabIndex=0`), which is also off-screen. The browser scrolls it into view, so the strip snaps back one keystroke later. The bug CR-01 reported is postponed, not fixed.
 
-**File:** `src/features/tickets/TicketCard.tsx:51-53, 81-83, 112-114`; `src/features/groups/__tests__/contrast.test.ts:13, 82-93`
-**Issue:** On missing cards, the issue key (`text-xs font-mono`) and the date/meta row use `text-brand-text-secondary` at `opacity-70`. Composited contrast is about 3.42:1 on surface and 3.28:1 on `brand-bg` in light mode, and about 3.42:1 in dark mode. For 12px non-bold text, AA requires 4.5:1. The contrast test hard-codes a 3:1 "legibility floor" and calls the content "decorative de-emphasis". The issue key is the primary identifier of the row and is not decorative, and WCAG has no exemption for de-emphasised content. The test therefore locks in a non-compliant state while the phase claims GQA compliance.
-**Fix:** Dim with a token instead of opacity. Use `text-brand-text-secondary` undimmed for the key and meta, and dim only the summary, which uses `brand-text` and stays at 4.5:1 or more at 0.7. Alternatively, raise the opacity to the value that keeps secondary text at 4.5:1 or more. Then change the test assertion to `toBeGreaterThanOrEqual(4.5)`.
+The 33-12 summary records this choice ("Focus fallback still targets the active tab but with preventScroll"). The previous review recommended moving focus to the opposite arrow or to the first/last visible tab, and that recommendation still stands.
 
-### WR-03: `useListSelection` text-field guard is broader than intended
-
-**File:** `src/features/groups/useListSelection.ts:105-112`
-**Issue:** The guard returns early for any key from any `INPUT`. That includes `type="checkbox"`, `type="radio"` and other non-text inputs, which do nothing with Escape. Escape on a focused checkbox or radio inside a list page therefore no longer exits select mode. The comment says the guard is about text fields, but the code does not check input types. The guard also runs before the `e.key === 'Escape'` check, so any key handling added to this function later will be silently skipped for every input.
-**Fix:**
-```ts
-if (e.key !== 'Escape' || e.defaultPrevented || !selectMode) return;
-const t = e.target as HTMLElement | null;
-const isTextField =
-  t instanceof HTMLTextAreaElement ||
-  t?.isContentEditable ||
-  (t instanceof HTMLInputElement &&
-    !['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file'].includes(t.type));
-if (isTextField) return;
+**Fix:** Move focus to a control that is visible once the arrow disappears. When the right arrow vanishes because the strip reached its end, the left arrow is the natural target, because it just appeared. It is rendered conditionally, so focus it after the state update:
+```tsx
+const [arrowHandoff, setArrowHandoff] = useState<'left' | 'right' | null>(null);
+// in updateOverflow, instead of focusing the active tab:
+if (focused === rightArrowRef.current && !next.canScrollRight) {
+  setArrowHandoff(next.canScrollLeft ? 'left' : null);
+  if (!next.canScrollLeft) focusActiveTab(); // no overflow at all: active tab is visible
+}
+// mirror for the left arrow
+useLayoutEffect(() => {
+  if (arrowHandoff === 'left') leftArrowRef.current?.focus();
+  else if (arrowHandoff === 'right') rightArrowRef.current?.focus();
+  if (arrowHandoff) setArrowHandoff(null);
+}, [arrowHandoff, overflow]);
 ```
-
-### WR-04: `readVar` regex is unanchored and can match a suffixed variable
-
-**File:** `src/test-utils/contrast.ts:25-29`
-**Issue:** `new RegExp(\`${name}:\\s*(#…)\`)` has no left boundary. `readVar(block, '--color-ring')` matches inside `--color-focus-ring: #…;`. Today it reads the correct value only because, in `body.dark`, `--color-ring` happens to be declared before `--color-focus-ring`. In `@theme`, `--color-ring` is `var(--color-brand)`, not hex, so a light-theme lookup would silently return `--color-focus-ring`'s value. Reordering declarations would make the contrast tests check the wrong token and still pass.
-**Fix:** Anchor the match to a declaration start and escape the name:
-```ts
-const esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const m = new RegExp(`(?:^|[\\s;{])${esc}\\s*:\\s*(#[0-9a-fA-F]{6})\\s*;`, 'm').exec(block);
-```
+Another option is to focus the last fully visible tab, measured with `getBoundingClientRect()` against the scroller rect. Either way, add a test asserting that the focused element's rect falls within the scroller's rect, or that the opposite arrow has focus.
 
 ## Info
 
-### IN-01: Comment claims the key-search field handles Escape, but it does not
+### IN-01: The key-search field still has no Escape handling (carried over)
 
-**File:** `src/features/groups/useListSelection.ts:105`; `src/features/tickets/TicketFilterBar.tsx:145-152`
-**Issue:** The comment says "Esc inside a text field belongs to that field (clear/dismiss)". The key-search `<input>` in `TicketFilterBar` has no Escape handler, so Escape there now does nothing at all. Before this change it exited select mode.
-**Fix:** Add `onKeyDown` with Escape-to-clear on the key-search input (call `preventDefault`), or reword the comment.
+**File:** `src/features/tickets/TicketFilterBar.tsx:145-152`; `src/features/groups/useListSelection.ts:117`
+**Issue:** The guard comment says Esc "belongs to that field (clear/dismiss)". The key-search `<input type="text">` has no `onKeyDown`, so in select mode Escape there does nothing: it neither clears the field nor exits select mode. Only the assignee combobox (`TicketFilterBar.tsx:129-134`) handles Escape.
+**Fix:** Add `onKeyDown={(e) => { if (e.key === 'Escape' && searchText) { e.preventDefault(); onSearchChange(''); } }}`. This lets an empty field fall through to select-mode exit if the guard is later relaxed. Alternatively, reword the comment.
 
-### IN-02: SK `_many` change contradicts CLDR
+### IN-02: SK `_many === _other` contradicts CLDR (carried over)
 
-**File:** `src/i18n/locales/sk.json:499, 535, 562, 568, ...`; `src/i18n/__tests__/groupLocale.test.ts:43-50`
-**Issue:** In CLDR, Slovak `many` is the category for non-integer numbers (e.g. "1,5 úlohy", genitive singular). The previous `_many` = `_few` values were grammatically correct for that case. The new rule `_many === _other` ("úloh") is wrong for decimals. Counts are always integers here, so this is unreachable today, but the test now enforces the incorrect form.
-**Fix:** Accept as-is with a comment noting that `_many` is unreachable for integer counts, or revert to the genitive singular and drop the `_many === _other` assertion.
+**File:** `src/i18n/locales/sk.json:499, 535, 561, 568`; `src/i18n/__tests__/groupLocale.test.ts:43-50`
+**Issue:** In Slovak CLDR, `many` covers non-integer counts and takes the genitive singular. The test enforces the plural `other` form. This cannot be reached with integer counts.
+**Fix:** Add a comment in the test noting that `_many` is unreachable for integer counts, or revert to the `_few` form.
 
-### IN-03: Truncated scenario adds filler to every search, ignoring JQL
+### IN-03: Redundant contrast test and redundant `scrollIntoView` (carried over)
 
-**File:** `src-tauri/src/mock_server.rs:317-347`
-**Issue:** The 1000 filler issues (`assignee: null`) are appended after `filter_issues`, so they show up in every v2 search, including assignee-filtered "mine" queries. That suits the truncation test but pollutes any other list that runs during manual UAT with this scenario. Their order (real issues first, then FILL-n) also differs from the key-sorted order used elsewhere.
-**Fix:** Document this in the scenario doc comment, or apply filler only when the JQL matches a configured assignee, as `PartialFail` does.
+**File:** `src/features/groups/__tests__/contrast.test.ts:65-69`; `src/components/ui/AppShell.tsx:50-51`
+**Issue:** The "unchecked checkbox boundary >= 3" test checks the same pair as the ">= 4.5" test at lines 45-49, so it can never fail on its own. In `handleNavKeyDown`, `focus()` already scrolls the element into view.
+**Fix:** Drop the duplicate test. Use `focus({ preventScroll: true })` followed by `scrollIntoView({ inline: 'nearest' })` if the explicit scroll is intended.
 
-### IN-04: `__mock/mutate` always sets status category to `indeterminate`
+### IN-04: The new "without scrolling" assertions are vacuous in jsdom, and the tests can leak DOM
 
-**File:** `src-tauri/src/mock_server.rs:972-975`
-**Issue:** Mutating status to "Done" yields `statusCategory.key = "indeterminate"`, so done-state UI (badges, filters) cannot be reproduced through this endpoint.
-**Fix:** Accept an optional `status_category` in `MutateBody`, or map well-known names ("Done", "To Do") to `done`/`new`.
+**File:** `src/features/groups/__tests__/GroupTabStrip.test.tsx:179-207`
+**Issue:** `expect(scroller.scrollLeft).toBe(400)` always passes, because jsdom never scrolls on `focus()`. Only the `spy` assertion actually guards CR-01, so the test names overstate what is checked. Also, the core-tab test appends a `<button data-tab-id="new">` to `document.body`, and both tests install a prototype `focus` spy. Cleanup (`core.remove()`, `spy.mockRestore()`) runs only after the assertions. If an assertion fails, the stray button and the prototype spy leak into later tests in the file, and later `focusCoreTab('new')` calls hit the wrong element.
+**Fix:** Delete the `scrollLeft` assertions, or label them as documentation. Move cleanup into `try/finally` or `afterEach` (`vi.restoreAllMocks()`, and remove the `[data-tab-id]` nodes).
 
-### IN-05: Scenario env var leaks into every `build_fixtures()` test
+### IN-05: The opacity extraction in the contrast test takes the first `opacity-NN` anywhere in TicketCard.tsx
 
-**File:** `src-tauri/src/fixtures.rs:3171`
-**Issue:** `build_fixtures()` reads `PMKAR_MOCK_SCENARIO` on every call. A developer who exports `PMKAR_MOCK_SCENARIO=drop` (or `truncated`) for manual UAT and then runs `cargo test --features mock-server` gets unrelated mock-server tests failing in confusing ways. Only `mock_server_scenarios.rs` overrides the scenario explicitly.
-**Fix:** Read the env var only in the binary's mock-server startup path, not in `build_fixtures()`, or default to `MockScenario::Default` under `#[cfg(test)]`.
+**File:** `src/features/groups/__tests__/contrast.test.ts:19-21`
+**Issue:** `/opacity-(\d+)/` matches the first occurrence anywhere in the file. A later edit that adds `disabled:opacity-50`, `hover:opacity-100` or similar above `dimClass` would make the test check the wrong opacity and still pass or fail misleadingly. The check also does not confirm that the opacity applies to a `brand-text` element.
+**Fix:** Export the dim opacity from `TicketCard.tsx` as a constant (for example `export const MISSING_DIM_CLASS = 'opacity-70 …'`) and parse that. Alternatively, anchor the regex to the `dimClass` declaration: `/const dimClass = dimmed\s*\?\s*'opacity-(\d+)/`.
 
-### IN-06: Redundant code in tests and nav handler
+### IN-06: The hook's JSDoc is now attached to `NON_TEXT_INPUT_TYPES`
 
-**File:** `src/features/groups/__tests__/contrast.test.ts:57-61`; `src/components/ui/AppShell.tsx:50-51`
-**Issue:** The "unchecked checkbox boundary >= 3" test checks the same pair that the preceding ">= 4.5" test already covers, so it can never fail on its own. In `handleNavKeyDown`, `focus()` already scrolls the target into view, which makes the follow-up `scrollIntoView` call redundant.
-**Fix:** Drop the duplicate test, or point it at the actual checkbox border token. Use `focus({ preventScroll: true })` followed by `scrollIntoView({ inline: 'nearest' })` if the explicit scroll is intended.
+**File:** `src/features/groups/useListSelection.ts:29-46`
+**Issue:** The new constant was inserted between the `useListSelection` JSDoc block and the function. Editors and doc tooling now attach the "Per-page selection state…" doc to the constant, and the hook has no documentation. Separately, `<select>` and `type="image"` are not covered: Escape on an open native `<select>` both closes the dropdown and exits select mode. This is minor.
+**Fix:** Move `NON_TEXT_INPUT_TYPES` above the JSDoc block. Optionally add `'image'` to the set and treat `HTMLSelectElement` as a field that owns Escape.
 
 ---
 
-_Reviewed: 2026-10-12_
+_Reviewed: 2026-10-13_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
