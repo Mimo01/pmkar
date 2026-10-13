@@ -211,17 +211,27 @@ describe('TicketCard', () => {
       expect(container.innerHTML).not.toContain('opacity-70');
     });
 
-    it('dims content but not chips, checkbox or footer', () => {
+    it('dims only the summary, not key, dates, assignee, chips, checkbox or footer', () => {
+      const withAssignee = {
+        ...ticket,
+        fields: {
+          ...ticket.fields,
+          assignee: { displayName: 'Jana Nováková' } as JiraTicket['fields']['assignee'],
+        },
+      };
       const { container } = setup({
+        ticket: withAssignee,
         dimmed: true,
         selectMode: true,
         onToggleSelect: vi.fn(),
         footerSlot: <button type="button">Footer btn</button>,
       });
-      for (const text of ['P-1', 'Card summary']) {
-        expect(screen.getByText(text).className).toContain('opacity-70');
-      }
+      expect(screen.getByText('Card summary').className).toContain('opacity-70');
       const unDimmed = [
+        screen.getByText('P-1'),
+        screen.getByText(/^Created /),
+        screen.getByText(/^Updated /),
+        screen.getByText('Jana Nováková'),
         screen.getByRole('button', { name: 'Go to group “Dev”' }),
         screen.getByRole('checkbox', { name: 'Select P-1' }),
         screen.getByRole('button', { name: 'Footer btn' }),

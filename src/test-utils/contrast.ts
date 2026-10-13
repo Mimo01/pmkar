@@ -23,7 +23,9 @@ export const rootBlock = extractBlock(css, /:root\s*\{/);
 export const darkBlock = extractBlock(css, /body\.dark\s*\{/);
 
 export function readVar(block: string, name: string): string {
-  const m = new RegExp(`${name}:\\s*(#[0-9a-fA-F]{6})\\s*;`).exec(block);
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Anchor to a whole declaration name so --color-ring never matches --color-focus-ring
+  const m = new RegExp(`(?:^|[\\s;{])${escaped}\\s*:\\s*(#[0-9a-fA-F]{6})\\s*;`, 'm').exec(block);
   if (!m) throw new Error(`var not found: ${name}`);
   return m[1].toLowerCase();
 }
