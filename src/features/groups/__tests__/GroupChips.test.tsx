@@ -151,7 +151,7 @@ describe('GroupChips', () => {
     const classes = chip.className.split(/\s+/);
     expect(classes).toContain('bg-(--group-color)');
     expect(classes).toContain('text-(--group-chip-text)');
-    expect(classes).toContain('rounded-md');
+    expect(classes).toContain('rounded-full');
     expect(container.querySelector('[style*="background-color"]')).toBeNull();
   });
 });

@@ -363,3 +363,4 @@ Resume file: .planning/phases/33-polish-verification/33-UI-SPEC.md
 | 2026-10-13 | fast | Vivid 8-hue group palette: amber→yellow, stronger tints | ✅ |
 | 2026-10-13 | fast | Solid vivid group chip fills with per-color label text | ✅ |
 | 2026-10-13 | fast | Unified dark chip label on brighter group fills | ✅ |
+| 2026-10-13 | fast | Group chips restyled as sheen pills with tag glyph | ✅ |
