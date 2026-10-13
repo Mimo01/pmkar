@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { contrast, darkBlock, mix, readVar, themeBlock } from '../../../test-utils/contrast';
 
@@ -5,12 +7,18 @@ import { contrast, darkBlock, mix, readVar, themeBlock } from '../../../test-uti
  * D-04: token-level contrast for every group-UI foreground/background pair in
  * both themes (jsdom cannot compute contrast via axe).
  *
- * Dimmed missing card decision: dimmed content is decorative de-emphasis. The
- * undimmed hint line (text-secondary, >= 4.5) and the labelled Remove /
- * Remove all missing buttons (full contrast) carry the meaning; key/meta keep
- * a 3:1 legibility floor at the dim opacity.
+ * Dimmed missing cards dim only the brand-text summary. Key, dates and
+ * metadata stay undimmed text-secondary (covered by the >= 4.5 secondary
+ * tests). Every dimmed text must meet 4.5:1 composited at the opacity that
+ * TicketCard.tsx actually renders.
  */
-const MISSING_DIM_OPACITY = 0.7;
+const ticketCardSource = readFileSync(
+  resolve(process.cwd(), 'src/features/tickets/TicketCard.tsx'),
+  'utf8',
+);
+const opacityMatch = /opacity-(\d+)/.exec(ticketCardSource);
+if (!opacityMatch) throw new Error('TicketCard.tsx has no opacity-NN dim class');
+const MISSING_DIM_OPACITY = Number(opacityMatch[1]) / 100;
 
 type Theme = 'light' | 'dark';
 const THEMES: Theme[] = ['light', 'dark'];
@@ -60,6 +68,11 @@ describe('token contrast', () => {
         ).toBeGreaterThanOrEqual(3);
       });
 
+      it(`${theme} dimmed summary (brand-text at ${MISSING_DIM_OPACITY}) on ${bgName} >= 4.5`, () => {
+        const dimmed = mix(readThemed('--color-brand-text', theme), bg(), MISSING_DIM_OPACITY);
+        expect(contrast(dimmed, bg())).toBeGreaterThanOrEqual(4.5);
+      });
+
       if (theme === 'dark') {
         it(`dark shared --color-ring on ${bgName} >= 3`, () => {
           expect(contrast(readVar(darkBlock, '--color-ring'), bg())).toBeGreaterThanOrEqual(3);
@@ -74,18 +87,6 @@ describe('token contrast', () => {
           readThemed('--color-destructive', theme),
         ),
       ).toBeGreaterThanOrEqual(4.5);
-    });
-
-    it(`${theme} dimmed missing card keeps legibility at ${MISSING_DIM_OPACITY} opacity`, () => {
-      const surface = readThemed('--color-brand-surface', theme);
-      const secondary = mix(
-        readThemed('--color-brand-text-secondary', theme),
-        surface,
-        MISSING_DIM_OPACITY,
-      );
-      const text = mix(readThemed('--color-brand-text', theme), surface, MISSING_DIM_OPACITY);
-      expect(contrast(secondary, surface)).toBeGreaterThanOrEqual(3);
-      expect(contrast(text, surface)).toBeGreaterThanOrEqual(4.5);
     });
   }
 });

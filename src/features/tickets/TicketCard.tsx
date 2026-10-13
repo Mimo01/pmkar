@@ -23,7 +23,10 @@ interface TicketCardProps {
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (shift: boolean) => void;
-  /** Dims the content (key, dates, summary, metadata) but not chips, checkbox or footer. */
+  /**
+   * Dims the summary only; key, dates and metadata stay at full secondary-text
+   * contrast (WCAG 1.4.3). Chips, checkbox and footer are never dimmed.
+   */
   dimmed?: boolean;
   /** Full-contrast control row rendered below the content. */
   footerSlot?: React.ReactNode;
@@ -48,6 +51,7 @@ export function TicketCard({
   const changeCount = unseenFields?.length ?? 0;
   const fieldList = unseenFields?.join(', ') ?? '';
   // Opacity on a parent cannot be undone by a child, so dim individual elements only.
+  // Only the brand-text summary is dimmed: secondary-text elements cannot reach 4.5:1 at 70%.
   const dimClass = dimmed
     ? 'opacity-70 transition-opacity duration-150 motion-reduce:transition-none'
     : '';
@@ -78,9 +82,7 @@ export function TicketCard({
         {/* Line 1: ticket key + dates on right */}
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <span className={cn('text-xs font-mono text-brand-text-secondary', dimClass)}>
-              {ticket.key}
-            </span>
+            <span className="text-xs font-mono text-brand-text-secondary">{ticket.key}</span>
             {hasUnseenChanges && (
               <TooltipProvider delayDuration={300}>
                 <Tooltip>
@@ -109,9 +111,7 @@ export function TicketCard({
               {actionSlot}
             </span>
           </div>
-          <div
-            className={cn('flex items-center gap-2 text-xs text-brand-text-secondary', dimClass)}
-          >
+          <div className="flex items-center gap-2 text-xs text-brand-text-secondary">
             {ticket.fields.created && (
               <>
                 <span>
@@ -136,7 +136,7 @@ export function TicketCard({
         </p>
         {/* Line 4: metadata row */}
         <div className="flex items-center gap-2">
-          <span className={cn('flex items-center gap-2 min-w-0', dimClass)}>
+          <span className="flex items-center gap-2 min-w-0">
             <StatusBadge status={ticket.fields.status.name} />
             <PriorityIcon priority={ticket.fields.priority.name} size="sm" />
             <UserAvatar user={ticket.fields.assignee} size="sm" />
