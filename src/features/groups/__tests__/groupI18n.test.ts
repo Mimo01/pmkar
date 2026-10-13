@@ -17,9 +17,9 @@ describe('groups.tab.aria plurals', () => {
 
   it('sk', async () => {
     await i18n.changeLanguage('sk');
-    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 1 })).toBe('Sprint, 1 úloha');
-    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 3 })).toBe('Sprint, 3 úlohy');
-    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 5 })).toBe('Sprint, 5 úloh');
+    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 1 })).toBe('Sprint, 1 tiket');
+    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 3 })).toBe('Sprint, 3 tikety');
+    expect(i18n.t('groups.tab.aria', { name: 'Sprint', count: 5 })).toBe('Sprint, 5 tiketov');
   });
 });
 
@@ -35,7 +35,7 @@ describe('groups.tab.menuHint', () => {
 
   it('sk', async () => {
     await i18n.changeLanguage('sk');
-    expect(i18n.t('groups.tab.menuHint')).toBe('Pravým kliknutím zobrazíte možnosti');
+    expect(i18n.t('groups.tab.menuHint')).toBe('Pravý klik pre možnosti');
   });
 });
 
@@ -57,13 +57,13 @@ describe('Phase 30 copy', () => {
   it('sk delete body plurals', async () => {
     await i18n.changeLanguage('sk');
     expect(i18n.t('groups.delete.body', { count: 1 })).toBe(
-      'V tejto skupine je 1 úloha. Samotné úlohy sa nezmenia.',
+      'V tejto skupine je 1 tiket. Samotné tikety sa nezmenia.',
     );
     expect(i18n.t('groups.delete.body', { count: 3 })).toBe(
-      'V tejto skupine sú 3 úlohy. Samotné úlohy sa nezmenia.',
+      'V tejto skupine sú 3 tikety. Samotné tikety sa nezmenia.',
     );
     expect(i18n.t('groups.delete.body', { count: 5 })).toBe(
-      'V tejto skupine je 5 úloh. Samotné úlohy sa nezmenia.',
+      'V tejto skupine je 5 tiketov. Samotné tikety sa nezmenia.',
     );
   });
 
@@ -124,23 +124,23 @@ describe('Phase 31 copy', () => {
     await i18n.changeLanguage('sk');
     const name = 'QA';
     expect(i18n.t('groups.toast.added', { count: 1, name })).toBe(
-      'Pridaná 1 úloha do skupiny „QA“',
+      'Pridaný 1 tiket do skupiny „QA“',
     );
     expect(i18n.t('groups.toast.added', { count: 3, name })).toBe(
-      'Pridané 3 úlohy do skupiny „QA“',
+      'Pridané 3 tikety do skupiny „QA“',
     );
     expect(i18n.t('groups.toast.added', { count: 5, name })).toBe(
-      'Pridaných 5 úloh do skupiny „QA“',
+      'Pridaných 5 tiketov do skupiny „QA“',
     );
   });
 
   it('sk bar removeConfirm plurals', async () => {
     await i18n.changeLanguage('sk');
     expect(i18n.t('groups.bar.removeConfirm', { count: 1, name: 'QA' })).toBe(
-      'Odstrániť 1 úlohu zo skupiny „QA“?',
+      'Odstrániť 1 tiket zo skupiny „QA“?',
     );
     expect(i18n.t('groups.bar.removeConfirm', { count: 5, name: 'QA' })).toBe(
-      'Odstrániť 5 úloh zo skupiny „QA“?',
+      'Odstrániť 5 tiketov zo skupiny „QA“?',
     );
   });
 
@@ -196,9 +196,9 @@ describe('Phase 32 missing copy', () => {
   it('sk plurals', async () => {
     await i18n.changeLanguage('sk');
     const c = (count: number) => i18n.t('groups.missing.removeAllConfirm', { count, name: 'S' });
-    expect(c(1)).toContain('1 úlohu');
-    expect(c(3)).toContain('3 úlohy');
-    expect(c(5)).toContain('5 úloh');
+    expect(c(1)).toContain('1 tiket');
+    expect(c(3)).toContain('3 tikety');
+    expect(c(5)).toContain('5 tiketov');
     expect(i18n.t('groups.missing.heading', { count: 1 })).toBe('Už nie je vo výsledkoch (1)');
     expect(i18n.t('groups.missing.heading', { count: 3 })).toBe('Už nie sú vo výsledkoch (3)');
   });
@@ -250,9 +250,9 @@ describe('SK plural resolution for all groups.* plural bases (D-16/D-17)', () =>
   it('renders Slovak count agreement', async () => {
     await i18n.changeLanguage('sk');
     const tab = (count: number) => i18n.t('groups.tab.aria', { name: 'S', count });
-    expect(tab(1)).toBe('S, 1 úloha');
-    expect(tab(3)).toBe('S, 3 úlohy');
-    expect(tab(5)).toBe('S, 5 úloh');
+    expect(tab(1)).toBe('S, 1 tiket');
+    expect(tab(3)).toBe('S, 3 tikety');
+    expect(tab(5)).toBe('S, 5 tiketov');
     expect(i18n.t('groups.bar.count', { count: 1 })).toBe('1 vybraná');
     expect(i18n.t('groups.bar.count', { count: 3 })).toBe('3 vybrané');
     expect(i18n.t('groups.bar.count', { count: 5 })).toBe('5 vybraných');

@@ -69,7 +69,8 @@ describe('groups.* SK wording (D-14, D-15)', () => {
   });
 
   it('no forbidden glossary terms in SK', () => {
-    const forbidden = /tiket|záložk|zmaza|vymaza|založ|\bissue\b/i;
+    // "tiket" is the app-wide SK term for an issue (supersedes D-14 "úloha").
+    const forbidden = /úloh|záložk|zmaza|vymaza|založ|\bissue\b/i;
     for (const k of groupKeys(skMap)) {
       expect(forbidden.test(skMap[k]), `sk.json key "${k}" uses a forbidden term`).toBe(false);
     }

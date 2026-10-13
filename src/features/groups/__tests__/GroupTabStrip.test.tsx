@@ -171,7 +171,7 @@ describe('GroupTabStrip', () => {
     await waitFor(() =>
       expect(screen.getAllByText('Right-click for options').length).toBeGreaterThan(0),
     );
-    expect(screen.getAllByText('Sprint 12, 3 issues').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('3 issues').length).toBeGreaterThan(0);
   });
 
   it('shows the right arrow when overflowing right, left arrow after scrolling', () => {

@@ -86,12 +86,12 @@ describe('DeleteGroupDialog', () => {
     });
     const sk3 = setup({ ...target, memberCount: 3 });
     expect((await screen.findByRole('alertdialog')).textContent).toContain(
-      'V tejto skupine sú 3 úlohy. Samotné úlohy sa nezmenia.',
+      'V tejto skupine sú 3 tikety. Samotné tikety sa nezmenia.',
     );
     sk3.view.unmount();
     setup({ ...target, memberCount: 5 });
     expect((await screen.findByRole('alertdialog')).textContent).toContain(
-      'V tejto skupine je 5 úloh.',
+      'V tejto skupine je 5 tiketov.',
     );
   });
 

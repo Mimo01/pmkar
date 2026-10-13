@@ -1,3 +1,4 @@
+import { MousePointerClick } from 'lucide-react';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu';
@@ -107,9 +108,17 @@ export function GroupTab({
                 <CountPill active={active}>{group.memberCount}</CountPill>
               </button>
             </TooltipTrigger>
-            <TooltipContent aria-hidden="true">
-              <span className="block">{summary}</span>
-              <span className="block">{t('groups.tab.menuHint')}</span>
+            <TooltipContent aria-hidden="true" className="max-w-xs">
+              <div className="flex items-baseline gap-2">
+                <span className="font-semibold break-words">{group.name}</span>
+                <span className="shrink-0 text-xs opacity-70">
+                  {t('groups.tab.count', { count: group.memberCount })}
+                </span>
+              </div>
+              <div className="mt-1.5 flex items-center gap-1.5 border-t border-border pt-1.5 text-xs opacity-70">
+                <MousePointerClick className="size-3.5 shrink-0" />
+                {t('groups.tab.menuHint')}
+              </div>
             </TooltipContent>
           </Tooltip>
         </div>
