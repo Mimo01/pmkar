@@ -387,9 +387,7 @@ function GroupPickerBody(props: BodyProps) {
                 className={`min-w-0 pl-1.5 pr-2 ${groupChipClass}`}
               >
                 <GroupChipIcon />
-                <span className="truncate" title={g.name}>
-                  {g.name}
-                </span>
+                <span className="truncate">{g.name}</span>
               </span>
             </div>
           );

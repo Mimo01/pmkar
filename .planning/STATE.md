@@ -366,3 +366,4 @@ Resume file: .planning/phases/33-polish-verification/33-UI-SPEC.md
 | 2026-10-13 | fast | Group chips restyled as sheen pills with tag glyph | ✅ |
 | 2026-10-13 | fast | Group chips: neutral surface chip with group-color filled tag | ✅ |
 | 2026-10-13 | fast | Group chips: group-tinted surface + border with filled tag | ✅ |
+| 2026-10-13 | fast | Remove tooltips from group chips | ✅ |

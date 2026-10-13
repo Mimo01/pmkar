@@ -134,7 +134,7 @@ describe('GroupChips', () => {
     expect(spy).toHaveBeenCalledWith(3);
   });
 
-  it('truncates long names and keeps the full name in the DOM tooltip trigger', () => {
+  it('truncates long names and keeps the full name in the DOM', () => {
     const long = 'X'.repeat(40);
     seed({ 'P-1': [9] }, [g(9, long)]);
     render(<GroupChips issueKey="P-1" />);

@@ -1,6 +1,5 @@
 import { Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { groupColorStyle } from './colors';
 import { useGroupNavigation } from './NavigationContext';
 import type { Group } from './types';
@@ -23,18 +22,13 @@ export function GroupChipIcon() {
   );
 }
 
-/** Non-interactive chip label: truncated name with a full-name tooltip. */
+/** Non-interactive chip label: tag glyph and truncated name. */
 export function GroupChipLabel({ group }: { group: Group }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex items-center gap-1 min-w-0">
-          <GroupChipIcon />
-          <span className="max-w-[160px] truncate">{group.name}</span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent aria-hidden="true">{group.name}</TooltipContent>
-    </Tooltip>
+    <span className="inline-flex items-center gap-1 min-w-0">
+      <GroupChipIcon />
+      <span className="max-w-[160px] truncate">{group.name}</span>
+    </span>
   );
 }
 
