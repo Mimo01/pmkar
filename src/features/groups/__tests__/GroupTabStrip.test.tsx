@@ -241,6 +241,35 @@ describe('GroupTabStrip', () => {
     );
   });
 
+  it('does not hand off focus or open a tooltip when the right arrow was clicked with a pointer', async () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    const right = screen.getByRole('button', { name: 'Scroll tabs right' });
+    await userEvent.setup().click(right);
+    expect(right).toHaveFocus();
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(screen.queryByRole('button', { name: 'Scroll tabs right' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Scroll tabs left' })).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).not.toHaveFocus();
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('hands off again once the clicked arrow is used from the keyboard', async () => {
+    seed([sprint, qa]);
+    renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);
+    const scroller = setOverflowMetrics(600, 200, 0);
+    fireEvent.scroll(scroller);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Scroll tabs right' }));
+    await user.keyboard('{Enter}');
+    scroller.scrollLeft = 400;
+    fireEvent.scroll(scroller);
+    expect(screen.getByRole('button', { name: 'Scroll tabs left' })).toHaveFocus();
+  });
+
   it('falls back to the current active group tab when overflow vanishes on resize', () => {
     seed([sprint, qa]);
     const view = renderWithI18n(<GroupTabStrip activeTab="group:1" onTabChange={vi.fn()} />);

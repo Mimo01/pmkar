@@ -1,5 +1,13 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  type FocusEvent,
+  type PointerEvent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -63,6 +71,10 @@ export function GroupTabStrip({
   const rightArrowRef = useRef<HTMLButtonElement | null>(null);
   const [overflow, setOverflow] = useState({ canScrollLeft: false, canScrollRight: false });
   const [arrowHandoff, setArrowHandoff] = useState<'left' | 'right' | null>(null);
+  // The arrow last activated by a pointer (cleared by keyboard use or blur). Chromium
+  // webviews focus a <button> on click, so without this a mouse user would get focus
+  // moved for them and the Radix tooltip opened on the programmatic focus.
+  const pointerArrowRef = useRef<HTMLButtonElement | null>(null);
   const wrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const moreRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const anchorRef = useRef<HTMLElement | null>(null);
@@ -104,17 +116,22 @@ export function GroupTabStrip({
       focused !== null && focused === leftArrowRef.current && !next.canScrollLeft;
     const focusedRightGone =
       focused !== null && focused === rightArrowRef.current && !next.canScrollRight;
+    // Pointer-initiated arrow focus is left to drop when the arrow unmounts: moving it
+    // would open the target's tooltip away from the cursor, and mouse users need no handoff.
+    const pointerFocused = focused !== null && focused === pointerArrowRef.current;
     // Hand focus to the opposite arrow: the active tab may be clipped by the scroller
     // (WCAG 2.4.7, 33-VERIFICATION SC2).
-    if (focusedRightGone && next.canScrollLeft) {
-      setArrowHandoff('left');
-    } else if (focusedLeftGone && next.canScrollRight) {
-      setArrowHandoff('right');
-    } else if (focusedLeftGone || focusedRightGone) {
-      const current = activeTabRef.current;
-      const id = parseGroupTabId(current);
-      if (id !== null) tabRefs.current.get(id)?.focus({ preventScroll: true });
-      else focusCoreTab(current as CoreTab, { preventScroll: true });
+    if (!pointerFocused) {
+      if (focusedRightGone && next.canScrollLeft) {
+        setArrowHandoff('left');
+      } else if (focusedLeftGone && next.canScrollRight) {
+        setArrowHandoff('right');
+      } else if (focusedLeftGone || focusedRightGone) {
+        const current = activeTabRef.current;
+        const id = parseGroupTabId(current);
+        if (id !== null) tabRefs.current.get(id)?.focus({ preventScroll: true });
+        else focusCoreTab(current as CoreTab, { preventScroll: true });
+      }
     }
     setOverflow((prev) =>
       prev.canScrollLeft === next.canScrollLeft && prev.canScrollRight === next.canScrollRight
@@ -310,6 +327,20 @@ export function GroupTabStrip({
     el?.scrollBy?.({ left: dir * step, behavior: reduced ? 'auto' : 'smooth' });
   }
 
+  function arrowInputHandlers() {
+    return {
+      onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
+        pointerArrowRef.current = e.currentTarget;
+      },
+      onKeyDown: () => {
+        pointerArrowRef.current = null;
+      },
+      onBlur: (e: FocusEvent<HTMLButtonElement>) => {
+        if (pointerArrowRef.current === e.currentTarget) pointerArrowRef.current = null;
+      },
+    };
+  }
+
   function handleCreated(id: number) {
     // Only honour focus/tab switch for a group the store actually has.
     if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
@@ -390,6 +421,7 @@ export function GroupTabStrip({
                       ref={leftArrowRef}
                       aria-label={t('groups.scrollLeft')}
                       onClick={() => scrollByDir(-1)}
+                      {...arrowInputHandlers()}
                       className={ARROW_CLASS}
                     >
                       <ChevronLeft className="w-4 h-4" aria-hidden="true" />
@@ -411,6 +443,7 @@ export function GroupTabStrip({
                       ref={rightArrowRef}
                       aria-label={t('groups.scrollRight')}
                       onClick={() => scrollByDir(1)}
+                      {...arrowInputHandlers()}
                       className={ARROW_CLASS}
                     >
                       <ChevronRight className="w-4 h-4" aria-hidden="true" />
