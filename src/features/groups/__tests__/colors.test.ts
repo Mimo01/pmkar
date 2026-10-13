@@ -3,6 +3,7 @@ import { contrast, darkBlock, readVar, rootBlock, themeBlock } from '../../../te
 import {
   GROUP_COLOR_HEX,
   GROUP_COLOR_TOKENS,
+  GROUP_LABEL_HEX,
   groupColorStyle,
   groupColorVar,
   isGroupColorToken,
@@ -26,11 +27,10 @@ describe('palette', () => {
     ]);
   });
 
-  it('has a fill and label color for every token', () => {
+  it('has a fill for every token', () => {
     expect(Object.keys(GROUP_COLOR_HEX)).toEqual([...GROUP_COLOR_TOKENS]);
     for (const t of GROUP_COLOR_TOKENS) {
-      expect(GROUP_COLOR_HEX[t].fill).toMatch(/^#[0-9a-f]{6}$/);
-      expect(GROUP_COLOR_HEX[t].text).toMatch(/^#[0-9a-f]{6}$/);
+      expect(GROUP_COLOR_HEX[t]).toMatch(/^#[0-9a-f]{6}$/);
     }
   });
 
@@ -38,16 +38,15 @@ describe('palette', () => {
     const forbidden = ['#c02232', '#dc2626', '#d4354a', '#a01c2a'];
     for (const t of GROUP_COLOR_TOKENS) {
       expect(t).not.toContain('red');
-      expect(forbidden).not.toContain(GROUP_COLOR_HEX[t].fill);
+      expect(forbidden).not.toContain(GROUP_COLOR_HEX[t]);
     }
   });
 });
 
 describe('contrast', () => {
   for (const t of GROUP_COLOR_TOKENS) {
-    it(`${t} label reaches 4.5:1 on its fill`, () => {
-      const { fill, text } = GROUP_COLOR_HEX[t];
-      expect(contrast(text, fill)).toBeGreaterThanOrEqual(4.5);
+    it(`${t} shared label reaches 4.5:1 on its fill`, () => {
+      expect(contrast(GROUP_LABEL_HEX, GROUP_COLOR_HEX[t])).toBeGreaterThanOrEqual(4.5);
     });
   }
 });
@@ -103,10 +102,13 @@ describe('css parity', () => {
     expect(count(darkBlock)).toBe(0);
   });
 
+  it('shared label color matches colors.ts', () => {
+    expect(readVar(rootBlock, '--group-chip-text')).toBe(GROUP_LABEL_HEX);
+  });
+
   for (const t of GROUP_COLOR_TOKENS) {
     it(`${t} matches colors.ts`, () => {
-      expect(readVar(rootBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t].fill);
-      expect(readVar(rootBlock, `--color-group-${t}-fg`)).toBe(GROUP_COLOR_HEX[t].text);
+      expect(readVar(rootBlock, `--color-group-${t}`)).toBe(GROUP_COLOR_HEX[t]);
     });
   }
 });
@@ -121,9 +123,9 @@ describe('light palette emission', () => {
 });
 
 describe('groupColorStyle', () => {
-  it('sets --group-color and --group-fg to css var references', () => {
-    const style = groupColorStyle('blue') as Record<string, string>;
-    expect(style['--group-color']).toBe('var(--color-group-blue)');
-    expect(style['--group-fg']).toBe('var(--color-group-blue-fg)');
+  it('sets --group-color to the css var reference', () => {
+    expect((groupColorStyle('blue') as Record<string, string>)['--group-color']).toBe(
+      'var(--color-group-blue)',
+    );
   });
 });

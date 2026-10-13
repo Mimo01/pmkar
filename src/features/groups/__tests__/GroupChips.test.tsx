@@ -150,7 +150,7 @@ describe('GroupChips', () => {
     expect(chip.style.getPropertyValue('--group-color')).toBe(groupColorVar('green'));
     const classes = chip.className.split(/\s+/);
     expect(classes).toContain('bg-(--group-color)');
-    expect(classes).toContain('text-(--group-fg)');
+    expect(classes).toContain('text-(--group-chip-text)');
     expect(classes).toContain('rounded-md');
     expect(container.querySelector('[style*="background-color"]')).toBeNull();
   });

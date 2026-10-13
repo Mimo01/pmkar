@@ -6,10 +6,10 @@ import type { Group } from './types';
 
 /**
  * Shared chip look: button-like rounded-md, text-xs font-medium, a solid
- * group-color fill with its matching label color.
+ * group-color fill with one shared dark label color.
  */
 export const groupChipClass =
-  'inline-flex items-center h-5 rounded-md text-xs font-medium bg-(--group-color) text-(--group-fg)';
+  'inline-flex items-center h-5 rounded-md text-xs font-medium bg-(--group-color) text-(--group-chip-text)';
 
 /** Non-interactive chip label: truncated name with a full-name tooltip. */
 export function GroupChipLabel({ group }: { group: Group }) {

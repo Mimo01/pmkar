@@ -44,26 +44,19 @@
   --radius: 0.5rem;
 }
 
-/* Group palette (Phase 28, D-05..D-07): solid fills via --group-color with --group-fg label text, plus tab underlines. Same in both themes.
+/* Group palette (Phase 28, D-05..D-07): solid fills via --group-color with one shared dark label color, plus tab underlines. Same in both themes.
    Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
    and these are referenced only via a runtime-built var() name in colors.ts. */
 :root {
-  --color-group-blue: #1f6feb;
-  --color-group-blue-fg: #ffffff;
+  --color-group-blue: #3b8bff;
   --color-group-teal: #14b8a6;
-  --color-group-teal-fg: #1c1917;
   --color-group-green: #22c55e;
-  --color-group-green-fg: #1c1917;
   --color-group-yellow: #facc15;
-  --color-group-yellow-fg: #1c1917;
   --color-group-orange: #f97316;
-  --color-group-orange-fg: #1c1917;
-  --color-group-purple: #9333ea;
-  --color-group-purple-fg: #ffffff;
-  --color-group-pink: #db2777;
-  --color-group-pink-fg: #ffffff;
-  --color-group-slate: #64748b;
-  --color-group-slate-fg: #ffffff;
+  --color-group-purple: #a66bff;
+  --color-group-pink: #f0529c;
+  --color-group-slate: #8796ad;
+  --group-chip-text: #1c1917;
 }
 
 /* Light theme body defaults */
