@@ -499,42 +499,15 @@ describe('GroupTabStrip', () => {
         .map((b) => b.getAttribute('aria-label')?.split(',')[0]);
     }
 
-    it('only the active tab has a focusable `…` button; others are hidden but laid out', () => {
+    it('has no `…` button; the menu is reached by right-click or keyboard only', () => {
       seed(three);
       renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
-      const more = screen.getByRole('button', { name: 'Group actions for QA' });
-      expect(more).toHaveAttribute('tabindex', '0');
-      expect(screen.queryByRole('button', { name: 'Group actions for Sprint 12' })).toBeNull();
-      const hidden = screen
-        .getByTestId('group-tab-scroller')
-        .querySelector('[aria-label="Group actions for Sprint 12"]') as HTMLElement;
-      expect(hidden).toHaveAttribute('aria-hidden', 'true');
-      expect(hidden).toHaveAttribute('tabindex', '-1');
-      expect(hidden.className).toContain('hidden');
-    });
-
-    it('`…` and tab button are siblings in one wrapper', () => {
-      seed(three);
-      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
+      expect(screen.queryByRole('button', { name: /Group actions/ })).toBeNull();
       const tab = screen.getByRole('button', { name: 'QA, 1 issue' });
-      const more = screen.getByRole('button', { name: 'Group actions for QA' });
-      expect(tab.contains(more)).toBe(false);
-      expect(tab.parentElement).toBe(more.parentElement);
       const inactive = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
       // Inactive tabs keep a faint group-color underline so colors read at a glance.
       expect(inactive.className.split(/\s+/)).toContain('border-(--group-color)/35');
       expect(tab.className.split(/\s+/)).toContain('border-(--group-color)');
-    });
-
-    it('keyboard Enter on `…` opens the menu', async () => {
-      seed(three);
-      renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
-      const more = screen.getByRole('button', { name: 'Group actions for QA' });
-      more.focus();
-      await userEvent.setup().keyboard('{Enter}');
-      expect(await screen.findByRole('menu')).toBeInTheDocument();
-      expect(screen.getAllByRole('menuitem')[0]).toHaveTextContent('Rename…');
-      expect(more).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('right-click opens the menu without switching tabs', async () => {
@@ -564,14 +537,14 @@ describe('GroupTabStrip', () => {
       expect(spy).not.toHaveBeenCalled();
     });
 
-    it('Move right from the active `…` menu reorders, announces, and refocuses', async () => {
+    it('Move right from the active tab menu reorders, announces, and refocuses', async () => {
       seed(three);
       mockServer(three);
       const spy = vi.fn();
       const user = userEvent.setup();
       renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={spy} />);
-      screen.getByRole('button', { name: 'Group actions for QA' }).focus();
-      await user.keyboard('{Enter}');
+      screen.getByRole('button', { name: 'QA, 1 issue' }).focus();
+      await user.keyboard('{Shift>}{F10}{/Shift}');
       await user.click(await screen.findByRole('menuitem', { name: 'Move right' }));
       await waitFor(() =>
         expect(invokeMock).toHaveBeenCalledWith('move_group', { groupId: 2, direction: 'right' }),
@@ -584,9 +557,7 @@ describe('GroupTabStrip', () => {
         ),
       );
       await waitFor(() =>
-        expect(document.activeElement).toBe(
-          screen.getByRole('button', { name: 'Group actions for QA' }),
-        ),
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: /^QA,/ })),
       );
       expect(scrollIntoViewMock).toHaveBeenCalled();
       expect(spy).not.toHaveBeenCalled();
@@ -718,13 +689,13 @@ describe('GroupTabStrip', () => {
       );
     });
 
-    it('Escape closing the `…` menu returns focus to the trigger', async () => {
+    it('Escape closing a keyboard-opened menu returns focus to the tab', async () => {
       seed(three);
       renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
-      const more = screen.getByRole('button', { name: 'Group actions for QA' });
+      const more = screen.getByRole('button', { name: 'QA, 1 issue' });
       more.focus();
       const user = userEvent.setup();
-      await user.keyboard('{Enter}');
+      await user.keyboard('{Shift>}{F10}{/Shift}');
       await screen.findByRole('menu');
       await user.keyboard('{Escape}');
       await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());

@@ -509,7 +509,6 @@
   "groups.noResults.body": "Vymažte vyhľadávanie alebo filter riešiteľa, aby sa zobrazili všetky úlohy v tejto skupine.",
   "groups.loadError": "Niektoré úlohy v tejto skupine sa nepodarilo načítať.",
   "groups.badge.done": "Hotové",
-  "groups.menu.trigger": "Akcie skupiny {{name}}",
   "groups.menu.rename": "Premenovať…",
   "groups.menu.color": "Zmeniť farbu…",
   "groups.menu.moveLeft": "Posunúť doľava",

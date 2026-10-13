@@ -193,16 +193,15 @@ function setupStrip(initialTab: TabId) {
   return user;
 }
 
-const actionsBtn = (name: string) =>
-  screen.getByRole('button', { name: `Group actions for ${name}` });
+const actionsBtn = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name},`) });
 
 async function openMenuWithKeyboard(user: ReturnType<typeof userEvent.setup>, name: string) {
   actionsBtn(name).focus();
-  await user.keyboard('{Enter}');
+  await user.keyboard('{Shift>}{F10}{/Shift}');
 }
 
 describe('Escape and focus return: tab strip overlays', () => {
-  it('Escape closes the group menu and focuses the `…` trigger', async () => {
+  it('Escape closes the group menu and focuses the tab', async () => {
     const user = setupStrip('group:2');
     await openMenuWithKeyboard(user, 'QA');
     await screen.findByRole('menuitem', { name: 'Rename…' });
@@ -211,7 +210,7 @@ describe('Escape and focus return: tab strip overlays', () => {
     await waitFor(() => expect(actionsBtn('QA')).toHaveFocus());
   });
 
-  it('Escape closes the rename popover and focuses the `…` trigger', async () => {
+  it('Escape closes the rename popover and focuses the tab', async () => {
     const user = setupStrip('group:2');
     await openMenuWithKeyboard(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Rename…' }));
@@ -222,7 +221,7 @@ describe('Escape and focus return: tab strip overlays', () => {
     await waitFor(() => expect(actionsBtn('QA')).toHaveFocus());
   });
 
-  it('Escape closes the color popover and focuses the `…` trigger', async () => {
+  it('Escape closes the color popover and focuses the tab', async () => {
     const user = setupStrip('group:2');
     await openMenuWithKeyboard(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Change color…' }));
@@ -232,7 +231,7 @@ describe('Escape and focus return: tab strip overlays', () => {
     await waitFor(() => expect(actionsBtn('QA')).toHaveFocus());
   });
 
-  it('Escape closes the delete dialog (Cancel focused on open) and focuses the `…` trigger', async () => {
+  it('Escape closes the delete dialog (Cancel focused on open) and focuses the tab', async () => {
     const user = setupStrip('group:2');
     await openMenuWithKeyboard(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete group…' }));

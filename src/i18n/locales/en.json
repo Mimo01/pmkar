@@ -509,7 +509,6 @@
   "groups.noResults.body": "Clear the search or assignee filter to see all issues in this group.",
   "groups.loadError": "Some issues in this group could not be loaded.",
   "groups.badge.done": "Done",
-  "groups.menu.trigger": "Group actions for {{name}}",
   "groups.menu.rename": "Rename…",
   "groups.menu.color": "Change color…",
   "groups.menu.moveLeft": "Move left",

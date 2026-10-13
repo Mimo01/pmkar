@@ -46,7 +46,6 @@ type MenuIntent = {
 
 type PendingFocus = {
   id: number;
-  target: 'tab' | 'more';
   source: 'create' | 'manage';
 } | null;
 
@@ -76,7 +75,6 @@ export function GroupTabStrip({
   // moved for them and the Radix tooltip opened on the programmatic focus.
   const pointerArrowRef = useRef<HTMLButtonElement | null>(null);
   const wrapperRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const moreRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const anchorRef = useRef<HTMLElement | null>(null);
   const menuIntentRef = useRef<MenuIntent>(null);
   const movingRef = useRef(false);
@@ -192,7 +190,7 @@ export function GroupTabStrip({
   useEffect(() => {
     if (focusRequest == null) return;
     if (useGroupStore.getState().groups.some((g) => g.id === focusRequest.id)) {
-      setPendingFocus({ id: focusRequest.id, target: 'tab', source: 'manage' });
+      setPendingFocus({ id: focusRequest.id, source: 'manage' });
     }
     onFocusRequestHandled?.();
   }, [focusRequest, onFocusRequestHandled]);
@@ -200,8 +198,7 @@ export function GroupTabStrip({
   // biome-ignore lint/correctness/useExhaustiveDependencies: wait for the new group to render
   useEffect(() => {
     if (pendingFocus === null) return;
-    const map = pendingFocus.target === 'more' ? moreRefs.current : tabRefs.current;
-    const el = map.get(pendingFocus.id);
+    const el = tabRefs.current.get(pendingFocus.id);
     if (!el) return;
     el.scrollIntoView?.({ inline: 'nearest', block: 'nearest' });
     el.focus();
@@ -226,11 +223,7 @@ export function GroupTabStrip({
 
   function focusGroupTrigger(id: number) {
     if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
-    setPendingFocus({
-      id,
-      target: activeTab === groupTabId(id) ? 'more' : 'tab',
-      source: 'manage',
-    });
+    setPendingFocus({ id, source: 'manage' });
   }
 
   function announce(msg: string) {
@@ -314,7 +307,7 @@ export function GroupTabStrip({
     if (ctx.focus.kind === 'core-new') {
       afterUnmount(() => focusCoreTab('new'));
     } else if (ctx.focus.kind === 'group') {
-      setPendingFocus({ id: ctx.focus.id, target: 'tab', source: 'manage' });
+      setPendingFocus({ id: ctx.focus.id, source: 'manage' });
     } else {
       afterUnmount(() => createTriggerRef.current?.focus());
     }
@@ -344,7 +337,7 @@ export function GroupTabStrip({
   function handleCreated(id: number) {
     // Only honour focus/tab switch for a group the store actually has.
     if (!useGroupStore.getState().groups.some((g) => g.id === id)) return;
-    setPendingFocus({ id, target: 'tab', source: 'create' });
+    setPendingFocus({ id, source: 'create' });
     onTabChange(groupTabId(id));
   }
 
@@ -383,18 +376,14 @@ export function GroupTabStrip({
                   if (el) tabRefs.current.set(g.id, el);
                   else tabRefs.current.delete(g.id);
                 }}
-                moreButtonRef={(el) => {
-                  if (el) moreRefs.current.set(g.id, el);
-                  else moreRefs.current.delete(g.id);
-                }}
                 wrapperRef={(el) => {
                   if (el) wrapperRefs.current.set(g.id, el);
                   else wrapperRefs.current.delete(g.id);
                 }}
                 onMenuCloseAutoFocus={handleMenuCloseAutoFocus}
-                renderMenuItems={(variant) => (
+                renderMenuItems={() => (
                   <GroupMenuItems
-                    variant={variant}
+                    variant="context"
                     canMoveLeft={!moving && canMove(groups, g.id, 'left')}
                     canMoveRight={!moving && canMove(groups, g.id, 'right')}
                     onRename={() => recordIntent(g.id, 'rename')}

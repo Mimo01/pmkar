@@ -131,8 +131,8 @@ function setup(initialTab: TabId) {
 }
 
 async function openMoreMenu(user: ReturnType<typeof userEvent.setup>, name: string) {
-  screen.getByRole('button', { name: `Group actions for ${name}` }).focus();
-  await user.keyboard('{Enter}');
+  tabButton(name).focus();
+  await user.keyboard('{Shift>}{F10}{/Shift}');
 }
 
 function tabButton(name: string) {
@@ -158,7 +158,7 @@ describe('GroupTabStrip remove all missing', () => {
     toastSuccessMock.mockReset();
   });
 
-  it('menu item opens the confirm; Cancel returns focus to the actions button', async () => {
+  it('menu item opens the confirm; Cancel returns focus to the tab', async () => {
     seedMissing();
     const { user } = setup('group:1');
     await openMoreMenu(user, 'Sprint 12');
@@ -167,9 +167,7 @@ describe('GroupTabStrip remove all missing', () => {
       await screen.findByText('Remove 1 issue from “Sprint 12”? It is no longer in results.'),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Group actions for Sprint 12' })).toHaveFocus(),
-    );
+    await waitFor(() => expect(tabButton('Sprint 12')).toHaveFocus());
     expect(invokeMock.mock.calls.some((c) => c[0] === 'remove_issues_from_group')).toBe(false);
   });
 
@@ -211,7 +209,7 @@ describe('GroupTabStrip remove all missing', () => {
 });
 
 describe('GroupTabStrip overlays', () => {
-  it('Rename opens focused popover, saves, and refocuses the renamed `…`', async () => {
+  it('Rename opens focused popover, saves, and refocuses the renamed tab', async () => {
     const { user } = setup('group:2');
     await openMoreMenu(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Rename…' }));
@@ -222,9 +220,7 @@ describe('GroupTabStrip overlays', () => {
     await user.clear(input);
     await user.type(input, 'QA team{Enter}');
     await waitFor(() => expect(tabButton('QA team')).toBeInTheDocument());
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Group actions for QA team' })).toHaveFocus(),
-    );
+    await waitFor(() => expect(tabButton('QA team')).toHaveFocus());
   });
 
   it('Rename cancel from a right-clicked inactive tab refocuses the tab, no tab switch', async () => {
@@ -237,7 +233,7 @@ describe('GroupTabStrip overlays', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Change color updates the tab color and refocuses `…`', async () => {
+  it('Change color updates the tab color and refocuses the tab', async () => {
     const { user } = setup('group:2');
     await openMoreMenu(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Change color…' }));
@@ -250,9 +246,7 @@ describe('GroupTabStrip overlays', () => {
         'var(--color-group-purple)',
       );
     });
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Group actions for QA' })).toHaveFocus(),
-    );
+    await waitFor(() => expect(tabButton('QA')).toHaveFocus());
   });
 
   it('Change color Esc returns focus without saving', async () => {
@@ -261,9 +255,7 @@ describe('GroupTabStrip overlays', () => {
     await user.click(await screen.findByRole('menuitem', { name: 'Change color…' }));
     await screen.findByRole('radio', { name: 'Purple' });
     await user.keyboard('{Escape}');
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Group actions for QA' })).toHaveFocus(),
-    );
+    await waitFor(() => expect(tabButton('QA')).toHaveFocus());
     expect(invokeMock.mock.calls.some((c) => c[0] === 'set_group_color')).toBe(false);
   });
 
@@ -322,15 +314,13 @@ describe('GroupTabStrip overlays', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'New group' })).toHaveFocus());
   });
 
-  it('Keep group deletes nothing and refocuses `…`', async () => {
+  it('Keep group deletes nothing and refocuses the tab', async () => {
     const { user } = setup('group:2');
     await openMoreMenu(user, 'QA');
     await user.click(await screen.findByRole('menuitem', { name: 'Delete group…' }));
     await screen.findByRole('alertdialog');
     await user.click(screen.getByRole('button', { name: 'Keep group' }));
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Group actions for QA' })).toHaveFocus(),
-    );
+    await waitFor(() => expect(tabButton('QA')).toHaveFocus());
     expect(invokeMock.mock.calls.some((c) => c[0] === 'delete_group')).toBe(false);
     expect(tabButton('QA')).toBeInTheDocument();
   });

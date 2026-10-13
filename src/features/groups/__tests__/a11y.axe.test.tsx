@@ -151,8 +151,8 @@ function TabStripHarness({ initialTab }: { initialTab: TabId }) {
 }
 
 async function openActions(user: ReturnType<typeof userEvent.setup>, name: string) {
-  screen.getByRole('button', { name: `Group actions for ${name}` }).focus();
-  await user.keyboard('{Enter}');
+  screen.getByRole('button', { name: new RegExp(`^${name},`) }).focus();
+  await user.keyboard('{Shift>}{F10}{/Shift}');
 }
 
 describe('group UI axe (D-01 key states)', () => {
