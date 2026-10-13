@@ -5,14 +5,13 @@
  * Consumers must validate stored strings with `isGroupColorToken` and render
  * via `groupColorVar`; never interpolate raw stored strings into styles.
  *
- * Rendering rule: `groupColorStyle` exposes the fill as `--group-color`.
- * Chips and picker names are solid group-color fills with one shared dark label
- * color (`--group-chip-text`, GROUP_LABEL_HEX) that reaches >= 4.5:1 on every
- * fill. Every group tab carries a group-color underline: softer at rest, full
- * strength when active. Color is never the only signal (the name is always
- * shown). Fills are identical in both themes.
+ * Rendering rule: `groupColorStyle` exposes the color as `--group-color`.
+ * Chips are neutral app-surface chips whose leading tag glyph is filled with the
+ * group color; text always stays neutral. Every group tab carries a group-color
+ * underline: softer at rest, full strength when active. Color is never the only
+ * signal (the name is always shown). Values are identical in both themes.
  *
- * The hex values here are mirrored as --color-group-* (and --group-chip-text)
+ * The hex values here are mirrored as --color-group-*
  * variables in the plain :root rule of src/index.css; a test keeps them in sync.
  * They must not be moved into @theme: Tailwind v4 would drop the ones not named
  * literally in source.
@@ -43,9 +42,6 @@ export const GROUP_COLOR_HEX: Readonly<Record<GroupColorToken, string>> = {
   pink: '#f0529c',
   slate: '#8796ad',
 };
-
-/** Shared chip label color, dark on every fill in both themes. */
-export const GROUP_LABEL_HEX = '#1c1917';
 
 export function isGroupColorToken(value: unknown): value is GroupColorToken {
   return typeof value === 'string' && (GROUP_COLOR_TOKENS as readonly string[]).includes(value);

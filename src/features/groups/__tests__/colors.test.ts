@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { contrast, darkBlock, readVar, rootBlock, themeBlock } from '../../../test-utils/contrast';
+import { darkBlock, readVar, rootBlock, themeBlock } from '../../../test-utils/contrast';
 import {
   GROUP_COLOR_HEX,
   GROUP_COLOR_TOKENS,
-  GROUP_LABEL_HEX,
   groupColorStyle,
   groupColorVar,
   isGroupColorToken,
@@ -41,14 +40,6 @@ describe('palette', () => {
       expect(forbidden).not.toContain(GROUP_COLOR_HEX[t]);
     }
   });
-});
-
-describe('contrast', () => {
-  for (const t of GROUP_COLOR_TOKENS) {
-    it(`${t} shared label reaches 4.5:1 on its fill`, () => {
-      expect(contrast(GROUP_LABEL_HEX, GROUP_COLOR_HEX[t])).toBeGreaterThanOrEqual(4.5);
-    });
-  }
 });
 
 describe('pickDefaultColor', () => {
@@ -100,10 +91,6 @@ describe('css parity', () => {
   it('declares the eight group fills in :root only (same in both themes)', () => {
     expect(count(rootBlock)).toBe(8);
     expect(count(darkBlock)).toBe(0);
-  });
-
-  it('shared label color matches colors.ts', () => {
-    expect(readVar(rootBlock, '--group-chip-text')).toBe(GROUP_LABEL_HEX);
   });
 
   for (const t of GROUP_COLOR_TOKENS) {

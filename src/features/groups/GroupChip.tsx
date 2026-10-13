@@ -6,16 +6,21 @@ import { useGroupNavigation } from './NavigationContext';
 import type { Group } from './types';
 
 /**
- * Shared chip look: a vivid group-color pill with a top sheen, a soft
- * group-tinted shadow (`group-chip-sheen` in index.css), a tag glyph and one
- * shared dark label color.
+ * Shared chip look: a neutral app-surface chip (rounded-md, hairline border,
+ * text-xs font-medium, neutral text). The group color lives only in the
+ * leading filled tag glyph, so chips sit quietly next to status badges.
  */
 export const groupChipClass =
-  'inline-flex items-center gap-1 h-5 rounded-full text-xs font-semibold bg-(--group-color) group-chip-sheen text-(--group-chip-text)';
+  'inline-flex items-center gap-1 h-5 rounded-md text-xs font-medium border border-brand-border bg-brand-surface-hover text-brand-text';
 
-/** Leading tag glyph shared by every chip; decorative, never the only signal. */
+/** Leading tag glyph in the group color; decorative, never the only signal. */
 export function GroupChipIcon() {
-  return <Tag className="h-3 w-3 shrink-0 opacity-60" strokeWidth={2.4} aria-hidden="true" />;
+  return (
+    <Tag
+      className="h-3 w-3 shrink-0 fill-(--group-color) text-(--group-color)"
+      aria-hidden="true"
+    />
+  );
 }
 
 /** Non-interactive chip label: truncated name with a full-name tooltip. */
@@ -46,7 +51,7 @@ export function CardGroupChip({ group }: { group: Group }) {
         navigateToGroup(group.id);
       }}
       style={groupColorStyle(group.color)}
-      className={`relative z-10 pl-1.5 pr-2 ${groupChipClass} hover:brightness-110 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
+      className={`relative z-10 pl-1.5 pr-2 ${groupChipClass} hover:border-brand-text-secondary/50 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
     >
       <GroupChipLabel group={group} />
     </button>
