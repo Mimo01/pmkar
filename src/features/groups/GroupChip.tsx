@@ -5,11 +5,11 @@ import { useGroupNavigation } from './NavigationContext';
 import type { Group } from './types';
 
 /**
- * Shared chip look, matching the app's StatusBadge pill: rounded-full,
- * text-xs font-medium, soft group-color tint and border, neutral text.
+ * Shared chip look: button-like rounded-md, text-xs font-medium, a vivid
+ * group-color tint and border, neutral text.
  */
 export const groupChipClass =
-  'inline-flex items-center h-5 rounded-full text-xs font-medium border border-(--group-color)/40 bg-(--group-color)/10 text-brand-text';
+  'inline-flex items-center h-5 rounded-md text-xs font-medium border border-(--group-color)/70 bg-(--group-color)/20 text-brand-text';
 
 /** Non-interactive chip label: truncated name with a full-name tooltip. */
 export function GroupChipLabel({ group }: { group: Group }) {
@@ -38,7 +38,7 @@ export function CardGroupChip({ group }: { group: Group }) {
         navigateToGroup(group.id);
       }}
       style={groupColorStyle(group.color)}
-      className={`relative z-10 px-2 ${groupChipClass} hover:bg-(--group-color)/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
+      className={`relative z-10 px-2 ${groupChipClass} hover:bg-(--group-color)/30 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
     >
       <GroupChipLabel group={group} />
     </button>

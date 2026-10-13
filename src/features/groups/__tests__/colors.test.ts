@@ -149,7 +149,7 @@ describe('tint text contrast', () => {
   const darkSurface = readVar(darkBlock, '--color-brand-surface');
   for (const t of GROUP_COLOR_TOKENS) {
     it(`${t} tint keeps neutral text at 4.5:1 in dark`, () => {
-      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.12);
+      const bg = mix(GROUP_COLOR_HEX[t].dark, darkSurface, 0.2);
       expect(contrast(darkText, bg)).toBeGreaterThanOrEqual(4.5);
     });
   }

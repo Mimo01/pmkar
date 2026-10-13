@@ -80,11 +80,7 @@ export function GroupTab({
         <div
           ref={setWrapper}
           style={groupColorStyle(group.color)}
-          className={`shrink-0 inline-flex items-center gap-1 mr-4 border-b-2 transition-colors duration-150 ${
-            active
-              ? 'border-(--group-color)'
-              : 'border-(--group-color)/35 hover:border-(--group-color)/70'
-          }`}
+          className="shrink-0 inline-flex items-center gap-1 mr-4"
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -96,10 +92,10 @@ export function GroupTab({
                 onKeyDown={handleKeyDown}
                 aria-label={t('groups.tab.aria', { name: group.name, count: group.memberCount })}
                 aria-current={active ? 'page' : undefined}
-                className={`flex items-center gap-1 text-sm py-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
+                className={`flex items-center gap-1 text-sm py-2 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
                   active
-                    ? 'text-brand-text font-semibold'
-                    : 'text-brand-text-secondary font-normal hover:text-brand-text'
+                    ? 'text-brand-text font-semibold border-(--group-color)'
+                    : 'text-brand-text-secondary font-normal hover:text-brand-text border-(--group-color)/35 hover:border-(--group-color)/70'
                 }`}
               >
                 <span className="grid max-w-[160px]">

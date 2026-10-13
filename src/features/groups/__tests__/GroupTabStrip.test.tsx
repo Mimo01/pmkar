@@ -142,7 +142,7 @@ describe('GroupTabStrip', () => {
     renderWithI18n(<GroupTabStrip activeTab="group:2" onTabChange={vi.fn()} />);
     const b = screen.getByRole('button', { name: 'QA, 1 issue' });
     expect(b).toHaveAttribute('aria-current', 'page');
-    expect(b.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)');
+    expect(b.className.split(/\s+/)).toContain('border-(--group-color)');
     expect(b.className).toContain('font-semibold');
     expect(screen.getByRole('button', { name: 'Sprint 12, 3 issues' })).not.toHaveAttribute(
       'aria-current',
@@ -522,8 +522,8 @@ describe('GroupTabStrip', () => {
       expect(tab.parentElement).toBe(more.parentElement);
       const inactive = screen.getByRole('button', { name: 'Sprint 12, 3 issues' });
       // Inactive tabs keep a faint group-color underline so colors read at a glance.
-      expect(inactive.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)/35');
-      expect(tab.parentElement?.className.split(/\s+/)).toContain('border-(--group-color)');
+      expect(inactive.className.split(/\s+/)).toContain('border-(--group-color)/35');
+      expect(tab.className.split(/\s+/)).toContain('border-(--group-color)');
     });
 
     it('keyboard Enter on `…` opens the menu', async () => {

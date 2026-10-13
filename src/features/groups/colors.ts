@@ -7,8 +7,8 @@
  *
  * Rendering rule (D-07, revised by quick task 261013-e6u): the color is exposed
  * as the `--group-color` custom property via `groupColorStyle`. Chips and
- * picker names are StatusBadge-style pills with a soft (~10%) tint background
- * and a (~40%) group-color border. Every group tab carries a group-color
+ * picker names are button-like (rounded-md) chips with a ~20% tint background
+ * and a ~70% group-color border. Every group tab carries a group-color
  * underline: faint at rest, full strength when active. Text always stays neutral
  * (text-brand-text), never colored, and color is never the only signal (the
  * name is always shown). Every value reaches >= 3:1 non-text contrast against

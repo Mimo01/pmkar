@@ -95,7 +95,7 @@ export function DetailGroupsRow({
                 <button
                   type="button"
                   aria-label={t('groups.chip.remove', { name: g.name })}
-                  className="inline-flex items-center justify-center h-5 w-5 rounded-full text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
+                  className="inline-flex items-center justify-center h-5 w-5 rounded-md text-brand-text-secondary hover:text-brand-text cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring"
                 >
                   <X className="w-3 h-3" aria-hidden="true" />
                 </button>
