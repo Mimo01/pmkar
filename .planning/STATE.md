@@ -359,6 +359,7 @@ None yet.
 | fast | Group chips: tinted surface + border with filled group-color tag (F1) | 2026-10-13 | c6e6663 | Approved | — |
 | fast | Remove tooltips from group chips | 2026-10-13 | 0abf651 | Approved | — |
 | fast | Pointer chip click no longer focuses group tab (no stray nav tooltip) | 2026-10-13 | 41e4733 | Approved | — |
+| fast | Release v0.5.0 with curated changelog | 2026-10-13 | 8c936d5 | Done | — |
 
 ## Session Continuity
 
