@@ -90,3 +90,25 @@ describe('token contrast', () => {
     });
   }
 });
+
+describe('readVar', () => {
+  it('resolves a whole declaration name, not a suffix of another', () => {
+    expect(readVar('--color-focus-ring: #111111;\n  --color-ring: #222222;', '--color-ring')).toBe(
+      '#222222',
+    );
+  });
+
+  it('does not match a name that merely ends with the requested one', () => {
+    expect(() =>
+      readVar('  --x--color-ring: #333333;\n  --color-focus-ring: #111111;', '--color-ring'),
+    ).toThrow('var not found: --color-ring');
+  });
+
+  it('lowercases the hex and accepts a declaration right after a brace', () => {
+    expect(readVar('{--color-a: #ABCDEF;}', '--color-a')).toBe('#abcdef');
+  });
+
+  it('escapes regex metacharacters in the name', () => {
+    expect(() => readVar('--a: #111111;', '--(a')).toThrow('var not found: --(a');
+  });
+});
