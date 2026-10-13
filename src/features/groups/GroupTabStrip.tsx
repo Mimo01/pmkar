@@ -82,6 +82,9 @@ export function GroupTabStrip({
   const announceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+
   const pendingGroup = useMemo(
     () => (pending ? (groups.find((g) => g.id === pending.groupId) ?? null) : null),
     [pending, groups],
@@ -101,9 +104,10 @@ export function GroupTabStrip({
       ((focused === leftArrowRef.current && !next.canScrollLeft) ||
         (focused === rightArrowRef.current && !next.canScrollRight))
     ) {
-      const id = parseGroupTabId(activeTab);
-      if (id !== null) tabRefs.current.get(id)?.focus();
-      else focusCoreTab(activeTab as CoreTab);
+      const current = activeTabRef.current;
+      const id = parseGroupTabId(current);
+      if (id !== null) tabRefs.current.get(id)?.focus({ preventScroll: true });
+      else focusCoreTab(current as CoreTab, { preventScroll: true });
     }
     setOverflow((prev) =>
       prev.canScrollLeft === next.canScrollLeft && prev.canScrollRight === next.canScrollRight

@@ -8,10 +8,10 @@ export function groupTabId(id: number): TabId {
 }
 
 /** Focuses a core nav tab by its data-tab-id. Returns false when it is not mounted. */
-export function focusCoreTab(tab: CoreTab): boolean {
+export function focusCoreTab(tab: CoreTab, options?: FocusOptions): boolean {
   const el = document.querySelector<HTMLElement>(`[data-tab-id="${tab}"]`);
   if (!el) return false;
-  el.focus();
+  el.focus(options);
   return true;
 }
 
