@@ -6,12 +6,12 @@ import { useGroupNavigation } from './NavigationContext';
 import type { Group } from './types';
 
 /**
- * Shared chip look: a neutral app-surface chip (rounded-md, hairline border,
- * text-xs font-medium, neutral text). The group color lives only in the
- * leading filled tag glyph, so chips sit quietly next to status badges.
+ * Shared chip look: rounded-md, text-xs font-medium, neutral text on a surface
+ * lightly tinted with the group color and a group-tinted hairline border
+ * (`group-chip` in index.css), led by a filled tag glyph in the group color.
  */
 export const groupChipClass =
-  'inline-flex items-center gap-1 h-5 rounded-md text-xs font-medium border border-brand-border bg-brand-surface-hover text-brand-text';
+  'inline-flex items-center gap-1 h-5 rounded-md text-xs font-medium border group-chip text-brand-text';
 
 /** Leading tag glyph in the group color; decorative, never the only signal. */
 export function GroupChipIcon() {
@@ -51,7 +51,7 @@ export function CardGroupChip({ group }: { group: Group }) {
         navigateToGroup(group.id);
       }}
       style={groupColorStyle(group.color)}
-      className={`relative z-10 pl-1.5 pr-2 ${groupChipClass} hover:border-brand-text-secondary/50 cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
+      className={`relative z-10 pl-1.5 pr-2 ${groupChipClass} hover:group-chip-hover cursor-pointer focus-visible:outline-2 focus-visible:outline-focus-ring`}
     >
       <GroupChipLabel group={group} />
     </button>

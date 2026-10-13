@@ -44,7 +44,7 @@
   --radius: 0.5rem;
 }
 
-/* Group palette (Phase 28, D-05..D-07): exposed via --group-color for chip tag glyphs and tab underlines; chip text stays neutral. Same in both themes.
+/* Group palette (Phase 28, D-05..D-07): exposed via --group-color for chip tints, tag glyphs and tab underlines; chip text stays neutral. Same in both themes.
    Kept outside @theme: Tailwind v4 drops @theme variables not named literally in source,
    and these are referenced only via a runtime-built var() name in colors.ts. */
 :root {
@@ -58,6 +58,17 @@
   --color-group-slate: #8796ad;
 }
 
+
+/* Group chip surface: a light group-color tint over the card surface and a
+   group-tinted hairline border; text stays neutral. */
+@utility group-chip {
+  background-color: color-mix(in srgb, var(--group-color) 9%, var(--color-brand-surface));
+  border-color: color-mix(in srgb, var(--group-color) 35%, var(--color-brand-border));
+}
+@utility group-chip-hover {
+  background-color: color-mix(in srgb, var(--group-color) 16%, var(--color-brand-surface));
+  border-color: color-mix(in srgb, var(--group-color) 55%, var(--color-brand-border));
+}
 
 /* Light theme body defaults */
 body {

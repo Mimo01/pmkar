@@ -6,8 +6,8 @@
  * via `groupColorVar`; never interpolate raw stored strings into styles.
  *
  * Rendering rule: `groupColorStyle` exposes the color as `--group-color`.
- * Chips are neutral app-surface chips whose leading tag glyph is filled with the
- * group color; text always stays neutral. Every group tab carries a group-color
+ * Chips sit on a light group-color tint with a group-tinted border and a leading
+ * tag glyph filled with the group color; text always stays neutral. Every group tab carries a group-color
  * underline: softer at rest, full strength when active. Color is never the only
  * signal (the name is always shown). Values are identical in both themes.
  *

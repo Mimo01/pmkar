@@ -143,13 +143,13 @@ describe('GroupChips', () => {
     expect(nameEl).toHaveClass('truncate');
   });
 
-  it('renders a neutral chip with a group-color tag with the group color var and no dot', () => {
+  it('renders a group-tinted chip with a group-color tag with the group color var and no dot', () => {
     seed({ 'P-1': [1] }, [g(1, 'A', 'green')]);
     const { container } = render(<GroupChips issueKey="P-1" />);
     const chip = screen.getByRole('button', { name: /A/ });
     expect(chip.style.getPropertyValue('--group-color')).toBe(groupColorVar('green'));
     const classes = chip.className.split(/\s+/);
-    expect(classes).toContain('bg-brand-surface-hover');
+    expect(classes).toContain('group-chip');
     expect(classes).toContain('text-brand-text');
     expect(classes).toContain('rounded-md');
     expect(chip.querySelector('svg')?.getAttribute('class')).toContain('fill-(--group-color)');
