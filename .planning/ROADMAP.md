@@ -91,7 +91,7 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 - [x] **Phase 34: Link Integrity Backend** - Atomic re-link command, no Linked row without a key, duplicate-copy guard, link survives cleanup (completed 2026-10-15)
 - [x] **Phase 35: Shared Triage Actions** - Key-preserving deny / re-link / restore transitions in one shared frontend module (completed 2026-10-15)
 - [x] **Phase 36: Detail and Group UI** - Explicit Deny / Link buttons in detail (page, panel, group view) with hints, focus handling and EN/SK strings (completed 2026-10-15)
-- [ ] **Phase 37: Consistency, Accessibility and UAT** - Each ticket in exactly one tab after any transition; keyboard and screen-reader verified
+- [x] **Phase 37: Consistency, Accessibility and UAT** - Each ticket in exactly one tab after any transition; keyboard and screen-reader verified (completed 2026-10-15)
 
 ## Phase Details
 
@@ -194,7 +194,7 @@ Plans:
 
 **Wave 3** *(blocked on all above)*
 
-- [ ] 37-05-PLAN.md — 37-HUMAN-UAT.md WebView2 checklist (supersedes 36-HUMAN-UAT), full suite gate, validation map
+- [x] 37-05-PLAN.md — 37-HUMAN-UAT.md WebView2 checklist (supersedes 36-HUMAN-UAT), full suite gate, validation map
 **UI hint**: yes
 
 ## Progress
@@ -237,4 +237,4 @@ Plans:
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
 | 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
-| 37. Consistency, Accessibility and UAT | v0.5.1 | 4/5 | In Progress|  |
+| 37. Consistency, Accessibility and UAT | v0.5.1 | 5/5 | Complete   | 2026-10-15 |
