@@ -186,6 +186,7 @@
   "triage.denyFailed": "Could not move the ticket to Ignored. Try again.",
   "triage.undoFailed": "Could not restore the link to {{key}}. The ticket stays in Ignored.",
   "triage.linkFailed": "Could not link the ticket. Try again.",
+  "triage.notConnected": "Not connected to the source Jira. Check Settings and try again.",
   "triage.handleFailed": "Could not mark the ticket as handled. Try again.",
   "a11y.denied": "{{key}} moved to Dismissed.",
   "a11y.undone": "Undo: {{key}} restored to Linked {{cloudKey}}.",

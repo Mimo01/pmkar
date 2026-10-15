@@ -186,6 +186,7 @@
   "triage.denyFailed": "Tiket sa nepodarilo presunúť do Ignorované. Skúste to znova.",
   "triage.undoFailed": "Odkaz na {{key}} sa nepodarilo obnoviť. Tiket zostáva v Ignorované.",
   "triage.linkFailed": "Tiket sa nepodarilo prepojiť. Skúste to znova.",
+  "triage.notConnected": "Nie ste pripojení k zdrojovej Jire. Skontrolujte Nastavenia a skúste to znova.",
   "triage.handleFailed": "Tiket sa nepodarilo označiť ako vybavený. Skúste to znova.",
   "a11y.denied": "Tiket {{key}} bol presunutý do Zamietnuté.",
   "a11y.undone": "Späť: tiket {{key}} bol obnovený ako prepojený s {{cloudKey}}.",

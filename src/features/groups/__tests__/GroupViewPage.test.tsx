@@ -10,7 +10,9 @@ import { GroupViewPage } from '../GroupViewPage';
 import { useGroupStore } from '../groupStore';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
-vi.mock('sonner', () => ({ toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() } }));
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), info: vi.fn(), error: vi.fn(), dismiss: vi.fn() },
+}));
 
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';

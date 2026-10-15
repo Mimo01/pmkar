@@ -21,6 +21,7 @@ import {
   type TicketSortField,
 } from './ticketListUtils';
 import { useTicketStore } from './ticketStore';
+import { markSeen } from './triageActions';
 import type { FetchTicketsResult, JiraTicket, TriageEntry } from './types';
 
 // --- Helpers ---
@@ -447,9 +448,7 @@ export function TicketListPage() {
   function handleSelectTicket(key: string) {
     const store = useTicketStore.getState();
     store.selectTicket(key);
-    store.markSeen(key);
-    // Fire-and-forget persist to SQLite
-    invoke('set_triage_state', { ticketKey: key, state: 'seen' }).catch(() => {});
+    markSeen(key);
   }
 
   const candidateTickets = tickets.filter((t) => isNewCandidate(t, triageMap));

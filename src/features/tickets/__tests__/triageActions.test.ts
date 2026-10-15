@@ -18,7 +18,7 @@ import { useAnnouncerStore } from '../../../components/LiveAnnouncer';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { useCopyStore } from '../copyStore';
 import { useTicketStore } from '../ticketStore';
-import { denyTicket, linkTicket, markHandled, restoreTicket } from '../triageActions';
+import { denyTicket, linkTicket, markHandled, markSeen, restoreTicket } from '../triageActions';
 import type { JiraTicketDetail } from '../types';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -275,6 +275,130 @@ describe('linkTicket', () => {
   });
 });
 
+describe('stale Undo and toast dismissal', () => {
+  it('Undo after restore does nothing', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    await denyTicket('T-1');
+    const undo = toastFn.mock.calls[0][1].action.onClick as () => void;
+    await restoreTicket('T-1');
+    invokeMock.mockClear();
+    undo();
+    await flush();
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(entry().state).toBe('seen');
+  });
+
+  it('restore and markHandled dismiss the deny toast; failure does not', async () => {
+    seed('ignored', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    await restoreTicket('T-1');
+    expect(toastDismiss).toHaveBeenCalledWith('deny-T-1');
+    toastDismiss.mockClear();
+    await markHandled('T-1');
+    expect(toastDismiss).toHaveBeenCalledWith('deny-T-1');
+    toastDismiss.mockClear();
+    invokeMock.mockRejectedValue(new Error('db'));
+    await markHandled('T-1');
+    await restoreTicket('T-1');
+    expect(toastDismiss).not.toHaveBeenCalled();
+  });
+});
+
+describe('overlapping writes on one key', () => {
+  it('both failing restores the original persisted entry', async () => {
+    seed('seen', null);
+    const original = entry();
+    invokeMock.mockRejectedValue(new Error('db'));
+    const a = denyTicket('T-1');
+    const b = restoreTicket('T-1');
+    await Promise.all([a, b]);
+    expect(entry()).toEqual(original);
+  });
+
+  it('first failing then second succeeding keeps the second state', async () => {
+    seed('seen', null);
+    invokeMock.mockRejectedValueOnce(new Error('db')).mockResolvedValueOnce(undefined);
+    const a = denyTicket('T-1');
+    const b = markHandled('T-1');
+    await Promise.all([a, b]);
+    expect(entry().state).toBe('handled');
+  });
+
+  it('runs set_triage_state sequentially per key', async () => {
+    seed('seen', null);
+    const resolvers: Array<() => void> = [];
+    invokeMock.mockImplementation(
+      () => new Promise<void>((r) => resolvers.push(() => r(undefined))),
+    );
+    const a = denyTicket('T-1');
+    const b = markHandled('T-1');
+    await flush();
+    expect(invokeMock).toHaveBeenCalledTimes(1);
+    resolvers[0]();
+    await flush();
+    expect(invokeMock).toHaveBeenCalledTimes(2);
+    resolvers[1]();
+    await Promise.all([a, b]);
+  });
+});
+
+describe('linkTicket guards', () => {
+  it('fails without a server connection', async () => {
+    seed('seen', null);
+    useConnectionStore.setState({ serverConnection: null } as never);
+    invokeMock.mockResolvedValue(null);
+    expect(await linkTicket('T-1')).toBe('failed');
+    expect(toastError).toHaveBeenCalledWith(
+      'Not connected to the source Jira. Check Settings and try again.',
+    );
+    expect(invokeMock).not.toHaveBeenCalledWith('fetch_ticket_detail', expect.anything());
+    expect(startPreview).not.toHaveBeenCalled();
+  });
+
+  it('fails when startPreview rejects', async () => {
+    seed('seen', null);
+    invokeMock.mockResolvedValue(null);
+    startPreview.mockRejectedValue(new Error('x'));
+    const detail = { key: 'T-1', fields: { summary: 's' } } as unknown as JiraTicketDetail;
+    expect(await linkTicket('T-1', detail)).toBe('failed');
+    expect(toastError).toHaveBeenCalledWith('Could not link the ticket. Try again.');
+  });
+});
+
+describe('markSeen', () => {
+  it('marks a new ticket seen and persists', async () => {
+    seed('new', null);
+    invokeMock.mockResolvedValue(undefined);
+    markSeen('T-1');
+    expect(entry().state).toBe('seen');
+    expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'seen',
+    });
+  });
+
+  it('leaves ignored and copied tickets alone', () => {
+    invokeMock.mockResolvedValue(undefined);
+    seed('ignored', null);
+    markSeen('T-1');
+    seed('copied', 'CLD-9');
+    markSeen('T-1');
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(entry().state).toBe('copied');
+  });
+
+  it('persists when there is no entry', () => {
+    useTicketStore.getState().hydrateTriageMap({});
+    invokeMock.mockResolvedValue(undefined);
+    markSeen('T-1');
+    expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'seen',
+    });
+  });
+});
+
 describe('hydrate round-trip (restart)', () => {
   it('keeps copiedKey across deny/restore/handled and relinks', async () => {
     seed('copied', 'CLD-9');
@@ -338,6 +462,7 @@ describe('announcements (RQA-03)', () => {
     undo();
     await flush();
     expect(msg()).toBe('Undo: T-1 restored to Linked CLD-1.');
+    seed('ignored', 'CLD-9');
     invokeMock.mockResolvedValueOnce(null);
     undo();
     await flush();
