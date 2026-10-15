@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { FOCUS_RING } from '../../lib/focusRing';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
+import { ConfirmTransitionDialog } from './ConfirmTransitionDialog';
 import { useCopyStore } from './copyStore';
 import { RememberedLinkHint } from './RememberedLinkHint';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
@@ -125,7 +126,11 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   // Escape key closes panel
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) {
+      if (
+        e.key === 'Escape' &&
+        !e.defaultPrevented &&
+        !(e.target instanceof Element && e.target.closest('[role="alertdialog"]'))
+      ) {
         onClose();
       }
     },
@@ -144,7 +149,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
       ref={tri.primaryRef}
       onClick={() => {
         if (linkBusy) return;
-        void tri.handleLink();
+        tri.requestLink();
       }}
       aria-disabled={linkBusy}
       className={`px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 aria-disabled:hover:bg-brand aria-disabled:opacity-50 aria-disabled:cursor-not-allowed flex items-center gap-1.5 ${FOCUS_RING}`}
@@ -283,7 +288,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                         <button
                           type="button"
                           ref={tri.denyRef}
-                          onClick={tri.handleDeny}
+                          onClick={tri.requestDeny}
                           className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                         >
                           {t('detail.deny')}
@@ -463,6 +468,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
           {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
         </div>
       )}
+      <ConfirmTransitionDialog {...tri.confirmDialog} />
     </aside>
   );
 }

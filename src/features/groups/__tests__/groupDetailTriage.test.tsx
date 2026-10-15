@@ -32,6 +32,7 @@ vi.mock('@/stores/schemaCacheStore', () => ({
 
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../../connections/connectionStore';
+import { cancelConfirm } from '../../tickets/__tests__/confirmHelpers';
 import { TicketDetailPage } from '../../tickets/TicketDetailPage';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, JiraTicketDetail, TriageEntry } from '../../tickets/types';
@@ -136,6 +137,15 @@ describe('group view hands off to the shared detail triage actions (RLNK-04)', (
   it('Linked ticket opened from a group shows Deny', async () => {
     openFromGroup('PROJ-1');
     expect(await screen.findByRole('button', { name: 'Deny' })).toBeVisible();
+  });
+
+  it('Deny from a group detail shows the confirmation dialog and writes nothing first', async () => {
+    openFromGroup('PROJ-1');
+    fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+    expect(await screen.findByRole('alertdialog')).toBeVisible();
+    expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+    await cancelConfirm();
+    expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
   });
 
   it('Denied ticket opened from a group shows Restore link and the hint', async () => {

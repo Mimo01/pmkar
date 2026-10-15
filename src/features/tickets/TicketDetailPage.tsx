@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatDate, formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { DetailGroupsRow } from '../groups/DetailGroupsRow';
+import { ConfirmTransitionDialog } from './ConfirmTransitionDialog';
 import { useCopyStore } from './copyStore';
 import { RememberedLinkHint } from './RememberedLinkHint';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
@@ -107,7 +108,11 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   // Escape key goes back
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) {
+      if (
+        e.key === 'Escape' &&
+        !e.defaultPrevented &&
+        !(e.target instanceof Element && e.target.closest('[role="alertdialog"]'))
+      ) {
         onBack();
       }
     },
@@ -258,7 +263,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                       variant="secondary"
                       size="lg"
                       ref={tri.denyRef}
-                      onClick={() => void tri.handleDeny()}
+                      onClick={() => tri.requestDeny()}
                     >
                       {t('detail.deny')}
                     </Button>
@@ -295,7 +300,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                             ref={tri.primaryRef}
                             onClick={() => {
                               if (linkBusy) return;
-                              void tri.handleLink();
+                              tri.requestLink();
                             }}
                             aria-disabled={linkBusy}
                             className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-primary"
@@ -317,7 +322,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                         ref={tri.primaryRef}
                         onClick={() => {
                           if (linkBusy) return;
-                          void tri.handleLink();
+                          tri.requestLink();
                         }}
                         aria-disabled={linkBusy}
                         className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-primary"
@@ -413,6 +418,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {activeTab === 'changes' && <ChangesTab issueKey={issueKey} />}
         </div>
       </div>
+      <ConfirmTransitionDialog {...tri.confirmDialog} />
     </div>
   );
 }

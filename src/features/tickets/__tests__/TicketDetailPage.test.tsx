@@ -51,6 +51,7 @@ import { useCopyStore } from '../copyStore';
 import { TicketDetailPage } from '../TicketDetailPage';
 import { useTicketStore } from '../ticketStore';
 import type { JiraTicketDetail } from '../types';
+import { cancelConfirm, confirmDeny, confirmLink, expectNoConfirmDialog } from './confirmHelpers';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -399,6 +400,7 @@ describe('TicketDetailPage', () => {
       seed('copied', 'CLD-9');
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+      await confirmDeny();
       const restoreLink = await screen.findByRole('button', { name: 'Restore link to CLD-9' });
       await waitFor(() => expect(document.activeElement).toBe(restoreLink));
       expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
@@ -420,6 +422,7 @@ describe('TicketDetailPage', () => {
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
       const deny = await screen.findByRole('button', { name: 'Deny' });
       fireEvent.click(deny);
+      await confirmDeny();
       await waitFor(() =>
         expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Deny' })),
       );
@@ -453,6 +456,7 @@ describe('TicketDetailPage', () => {
       });
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await confirmLink();
       const badge = await screen.findByText(/→ CLD-9/);
       await waitFor(() => expect(document.activeElement).toBe(badge));
       expect(screen.getByRole('button', { name: 'Deny' })).toBeVisible();
@@ -471,8 +475,59 @@ describe('TicketDetailPage', () => {
       });
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
       fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await confirmLink();
       await waitFor(() => expect(startPreview).toHaveBeenCalled());
       expect(screen.queryByText(/→ CLD-9/)).toBeNull();
+    });
+
+    it('Linked: Deny shows dialog, writes nothing until confirmed; Cancel returns focus to Deny', async () => {
+      seed('copied', 'CLD-9');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+      expect(await screen.findByRole('alertdialog')).toBeVisible();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+      await cancelConfirm();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Deny' })),
+      );
+    });
+
+    it('Esc in the dialog closes only the dialog, not the page', async () => {
+      seed('copied', 'CLD-9');
+      const onBack = vi.fn();
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={onBack} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+      const dlg = await screen.findByRole('alertdialog');
+      fireEvent.keyDown(dlg, { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+      expect(onBack).not.toHaveBeenCalled();
+    });
+
+    it('Restore link requires confirmation before relink', async () => {
+      seed('ignored', 'CLD-9');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      expect(await screen.findByRole('alertdialog')).toBeVisible();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('relink_ticket');
+      await cancelConfirm();
+    });
+
+    it('Never linked: Copy opens preview without a confirmation dialog', async () => {
+      seed('ignored', null);
+      const startPreview = vi.fn();
+      useCopyStore.setState({ startPreview } as never);
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /^Copy to/ }));
+      await waitFor(() => expect(startPreview).toHaveBeenCalled());
+      expectNoConfirmDialog();
+    });
+
+    it('Linked ticket shows no Handled button', async () => {
+      seed('copied', 'CLD-9');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: 'Deny' });
+      expect(screen.queryByRole('button', { name: /handled/i })).toBeNull();
     });
 
     it('Restore from denied focuses Dismiss', async () => {

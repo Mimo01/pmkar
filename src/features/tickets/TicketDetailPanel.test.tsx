@@ -1,6 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useConnectionStore } from '../connections/connectionStore';
+import {
+  cancelConfirm,
+  confirmDeny,
+  confirmLink,
+  expectNoConfirmDialog,
+} from './__tests__/confirmHelpers';
+import { useCopyStore } from './copyStore';
 import { TicketDetailPanel } from './TicketDetailPanel';
 import { useTicketStore } from './ticketStore';
 
@@ -252,6 +260,7 @@ describe('TicketDetailPanel', () => {
       seed('copied', 'CLD-9');
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: /^deny$/i }));
+      await confirmDeny();
       await waitFor(() =>
         expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
           ticketKey: 'PROJ-1',
@@ -272,6 +281,7 @@ describe('TicketDetailPanel', () => {
       renderPanel();
       const deny = await screen.findByRole('button', { name: /^deny$/i });
       fireEvent.click(deny);
+      await confirmDeny();
       await waitFor(() => expect(toast.error).toHaveBeenCalled());
       await waitFor(() =>
         expect(document.activeElement).toBe(screen.getByRole('button', { name: /^deny$/i })),
@@ -299,6 +309,7 @@ describe('TicketDetailPanel', () => {
       seed('ignored', 'CLD-9', { relink_ticket: () => Promise.resolve('CLD-9') });
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await confirmLink();
       const badge = await screen.findByText(/CLD-9/, { selector: 'span[tabindex="-1"]' });
       await waitFor(() => expect(document.activeElement).toBe(badge));
     });
@@ -307,12 +318,72 @@ describe('TicketDetailPanel', () => {
       seed('ignored', 'CLD-9', { relink_ticket: () => Promise.reject(new Error('fail')) });
       renderPanel();
       fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await confirmLink();
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith('Could not link the ticket. Try again.'),
       );
       const primary = await screen.findByRole('button', { name: 'Restore link to CLD-9' });
       await waitFor(() => expect(primary).toBeEnabled());
       await waitFor(() => expect(document.activeElement).toBe(primary));
+    });
+
+    it('Deny shows dialog first; Cancel returns focus to Deny with no write', async () => {
+      seed('copied', 'CLD-9');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: /^deny$/i }));
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+      await cancelConfirm();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: /^deny$/i })),
+      );
+    });
+
+    it('Esc in the dialog closes only the dialog, panel stays open', async () => {
+      seed('copied', 'CLD-9');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: /^deny$/i }));
+      const dlg = await screen.findByRole('alertdialog');
+      fireEvent.keyDown(dlg, { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: /^deny$/i })).toBeInTheDocument();
+    });
+
+    it('Restore link requires confirmation before relink', async () => {
+      seed('ignored', 'CLD-9');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+      expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('relink_ticket');
+      await cancelConfirm();
+    });
+
+    it('Never linked: Copy opens preview without confirmation', async () => {
+      seed('ignored', null, { relink_ticket: () => Promise.resolve(null) });
+      const startPreview = vi.fn();
+      useCopyStore.setState({ startPreview } as never);
+      useConnectionStore.setState({
+        serverConnection: {
+          baseUrl: 'http://server.example.com',
+          username: 'u',
+          serverVersion: '9.0.0',
+          lastTestedAt: '2024-01-01T00:00:00.000Z',
+          status: 'ok',
+        },
+      });
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: /^Copy to/ }));
+      await waitFor(() => expect(startPreview).toHaveBeenCalled());
+      expectNoConfirmDialog();
+    });
+
+    it('Linked ticket shows no Handled button', async () => {
+      seed('copied', 'CLD-9');
+      renderPanel();
+      await screen.findByRole('button', { name: /^deny$/i });
+      expect(screen.queryByRole('button', { name: /handled/i })).toBeNull();
     });
 
     it('Restore sets seen and focuses Dismiss', async () => {

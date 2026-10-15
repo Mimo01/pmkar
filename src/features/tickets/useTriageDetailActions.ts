@@ -155,6 +155,9 @@ export function useTriageDetailActions(
         if (el?.isConnected) el.focus();
         return;
       }
+      // Keep focus on the trigger while the confirmed action is in flight.
+      const trigger = target.kind === 'deny' ? denyRef.current : primaryRef.current;
+      if (trigger?.isConnected) trigger.focus();
       const current = useTicketStore.getState().triageMap[issueKey];
       if (target.kind === 'deny') {
         if (current?.state !== 'copied') return;

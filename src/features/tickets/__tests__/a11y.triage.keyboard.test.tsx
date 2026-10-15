@@ -138,6 +138,19 @@ async function tabTo(user: ReturnType<typeof userEvent.setup>, name: string) {
   return target;
 }
 
+/** Keyboard-confirm the open dialog: Cancel is focused first, Tab to Confirm, Enter. */
+async function keyboardConfirm(user: ReturnType<typeof userEvent.setup>) {
+  const dlg = await screen.findByRole('alertdialog');
+  const cancel = within(dlg).getByRole('button', { name: i18n.t('triage.confirm.cancel') });
+  await waitFor(() => expect(document.activeElement).toBe(cancel));
+  await user.tab();
+  expect((document.activeElement as HTMLElement).textContent).not.toBe(
+    i18n.t('triage.confirm.cancel'),
+  );
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+}
+
 describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06)', (surface) => {
   const deny = () => i18n.t('detail.deny');
   const restoreLink = () => i18n.t('detail.restoreLink', { key: CLOUD });
@@ -183,6 +196,7 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
       const user = userEvent.setup();
       await tabTo(user, deny());
       await user.keyboard(keys);
+      await keyboardConfirm(user);
       await waitFor(() =>
         expect(callsOf('set_triage_state')[0]?.[1]).toMatchObject({
           ticketKey: KEY,
@@ -199,6 +213,7 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
       const user = userEvent.setup();
       await tabTo(user, restoreLink());
       await user.keyboard(keys);
+      await keyboardConfirm(user);
       await waitFor(() => expect(callsOf('relink_ticket').length).toBe(1));
       await waitFor(() => {
         const active = document.activeElement as HTMLElement;
@@ -239,6 +254,7 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
     const user = userEvent.setup();
     const primary = await tabTo(user, restoreLink());
     await user.keyboard('{Enter}');
+    await keyboardConfirm(user);
     await waitFor(() => expect(callsOf('relink_ticket').length).toBe(1));
     await waitFor(() => expect(primary).toHaveAttribute('aria-disabled', 'true'));
     expect(primary).not.toHaveAttribute('disabled');
@@ -246,6 +262,72 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
     await user.keyboard('{Enter}');
     expect(callsOf('relink_ticket').length).toBe(1);
     expect(document.activeElement).toBe(primary);
+  });
+
+  it('Deny via Space then Escape: focus back on Deny, nothing written', async () => {
+    seed(LINKED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    const denyBtn = await tabTo(user, deny());
+    await user.keyboard(' ');
+    await screen.findByRole('alertdialog');
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(callsOf('set_triage_state').length).toBe(0);
+    await waitFor(() => expect(document.activeElement).toBe(denyBtn));
+  });
+
+  it('dialog traps focus with Tab and Shift+Tab', async () => {
+    seed(LINKED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, deny());
+    await user.keyboard('{Enter}');
+    const dlg = await screen.findByRole('alertdialog');
+    for (let i = 0; i < 4; i++) {
+      await user.tab();
+      expect(dlg.contains(document.activeElement)).toBe(true);
+    }
+    for (let i = 0; i < 4; i++) {
+      await user.tab({ shift: true });
+      expect(dlg.contains(document.activeElement)).toBe(true);
+    }
+  });
+
+  it('has no axe violations with the deny and link dialogs open', async () => {
+    seed(LINKED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, deny());
+    await user.keyboard('{Enter}');
+    await screen.findByRole('alertdialog');
+    expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
+  });
+
+  it('has no axe violations with the link dialog open', async () => {
+    seed(DENIED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, restoreLink());
+    await user.keyboard('{Enter}');
+    await screen.findByRole('alertdialog');
+    expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
+  });
+
+  it('SK: deny dialog title is localized', async () => {
+    await i18n.changeLanguage('sk');
+    try {
+      seed(LINKED);
+      await renderSurface(surface);
+      const user = userEvent.setup();
+      await tabTo(user, i18n.t('detail.deny'));
+      await user.keyboard('{Enter}');
+      const dlg = await screen.findByRole('alertdialog');
+      expect(dlg.textContent).toContain('Zamietnuté');
+      expect(dlg.textContent).toContain('Presunúť');
+    } finally {
+      await i18n.changeLanguage('en');
+    }
   });
 
   describe('static button audit', () => {
