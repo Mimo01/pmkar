@@ -239,10 +239,10 @@ Frontmatter like 36-HUMAN-UAT (`status: partial`, `source`, dates). Sections per
 | A4 | jsdom in this repo supports requestAnimationFrame | Tests | Low: use setTimeout fallback |
 | A5 | NVDA/Narrator treat `role=status` + aria-atomic in WebView2 as expected | Live region | Medium: only the manual run can prove |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. Pre-existing toast wording "Ignored" vs tab "Dismissed"? Recommendation: leave `triage.denied` unchanged, announce with "Dismissed" per UI-SPEC, mention to user.
-2. Which exact `get_triage_state` call shape is used at startup? Grep when writing the round-trip mock; the invariant only needs `hydrateTriageMap(map)`.
+1. Pre-existing toast wording "Ignored" vs tab "Dismissed"? Recommendation: leave `triage.denied` unchanged, announce with "Dismissed" per UI-SPEC, mention to user. RESOLVED: plan 37-01/37-03 keep toast unchanged; mismatch recorded in UAT.
+2. Which exact `get_triage_state` call shape is used at startup? Grep when writing the round-trip mock; the invariant only needs `hydrateTriageMap(map)`. RESOLVED: plan 37-02 uses the real call at TicketListPage.tsx L404.
 
 ## Sources
 
