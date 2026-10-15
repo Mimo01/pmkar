@@ -1,10 +1,17 @@
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
+import { announce } from '../../components/LiveAnnouncer';
 import i18n from '../../i18n/index';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicketDetail, TriageEntry, TriageState } from './types';
+
+/** Show a failure toast and mirror it to the live region (D-03, D-05). */
+function notifyError(text: string): void {
+  toast.error(text);
+  announce(text);
+}
 
 /** Single writer of triage map entries (D-10, D-12). */
 function writeEntry(issueKey: string, entry: TriageEntry): void {
@@ -38,7 +45,7 @@ async function applyState(
       else next[issueKey] = prev;
       useTicketStore.getState().hydrateTriageMap(next);
     }
-    toast.error(i18n.t(failKey));
+    notifyError(i18n.t(failKey));
     return { ok: false, prev };
   }
 }
@@ -49,12 +56,13 @@ async function undoDeny(issueKey: string): Promise<void> {
     const key = await invoke<string | null>('relink_ticket', { ticketKey: issueKey });
     if (typeof key === 'string' && key) {
       writeEntry(issueKey, { state: 'copied', copiedKey: key });
+      announce(i18n.t('a11y.undone', { key: issueKey, cloudKey: key }));
       return;
     }
   } catch {
     // fall through to the failure toast
   }
-  toast.error(i18n.t('triage.undoFailed', { key: issueKey }));
+  notifyError(i18n.t('triage.undoFailed', { key: issueKey }));
 }
 
 /**
@@ -63,6 +71,7 @@ async function undoDeny(issueKey: string): Promise<void> {
  */
 export async function denyTicket(issueKey: string): Promise<boolean> {
   const { ok, prev } = await applyState(issueKey, 'ignored', 'triage.denyFailed');
+  if (ok) announce(i18n.t('a11y.denied', { key: issueKey }));
   if (ok && prev?.copiedKey) {
     toast(i18n.t('triage.denied', { key: issueKey }), {
       id: `deny-${issueKey}`,
@@ -81,12 +90,14 @@ export async function denyTicket(issueKey: string): Promise<boolean> {
 /** Restore a dismissed/handled ticket to 'seen', keeping its Cloud key (D-09). */
 export async function restoreTicket(issueKey: string): Promise<boolean> {
   const { ok } = await applyState(issueKey, 'seen', 'ignored.restoreFailed');
+  if (ok) announce(i18n.t('a11y.restored', { key: issueKey }));
   return ok;
 }
 
 /** Mark a ticket handled, keeping its Cloud key (D-09). */
 export async function markHandled(issueKey: string): Promise<boolean> {
   const { ok } = await applyState(issueKey, 'handled', 'triage.handleFailed');
+  if (ok) announce(i18n.t('a11y.handled', { key: issueKey }));
   return ok;
 }
 
@@ -101,12 +112,13 @@ export async function linkTicket(issueKey: string, detail?: JiraTicketDetail): P
   try {
     key = await invoke<string | null>('relink_ticket', { ticketKey: issueKey });
   } catch {
-    toast.error(i18n.t('triage.linkFailed'));
+    notifyError(i18n.t('triage.linkFailed'));
     return 'failed';
   }
   if (typeof key === 'string' && key) {
     writeEntry(issueKey, { state: 'copied', copiedKey: key });
     toast.dismiss(`deny-${issueKey}`);
+    announce(i18n.t('a11y.linked', { key: issueKey, cloudKey: key }));
     return 'relinked';
   }
   const serverBase = useConnectionStore.getState().serverConnection?.baseUrl ?? '';
@@ -119,7 +131,7 @@ export async function linkTicket(issueKey: string, detail?: JiraTicketDetail): P
         issueKey,
       });
     } catch {
-      toast.error(i18n.t('triage.linkFailed'));
+      notifyError(i18n.t('triage.linkFailed'));
       return 'failed';
     }
   }
