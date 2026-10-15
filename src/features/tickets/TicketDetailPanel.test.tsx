@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketDetailPanel } from './TicketDetailPanel';
+import { useTicketStore } from './ticketStore';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -155,6 +156,65 @@ describe('TicketDetailPanel', () => {
     await waitFor(() => {
       // After error, no loading spinner should remain — component should still render
       expect(document.body).toBeTruthy();
+    });
+  });
+
+  describe('triage handlers keep the remembered key (LINT-01, D-09, D-13)', () => {
+    const seed = (state: 'seen' | 'ignored' | 'handled') => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(mockDetail as never);
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey: 'CLD-9' } } });
+    };
+
+    it('Dismiss keeps CLD-9 and makes no Jira copy call', async () => {
+      seed('seen');
+      render(
+        <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: /dismiss/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'ignored',
+          copiedKey: 'CLD-9',
+        }),
+      );
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'ignored',
+      });
+      const cmds = mockInvoke.mock.calls.map((c) => c[0] as string);
+      expect(cmds).not.toContain('relink_ticket');
+      expect(cmds.some((c) => c.startsWith('copy_'))).toBe(false);
+    });
+
+    it('Mark as Handled keeps CLD-9', async () => {
+      seed('seen');
+      render(
+        <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: /mark as handled/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'handled',
+          copiedKey: 'CLD-9',
+        }),
+      );
+    });
+
+    it('Restoring from Ignored keeps CLD-9', async () => {
+      seed('ignored');
+      render(
+        <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: /^ignored$/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'seen',
+          copiedKey: 'CLD-9',
+        }),
+      );
     });
   });
 });

@@ -332,4 +332,57 @@ describe('TicketDetailPage', () => {
       expect(onBack).not.toHaveBeenCalled();
     });
   });
+
+  describe('triage handlers keep the remembered key (LINT-01, D-09, D-13)', () => {
+    const seed = (state: 'seen' | 'ignored' | 'handled') => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey: 'CLD-9' } } });
+    };
+
+    it('Dismiss keeps CLD-9 and makes no Jira copy call', async () => {
+      seed('seen');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /dismiss/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'ignored',
+          copiedKey: 'CLD-9',
+        }),
+      );
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'ignored',
+      });
+      const cmds = mockInvoke.mock.calls.map((c) => c[0] as string);
+      expect(cmds).not.toContain('relink_ticket');
+      expect(cmds.some((c) => c.startsWith('copy_'))).toBe(false);
+    });
+
+    it('Mark as Handled keeps CLD-9', async () => {
+      seed('seen');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /mark as handled/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'handled',
+          copiedKey: 'CLD-9',
+        }),
+      );
+    });
+
+    it('Restoring from Ignored keeps CLD-9', async () => {
+      seed('ignored');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /^ignored$/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'seen',
+          copiedKey: 'CLD-9',
+        }),
+      );
+    });
+  });
 });
