@@ -1,6 +1,6 @@
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::notification_dispatcher::NotificationPrefs;
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -205,7 +205,43 @@ impl TriageDb {
         Ok(())
     }
 
+    /// Returns the remembered Cloud key for a ticket, if any.
+    /// Unknown tickets and keyless rows both return `None`.
+    pub fn get_copied_key(&self, key: &str) -> AppResult<Option<String>> {
+        let found = self
+            .conn
+            .query_row(
+                "SELECT copied_key FROM triage_state WHERE ticket_key=?1",
+                rusqlite::params![key],
+                |r| r.get::<_, Option<String>>(0),
+            )
+            .optional()?;
+        Ok(found.flatten())
+    }
+
+    /// Re-links a ticket to its remembered Cloud key by flipping state to 'copied'.
+    /// Only path into 'copied' besides `set_triage_copied`. Never creates a row and
+    /// never writes `copied_key`. Returns `None` when no key is remembered.
+    /// The caller holds the `Mutex<TriageDb>` lock, so UPDATE + SELECT cannot interleave.
+    pub fn relink(&self, key: &str) -> AppResult<Option<String>> {
+        let now = chrono::Utc::now().to_rfc3339();
+        let changed = self.conn.execute(
+            "UPDATE triage_state SET state='copied', last_updated=?1 WHERE ticket_key=?2 AND copied_key IS NOT NULL",
+            rusqlite::params![now, key],
+        )?;
+        if changed == 0 {
+            return Ok(None);
+        }
+        self.get_copied_key(key)
+    }
+
     pub fn set_triage(&self, key: &str, state: &str) -> AppResult<()> {
+        if state == "copied" {
+            return Err(AppError::Internal(
+                "State 'copied' cannot be set directly; use relink_ticket or the copy flow"
+                    .to_string(),
+            ));
+        }
         let now = chrono::Utc::now().to_rfc3339();
         self.conn.execute(
             "INSERT INTO triage_state (ticket_key, state, first_seen, last_updated)
@@ -393,7 +429,6 @@ impl TriageDb {
         Option<String>,
         Option<String>,
     )> {
-        use rusqlite::OptionalExtension;
         let result = self
             .conn
             .query_row(
@@ -445,7 +480,8 @@ impl TriageDb {
     }
 
     /// Delete triage entries for the given ticket keys (bulk delete).
-    /// Returns the number of rows deleted.
+    /// Rows with a remembered link (`copied_key` set) are kept untouched.
+    /// Returns the number of rows actually deleted.
     pub fn delete_triage_entries(&self, keys: &[String]) -> AppResult<usize> {
         if keys.is_empty() {
             return Ok(0);
@@ -456,7 +492,9 @@ impl TriageDb {
             .map(|(i, _)| format!("?{}", i + 1))
             .collect::<Vec<_>>()
             .join(", ");
-        let sql = format!("DELETE FROM triage_state WHERE ticket_key IN ({placeholders})");
+        let sql = format!(
+            "DELETE FROM triage_state WHERE ticket_key IN ({placeholders}) AND copied_key IS NULL"
+        );
         let params: Vec<&dyn rusqlite::ToSql> =
             keys.iter().map(|k| k as &dyn rusqlite::ToSql).collect();
         let count = self.conn.execute(&sql, params.as_slice())?;
@@ -481,6 +519,30 @@ impl TriageDb {
             .collect::<Result<Vec<ConnectionMeta>, _>>()?;
         Ok(rows)
     }
+}
+
+/// Test-only: builds a DB file with the pre-handled schema (`copied_key` added via ALTER)
+/// and legacy rows, then opens it through `TriageDb::open` so migrations run.
+#[cfg(test)]
+pub(crate) fn open_legacy_shape_for_test(dir: &std::path::Path) -> TriageDb {
+    let path = dir.join("legacy_triage.db");
+    {
+        let conn = Connection::open(&path).expect("open legacy conn");
+        conn.execute_batch(
+            "CREATE TABLE triage_state (ticket_key TEXT PRIMARY KEY, state TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied')), first_seen TEXT NOT NULL, last_updated TEXT NOT NULL);",
+        )
+        .expect("create legacy table");
+        conn.execute_batch(ALTER_TRIAGE_ADD_COPIED_KEY)
+            .expect("alter legacy table");
+        conn.execute_batch(
+            "INSERT INTO triage_state (ticket_key, state, first_seen, last_updated, copied_key) VALUES
+             ('LEG-1','copied','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00','CLOUD-1'),
+             ('LEG-2','ignored','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00','CLOUD-2'),
+             ('LEG-3','new','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00',NULL);",
+        )
+        .expect("seed legacy rows");
+    }
+    TriageDb::open(&path).expect("legacy open failed")
 }
 
 #[cfg(test)]
@@ -723,5 +785,126 @@ mod tests {
         assert!(retrieved.notify_status_change);
         assert!(!retrieved.notify_priority_change);
         assert!(retrieved.notify_new_comment);
+    }
+
+    #[test]
+    fn test_set_triage_rejects_copied() {
+        let db = new_db();
+        assert!(db.set_triage("PROJ-1", "copied").is_err());
+        assert!(!db.get_all_triage().unwrap().contains_key("PROJ-1"));
+        db.set_triage_copied("PROJ-1", "CLOUD-1").unwrap();
+        assert!(db.set_triage("PROJ-1", "copied").is_err());
+        let all = db.get_all_triage().unwrap();
+        assert_eq!(
+            all["PROJ-1"],
+            ("copied".to_string(), Some("CLOUD-1".to_string()))
+        );
+        for st in ["new", "seen", "ignored", "handled"] {
+            db.set_triage("PROJ-1", st).unwrap();
+            let all = db.get_all_triage().unwrap();
+            assert_eq!(all["PROJ-1"], (st.to_string(), Some("CLOUD-1".to_string())));
+        }
+    }
+
+    #[test]
+    fn test_get_copied_key_cases() {
+        let db = new_db();
+        assert_eq!(db.get_copied_key("X-1").unwrap(), None);
+        db.set_triage("X-1", "new").unwrap();
+        assert_eq!(db.get_copied_key("X-1").unwrap(), None);
+        db.set_triage_copied("PROJ-1", "CLOUD-1").unwrap();
+        assert_eq!(
+            db.get_copied_key("PROJ-1").unwrap(),
+            Some("CLOUD-1".to_string())
+        );
+        db.set_triage("PROJ-1", "ignored").unwrap();
+        assert_eq!(
+            db.get_copied_key("PROJ-1").unwrap(),
+            Some("CLOUD-1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_relink_hit_idempotent_any_state() {
+        let db = new_db();
+        db.set_triage_copied("PROJ-1", "CLOUD-1").unwrap();
+        for st in ["new", "seen", "ignored", "handled"] {
+            db.set_triage("PROJ-1", st).unwrap();
+            assert_eq!(db.relink("PROJ-1").unwrap(), Some("CLOUD-1".to_string()));
+            let all = db.get_all_triage().unwrap();
+            assert_eq!(
+                all["PROJ-1"],
+                ("copied".to_string(), Some("CLOUD-1".to_string()))
+            );
+        }
+        assert_eq!(db.relink("PROJ-1").unwrap(), Some("CLOUD-1".to_string()));
+    }
+
+    #[test]
+    fn test_relink_miss_creates_no_row() {
+        let db = new_db();
+        assert_eq!(db.relink("NOPE-1").unwrap(), None);
+        assert!(db.get_all_triage().unwrap().is_empty());
+        db.set_triage("K-1", "ignored").unwrap();
+        assert_eq!(db.relink("K-1").unwrap(), None);
+        assert_eq!(
+            db.get_all_triage().unwrap()["K-1"],
+            ("ignored".to_string(), None)
+        );
+    }
+
+    #[test]
+    fn test_delete_triage_entries_keeps_linked() {
+        let db = new_db();
+        db.set_triage("A", "new").unwrap();
+        db.set_triage_copied("B", "CLOUD-B").unwrap();
+        db.set_triage_copied("C", "CLOUD-C").unwrap();
+        db.set_triage("C", "ignored").unwrap();
+        let keys = vec!["A".to_string(), "B".to_string(), "C".to_string()];
+        assert_eq!(db.delete_triage_entries(&keys).unwrap(), 1);
+        let all = db.get_all_triage().unwrap();
+        assert!(!all.contains_key("A"));
+        assert_eq!(
+            all["B"],
+            ("copied".to_string(), Some("CLOUD-B".to_string()))
+        );
+        assert_eq!(
+            all["C"],
+            ("ignored".to_string(), Some("CLOUD-C".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_legacy_shape_db_relink_guard_cleanup() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let db = open_legacy_shape_for_test(dir.path());
+        let all = db.get_all_triage().unwrap();
+        assert_eq!(
+            all["LEG-1"],
+            ("copied".to_string(), Some("CLOUD-1".to_string()))
+        );
+        assert_eq!(
+            all["LEG-2"],
+            ("ignored".to_string(), Some("CLOUD-2".to_string()))
+        );
+        assert_eq!(all["LEG-3"], ("new".to_string(), None));
+        db.set_triage("LEG-9", "handled").unwrap();
+        assert_eq!(
+            db.get_copied_key("LEG-2").unwrap(),
+            Some("CLOUD-2".to_string())
+        );
+        assert_eq!(db.relink("LEG-2").unwrap(), Some("CLOUD-2".to_string()));
+        assert_eq!(db.get_all_triage().unwrap()["LEG-2"].0, "copied");
+        assert_eq!(db.relink("LEG-1").unwrap(), Some("CLOUD-1".to_string()));
+        assert_eq!(db.relink("LEG-3").unwrap(), None);
+        let keys = vec![
+            "LEG-1".to_string(),
+            "LEG-2".to_string(),
+            "LEG-3".to_string(),
+        ];
+        assert_eq!(db.delete_triage_entries(&keys).unwrap(), 1);
+        let all = db.get_all_triage().unwrap();
+        assert!(all.contains_key("LEG-1") && all.contains_key("LEG-2"));
+        assert!(!all.contains_key("LEG-3"));
     }
 }
