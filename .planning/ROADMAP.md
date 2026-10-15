@@ -89,7 +89,7 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 **Milestone Goal:** Move tickets freely between Linked and Not mine without losing the Cloud link.
 
 - [x] **Phase 34: Link Integrity Backend** - Atomic re-link command, no Linked row without a key, duplicate-copy guard, link survives cleanup (completed 2026-10-15)
-- [ ] **Phase 35: Shared Triage Actions** - Key-preserving deny / re-link / restore transitions in one shared frontend module
+- [x] **Phase 35: Shared Triage Actions** - Key-preserving deny / re-link / restore transitions in one shared frontend module (completed 2026-10-15)
 - [ ] **Phase 36: Detail and Group UI** - Explicit Deny / Link buttons in detail (page, panel, group view) with hints, focus handling and EN/SK strings
 - [ ] **Phase 37: Consistency, Accessibility and UAT** - Each ticket in exactly one tab after any transition; keyboard and screen-reader verified
 
@@ -139,7 +139,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 35-02-PLAN.md — Migrate TicketDetailPage/Panel to the module + key-preservation component tests + single-writer gate
+- [x] 35-02-PLAN.md — Migrate TicketDetailPage/Panel to the module + key-preservation component tests + single-writer gate
 
 ### Phase 36: Detail and Group UI
 
@@ -210,6 +210,6 @@ Plans:
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
-| 35. Shared Triage Actions | v0.5.1 | 1/2 | In Progress|  |
+| 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 36. Detail and Group UI | v0.5.1 | 0/? | Not started | - |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
