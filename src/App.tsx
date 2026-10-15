@@ -2,6 +2,7 @@ import './i18n/index';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { LiveAnnouncer } from './components/LiveAnnouncer';
 import { AppShell } from './components/ui/AppShell';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { Toaster } from './components/ui/sonner';
@@ -209,6 +210,7 @@ function App() {
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
         <Toaster />
+        <LiveAnnouncer />
       </ErrorBoundary>
     );
   }
@@ -233,6 +235,7 @@ function App() {
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
         <Toaster />
+        <LiveAnnouncer />
       </ErrorBoundary>
     );
   }
@@ -246,6 +249,7 @@ function App() {
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
         <Toaster />
+        <LiveAnnouncer />
       </ErrorBoundary>
     );
   }
@@ -272,6 +276,7 @@ function App() {
         <UpdateModal open={showUpdateModal} />
         <AboutModal open={showAbout} onOpenChange={setShowAbout} />
         <Toaster />
+        <LiveAnnouncer />
       </ErrorBoundary>
     );
   }
@@ -317,6 +322,7 @@ function App() {
       <UpdateModal open={showUpdateModal} />
       <AboutModal open={showAbout} onOpenChange={setShowAbout} />
       <Toaster />
+      <LiveAnnouncer />
     </ErrorBoundary>
   );
 }
