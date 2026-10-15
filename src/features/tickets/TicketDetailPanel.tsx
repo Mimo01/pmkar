@@ -124,17 +124,19 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   }, [detail]);
 
   // Escape key closes panel
+  const confirmOpen = tri.confirmDialog.target !== null;
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.key === 'Escape' &&
         !e.defaultPrevented &&
+        !confirmOpen &&
         !(e.target instanceof Element && e.target.closest('[role="alertdialog"]'))
       ) {
         onClose();
       }
     },
-    [onClose],
+    [onClose, confirmOpen],
   );
 
   useEffect(() => {

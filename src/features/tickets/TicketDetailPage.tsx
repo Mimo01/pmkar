@@ -106,17 +106,19 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   }, [issueKey, baseUrl]);
 
   // Escape key goes back
+  const confirmOpen = tri.confirmDialog.target !== null;
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (
         e.key === 'Escape' &&
         !e.defaultPrevented &&
+        !confirmOpen &&
         !(e.target instanceof Element && e.target.closest('[role="alertdialog"]'))
       ) {
         onBack();
       }
     },
-    [onBack],
+    [onBack, confirmOpen],
   );
 
   useEffect(() => {
