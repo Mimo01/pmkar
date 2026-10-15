@@ -21,6 +21,8 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 Shipped v0.5.0 Custom Groups (2026-10-15): user-defined groups as tabs next to the core New / Not mine / Linked tabs, tag-like membership from detail, cards and multi-select, durable snapshots so grouped issues never silently vanish, full EN/SK and WCAG AA polish. Phase 33 UAT and several human verifications remain open (see STATE.md Deferred Items).
 
+v0.5.1 Re-triage in progress: Phase 36 complete — explicit Deny and Restore link buttons in ticket page, panel and group view, with remembered-link hints (human UAT pending).
+
 ## Next Milestone Goals
 
 Not yet defined — run `/gsd:new-milestone`. Candidates: close v0.5.0 UAT/verification debt, Excel export (EXPRT-01), dock/taskbar badge (BADGE-01), notification history (NHIST-01), ADF rich-text editor in copy preview.
@@ -161,4 +163,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-15 after v0.5.1 milestone start*
+*Last updated: 2026-10-15 after Phase 36 completion*
