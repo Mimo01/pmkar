@@ -105,7 +105,11 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
   3. Attempting to copy a ticket that already has a remembered link is refused, so no duplicate Cloud issue is created
   4. A done ticket that has a remembered link keeps that link after a fetch; done tickets without a link are still cleaned up
   5. The mock server and Rust tests cover all of the above
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 34-01-PLAN.md — DB layer: set_triage rejects 'copied', atomic relink + get_copied_key, cleanup keeps linked rows, legacy-shape DB test
+- [ ] 34-02-PLAN.md — Command layer: validate_triage_state, relink_ticket command + registration, duplicate-copy guard first in copy_ticket_v2, full suite
 
 ### Phase 35: Shared Triage Actions
 **Goal**: Deny, re-link and restore behave identically everywhere and never disagree with the database about the remembered Cloud key
