@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { RememberedLinkHint } from '../tickets/RememberedLinkHint';
 import { SkeletonCards, TicketCard } from '../tickets/TicketCard';
 import { TicketFilterBar } from '../tickets/TicketFilterBar';
 import {
@@ -159,6 +160,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                     {t('tickets.card.handledBadge')}
                   </span>
                 )}
+                <RememberedLinkHint variant="row" entry={entry} />
                 <button
                   type="button"
                   onClick={(e) => {
