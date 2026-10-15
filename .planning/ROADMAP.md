@@ -190,7 +190,7 @@ Plans:
 
 **Wave 2** *(blocked on 37-01)*
 
-- [ ] 37-03-PLAN.md — Announce deny/undo/link/restore/handled and failures from triageActions.ts
+- [x] 37-03-PLAN.md — Announce deny/undo/link/restore/handled and failures from triageActions.ts
 
 **Wave 3** *(blocked on all above)*
 
@@ -237,4 +237,4 @@ Plans:
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
 | 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
-| 37. Consistency, Accessibility and UAT | v0.5.1 | 3/5 | In Progress|  |
+| 37. Consistency, Accessibility and UAT | v0.5.1 | 4/5 | In Progress|  |
