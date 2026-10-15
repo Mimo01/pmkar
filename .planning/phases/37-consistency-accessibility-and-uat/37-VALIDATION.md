@@ -1,9 +1,9 @@
 ---
 phase: 37
 slug: consistency-accessibility-and-uat
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-10-15
 ---
 
@@ -38,11 +38,11 @@ created: 2026-10-15
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 37-xx-xx | TBD | TBD | RQA-01 | — | N/A | integration | `npx vitest run src/features/tickets/__tests__/triageConsistency.test.tsx` | ❌ W0 | ⬜ pending |
-| 37-xx-xx | TBD | TBD | RQA-03 | T-37-01 | announcement text rendered as React text, never HTML | unit | `npx vitest run src/features/tickets/__tests__/triageActions.test.ts` | ✅ extend | ⬜ pending |
-| 37-xx-xx | TBD | TBD | RQA-03 | — | N/A | unit | `npx vitest run src/components/__tests__/LiveAnnouncer.test.tsx` | ❌ W0 | ⬜ pending |
-| 37-xx-xx | TBD | TBD | RQA-03 | — | N/A | unit | `npx vitest run src/i18n/__tests__/a11yLocale.test.ts` | ❌ W0 | ⬜ pending |
-| 37-xx-xx | TBD | TBD | RQA-03 | — | N/A | integration | `npx vitest run src/features/tickets/__tests__/a11y.triage.keyboard.test.tsx` | ❌ W0 | ⬜ pending |
+| 37-01-01 | 37-01 | 1 | RQA-01 | — | N/A | integration | `npx vitest run src/features/tickets/__tests__/triageConsistency.test.tsx` | ✅ | ✅ green |
+| 37-02-01 | 37-02 | 2 | RQA-03 | T-37-01 | announcement text rendered as React text, never HTML | unit | `npx vitest run src/features/tickets/__tests__/triageActions.test.ts` | ✅ | ✅ green |
+| 37-02-02 | 37-02 | 2 | RQA-03 | — | N/A | unit | `npx vitest run src/components/__tests__/LiveAnnouncer.test.tsx` | ✅ | ✅ green |
+| 37-03-01 | 37-03 | 2 | RQA-03 | — | N/A | unit | `npx vitest run src/i18n/__tests__/a11yLocale.test.ts` | ✅ | ✅ green |
+| 37-04-01 | 37-04 | 2 | RQA-03 | — | N/A | integration | `npx vitest run src/features/tickets/__tests__/a11y.triage.keyboard.test.tsx` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -50,10 +50,10 @@ created: 2026-10-15
 
 ## Wave 0 Requirements
 
-- [ ] `src/features/tickets/__tests__/triageConsistency.test.tsx` — RQA-01
-- [ ] `src/components/__tests__/LiveAnnouncer.test.tsx` — RQA-03
-- [ ] `src/i18n/__tests__/a11yLocale.test.ts` — RQA-03
-- [ ] `src/features/tickets/__tests__/a11y.triage.keyboard.test.tsx` — RQA-03
+- [x] `src/features/tickets/__tests__/triageConsistency.test.tsx` — RQA-01
+- [x] `src/components/__tests__/LiveAnnouncer.test.tsx` — RQA-03
+- [x] `src/i18n/__tests__/a11yLocale.test.ts` — RQA-03
+- [x] `src/features/tickets/__tests__/a11y.triage.keyboard.test.tsx` — RQA-03
 
 ---
 
@@ -67,11 +67,11 @@ created: 2026-10-15
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved (automated); manual run pending in 37-HUMAN-UAT.md
