@@ -132,9 +132,13 @@ Plans:
   5. The remembered key is still present after deny, restore and handled transitions, in both the database and the in-memory store (verified after app restart)
 
 **Plans**: 2 plans
-
 Plans:
+**Wave 1**
+
 - [ ] 35-01-PLAN.md — Shared triageActions module (deny/restore/handled/link, Undo toast, key preservation) + tests + i18n
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 35-02-PLAN.md — Migrate TicketDetailPage/Panel to the module + key-preservation component tests + single-writer gate
 
 ### Phase 36: Detail and Group UI
