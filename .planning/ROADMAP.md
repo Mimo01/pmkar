@@ -112,7 +112,7 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 Plans:
 **Wave 1**
 
-- [ ] 34-01-PLAN.md — DB layer: set_triage rejects 'copied', atomic relink + get_copied_key, cleanup keeps linked rows, legacy-shape DB test
+- [x] 34-01-PLAN.md — DB layer: set_triage rejects 'copied', atomic relink + get_copied_key, cleanup keeps linked rows, legacy-shape DB test
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -201,7 +201,7 @@ Plans:
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
-| 34. Link Integrity Backend | v0.5.1 | 0/? | Not started | - |
+| 34. Link Integrity Backend | v0.5.1 | 1/2 | In Progress|  |
 | 35. Shared Triage Actions | v0.5.1 | 0/? | Not started | - |
 | 36. Detail and Group UI | v0.5.1 | 0/? | Not started | - |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
