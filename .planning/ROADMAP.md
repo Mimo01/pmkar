@@ -252,7 +252,7 @@ Plans:
   4. Fetch and poll never change Linked or Not mine rows, and a static guard ensures only the confirmed hook path calls the transition functions
   5. Dialog strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist is written
 
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -270,5 +270,5 @@ Plans:
 
 **Wave 4** *(blocked on all above)*
 
-- [ ] 37.1-05-PLAN.md — 37.1-HUMAN-UAT.md WebView2 checklist, full suite gate, validation map
+- [x] 37.1-05-PLAN.md — 37.1-HUMAN-UAT.md WebView2 checklist, full suite gate, validation map
 **UI hint**: yes
