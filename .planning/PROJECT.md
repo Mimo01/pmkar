@@ -8,6 +8,15 @@ Pmkar is a cross-platform desktop app (Tauri 2.10 / React 19 / Rust) that bridge
 
 Surface relevant tickets from the customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
 
+## Current Milestone: v0.5.1 Re-triage
+
+**Goal:** Move tickets freely between Linked and Not mine without losing the Cloud link.
+
+**Target features:**
+- Deny an already-Linked ticket from an explicit button in ticket detail (Cloud copy untouched, link remembered)
+- Link a denied ticket from detail: restore the prior Cloud link if one existed, otherwise open the normal copy preview
+- Tab lists, counts, group view and EN/SK strings stay consistent after re-triage
+
 ## Current State
 
 Shipped v0.5.0 Custom Groups (2026-10-15): user-defined groups as tabs next to the core New / Not mine / Linked tabs, tag-like membership from detail, cards and multi-select, durable snapshots so grouped issues never silently vanish, full EN/SK and WCAG AA polish. Phase 33 UAT and several human verifications remain open (see STATE.md Deferred Items).
@@ -67,6 +76,7 @@ Not yet defined — run `/gsd:new-milestone`. Candidates: close v0.5.0 UAT/verif
 
 ### Active
 
+- [ ] Deny a Linked ticket and re-link a denied ticket, keeping the same Cloud link (v0.5.1)
 - [ ] Excel export capability (scope TBD) — tracked as EXPRT-01
 - [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
 - [ ] In-app notification history panel — tracked as NHIST-01
@@ -151,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-15 after v0.5.0 milestone*
+*Last updated: 2026-10-15 after v0.5.1 milestone start*
