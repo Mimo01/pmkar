@@ -196,6 +196,7 @@
   "triage.confirm.link.body": "{{key}} will move back to your linked tickets. No new Jira issue is created.",
   "triage.confirm.link.action": "Restore link",
   "triage.confirm.cancel": "Cancel",
+  "triage.confirm.stale": "{{key}} changed while you were confirming. Nothing was moved.",
   "a11y.denied": "{{key}} moved to Dismissed.",
   "a11y.undone": "Undo: {{key}} restored to Linked {{cloudKey}}.",
   "a11y.linked": "{{key}} linked to {{cloudKey}}.",

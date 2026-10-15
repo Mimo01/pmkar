@@ -196,6 +196,7 @@
   "triage.confirm.link.body": "Tiket {{key}} sa presunie späť do prepojených. Nevytvorí sa nový tiket v Jire.",
   "triage.confirm.link.action": "Obnoviť prepojenie",
   "triage.confirm.cancel": "Zrušiť",
+  "triage.confirm.stale": "Tiket {{key}} sa zmenil počas potvrdzovania. Nič sa nepresunulo.",
   "a11y.denied": "Tiket {{key}} bol presunutý do Zamietnuté.",
   "a11y.undone": "Späť: tiket {{key}} bol obnovený ako prepojený s {{cloudKey}}.",
   "a11y.linked": "Tiket {{key}} bol prepojený s {{cloudKey}}.",

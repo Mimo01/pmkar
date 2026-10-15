@@ -1,4 +1,7 @@
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { announce } from '../../components/LiveAnnouncer';
+import i18n from '../../i18n/index';
 import type {
   ConfirmTransitionDialogProps,
   ConfirmTransitionTarget,
@@ -33,6 +36,13 @@ export interface TriageDetailActions {
   requestLink: () => void;
   /** Spread onto <ConfirmTransitionDialog />. */
   confirmDialog: ConfirmTransitionDialogProps;
+}
+
+/** The ticket changed while the confirmation was open: tell the user nothing moved (WR-02). */
+function notifyStale(issueKey: string): void {
+  const text = i18n.t('triage.confirm.stale', { key: issueKey });
+  toast(text);
+  announce(text);
 }
 
 type FocusTarget = 'primary' | 'badge' | 'dismiss' | 'deny';
@@ -150,10 +160,16 @@ export function useTriageDetailActions(
       if (!confirmed || !target || target.ticketKey !== issueKey) return;
       const current = useTicketStore.getState().triageMap[issueKey];
       if (target.kind === 'deny') {
-        if (current?.state !== 'copied') return;
+        if (current?.state !== 'copied') {
+          notifyStale(issueKey);
+          return;
+        }
         void handleDeny();
       } else {
-        if (current?.state !== 'ignored' || current.copiedKey !== target.cloudKey) return;
+        if (current?.state !== 'ignored' || current.copiedKey !== target.cloudKey) {
+          notifyStale(issueKey);
+          return;
+        }
         void handleLink();
       }
     },
