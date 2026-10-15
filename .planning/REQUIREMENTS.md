@@ -32,6 +32,13 @@
 - [x] **RQA-02**: All new strings exist in EN and SK (Slovak uses "tiket") and pass the i18n guard tests
 - [ ] **RQA-03**: Deny/Link buttons are keyboard accessible with screen-reader announcements (WCAG AA)
 
+### Transition confirmation
+
+- [ ] **CONF-01**: Denying a Linked ticket requires explicit confirmation in a dialog; Cancel or Esc leaves it Linked with no backend call
+- [ ] **CONF-02**: Restoring the remembered link of a Not mine ticket requires explicit confirmation; a never-linked ticket goes to the copy preview, which is its own confirmation
+- [ ] **CONF-03**: No Linked ↔ Not mine transition happens automatically: Undo restores only the true prior state, fetch/poll never change Linked or Not mine rows, and a static guard locks the only callers
+- [ ] **CONF-04**: Confirmation strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist covers it
+
 ## Future Requirements
 
 - Cloud existence check on re-link (404 falls back to copy preview) — deferred, adds Jira call
@@ -67,10 +74,14 @@
 | RQA-01 | Phase 37 | Pending |
 | RQA-02 | Phase 36 | Complete |
 | RQA-03 | Phase 37 | Pending |
+| CONF-01 | Phase 37.1 | Pending |
+| CONF-02 | Phase 37.1 | Pending |
+| CONF-03 | Phase 37.1 | Pending |
+| CONF-04 | Phase 37.1 | Pending |
 
 **Coverage:**
-- v0.5.1 requirements: 15 total
-- Mapped to phases: 15
+- v0.5.1 requirements: 19 total
+- Mapped to phases: 19
 - Unmapped: 0
 
 ---
