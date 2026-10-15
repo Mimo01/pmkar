@@ -1,6 +1,7 @@
 import { Info, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FOCUS_RING } from '@/lib/focusRing';
 import { cn } from '@/lib/utils';
 import { SelectionBar } from '../groups/SelectionBar';
 import { useListSelection } from '../groups/useListSelection';
@@ -120,9 +121,9 @@ export function IgnoredTicketsPage() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        restoreTicket(ticket.key);
+                        void restoreTicket(ticket.key);
                       }}
-                      className="rounded text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                      className={`rounded text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
                     >
                       {t('ignored.restore')}
                     </button>

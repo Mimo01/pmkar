@@ -43,8 +43,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
   const targetProjectName = useConnectionStore((s) => s.targetProjectName);
   const triageEntry = tri.triageEntry;
-  const isCopied = triageEntry?.state === 'copied';
-  const isIgnored = triageEntry?.state === 'ignored';
+  const linkedKey = tri.triageEntry?.copiedKey ?? '';
   const linkBusy = tri.linking || copyPhase === 'loading_preview';
   const isHandled = triageEntry?.state === 'handled';
   const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
@@ -70,8 +69,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   };
 
   const handleOpenInCloudJira = () => {
-    if (triageEntry?.copiedKey && cloudBaseUrl) {
-      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${triageEntry.copiedKey}` });
+    if (linkedKey && cloudBaseUrl) {
+      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${linkedKey}` });
     }
   };
 
@@ -193,9 +192,9 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
           {t('detail.back')}
         </button>
         <span className="text-xs font-mono text-brand-muted">{issueKey}</span>
-        {isCopied && triageEntry?.copiedKey && (
+        {tri.isLinked && linkedKey && (
           <Badge variant="outline" className="text-xs font-mono">
-            {triageEntry.copiedKey}
+            {linkedKey}
           </Badge>
         )}
       </div>
@@ -219,7 +218,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
         {/* Action buttons */}
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
-            {!isCopied && !isIgnored && !isHandled && (
+            {!tri.isLinked && !tri.isDenied && !isHandled && (
               <Button
                 variant="default"
                 size="lg"
@@ -234,7 +233,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 })}
               </Button>
             )}
-            {isCopied && triageEntry?.copiedKey ? (
+            {tri.isLinked ? (
               <>
                 {/* Linked status badge */}
                 <span
@@ -243,7 +242,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none outline-none"
                 >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                  {t('detail.copied')} → {triageEntry.copiedKey}
+                  {t('detail.copied')} → {linkedKey}
                 </span>
                 <Button variant="outline" size="sm" onClick={handleOpenInJira}>
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
@@ -251,7 +250,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleOpenInCloudJira}>
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  {triageEntry.copiedKey}
+                  {linkedKey}
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -267,7 +266,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                   <TooltipContent aria-hidden="true">
                     {t('detail.deny.tooltip', {
                       tab: t('nav.notMine'),
-                      key: triageEntry.copiedKey,
+                      key: linkedKey,
                     })}
                   </TooltipContent>
                 </Tooltip>
@@ -285,7 +284,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                       {t('detail.handled.tooltip')}
                     </TooltipContent>
                   </Tooltip>
-                ) : isIgnored ? (
+                ) : tri.isDenied ? (
                   <>
                     {tri.rememberedKey ? (
                       <Tooltip>
@@ -299,7 +298,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                               void tri.handleLink();
                             }}
                             aria-disabled={linkBusy}
-                            className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
+                            className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-primary"
                           >
                             {linkBusy ? (
                               <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -321,7 +320,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                           void tri.handleLink();
                         }}
                         aria-disabled={linkBusy}
-                        className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
+                        className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-primary"
                       >
                         {linkBusy ? (
                           <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />

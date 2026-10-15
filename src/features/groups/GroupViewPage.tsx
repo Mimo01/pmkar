@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { FOCUS_RING } from '@/lib/focusRing';
 import { cn } from '@/lib/utils';
 import { RememberedLinkHint } from '../tickets/RememberedLinkHint';
 import { SkeletonCards, TicketCard } from '../tickets/TicketCard';
@@ -165,9 +166,9 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    restoreTicket(ticket.key);
+                    void restoreTicket(ticket.key);
                   }}
-                  className="rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                  className={`rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
                 >
                   {t('ignored.restore')}
                 </button>
