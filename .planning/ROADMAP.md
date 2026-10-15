@@ -222,5 +222,5 @@ Plans:
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
-| 36. Detail and Group UI | v0.5.1 | 5/5 | Complete   | 2026-10-15 |
+| 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
