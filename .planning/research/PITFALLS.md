@@ -1,408 +1,504 @@
 # Pitfalls Research
 
-**Domain:** Adding user-defined issue groups (tag-like many-to-many, colored/reorderable tabs, multi-select) to an existing Tauri/React/rusqlite Jira triage app (Pmkar v0.5.0)
-**Researched:** 2026-10-11
-**Confidence:** MEDIUM. Codebase observations (triage_db.rs, snapshot_db.rs, PROJECT.md, memory notes) are HIGH. UX/a11y guidance (WAI-ARIA tabs, dnd keyboard patterns, WCAG contrast) is from established standards and training knowledge, not re-verified this session. No drag-and-drop library is currently in the repo (grep of package.json/src found none), so the DnD choice is open.
+**Domain:** Re-triage (Linked -> Denied -> Linked, keeping the Cloud link) added to the existing Pmkar triage system
+**Researched:** 2026-10-15
+**Confidence:** HIGH for pitfalls grounded in current code (triage_db.rs, commands.rs, poll_engine.rs, triageActions.ts, TicketDetailPanel.tsx, ticketListUtils.ts, groupBadge.ts). MEDIUM for Jira Cloud remote-link behavior (not re-verified against live docs). The WebView2 notes are LOW confidence.
+
+## Code facts the pitfalls rest on
+
+- `triage_state.copied_key` is only written by `set_triage_copied`. `set_triage(key, state)` upserts `state` and `last_updated` and leaves `copied_key` untouched. So the DB already retains the key across deny, but only by accident.
+- Every frontend handler (`handleIgnore`, `handleUnignore`, `handleMarkHandled`, `handleUnhandle`, `restoreTicket`) writes `copiedKey: null` into the store optimistically. The DB keeps the old key. The store and the DB therefore already disagree. The next `get_triage_state` hydrate (`CopyResultPage.handleClose`, fetch) resurrects the key.
+- `fetch_tickets` calls `delete_triage_entries(done_keys)` for every issue whose status category is `done`. That row, including `copied_key`, is hard-deleted.
+- Tab predicates are state-only: `isLinkedCandidate` = `state === 'copied'`, `isNotMineCandidate` = `ignored` or `handled`, `isNewCandidate` = not `ignored`, `copied` or `handled`. They never look at `copiedKey`. `groupBadgeKey` derives from the same predicates.
+- `TriageIndicator` shows `copiedKey` only when `state === 'copied'`.
+- `copy_ticket_v2` ends with `set_triage_copied`, which overwrites `copied_key` unconditionally. `add_remote_link` uses `globalId = pmkar-source=<url>&key=<sourceKey>`.
+- `poll_engine::do_poll` and `dispatch_notifications` never consult triage state. A denied ticket keeps producing change records, unseen-change dots and OS notifications.
+- `TicketDetailPanel` and `TicketDetailPage` are duplicated components. Both hold the same five handlers.
 
 ## Critical Pitfalls
 
-### Pitfall 1: Issue identity is a bare `ticket_key`, with no connection or project scope
+### Pitfall 1: Link memory is lost when the ticket goes Done (hard delete)
 
 **What goes wrong:**
-Group membership is stored as `(group_id, issue_key)` and looked up by key alone. If the user changes the source connection, project or Jira instance (`app_config.source_project_key`, `connection_meta`), `ABC-12` from the old source collides with `ABC-12` in the new one. Groups then show the wrong issue, or an "orphan" that looks like a live issue.
+`fetch_tickets` deletes the whole triage row for any done ticket. A Linked or Denied ticket that is resolved loses its `copied_key`. If the ticket is reopened it comes back as `new` with no link. Copying it again creates a second Cloud issue. The v0.5.1 promise ("link remembered") then holds only until the ticket is resolved.
 
 **Why it happens:**
-The existing `triage_state` table is `ticket_key TEXT PRIMARY KEY` with no scope, so copying that shape feels consistent. Triage already has this latent flaw. Groups would inherit it and make it more visible, because groups are long-lived curated data.
+The delete is a v0.1-era cleanup for finished tickets. Nothing ever depended on a durable `copied_key` for non-copied states.
 
 **How to avoid:**
-- Decide identity explicitly in the first phase. Recommended: store a `source_scope` column (source base-URL hash or a connection id, plus the project key if projects can change) next to `issue_key`. Primary key is `(group_id, scope, issue_key)`.
-- Do not change `triage_state` in this milestone, but record the divergence as a known issue. Do not let the group join logic assume triage and group keys share a scope.
-- Filter group membership by the current scope at read time. Keep other-scope rows in the DB rather than deleting them, so switching back restores them.
-- Test case: switch source project A to B to A, then check that groups are intact and nothing cross-contaminates.
+- Change the done cleanup so it only deletes rows with no link memory: `DELETE ... WHERE ticket_key IN (...) AND copied_key IS NULL`.
+- Or keep the row and let the predicates' `!isDoneTicket` carry the hiding.
+- Add a Rust test: set copied, deny, fetch with the issue done, assert `copied_key` survives.
 
 **Warning signs:**
-A group tab shows issues whose summary is unrelated to what the user added. Membership count differs from the visible count after a settings change.
+A reopened ticket shows as New. `get_all_triage` has fewer rows than expected after a fetch.
 
 **Phase to address:**
-Phase 1 (data model and persistence). It is costly to retrofit after users have data.
+Backend phase (first phase), before any UI work.
 
 ---
 
-### Pitfall 2: Storing only keys, then losing the issue when it drops out of the fetch (or storing full snapshots and showing stale data)
+### Pitfall 2: Stale or ambiguous `copied_key` on non-copied rows
 
 **What goes wrong:**
-There are two opposite failures.
-- Keys only: when a grouped issue is missing from the latest fetch (resolved, reassigned, or the watch list changed, or a partial-failure batch from the v0.4.8 per-user fetch), the group card has nothing to render. The issue vanishes, which violates "never silently lose an issue".
-- Full snapshots: the card shows stale status or summary with no indication, and it duplicates `snapshot_store`.
-
-A related trap is treating "absent from this fetch" as "gone". The per-user batched fetch can fail partially (v0.4.8 Phase 26), so a failed batch makes grouped issues look "no longer in results" when they are not.
+Once a key survives deny, "has a key" no longer implies "is Linked". Several things break:
+- "Restore" from Not mine (`ignored` -> `seen`) leaves a key on a `seen` row. The ticket now appears in New with a hidden key.
+- A fresh Copy then overwrites the old key via `set_triage_copied`. The earlier Cloud issue is orphaned with no trace.
+- Any new code that tests `copiedKey` instead of `state` will misclassify tickets.
 
 **Why it happens:**
-The group view is derived by joining membership with the in-memory fetched list. Absent rows silently drop out of the join. Developers reach for an inner join instead of a left join from membership.
+The schema encodes two things in one column pair: current triage state and remembered link. The existing code treats `copiedKey` as an attribute of the `copied` state only.
 
 **How to avoid:**
-- Drive the group view from membership (left join to fetched issues), never from the fetched list.
-- Persist a minimal "last known" stub per membership: key, summary, last known status and `last_seen_at`. Render stubs with a clear "no longer in results" label, and the one-click remove always works.
-- Show "no longer in results" only after a complete successful fetch. After a partial-failure fetch, show a neutral "not refreshed" state, or suppress the label. The stub must carry `lastKnown` styling, not look live.
-- Do not allow normal card actions (copy, triage) on stubs, or have them re-fetch the issue by key first. Copy from stale data is a fidelity risk.
-- Refresh stubs opportunistically from `snapshot_store` when a snapshot exists, instead of duplicating data.
-- Never auto-remove membership on a fetch miss, and never clean up orphans in the background.
+- Make the semantics explicit in one place. Recommended: `state` stays the single source of truth for tabs, and `copied_key` means "last known Cloud twin". "Link" is offered when `state in (ignored, handled) && copiedKey`.
+- Decide up front what Restore from Not mine does to the key. Recommended: keep it. A later copy of a ticket with a remembered key must either reuse the key or warn, never silently overwrite.
+- Add a TS helper such as `hasRememberedLink(entry)` and use it everywhere instead of inline `entry?.copiedKey` checks.
+- Add a Rust `set_triage_denied` / `set_triage_relinked` with named intent, so the retention is deliberate and tested. Do not rely on the upsert quirk.
 
 **Warning signs:**
-Group count badge differs from rendered card count. An issue that was in the group yesterday is invisible today. "No longer in results" appears for every issue right after a failed batch.
+A New-tab ticket whose DB row has a `copied_key`. `copied_key` values changing between two copies of the same source key.
 
 **Phase to address:**
-Phase 2 (group view and missing-issue handling). The stub schema must be decided in Phase 1.
+Backend phase (data model and command contract). Re-check in the detail UI phase.
 
 ---
 
-### Pitfall 3: SQLite migration done the ad hoc way breaks existing DBs
+### Pitfall 3: Optimistic update writes `copiedKey: null` and diverges from the DB
 
 **What goes wrong:**
-The repo's migration style is `CREATE TABLE IF NOT EXISTS` plus `let _ = conn.execute_batch("ALTER ...")` (swallows all errors) plus sqlite_master string sniffing. If group tables are added to `triage.db` carelessly, a failed migration is silently ignored and the first group write fails at runtime on real users' DBs. Dev DBs (fresh) pass tests. Putting group tables in the wrong DB also creates cross-domain coupling.
+Copy-pasting the existing handler pattern (`{ state: 'ignored', copiedKey: null }`) makes the optimistic entry drop the key while the DB keeps it. The Link button, which is gated on `copiedKey`, vanishes until the next hydrate. After the next hydrate it appears. Users see a "flicker" bug and a Link button that exists only sometimes.
 
 **Why it happens:**
-Tests use `open_in_memory()`, which always creates the latest schema. Upgrade-from-v0.4.8 paths are never exercised.
+All five existing handlers hardcode `copiedKey: null`. They were correct only while the key could not matter outside `copied`.
 
 **How to avoid:**
-- Follow the db-per-concern decision: create a new `groups.db` (or a clearly separate module), not columns in `triage_state`. This also avoids the table-rebuild migration `MIGRATE_TRIAGE_CHECK_HANDLED`, which runs `DROP TABLE triage_state` and is risky to touch.
-- Create tables with `IF NOT EXISTS` only, additive, with no changes to existing tables. Do not use `let _ =` on new migrations. Propagate errors, or use the `ignore_duplicate_column` helper if an ALTER is unavoidable.
-- Enable `PRAGMA foreign_keys = ON` per connection (rusqlite does not enable it by default) if using `ON DELETE CASCADE` on membership. Without it, deleting a group leaves orphan membership rows. Test this explicitly.
-- Add an upgrade test that opens a file DB created with the v0.4.8 schema, then opens it with the new code, and asserts old data is intact.
-- Consider `PRAGMA user_version` for the new DB so later migrations are ordered. Do not retrofit it into the other DBs now.
+- Build optimistic entries as `{ ...prev, state }`, preserving `copiedKey`. The optimistic entry equals what the DB will return.
+- Fix the existing deny, restore and handled handlers in the same change, or the milestone leaves inconsistent behavior.
+- Add a parity test: for each transition, assert optimistic entry === what `get_triage_state` returns after the command.
 
 **Warning signs:**
-Tests pass but a real upgraded install shows "no such table/column". Deleting a group does not shrink membership rows.
+Link button state differs before and after an F5 fetch or after closing CopyResult. Tests only assert `copiedKey: null`.
 
 **Phase to address:**
-Phase 1 (persistence).
+Frontend actions phase (shared triage actions).
 
 ---
 
-### Pitfall 4: Zustand selector instability and store sprawl (known project pitfall)
+### Pitfall 4: Rollback races and fire-and-forget errors
 
 **What goes wrong:**
-Selectors such as `useGroupStore(s => s.membership[groupId] ?? [])` or `s => s.groups.filter(...)` / `.map(...)` return a new reference every call. React 19 plus Zustand then loops on re-render ("Maximum update depth exceeded"). The project memory records this exact failure (never return `?? []` in a selector).
-
-Related: a per-card `isInGroup(issueKey)` selector that scans all groups makes every card re-render on any membership change.
+The detail handlers use `.catch(() => {})` and never roll back, so a failed deny leaves the UI showing Not mine while the DB says Linked. `restoreTicket` has the safer pattern (rollback only if `current[issueKey] === optimistic`), but it compares by reference. Pitfalls:
+- A re-link is a multi-step flow: validate the Cloud key, then write. If a second action (a poll hydrate, a group toggle, a rapid double click) replaces the entry in between, the reference check silently skips the rollback or rolls back over newer state.
+- `hydrateTriageMap({...getState().triageMap, ...})` rewrites the whole map from a snapshot. Two overlapping actions on different tickets can clobber each other if one snapshot is taken before the other's write.
+- A poll or fetch hydrate landing between the optimistic write and the invoke result replaces the optimistic entry, so the reference check fails and an error leaves the UI stale.
 
 **Why it happens:**
-Group data is naturally list-shaped, so derived lists get created inside selectors.
+A whole-map replace with no per-key patch API, plus reference equality as the race guard.
 
 **How to avoid:**
-- Selector returns `null` / module-level `const EMPTY: readonly string[] = []` fallbacks, handled in the component. Prefer the `null` fallback per project convention.
-- Derive lists with `useMemo` from stable slices, or use `useShallow` for object/array selections.
-- Store membership as `Record<groupId, Set|string[]>` plus a reverse index `Record<issueKey, groupId[]>` maintained in the same reducer, so a card selects only its own entry.
-- Add a lint-like test: render a component with an empty group and assert no re-render loop (render count is bounded).
+- Add one shared `denyLinkedTicket` / `relinkTicket` in `triageActions.ts`, modeled on `restoreTicket`. Both detail components call it, and nothing inline survives.
+- Add a per-key store setter (`setTriageEntry(key, entry)`) so actions do not copy the whole map.
+- Compare rollback on a field value (`state` and `copiedKey`), not on object identity. Or use a per-key in-flight token.
+- Disable the button while pending, so double clicks cannot interleave.
+- On failure, re-fetch `get_triage_state` rather than hand-rolling the rollback.
+- Test: fail the invoke after a hydrate lands, and assert the final state equals the DB.
 
 **Warning signs:**
-UI freezes when opening an empty group. Console shows "getSnapshot should be cached" or max update depth errors. Card re-render counts spike on selection.
+`.catch(() => {})` in a new handler. A test that only covers the happy path.
 
 **Phase to address:**
-Phase 1 (store design) and verified in every UI phase.
+Frontend actions phase.
 
 ---
 
-### Pitfall 5: Multi-select state leaks across tabs, refetches and group changes
+### Pitfall 5: Re-link restores a dead or wrong Cloud issue
 
 **What goes wrong:**
-Selection stored as a flat `selectedKeys` in a shared store survives tab switches, so a bulk "Add to group" applies to hidden items from another tab. Selection also keeps keys that disappeared after a refetch, so the action counts items the user can no longer see. Pressing F5 (manual poll) or the auto-poll resets or retains selection unpredictably. Deleting a group while it is the active tab leaves the active tab pointing at nothing.
+Link-from-detail restores `copied_key` without looking at the Cloud. The issue may have been deleted, moved to another project (key changed) or archived. The ticket shows green "Linked -> CLOUD-123" pointing at nothing. The "Open in Cloud" button gives a 404.
 
 **Why it happens:**
-Selection is treated as global state instead of view state scoped to a list.
+The restore is a local DB flip, so it feels free. The Cloud copy was explicitly left "untouched" and may have changed independently.
 
 **How to avoid:**
-- Key the selection by view: `selection = { viewId, keys }`. Clear on tab change, on group delete, and on source scope change. Intersect with currently visible keys before any bulk action.
-- Show the count from the intersected set, and the action target is exactly what is visible.
-- Active tab id must be validated against existing groups; fall back to the "New" tab when the group is deleted or renamed away.
-- Handle the card-click versus checkbox-click conflict: the checkbox must stop propagation so it does not open the detail panel. Decide whether selection mode is explicit (a toggle) or implicit (checkboxes always visible, which adds card clutter).
-- Support Shift-click range select only if a stable ordering exists; otherwise skip it for v0.5.0.
-- Do not let existing triage bulk actions (if any) act on the group's selection unintentionally.
+- Do a cheap check before restoring. A single `GET /rest/api/3/issue/{key}?fields=summary` through the Cloud client lets the user see "Linked to CLOUD-123 - <summary>".
+- On 404, fall back to the normal copy preview and tell the user why. Do not delete the stale key until the new copy succeeds.
+- On network or auth error, do not fall back to copy. Surface the error, because falling back risks a duplicate.
+- Use a backend command, for example `relink_ticket(source_key) -> { restored | needs_copy }`. Do not decide this in the frontend from the cached `copiedKey`.
+- Decide (and document) whether a project move is handled. A GET by the old key normally resolves, and the response carries the current key. Save that current key.
 
 **Warning signs:**
-"Added 14 issues" toast when 3 were visible. Bulk bar remains after switching tabs.
+Re-link works offline. There is no Cloud call in the re-link path or tests.
 
 **Phase to address:**
-Phase 3 (multi-select and entry points).
+Re-link backend + flow phase.
 
 ---
 
-### Pitfall 6: Draggable tabs are inaccessible, break overflow scrolling, or fight the tablist
+### Pitfall 6: Re-copy creates a duplicate Cloud issue
 
 **What goes wrong:**
-- Pointer-only drag reorder fails WCAG 2.1.1 (keyboard) and the project's WCAG AA goal.
-- Wrapping a roving-tabindex `role="tablist"` in a sortable library that attaches its own `tabindex`, `role="button"` and `aria-roledescription` produces conflicting semantics. Arrow keys either navigate tabs or reorder, not both.
-- Overflow scroll: the active tab is not scrolled into view after creation, keyboard focus or selection. The fixed core tabs plus a divider scroll away with the groups, or the divider is read as a tab by screen readers.
-- Drag inside a horizontally scrolling container misbehaves: auto-scroll fights, the drop indicator is clipped by `overflow`, and the drag overlay is clipped.
-- Rename or delete controls inside the tab (nested interactive elements inside `role="tab"`) are invalid ARIA.
+The "otherwise open the normal copy preview" fallback is also reachable by mistake:
+- The key is lost (Pitfall 1).
+- The user hits Copy on a `seen` ticket that has a remembered key (Pitfall 2).
+- The check at re-link time was transient (Pitfall 5).
+- Double clicks, or a copy preview opened before the deny landed.
+`copy_ticket_v2` has no idempotency check. It always creates an issue and then overwrites `copied_key`.
 
 **Why it happens:**
-Drag libraries are added last and tested only with a mouse.
+The copy pipeline assumes "a ticket in copy preview has never been copied".
 
 **How to avoid:**
-- Core tabs New / Not mine / Linked are not sortable and stay pinned (or at least sticky) outside the scroll region. The divider is `role="separator"` (`aria-orientation="vertical"`), not a tab.
-- Provide a keyboard reorder path that is not drag: for example, Alt+Left/Right (or Ctrl+Shift+arrows) on a focused tab, with a live-region announcement ("Moved Billing to position 3 of 5"), plus "Move left/right" in a tab context menu or a Manage Groups dialog. A Manage Groups list with up/down buttons is the simplest accessible fallback and doubles as the home for rename/recolor/delete.
-- Use a library with a built-in keyboard sensor and announcements (dnd-kit is the usual React choice, with `KeyboardSensor` and `sortableKeyboardCoordinates`; verify its current React 19 compatibility before adopting, since this was not checked this session). Require a drag activation distance (about 5 px) so a click still selects the tab.
-- Keep the tablist keyboard model standard: Left/Right moves focus, Home/End, `aria-selected`, `aria-controls` linked to a panel. Keep rename/delete out of the tab element (use a context menu, a separate button, or the manage dialog).
-- Call `scrollIntoView({ inline: "nearest" })` on the active tab. Provide overflow affordance (edge fade or chevrons) and test with 20+ groups and long names (truncate with a tooltip and `title` or `aria-label`).
-- Add a reduced-motion check for drag animations.
+- Guard in `copy_ticket_v2` (backend, not the UI). If a remembered key exists and the Cloud issue still resolves, return a typed `AlreadyLinked { key }` result. Continue only with an explicit `force`/"copy anyway" argument.
+- Fallback signal: also search the Cloud by the remote link `globalId` (`pmkar-source=...&key=<source>`). It is a recovery path for a lost `copied_key`. Treat it as optional, MEDIUM confidence, and do not make it the primary guard.
+- Disable "Copy to Cloud" in the detail header when `hasRememberedLink`. The Link button becomes the primary action.
+- Test: deny, then copy again, and assert the guard fires with no create call to the mock Cloud.
 
 **Warning signs:**
-Cannot reorder with the keyboard. Axe flags nested-interactive or `aria-required-children`. The newly created group tab is off-screen. Screen reader announces the divider as "tab".
+Two Cloud issues for the same source key. The mock server's issue count rises after a deny and re-link.
 
 **Phase to address:**
-Phase 2 (tab bar) for structure and overflow; Phase 4 (reorder and manage groups) for drag and keyboard reorder. Run an a11y check at the end of both.
+Re-link backend + flow phase (guard), Detail UI phase (button gating).
 
 ---
 
-### Pitfall 7: Color contrast fails in one theme, and color is the only signal
+### Pitfall 7: "Copied" origin remote link semantics
 
 **What goes wrong:**
-A user-chosen color that works as a dot on light fails as text or a border on dark (or vice versa). Colored text or fill with white or black text drops below 4.5:1 (text) or 3:1 (non-text UI, WCAG 1.4.11). Groups distinguished only by color fail 1.4.1. The selected tab state is shown only by color.
+- Deny does not touch the Cloud, but a developer "cleans up" the origin remote link on deny or re-link. This breaks the "Cloud copy untouched" requirement.
+- On re-link the developer re-adds the remote link, creating a duplicate link on the Cloud issue.
+- On re-copy after a lost key, the new Cloud issue also gets a remote link with the same `globalId`, so two Cloud issues point back at one source.
 
 **Why it happens:**
-Free-form color pickers, or a palette tuned in one theme only. The project already has a dark mode contrast bar of 4.5:1+.
+Remote link creation lives inside the copy pipeline (`add_remote_link`), so devs reuse the pipeline for re-link.
 
 **How to avoid:**
-- Offer a fixed palette (8 to 10 hues), not a free picker. Store a palette token name (`"blue"`), not hex, so each theme maps it to its own tuned value via CSS variables.
-- Use color as an accent only (dot or small bar on the tab), and keep the label text in the standard foreground token. Group identity is always the name plus color, never color alone.
-- Verify each palette entry in both themes against the actual tab background, the selected and hover states, and the card chip background: at least 3:1 for the dot or indicator, 4.5:1 for any colored text. Add an automated contrast test over the token table.
-- Keep the triage badges distinct from group colors (do not reuse the semantic status colors such as red/green/amber for groups, or users will read a group as a status).
-- Default a new group to the next unused palette color.
+- Re-link never calls `copy_ticket_v2` or any pipeline step. It only writes triage state, plus the optional existence GET.
+- Deny writes nothing to Cloud. Add a test that asserts zero Cloud calls on deny.
+- Origin link on Cloud is permanent audit history. Note that in the requirements.
+- Keep the stable `globalId` format. Jira's remote-link API treats a matching `globalId` as an update, so retrying is idempotent (MEDIUM confidence, verify on the first real run).
 
 **Warning signs:**
-Axe color-contrast violations in one theme only. Two groups that look identical in grayscale.
+Cloud issue shows two "Pmkar source" links. A re-link audit-log entry contains `remotelink`.
 
 **Phase to address:**
-Phase 1 defines the token palette; Phase 2 verifies it on tabs; Phase 5 verifies it in chips/badges.
+Re-link backend + flow phase.
 
 ---
 
-### Pitfall 8: Group names: duplicates, empties, whitespace, and rename races
+### Pitfall 8: Notifications and unseen-change dots for denied tickets
 
 **What goes wrong:**
-Two groups named "Billing", or "billing" and "Billing ", confuse users and break any name-based lookup. Empty or whitespace-only names produce a blank tab (inaccessible, no accessible name). Very long names break the tab bar. Rename that validates only in the UI lets the backend persist duplicates. Using the name as an identifier means a rename orphans membership.
+The poll engine ignores triage state. Today's Not mine tickets already trigger OS notifications and blue dots. After this milestone, a user who denies a Linked ticket expects silence, and gets pinged on every comment. Worse, a Linked ticket's updates are probably the ones the user cares about most, so the two cases pull in opposite directions.
+
+**Why it happens:**
+`process_tickets` and `dispatch_notifications` receive no triage context. Nothing so far has needed a "do not notify" state.
 
 **How to avoid:**
-- Group `id` is a generated stable ID (UUID or integer). The name is a mutable attribute only.
-- Validate on both sides: trim, collapse whitespace, 1 to ~40 chars, unique case-insensitively using NFC-normalized comparison (`UNIQUE` index on `lower(name)` is not Unicode-aware in SQLite for Slovak diacritics, so do the comparison in Rust or store a normalized `name_key`). Return a typed error that the UI maps to an i18n message.
-- Reserved names: reject collisions with the core tab labels (New / Not mine / Linked, in both EN and SK).
-- Inline validation message uses `aria-describedby` and `aria-invalid`.
-- Enforce a soft cap (for example 50 groups) to bound the tab bar and keep the fetch cheap.
+- Make an explicit product decision before the phase: should Denied (including denied-with-link) tickets suppress OS notifications and dots?
+- If yes, filter in `do_poll` (read `get_all_triage()` once, before the dispatch loop), and keep snapshots updating. Skipping snapshots would make the diff huge when the ticket is re-linked, so change detection must keep running and only dispatch is skipped.
+- Never gate on `copied_key`. Gate on `state in (ignored, handled)`.
+- Make sure the unseen-change dot is not shown for hidden rows. Dots on a hidden ticket inflate the tab or app counts.
+- If nothing changes, record it as a known and intended behavior so UAT does not file it as a bug.
 
 **Warning signs:**
-Duplicate names in the DB. Blank tab after a rename with spaces. Rename causes membership to disappear.
+A notification for a ticket visible only in Not mine. Unseen counts that differ from visible dots.
 
 **Phase to address:**
-Phase 1 (backend validation and IDs) and Phase 4 (rename UI).
+Notifications decision in roadmap scoping. Implementation in the backend phase (small), unless the decision is "leave as is".
 
 ---
 
-### Pitfall 9: Deleting a group destroys curation without a safety net
+### Pitfall 9: Group view badges and tab counts go inconsistent
 
 **What goes wrong:**
-One-click delete removes a group and all memberships. Users lose curated work. A native `window.confirm` is inconsistent with the app and not styled/i18n'd. A confirmation that does not say how many issues are affected is ignored by habit.
+- `groupBadgeKey` is derived from the three predicates in order (Not mine, Linked, New, else Done). If a new "denied but has link" notion leaks into one predicate and not the others, a ticket can be counted in two tabs or none.
+- The re-link and deny actions update `triageMap` but group-view derived lists and counts (`useGroupMembers`, tab count selectors, `CountPill`) may be memoized on the ticket list alone and stay stale.
+- A group-view row for a Linked ticket shows the `copiedKey` chip only when `badge === 'nav.linked'`. After deny it must disappear. The reverse transition must restore it, but only after the store entry has been updated.
+- Group view has its own restore button (`ignored.restore`). A new Link action must exist there too, or the group view diverges from detail (one entry point per action, per the feedback memory).
+
+**Why it happens:**
+Counts and badges derive from `triageMap`, `tickets` and `isDoneTicket` separately in multiple places (list pages, tab strip, group view).
 
 **How to avoid:**
-- Use the existing shadcn `AlertDialog` (focus trapped, default focus on Cancel, Escape cancels) with copy such as: Delete "Billing"? Its 12 issues stay in their New / Not mine / Linked tabs; only the group is removed. Count shown, EN and SK, with plural forms (Slovak has three plural categories in i18next: `_one`, `_few`, `_other`; verify the project's i18next version generates them).
-- State clearly that deleting a group never deletes or changes issues in Jira or triage state.
-- For small cost, consider soft delete with an Undo toast (sonner is already a dependency). Undo restores the group and memberships. Hard-delete after the toast times out or on app close. Keep this optional; confirmation alone satisfies the requirement.
-- After delete, move focus to a sensible element (the previous tab or the first core tab) and announce via a live region.
-- Do not cascade into `triage_state`.
+- Do not change the predicates. Re-triage only moves `state` between `copied` and `ignored`, so the existing exclusive predicates stay exclusive.
+- Add a transition test matrix: for each of {copied -> ignored, ignored -> copied} assert the key is in exactly one of New / Not mine / Linked, the counts sum correctly, and the group badge changes.
+- Extend `ticketListParity.test.tsx` with the re-triage transitions.
+- Verify the Linked page "Cloud key" column, the TriageIndicator and the group view row all read the same entry.
 
 **Warning signs:**
-Focus lost to `<body>` after delete. Support request "I lost my group".
+Count badge says 3 but the list shows 2. A ticket visible in two tabs. A badge that changes only after a reload.
 
 **Phase to address:**
-Phase 4 (manage groups).
+Detail UI phase (wire-up) and a final consistency/QA phase (parity tests).
 
 ---
 
-### Pitfall 10: Group membership and triage state conflated, or coupled in the data model
+### Pitfall 10: Zustand selectors and infinite re-render
 
 **What goes wrong:**
-Adding a "group" value to the triage state enum (the `CHECK(state IN (...))` constraint would require another table rebuild), or hiding grouped issues from the core tabs, or moving an issue out of New when it is added to a group. The requirement says membership is independent and the issue still appears in its core tab. Also, the group-tab triage badge reads state from a different path than the core tabs and drifts (copied but badge says new).
+New selectors for "denied with link" or "linked keys" written as `useTicketStore(s => s.list.filter(...) ?? [])` or `s => Object.entries(...)` return a new reference each time and trigger an infinite render loop (the known project pitfall). `?? []` in a selector is the classic cause.
+
+**Why it happens:**
+Derived values are convenient in selectors, and the project pitfall is easy to forget when copying nearby code.
 
 **How to avoid:**
-- Membership is a separate table. Never touch `triage_state` or its CHECK.
-- A single selector/function `getTriageState(key)` is used by both core tabs and group cards (shared TicketCard badge component), so they cannot disagree.
-- Ignored ("Not mine") and copied/handled ("Linked") issues in a group must still show correctly and remain removable. Check "mark as not mine" while grouped: it stays in the group with a badge (do not auto-remove).
-- Define and test the semantics of the Linked tab: an issue that is copied and in a group appears in both tabs.
-- Core-tab counters must not include or exclude group membership.
+- Select the raw entry only: `useTicketStore(s => s.triageMap[issueKey])`. This is already stable, so derive booleans from it in render.
+- For lists, use a `null` fallback or `useShallow`, or compute with `useMemo` on stable inputs.
+- Add a render-count test on the new detail buttons and the count selectors.
 
 **Warning signs:**
-Counts on core tabs change when adding to a group. Badge differs between tab and group view for the same issue.
+"Maximum update depth exceeded" in the console. A frozen window after clicking Deny.
 
 **Phase to address:**
-Phase 1 (model) and Phase 2 (group view reuses shared badge).
+Detail UI phase, and verify in code review of every phase that touches selectors.
 
 ---
 
-### Pitfall 11: Clutter on TicketCard and list density regression
+### Pitfall 11: Duplicated detail components drift
 
 **What goes wrong:**
-Adding group chips, a checkbox, a "add to group" hover icon, a triage badge and the existing blue dot / change indicators to each card overloads it. Hover-only icons conflict with the user's stated preference for explicit labelled buttons and one entry point per action (memory feedback). Multiple entry points (detail button, bulk bar, context menu) multiply the places where the action must be kept consistent.
+`TicketDetailPanel.tsx` and `TicketDetailPage.tsx` contain near-identical handler blocks. Adding Deny and Link to one and forgetting the other (or handling errors differently) gives different behavior depending on how the user opened the ticket. Group view may open a third entry point.
+
+**Why it happens:**
+The copies exist already, and a copy-paste edit is the cheapest change.
 
 **How to avoid:**
-- Cards show at most N (about 2) tiny color dots with a "+n" overflow, with full names in the tooltip and `aria-label`; full membership shown in the detail panel as removable chips.
-- The triage badge appears on group-tab cards only (core tabs already convey state by tab). Make the badge a prop (`showTriageBadge`).
-- No hover-revealed row icons for group actions. Primary entry: a labelled "Groups" button/popover (checkbox list with search, create-new inline) in the detail panel. Secondary: bulk bar in multi-select. Third (optional) entry such as context menu only if it reuses the exact same popover component.
-- Checkboxes appear only in selection mode (or on focus-within) to keep the default card clean.
-- Virtualized lists, if used, need constant card height, so avoid variable-height chip rows.
+- Put the new actions in `triageActions.ts` first (shared), and have both components call them. Remove the inline handlers they replace.
+- One test per component asserting the same buttons with the same visibility rules.
 
 **Warning signs:**
-Card height grows when memberships are added. Design review: three different ways to do the same thing with different wording.
+A diff touching one component only. Different toast keys between the two.
 
 **Phase to address:**
-Phase 2 (card design) and Phase 3 (entry points). Review at milestone end per the user's preferred workflow.
+Frontend actions phase, then Detail UI phase.
 
 ---
 
-### Pitfall 12: Group membership operations are not atomic and the UI goes out of sync with the DB
+### Pitfall 12: Detail button gating and confusing explicit actions
 
 **What goes wrong:**
-Bulk add to a group runs N sequential Tauri invokes, and a failure halfway leaves partial membership. Optimistic UI updates are not rolled back on error. Adding an issue that is already a member throws a UNIQUE constraint error instead of being idempotent. Concurrent poll refresh overwrites the in-memory membership store with a stale read.
+- Deny appears on Linked tickets but the old Mark-as-handled and Ignore buttons also appear, giving three overlapping ways to leave Linked. The feedback memory says: explicit labelled buttons in detail, one entry point per action.
+- Link appears on every Not mine ticket, even ones that never had a link. For those it should read as "Copy to Cloud" (the existing action).
+- Denying from the Linked tab removes the ticket from the list while the detail pane stays open on it, showing a stale state or an empty pane.
 
 **How to avoid:**
-- One Tauri command per bulk operation (`add_issues_to_group(group_id, scope, keys[])`) running in a single transaction with `INSERT OR IGNORE`. Same for remove.
-- Return the authoritative resulting membership (or a delta) and update the store from it. Roll back optimistic changes on error with a toast.
-- Membership lives in its own store, loaded independently of ticket fetch/poll; poll results must never replace membership.
-- Rust side: the DB handle is behind a Mutex like other DBs; don't hold the lock across awaits.
-- Limit batch size sanity (hundreds fine; SQLite handles it).
-
-**Warning signs:**
-UNIQUE constraint errors in logs. UI shows member, DB does not, after restart.
+- Define the button matrix by `state` x `hasRememberedLink`: copied -> Open in Cloud + Deny. ignored/handled with link -> Link (primary) and Restore. ignored/handled without link -> Copy and Restore. Confirm this in requirements.
+- Decide what happens to the selection after Deny (stay on the ticket with new state, or advance to the next row). Test both selection and focus. WCAG: move focus to a predictable element and announce the result in the existing live region.
+- Should Deny confirm? The Cloud copy is untouched and the action is reversible, so use no confirmation, but show a toast with the target key and "Undo" if cheap.
 
 **Phase to address:**
-Phase 1 (commands) and Phase 3 (bulk UI).
+Detail UI phase.
 
 ---
+
+## Moderate Pitfalls
+
+### Pitfall 13: i18n EN/SK drift and the "tiket" guard
+
+**What goes wrong:**
+New strings (Deny, Link, toasts, aria announcements, confirmation, "kept link" hints) are added to EN only, or the SK text uses "uloha". The groups guard test enforces "tiket" for issues. Slovak plurals for new counts need the existing plural forms (`_one`, `_few`, `_other`). Reusing "Not mine"/"Linked" nouns with inconsistent translations produces mixed terminology.
+
+**Prevention:**
+- Add keys to both locales in the same commit. Reuse existing `nav.linked` / `nav.notMine` labels in sentences.
+- Run the existing key-parity test and the SK guard. Extend the guard's scope (or add a second one) to cover the new keys.
+- Words to avoid: "úloha". Use "tiket".
+- Translate the failure toasts and the aria-live announcements too, not only the button labels.
+
+**Phase to address:**
+Every UI phase writes both locales; a final QA phase runs the guards.
+
+### Pitfall 14: Backend command contract drift (`set_triage_state` accepts any state)
+
+**What goes wrong:**
+`set_triage_state` accepts `copied` from the frontend with no key. A path that sets `copied` without a key (a naive "re-link" implemented as `set_triage_state('copied')`) produces `state=copied, copied_key=NULL`: a green Linked row with no Cloud link and no way to open it.
+
+**Prevention:**
+- Remove `copied` from the allowed set in `set_triage_state`, or reject it. Re-link goes through a dedicated command that sets `copied` only with a non-null `copied_key` from the DB.
+- Add a CHECK-like invariant test: `state='copied' => copied_key IS NOT NULL`.
+- The frontend never supplies the key. The backend reads its remembered value.
+- Rust test and frontend test for each command.
+
+**Phase to address:**
+Backend phase.
+
+### Pitfall 15: Existing rows with old data
+
+**What goes wrong:**
+Rows already in users' DBs: `ignored` rows that were copied before v0.5.0 may or may not have a key (handlers did not clear the DB key, so some old denied-after-copy rows may carry one). The first run after upgrade shows Link on tickets the user ignored years ago. Others have none.
+
+**Prevention:**
+- Accept it: the key is genuinely the last Cloud twin. The pre-check from Pitfall 5 makes it safe.
+- No migration needed. Do not add a destructive backfill. If a CHECK widening is needed, reuse the `migrate_triage_check_constraint` pattern. It rebuilds the table, so run it in a transaction and test against a populated DB.
+- Add a Rust test with a legacy row (`ignored` + `copied_key`).
+
+**Phase to address:**
+Backend phase.
+
+### Pitfall 16: Snapshot "seen baseline" after a long deny
+
+**What goes wrong:**
+While denied, changes pile up as unseen. On re-link the user gets a long cumulative diff, or the Changes tab auto-switches (it does so when `hasUnseenChanges`). It is not wrong, but it surprises.
+
+**Prevention:**
+Keep the behavior. Make sure the Changes tab auto-switch ref (`initialTabRef`) still works after the state flip and the detail re-render. Mark seen on re-link only if that is an explicit product decision.
+
+**Phase to address:**
+Detail UI phase (verify).
+
+### Pitfall 17: Mock server cannot exercise the new paths
+
+**What goes wrong:**
+The mock Cloud has no issue-by-key GET for deleted issues and no way to simulate 404 or duplicates (see mock fixtures memory: issue response and field list are independent). The re-link existence check and the duplicate guard then ship untested end to end.
+
+**Prevention:**
+- Extend the mock Cloud in the backend phase: GET issue 404 for a sentinel key, a counter of created issues, and a fixture that is a linked ticket with a known Cloud key.
+- Add the fixtures before the UI phase, so UAT can be done without a real PAT.
+
+**Phase to address:**
+Backend phase (mock extension first).
+
+## Minor Pitfalls
+
+### Pitfall 18: Windows WebView2 specifics (LOW confidence)
+
+**What goes wrong:**
+Focus and tooltip behavior differ in WebView2. The project already had a tooltip-on-handoff bug (WR-01) that needed a manual WebView2 check. A button that disappears (Deny on a ticket that leaves the list) while focused drops focus to `body` on WebView2, and keyboard users lose their place. Native `title` tooltips on the Link button can stick after the element unmounts.
+
+**Prevention:**
+Move focus deliberately after the action, avoid `title`-based tooltips on buttons that unmount on click (the group chip redesign already removed chip tooltips), and add the Deny/Link flow to the manual WebView2 UAT checklist.
+
+**Phase to address:**
+Final QA/UAT phase.
+
+### Pitfall 19: Audit log gaps
+
+**What goes wrong:**
+Deny writes nothing to the audit log and re-link's existence GET might bypass the audited client (preview lookups bypass it by design). The audit viewer then cannot explain why a ticket changed state.
+
+**Prevention:**
+Decide: the Cloud GET goes through the audited client (it is a real Cloud call), while local-only transitions are not logged. Redaction rules still apply.
+
+**Phase to address:**
+Re-link backend phase.
+
+### Pitfall 20: Removing a "Linked" ticket from a group's tab count
+
+**What goes wrong:**
+Group counts are not affected by triage moves unless they count by badge. If a group tab shows a per-badge breakdown, update it in the same parity test.
+
+**Prevention:**
+Check `CountPill` / `groupTabs.ts` inputs, and add a case to the group tests.
+
+**Phase to address:**
+Consistency/QA phase.
 
 ## Technical Debt Patterns
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Key membership by `issue_key` only (copying `triage_state`) | Matches existing shape, simplest queries | Cross-source collisions, no clean path to fix later | Never; add a scope column now |
-| Store group names/colors in a JSON blob in `app_config` | No new table | No integrity, no atomic membership, awkward reorder | Never for membership; tolerable only for nothing |
-| Store tab order as an array in a JSON column | Easy reorder | Concurrent edits and partial writes | Acceptable if written atomically in one transaction; otherwise use a `position` int column (renumber in a transaction) |
-| `position` gaps vs dense renumber | Fewer writes | Drift, duplicates after delete | Use dense renumber in one transaction on reorder/delete |
-| Skip keyboard reorder, ship mouse drag only | Faster | Fails WCAG AA, which is a stated product constraint | Never; ship the Manage Groups up/down fallback at minimum |
-| `let _ = conn.execute_batch(ALTER...)` for new migrations | Matches existing code | Silent migration failure | Never for new code |
-| Persist full issue JSON per membership | Group view always renders | Staleness and duplication of `snapshot_store` | Only a minimal stub (key, summary, last status, last_seen) |
-| Hex colors stored per group | Free-form picker | Contrast failures per theme | Never; store palette token |
+| Rely on `set_triage` upsert not clearing `copied_key` | Zero backend change | Silent break if anyone later "cleans" the upsert; undocumented invariant | Never; add a named command and a test |
+| Copy-paste the five inline handlers for Deny/Link | Fast | Panel/Page drift, `copiedKey: null` bug propagated | Never |
+| Re-link as a pure local flip (no Cloud check) | No network, instant | Dead links, duplicates on fallback | Only if the badge clearly says "unverified" (not recommended) |
+| Frontend-supplied `copiedKey` to the backend | Fewer backend changes | Stale key written back; wrong key on race | Never |
+| Skip the duplicate guard in `copy_ticket_v2` | Smaller change | Duplicate Cloud issues, irreversible by the app | Never |
+| Notification suppression by hiding in the UI only | No Rust change | OS notifications still fire | Only if the product decision is "leave notifications as-is" |
 
 ## Integration Gotchas
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Fetch pipeline (per-user batched, partial failure) | Treat a missing issue as "gone" after a partial failure | Mark "no longer in results" only after a fully successful fetch; otherwise "not refreshed" |
-| Poll engine / snapshot_db | Poll results replace the whole store, wiping membership-derived state; group stubs duplicate snapshots | Membership in an independent store; read stubs, optionally enrich from snapshots |
-| triage_db | Extending the `state` CHECK or adding columns to `triage_state` | Separate membership table; leave triage untouched |
-| Copy flow (CopyResultModal, copy_ticket_v2) | Allowing copy from a stale stub | Disable or re-fetch by key first; badge updates via the same triage state source after copy |
-| Detail panel | Opened for an issue not in the current fetch (stub) and fails to load or renders blank | Fetch detail by key on demand; show error state with remove-from-group still available |
-| Settings change of source project/connection | Groups carry over silently | Scope column plus filter; communicate when groups are for a different source |
-| i18next EN+SK | Interpolated counts with only `_one/_other`; hardcoded step labels (the CONI-01 symptom) | Add `_few` for Slovak; add keys in both locales in the same change; CONI-01 fix uses a keyed map of step to label with a fallback, plus a test that every step enum value has a key |
-| Tauri window state | Selection/active tab persisted across restarts pointing at deleted groups | Validate persisted active tab on boot; fall back to "New" |
+| Jira Cloud GET issue | Treating any error as "dead link" and falling back to copy | Only 404 (and clear "issue does not exist") falls back; 401/403/5xx/network surface an error with no state change |
+| Jira Cloud remote link | Re-adding the origin link on re-link | Never touch remote links outside `copy_ticket_v2`; keep stable `globalId` |
+| Jira Cloud project move | Saving the old key forever | Use the key in the GET response as the current key and update `copied_key` |
+| Server fetch (done tickets) | Hard-deleting the triage row | Preserve link memory (Pitfall 1) |
+| Poll engine | Assuming triage state is absent from it | Read triage map once per poll if suppression is decided |
+| Tauri commands | Passing state strings with a loose allow-list | Dedicated typed commands for deny and re-link |
 
 ## Performance Traps
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Per-card selector scanning all groups | Whole list re-renders on any membership change | Reverse index `issueKey -> groupIds`, per-key selector | Around 500+ cards with 20+ groups |
-| N invokes for bulk add | UI hangs, partial state | Single batched transactional command | Selections above about 20 |
-| Recomputing group lists in render | Jank when polling | `useMemo` on stable slices; precompute Sets | Large result sets (1k+ issues) |
-| Tab bar re-measuring on every render | Scroll jumps | Measure on resize/groups-change only | 30+ groups |
-| Counting membership per tab with a query per tab | Slow startup | One grouped query, `GROUP BY group_id` | 50 groups |
+| Whole-map `hydrateTriageMap({...map})` per click | Re-renders every card and tab count | Per-key setter | Roughly a few thousand tickets in `triageMap` |
+| Cloud GET per row to "verify links" for the list | Slow list, API rate limits | Verify only on the explicit Link click | More than a few dozen denied-with-link rows |
+| Count selectors scanning tickets x triage x groups on every store change | Jank on bulk actions | Memoize on stable inputs; select primitives | Large fetch results (pagination cap) |
 
 ## Security Mistakes
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Logging group names/issue keys with full detail to the audit log | Group names may contain customer info; audit is a PII-sensitive area | Group ops are local only; do not send through the HTTP audit client; if logged, follow hash-based redaction default |
-| Trusting frontend-supplied scope or base URL in group commands | Repeats the v0.4.8 CR-01 class of bug | Backend derives scope from stored config/keychain, not the invoke payload |
-| Rendering group names unsanitized as HTML | Injection via any future import | Render as text only (React default); never `dangerouslySetInnerHTML` |
-| Putting group data in a file outside the app data dir | Leakage | Same app data dir and permissions as other DBs |
+| Building the Cloud URL from a frontend-supplied base | Credential-bearing request to an arbitrary host (CR-01 class of bug, fixed in v0.4.8) | The re-link GET takes its base URL from the keychain/connection meta, never from the frontend |
+| Logging the Cloud response with verbose bodies | PII in the audit log | Keep existing redaction; GET only needs key and summary (`fields=summary`) |
+| Opening `/browse/<copiedKey>` with an unvalidated key | URL injection into `open_external_url` | Validate key format `^[A-Z][A-Z0-9_]+-\d+$` on write (backend) and before opening |
 
 ## UX Pitfalls
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| First-run empty state: no groups, no hint | Feature undiscoverable | Empty-state hint plus a "+" tab/button after the divider with an accessible name |
-| Creating a group requires leaving context | Friction | Inline "Create group" in the add-to-group popover |
-| Empty group tab shows blank list | Looks broken | Empty state explaining how to add issues |
-| Adding to a group gives no feedback | Uncertainty | Toast with count and Undo; announce via live region |
-| "No longer in results" is vague | Users do not know why | Tooltip: not in the latest fetch (resolved, reassigned, or outside your watch list); one-click Remove, labelled |
-| Group tab badge counts include missing issues without distinction | Confusing numbers | Count total, show missing as separate hint in the tab body |
-| Colour dot chosen at random with no preview | Unhelpful | Palette swatches with names (`aria-label`), selected check mark |
-| Tab names in two locales | N/A (user-entered) | Do not translate user names; only translate chrome |
-| Hover-only actions (contradicts stored preference) | Hidden functionality | Labelled buttons in the detail panel |
+| Deny with no feedback because the row vanishes | User unsure it worked, cannot find the ticket | Toast naming the target tab and the kept link; announce via the live region |
+| Link button on denied tickets that never had a link | Confusing "Link" that opens a copy flow | Label by outcome: "Link to CLOUD-123" vs "Copy to Cloud" |
+| Silent fallback to the copy preview | User thinks the link was restored | Explain: "CLOUD-123 no longer exists, copy again?" |
+| Hover-revealed row icons for Deny | Violates explicit-action preference | Labelled detail button only; no row icon |
+| Linked tab count drops and the user cannot tell why | Distrust of counts | Toast + consistent counts (Pitfall 9) |
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Persistence:** Upgrade test from a v0.4.8 DB file passes; groups survive an app restart; `PRAGMA foreign_keys` verified so delete cascades.
-- [ ] **Identity:** Switching source project and back does not mix or lose memberships.
-- [ ] **Missing issues:** Grouped issue absent from fetch appears with "no longer in results" and removable; a partial-failure fetch does not mislabel; nothing is silently dropped.
-- [ ] **Selectors:** No `?? []` / fresh array in any Zustand selector; empty-group render test shows no loop.
-- [ ] **Selection:** Cleared on tab change, group delete, source change; bulk count equals visible selection.
-- [ ] **Keyboard:** Tabs navigable by arrows/Home/End; reorder possible by keyboard; Manage Groups fallback; focus after create/rename/delete is deterministic; live-region announcements.
-- [ ] **ARIA:** Axe clean: divider is a separator, no nested interactive in `role="tab"`, tabpanel labelled by tab.
-- [ ] **Overflow:** 25 groups with long names; active tab scrolled into view; core tabs not lost; drop indicator not clipped.
-- [ ] **Contrast:** Every palette token checked in light and dark at tab, selected, hover, and card chip; not color-only.
-- [ ] **Names:** Duplicate (case/diacritic-insensitive), empty, whitespace, over-length, core-tab names rejected on the backend with localized messages.
-- [ ] **Delete:** Confirmation with count, safe default focus, focus restoration, issues untouched.
-- [ ] **Triage independence:** Core tab counts unchanged by grouping; badge identical in core and group views; ignored/copied issues behave in groups.
-- [ ] **Card clutter:** Card height unchanged with 0 versus 5 memberships; no hover-only controls.
-- [ ] **i18n:** All new strings in EN and SK including plurals (`_few`); CONI-01 step labels map every step; test fails if a key is missing.
-- [ ] **Bulk ops:** Single transactional command; idempotent; rollback on failure.
+- [ ] **Deny:** DB row keeps `copied_key` after a fetch, restart and a done-status fetch. Verify with a Rust test and a restart UAT.
+- [ ] **Deny:** optimistic entry equals the DB entry (key preserved); the Link button does not flicker after F5.
+- [ ] **Re-link:** performs a Cloud existence check; 404 falls back to preview; network error does not.
+- [ ] **Re-link:** mock Cloud issue count unchanged; no remote link call; audit log shows only the GET.
+- [ ] **Copy guard:** copying a ticket with a live remembered key returns `AlreadyLinked`, not a new issue.
+- [ ] **Invariant:** no row can reach `state='copied'` with a NULL `copied_key` (`set_triage_state('copied')` rejected).
+- [ ] **Consistency:** every ticket is in exactly one of New / Not mine / Linked after each transition; tab counts, list, group badge and TriageIndicator agree.
+- [ ] **Both entry points:** Panel and Page and the group view behave the same.
+- [ ] **Selectors:** no `?? []` or fresh-array return in a Zustand selector; no render loop.
+- [ ] **i18n:** EN and SK keys present, SK uses "tiket", plural forms right, guard test passes, toasts and aria text translated.
+- [ ] **Notifications:** behavior for denied tickets is a recorded decision and matches the implementation.
+- [ ] **Focus (WebView2):** focus lands somewhere sensible after Deny/Link removes the focused button; verified on Windows.
 
 ## Recovery Strategies
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Missing scope column shipped | HIGH | Add column with migration defaulting existing rows to the current scope at upgrade time; risky if the user already switched sources |
-| Migration swallowed an error | MEDIUM | Add a repair step on open that checks `PRAGMA table_info` and re-applies; ship as patch release |
-| Orphan membership rows (no FK) | LOW | One-time cleanup `DELETE ... WHERE group_id NOT IN (SELECT id FROM groups)` at open |
-| Selector loop released | LOW | Hotfix with `null` fallback or `useShallow`; add regression test |
-| Duplicate names already persisted | MEDIUM | Migration to suffix duplicates ("Billing (2)"), add normalized unique index |
-| Inaccessible drag shipped | MEDIUM | Add Manage Groups dialog with up/down buttons (independent of tab bar) |
-| User lost a group by delete | MEDIUM | Undo toast only helps in-session; otherwise no recovery, so prevent with confirmation |
+| Link memory lost for done tickets | MEDIUM | Recover keys from the Cloud by searching remote link `globalId`, or from the audit log copy rows; manual re-link |
+| Duplicate Cloud issue | MEDIUM | Delete or close the extra in Cloud; point `copied_key` at the intended one; the app has no tooling for this, so prevention is key |
+| `copied` row with NULL key | LOW | One-off fix: set the row back to `seen`, or set the key manually; add a startup repair that downgrades such rows |
+| Store/DB divergence | LOW | Re-hydrate from `get_triage_state` (already happens on fetch and CopyResult close) |
+| Dead restored link | LOW | Re-run Link (existence check fails, fallback to copy); the stale key is overwritten by the new copy |
 
 ## Pitfall-to-Phase Mapping
 
-Suggested phase shape for v0.5.0 (names indicative):
-1. Data model, persistence and store (groups.db, commands, palette tokens, scope, stubs)
-2. Tab bar and group view (overflow, divider, badge, missing-issue stubs)
-3. Membership entry points (detail button/popover, list multi-select, bulk bar)
-4. Manage groups (create/rename/delete/reorder incl. keyboard, confirmation)
-5. Polish, a11y/contrast audit, i18n incl. CONI-01
+Suggested phase shape for the milestone: (1) Backend + mock, (2) Shared frontend actions, (3) Detail/group UI + i18n, (4) Consistency, a11y and UAT.
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| 1 Issue identity/scope | Phase 1 | Test: source A to B to A keeps and isolates memberships |
-| 2 Lost/stale grouped issues | Phase 1 (schema), Phase 2 (UI) | Test: absent issue renders stub; partial-failure fetch shows no false "gone" |
-| 3 Migration | Phase 1 | Upgrade test from v0.4.8 file DB; FK cascade test |
-| 4 Selector stability | Phase 1, every UI phase | Empty-group render test with bounded renders |
-| 5 Selection leakage | Phase 3 | Tests: tab switch, refetch, delete clear/intersect selection |
-| 6 Tab a11y/overflow/DnD | Phase 2 and 4 | Axe, keyboard-only walkthrough, 25-group overflow test |
-| 7 Contrast/color-only | Phase 1 (tokens), 2, 5 | Automated token contrast test in both themes |
-| 8 Names | Phase 1, 4 | Rust unit tests for dup/empty/diacritics/core names |
-| 9 Delete safety | Phase 4 | AlertDialog test with count, focus restoration |
-| 10 Triage independence | Phase 1, 2 | Test: core counts unchanged; shared badge source |
-| 11 Card clutter | Phase 2, 3 | Visual review at milestone end; no hover-only controls |
-| 12 Atomic bulk ops | Phase 1, 3 | Transactional command test; idempotent add |
-| CONI-01 i18n | Phase 5 (or any small independent phase) | Test: every copy step has EN and SK key |
-
-Research flags: Phase 4 (DnD library choice, React 19 compatibility, keyboard reorder pattern) and Phase 1 (identity/scope decision) warrant deeper phase-level research. Phases 2, 3, 5 follow standard patterns already used in the codebase.
+| 1 Done-ticket row deletion | 1 Backend | Rust test: deny, then fetch with a done issue, key kept |
+| 2 Ambiguous key on non-copied rows | 1 Backend | Named commands; documented semantics; tests for Restore and re-copy |
+| 3 `copiedKey: null` optimistic divergence | 2 Actions | Parity test optimistic vs `get_triage_state` |
+| 4 Rollback races | 2 Actions | Test with a hydrate between optimistic write and failure |
+| 5 Dead Cloud issue on re-link | 1 Backend | Mock 404 and 5xx cases |
+| 6 Duplicate re-copy | 1 Backend (guard), 3 UI (gating) | Mock created-issue counter |
+| 7 Remote link semantics | 1 Backend | Zero Cloud writes on deny and re-link |
+| 8 Notifications for denied tickets | Scoping decision, then 1 Backend | Poll test with a denied ticket |
+| 9 Badges and counts | 3 UI, 4 QA | Extended `ticketListParity` transition matrix |
+| 10 Zustand selector loop | 3 UI | Render-count tests; review checklist |
+| 11 Panel/Page drift | 2 Actions, 3 UI | Same tests run against both components |
+| 12 Button matrix and focus | 3 UI | Component tests per state; a11y UAT |
+| 13 i18n | 3 UI, 4 QA | Key parity and SK guard tests |
+| 14 Loose `set_triage_state` | 1 Backend | Invariant test |
+| 15 Legacy rows | 1 Backend | Populated-DB migration test |
+| 16 Seen baseline | 3 UI | Manual check |
+| 17 Mock gaps | 1 Backend (first) | Mock fixtures merged before UI work |
+| 18 WebView2 | 4 QA | Manual Windows checklist |
+| 19 Audit gaps | 1 Backend | Audit rows reviewed |
+| 20 Group tab counts | 4 QA | Group tests |
 
 ## Sources
 
-- Codebase inspection (HIGH): `/Users/mimo/Documents/Projects/pmkar/src-tauri/src/triage_db.rs` (ticket_key-only PK, CHECK rebuild migration, `let _ =` ALTERs, `ignore_duplicate_column`), `snapshot_db.rs` (additive ALTER migrations), `field_mapping_db.rs` (PRAGMA table_info guard pattern, db-per-concern), `.planning/PROJECT.md` (key decisions, v0.4.8 CR-01, partial-failure fetch).
-- Project memory (HIGH): Zustand selector `?? []` loop; prefer explicit labelled buttons over hover icons.
-- WAI-ARIA Authoring Practices, Tabs pattern (MEDIUM, training knowledge, not re-fetched).
-- WCAG 2.1: 1.4.1 Use of Color, 1.4.3 Contrast, 1.4.11 Non-text Contrast, 2.1.1 Keyboard (MEDIUM, standard).
-- dnd-kit keyboard sensor/announcements (LOW to MEDIUM; React 19 compatibility unverified, check at Phase 4).
-- SQLite: foreign keys off by default per connection; LOWER() is ASCII-only without ICU (MEDIUM, established behavior).
+- Code inspected: `/Users/mimo/Documents/Projects/pmkar/src-tauri/src/triage_db.rs` (set_triage, set_triage_copied, delete_triage_entries, CHECK migration), `/Users/mimo/Documents/Projects/pmkar/src-tauri/src/commands.rs` (fetch triage sync and done cleanup, set_triage_state allow-list, copy_ticket_v2 end), `/Users/mimo/Documents/Projects/pmkar/src-tauri/src/copy_pipeline.rs` (add_remote_link globalId), `/Users/mimo/Documents/Projects/pmkar/src-tauri/src/poll_engine.rs` and `notification_dispatcher.rs` (no triage gating), `/Users/mimo/Documents/Projects/pmkar/src/features/tickets/triageActions.ts`, `TicketDetailPanel.tsx`, `TicketDetailPage.tsx`, `TriageIndicator.tsx`, `ticketListUtils.ts`, `/Users/mimo/Documents/Projects/pmkar/src/features/groups/groupBadge.ts`, `GroupViewPage.tsx`.
+- Project context: `/Users/mimo/Documents/Projects/pmkar/.planning/PROJECT.md` and the user's memory notes (Zustand selector rule, explicit-action preference, SK "tiket" guard, no drag and drop).
+- Jira remote link `globalId` update semantics and project-move key resolution: training knowledge only, not re-verified in this pass (MEDIUM/LOW). Verify against the Atlassian Cloud REST v3 docs when the re-link phase is planned.
+- WebView2 focus/tooltip notes: project history (WR-01) plus general knowledge, LOW confidence.
 
 ---
-*Pitfalls research for: custom groups / tagging in a desktop Jira triage app (Pmkar v0.5.0)*
-*Researched: 2026-10-11*
+*Pitfalls research for: Pmkar v0.5.1 Re-triage*
+*Researched: 2026-10-15*

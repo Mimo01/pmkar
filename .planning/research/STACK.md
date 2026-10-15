@@ -1,136 +1,73 @@
-# Technology Stack: Custom Groups (v0.5.0)
+# Technology Stack
 
-**Project:** Pmkar
-**Researched:** 2026-10-11
-**Scope:** Additions only. Zustand, shadcn/ui, Radix tabs, i18next, rusqlite, cmdk, TanStack Virtual, sonner, Tailwind, lucide are already present and are reused.
+**Project:** Pmkar v0.5.1 Re-triage
+**Researched:** 2026-10-15
+**Overall confidence:** HIGH (conclusions come from reading the repo code, not from external docs)
 
-## Bottom Line
+## Verdict
 
-Add exactly **three** npm packages (`@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities`) and **zero** Rust crates. Everything else (color palette, multi-select, schema, migrations, i18n) is built from what is already in the repo.
+**No new libraries, no version bumps, and no SQLite schema or CHECK-constraint change.** The feature uses what is already in place. The only backend change is one small new Tauri command, plus frontend changes.
 
-## Recommended Additions
+Why no schema change:
+- `triage_state` already has `copied_key TEXT`. The CHECK is `state IN ('new','seen','ignored','copied','handled')`. Both "denied but linked" and "linked" are expressible as `(state, copied_key)` pairs.
+- "Denied, link remembered" is `state='ignored'` with `copied_key` still set. "Linked" is `state='copied'` with `copied_key` set.
+- `TriageDb::set_triage` (triage_db.rs:208) upserts with `ON CONFLICT DO UPDATE SET state=?2, last_updated=?3`. It never touches `copied_key`, so the key already survives a deny today. This is the load-bearing fact.
+- Do not widen the CHECK. That would force the table-rebuild migration (`MIGRATE_TRIAGE_CHECK_HANDLED` pattern) for no benefit.
+- Do not add a `denied_from_linked` column or a new state such as `'unlinked'`. It would duplicate `copied_key IS NOT NULL` and spread across `TriageState` in types.ts, `set_triage_state` validation, `TriageIndicator`, tab filters and group badges.
 
-### Frontend: drag-reorder of group tabs
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| @dnd-kit/core | ^6.3.1 | DnD context, sensors | Stable. Peer deps `react >=16.8`, so it works with React 19. Built-in KeyboardSensor gives WCAG-AA keyboard reorder (project requirement). Last published 2024-12, so it is stable but quiet. |
-| @dnd-kit/sortable | ^10.0.0 | `SortableContext`, `useSortable`, `horizontalListSortingStrategy`, `arrayMove` | Purpose-built for a horizontal sortable strip. Peer dep is `@dnd-kit/core ^6.3.0`. |
-| @dnd-kit/utilities | ^3.2.2 | `CSS.Transform.toString` | Needed for the `useSortable` transform style. It is a transitive dep of sortable, so list it explicitly if imported. |
+## Existing Stack (reuse as-is)
 
-Verified via the npm registry (peer deps and versions). I did not fetch Context7 docs for the dnd-kit API; the API names above come from training knowledge, so confirm them at implementation (MEDIUM confidence).
+| Technology | Version (in repo) | Role in this feature |
+|------------|-------------------|----------------------|
+| Tauri | 2.10 | One new `#[tauri::command]` registered in main.rs `generate_handler!` (next to `commands::set_triage_state`, line ~232) |
+| rusqlite (bundled) | 0.39 | The new command is a single `UPDATE` / `SELECT` on `triage_state` |
+| Zustand `ticketStore` | existing | `triageMap` / `hydrateTriageMap` optimistic updates |
+| sonner + i18next | existing | Failure toasts and EN/SK strings. The groups guard test requires SK "tiket", not "úloha" |
+| Radix / shadcn Button | existing | Explicit labelled "Deny" and "Link" buttons in detail (project feedback: no hover icons, one entry point per action) |
 
-**Do not use `@dnd-kit/react` (0.5.0) or `@dnd-kit/helpers`.** This is the pre-1.0 rewrite and its API is still moving. A single horizontal tab strip does not justify that risk.
+## Required Backend Change (one command, no schema change)
 
-**Do not add `@dnd-kit/modifiers`** for the first pass. Use the `restrictToHorizontalAxis` modifier only if drift is visible. If it is needed, v9.0.0 is compatible with core 6.
+Add `relink_ticket(ticket_key) -> Option<String>` (name is the roadmap's choice) to `TriageDb` plus a command wrapper in commands.rs:
+- Single statement: `UPDATE triage_state SET state='copied', last_updated=?2 WHERE ticket_key=?1 AND copied_key IS NOT NULL`. Return the `copied_key`, or `None` when there is nothing to restore.
+- The frontend then does either:
+  - restore: set `{state:'copied', copiedKey}` in `triageMap`, or
+  - fall back to the existing copy-preview route when `None`.
+- Why a dedicated command and not `set_triage_state('copied')`:
+  - The current validation accepts `"copied"`, so a frontend call would silently produce `state='copied'` with a NULL `copied_key`. That is a corrupt "Linked" row, and `LinkedTicketsPage` and `TriageIndicator` assume a key exists.
+  - Making the "has a key" check part of the same SQL statement is atomic and cannot race the optimistic UI.
+- Consider also tightening `set_triage_state` to reject `"copied"` (copy flow uses `set_triage_copied`, not this command). Check test fixtures first.
+- Deny needs no backend change. Call the existing `set_triage_state(ticketKey, 'ignored')`.
+- Optional: a `deny_ticket` wrapper is unnecessary.
 
-Integration notes:
-- Make only the group tabs sortable. Core tabs (New / Not mine / Linked) and the divider stay outside `SortableContext`, so core tabs are never reorderable.
-- Use `PointerSensor` with `activationConstraint: { distance: 5 }` so a click still selects the tab. Add `KeyboardSensor` with `sortableKeyboardCoordinates`.
-- The existing `@radix-ui/react-tabs` handles roving focus and ARIA. Wrap each group `Tabs.Trigger` in a `useSortable` element via `asChild`. Test the combination of the drag listeners and Radix arrow-key navigation early. The conflict is Space/Enter, which both Radix and the KeyboardSensor use. Consider an explicit "Move left / Move right" item in the tab context menu as the accessible fallback.
-- Persist the new order on `onDragEnd` only, not on every move.
-- Horizontal overflow needs no library. Use the existing `@radix-ui/react-scroll-area` (horizontal) or `overflow-x-auto`, plus `scrollIntoView({inline:'nearest'})` for the active tab.
+## Integration Points and Gotchas (stack-adjacent, affect the roadmap)
 
-### Frontend: multi-select in the ticket list
-**No new library.** Implement it as a Zustand slice (`selectedKeys: Set<string>` or an array, plus `lastClickedKey` for shift-range).
-- Reuse the hand-rolled checkbox pattern. There is no shadcn `checkbox.tsx` in `src/components/ui`. Either add shadcn's Checkbox (this needs `@radix-ui/react-checkbox`, a single small Radix package that matches the existing Radix-per-primitive approach) or use a native `<input type="checkbox">` styled with Tailwind. **Recommend adding `@radix-ui/react-checkbox` ^1.x via shadcn**, because it supports the indeterminate state for a select-all header and has proper ARIA.
-- The list is virtualized with TanStack Virtual, so selection state must live in the store keyed by issue key, never in row-local state. Shift-range selection must use the filtered/sorted key array, not the DOM rows.
-- Bulk "Add to group" can use the existing **cmdk**-based popover or a Radix Dialog. No `@radix-ui/react-popover` or dropdown is installed. If a popover is wanted for the "Add to group" picker, use the existing cmdk plus Dialog, or add `@radix-ui/react-popover` (shadcn Popover). Prefer reusing Dialog and cmdk to avoid new deps, unless the UX needs anchoring.
-- **Selection anti-pattern:** do not use a table or selection library (TanStack Table, react-aria selection). It is overkill for card lists.
+1. **Optimistic updates drop the key.** `restoreTicket` (triageActions.ts) and the ignore/handled handlers in TicketDetailPage.tsx and TicketDetailPanel.tsx write `copiedKey: null` into `triageMap`. The DB keeps the key but the UI loses it. Deny must write `{state:'ignored', copiedKey: <previous>}`, otherwise the Link button cannot tell "had a link" from "never linked" until a reload. Preserve `prev.copiedKey` in these handlers; the existing helper `restoreTicket` should keep it too. Roll back on invoke failure, as `restoreTicket` already does.
+2. **Stale remembered keys.** Because `set_triage` never clears `copied_key`, any ignored or seen ticket that was once copied keeps a key. That is the desired behavior for re-link. Product call: restoring a denied ticket to `seen` via the existing Restore also keeps the key, which is harmless since `set_triage_copied` overwrites on a new copy.
+3. **Done tickets lose their link.** `fetch` calls `delete_triage_entries` for tickets whose statusCategory is `done`, which deletes the row and the remembered `copied_key`. A done-then-reopened ticket reappears as a fresh `new` with no link. This is acceptable, but note it as an edge case in requirements and tests.
+4. **Dedupe.** Without re-link, "Link" on a denied-but-previously-copied ticket would run `copy_ticket_v2` again and create a duplicate Cloud issue. The relink-first decision in the detail Link handler is the dedupe guard. The remote-link origin tracking is not queried.
+5. **No Cloud verification.** Do not add a Jira call to verify the Cloud issue still exists. The requirement says "Cloud copy untouched". If the copy was deleted, the link is stale, which is out of scope. Flag as a possible future item.
+6. **Consistency surfaces.** The tab filters in ticketListUtils.ts, tab counts, group-view triage badges, `TriageIndicator`, and `LinkedTicketsPage` and `IgnoredTicketsPage` all derive from `(state, copiedKey)`. Keep them derived from `triageMap` only. Do not add a parallel list. Check whether `IgnoredTicketsPage` should show a "was linked → KEY" hint (copiedKey on an ignored row).
+7. **Mock server and tests.** No mock-fixture change is needed because no new Jira calls are made. Add Rust unit tests in triage_db.rs (deny keeps key; relink returns key; relink with no key returns None and leaves state unchanged) and Vitest tests for the handlers. The existing in-memory `new_db()` helper covers them.
 
-### Frontend: color palette
-**No new library.** Use a fixed curated palette of about 8-10 named colors stored as a token string (for example `"blue"`, `"amber"`) and not as hex.
-- Map each token to Tailwind v4 classes in one constant (`GROUP_COLORS`). Tailwind v4 must see full class strings statically, so write them out and do not interpolate (`bg-${c}-500` will be purged).
-- Define each color's light/dark foreground/background pair and check contrast at 4.5:1 for the AA requirement. Color must never be the only identifier: the tab also shows the name, and a dot is decorative (`aria-hidden`).
-- No `react-colorful` or arbitrary color picker. It adds a contrast-validation burden and a dependency for little benefit.
-- Storing a token means a palette retune later does not need a data migration. Unknown tokens should fall back to gray.
+## What NOT to Add
 
-### Backend: SQLite
-**No new crate.** `rusqlite` 0.39 (bundled) is sufficient.
-
-Follow the established db-per-concern pattern (triage.db / snapshot.db / audit.db / mapping.db). Recommendation: **a new `groups_db.rs` with its own `groups.db`**, or, if a simpler path is preferred, tables inside `triage.db`, because membership is conceptually local user state like triage. The tradeoff is that triage_db already carries a messy migration history. A separate `groups_db` avoids growing that file. The PROJECT.md decision log also favours per-concern DBs.
-
-Proposed schema (idempotent `CREATE TABLE IF NOT EXISTS` run at open, matching existing migration style in `triage_db.rs`, which uses `execute_batch` plus `ignore_duplicate_column`):
-
-```sql
-CREATE TABLE IF NOT EXISTS issue_group (
-  id         TEXT PRIMARY KEY,           -- uuid v4 (uuid crate already present)
-  name       TEXT NOT NULL,
-  color      TEXT NOT NULL,              -- palette token
-  position   INTEGER NOT NULL,           -- dense 0..n, rewritten on reorder
-  created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS issue_group_member (
-  group_id   TEXT NOT NULL REFERENCES issue_group(id) ON DELETE CASCADE,
-  ticket_key TEXT NOT NULL,
-  added_at   TEXT NOT NULL,
-  -- snapshot for the "no longer in results" fallback card:
-  summary    TEXT,
-  PRIMARY KEY (group_id, ticket_key)
-);
-CREATE INDEX IF NOT EXISTS idx_member_ticket ON issue_group_member(ticket_key);
-```
-
-Key points:
-- `PRAGMA foreign_keys = ON` must be set per connection, because SQLite defaults it to off. Without it `ON DELETE CASCADE` silently does nothing and deleting a group leaks membership rows. Add a test.
-- Reorder: one transaction that rewrites `position` for all groups from the ordered id list (the group count is tiny), so there are no fractional-index libraries.
-- Do not enforce a unique name by default at the DB level. Decide in the UI. If it is enforced, use `COLLATE NOCASE`.
-- "No longer in results": store membership by `ticket_key` only, and never delete members when a fetch omits the key. Keep a tiny cached `summary` (and optionally status) on the member row so the missing-card can render something. Alternatively, `snapshot.db` already stores snapshots, so the frontend can fall back to the snapshot data. Check `snapshot_db.rs` before adding a duplicate column; reusing snapshots is preferred if the snapshot is keyed by ticket key.
-- Tauri commands (existing pattern): `list_groups`, `create_group`, `update_group` (rename/color), `delete_group`, `reorder_groups`, `add_issues_to_group(group_id, keys[])`, `remove_issue_from_group`, `list_group_members`. Bulk add must be one transaction with `INSERT OR IGNORE`.
-- Register the new DB state in `lib.rs` next to the existing `manage(...)` calls and add commands to the `invoke_handler`.
-- Rust ids: reuse the `uuid` crate and `chrono` for timestamps.
-- Clippy pedantic is on, so add `# Errors` docs as per existing style (missing_errors_doc is allowed, so it is fine).
-
-Migration versioning: the repo uses ad-hoc idempotent DDL rather than `PRAGMA user_version`. Do not introduce `rusqlite_migration` or a migration framework for two new tables. Match the existing style. If a future change needs a column, add `ignore_duplicate_column(ALTER ...)`.
-
-### Frontend: state
-**No new library.** Create `groupStore.ts` (Zustand, hydrate via `invoke`). Reminder from project memory: never return `?? []` inside a selector (infinite re-render). Use a `null` fallback or a module-level `EMPTY` constant. Derive "issues in group X" with memoized selectors outside the store, joining `membership` against `ticketStore` issues. Membership with no matching fetched issue yields the "no longer in results" entries.
-
-### i18n
-No new library. Add a `groups.*` namespace to the EN and SK resource files, plus the CONI-01 CopyResultModal step-label keys. Use i18next plural forms for counts ("3 issues selected"). Slovak has 3 plural categories (one/few/many/other) in CLDR, so provide `_one`, `_few`, `_many`, `_other` keys for Slovak or the count strings will read wrong.
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Tab reorder | @dnd-kit/core + sortable | @dnd-kit/react 0.5.0 | Pre-1.0, API still changing |
-| Tab reorder | @dnd-kit | react-beautiful-dnd | Deprecated/archived, React 19 issues |
-| Tab reorder | @dnd-kit | @hello-pangea/dnd | List-oriented, heavier, weaker horizontal-tab and keyboard story for this case |
-| Tab reorder | @dnd-kit | Hand-rolled HTML5 DnD | Poor in the Tauri webview (WebKit/WebView2 differences), no keyboard support, fails AA |
-| Tab reorder | @dnd-kit | Move left/right buttons only | Acceptable as the a11y fallback, but drag is expected for tab UX. Keep both |
-| Color | Token palette | react-colorful / hex input | Contrast risk, extra dep, inconsistent look |
-| Selection | Zustand slice | TanStack Table / react-aria | Overkill for virtualized cards |
-| Migrations | Existing idempotent DDL | rusqlite_migration | Two tables do not justify a new pattern |
-| Ordering | Integer position rewrite | Fractional indexing lib | Group count is under about 20 |
-| Storage | groups.db (or triage.db) | localStorage | Must survive webview data resets and match the "local SQLite" convention |
-
-## Explicitly NOT Adding
-- `@dnd-kit/react`, `@dnd-kit/helpers`, `react-beautiful-dnd`, `@hello-pangea/dnd`
-- Any color-picker package
-- Any state library besides Zustand, any table library
-- `rusqlite_migration` or ORM (diesel, sea-orm)
-- Any new Rust crate
+| Do not add | Why |
+|------------|-----|
+| New npm or crate dependencies | The feature is state transitions on an existing table; nothing is missing |
+| A schema migration or CHECK widening | `copied_key` already persists across state changes (see Verdict) |
+| A new triage state such as `unlinked` or `denied` | Duplicates `ignored` + `copied_key`; wide blast radius across TS and Rust |
+| A state-machine library (XState etc.) | Two transitions do not justify it |
+| rusqlite transactions or a migration framework | Single-statement update is atomic; the repo uses idempotent `ALTER` and rebuild patterns |
+| Drag and drop | Project rule: explicit buttons only |
+| Jira API re-verification of the Cloud copy | Out of scope; adds audit-log noise and failure modes |
 
 ## Installation
 
 ```bash
-npm install @dnd-kit/core@^6.3.1 @dnd-kit/sortable@^10.0.0 @dnd-kit/utilities@^3.2.2
-# Optional, only if a shadcn Checkbox is added for multi-select:
-npx shadcn@latest add checkbox   # pulls @radix-ui/react-checkbox
+# Nothing to install.
 ```
 
-No Cargo changes.
-
-## Confidence
-
-| Item | Level | Basis |
-|------|-------|-------|
-| dnd-kit versions and peer deps | HIGH | npm registry queried 2026-10-11 |
-| dnd-kit API and Radix Tabs interplay | MEDIUM | Training knowledge, not re-verified against docs; prototype early |
-| rusqlite schema and FK pragma | HIGH | Standard SQLite behavior, matches existing repo patterns read in `triage_db.rs` |
-| Slovak plural categories | MEDIUM | CLDR knowledge; i18next supports it, so verify the keys at implementation |
-| Reusing snapshot.db for missing-issue data | LOW | Not inspected; check `snapshot_db.rs` |
-
 ## Sources
-- npm registry (`npm view @dnd-kit/*`), 2026-10-11
-- `/Users/mimo/Documents/Projects/pmkar/package.json`, `src-tauri/Cargo.toml`, `src-tauri/src/triage_db.rs` (existing migration style)
-- `.planning/PROJECT.md`
+
+- Repo (HIGH): src-tauri/src/triage_db.rs (schema, CHECK, `set_triage`, `set_triage_copied`, `delete_triage_entries`), src-tauri/src/commands.rs (`set_triage_state`, `get_triage_state`, fetch triage sync, copy_ticket_v2 Phase 8), src/features/tickets/triageActions.ts, TicketDetailPage.tsx, TicketDetailPanel.tsx, types.ts, and Cargo.toml (tauri 2.10, rusqlite 0.39).
+- No external docs consulted; nothing here depends on library behavior beyond standard SQLite `UPDATE ... WHERE` and Tauri 2 command registration, both already used in the codebase.
