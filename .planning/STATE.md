@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5.1
 milestone_name: Re-triage
 status: executing
-last_updated: "2026-10-15T11:52:35.869Z"
-last_activity: 2026-10-15 -- Phase 37 execution started
+last_updated: "2026-10-15T14:23:33.733Z"
+last_activity: 2026-10-15 -- Phase 37.1 planning complete
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 14
-  completed_plans: 9
-  percent: 64
+  total_phases: 5
+  completed_phases: 4
+  total_plans: 19
+  completed_plans: 14
+  percent: 74
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-10-15)
 
 Phase: 37 (consistency-accessibility-and-uat) — EXECUTING
 Plan: 1 of 5
-Status: Executing Phase 37
-Last activity: 2026-10-15 -- Phase 37 execution started
+Status: Ready to execute
+Last activity: 2026-10-15 -- Phase 37.1 planning complete
 
 ## Deferred Items
 
@@ -273,6 +273,7 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - v0.4.0 milestone added (2026-04-27): Configurable Field Mapping (Phases 17-23) — replaces hardcoded copy logic with discovery + persistence + renderer registry + transform pipeline + cutover
 - Phase 26 added: Batch Ticket Fetching per Watched User
 - Phase 27 added: Add static value mapping to configurable field mapping
+- Phase 37.1 inserted after Phase 37: Confirmation required before moving tickets between Linked and Not mine, never performed automatically (URGENT)
 
 ### Pending Todos
 
@@ -377,9 +378,9 @@ None yet.
 
 Last activity: 2026-10-15 - Completed quick task 261015-lwy: Address v0.5.1 tech debt
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
-Last session: 2026-10-15T10:29:01.657Z
-Stopped at: Phase 37 UI-SPEC approved
-Resume file: .planning/phases/37-consistency-accessibility-and-uat/37-UI-SPEC.md
+Last session: 2026-10-15T14:14:17.315Z
+Stopped at: Phase 37.1 UI-SPEC approved
+Resume file: .planning/phases/37.1-confirmation-required-before-moving-tickets-between-linked-a/37.1-UI-SPEC.md
 
 ## Operator Next Steps
 
