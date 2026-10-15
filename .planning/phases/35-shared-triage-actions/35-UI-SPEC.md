@@ -1,7 +1,8 @@
 ---
 phase: 35
 slug: shared-triage-actions
-status: draft
+status: approved
+reviewed_at: 2026-10-15
 shadcn_initialized: true
 preset: neutral base, cssVariables (aliased to brand tokens in src/index.css)
 created: 2026-10-15
@@ -48,7 +49,7 @@ Exceptions: none. Undo action button uses sonner's built-in sizing (hit area at 
 
 ## Typography
 
-No new typography. Toasts inherit sonner defaults (13px title, 400/500 weight) as already configured by the existing wrapper. Declared for the phase:
+No new typography. Toasts inherit sonner defaults (rendered at the 14px, 400/600 declared below) as already configured by the existing wrapper. Declared for the phase:
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
@@ -83,7 +84,7 @@ Accent reserved for: the Undo action button in the Deny toast (existing `actionB
 - Message + single action button "Undo". `duration: 8000` ms (D-01). Hover/focus pauses dismissal (sonner default); keep it.
 - Toast is global, not tied to route; do NOT dismiss on navigation (D-02). Use a stable toast id per key (e.g. `deny-{KEY}`) so repeated denies replace rather than stack.
 - Undo click calls `linkTicket`-equivalent re-link (`relink_ticket`); on success store returns to `copied` with same key, toast dismissed. No success toast (the state change is the feedback).
-- Undo failure or `None`: `toast.error` with undo-failed copy; ticket stays Not mine (D-03).
+- Undo failure or `None`: `toast.error` with undo-failed copy; ticket stays in Ignored (D-03).
 - Accessibility: sonner toasts are `aria-live` polite; the 8 s duration is the screen-reader allowance. Undo must be keyboard reachable (sonner hotkey Alt+T focuses the region; do not disable).
 
 **Link (RLNK-01/02)**: no new visual. `needs-copy` result opens the existing copy preview exactly as today. `relinked` result has no toast and no navigation; the ticket simply appears Linked.
@@ -108,7 +109,7 @@ Only strings that must exist for Phase 35. Keys are proposals (planner may renam
 | Error: restore failed | reuse existing `ignored.restoreFailed` | reuse existing |
 | Primary CTA | none new this phase (Phase 36 adds labelled Deny / Link buttons) | - |
 | Empty state | not applicable (no new screens) | - |
-| Destructive confirmation | none: Deny is reversible via Undo and Not mine; no Cloud delete | - |
+| Destructive confirmation | none: Deny is reversible via Undo and the Ignored tab; no Cloud delete | - |
 
 The user-facing tab is currently labelled "Ignored" (`nav.ignored`, SK "Ignorované"); strings above use that label. If Phase 36 renames the tab to "Not mine", it updates these strings. Add keys to both `en.json` and `sk.json` so i18n guard tests pass.
 
