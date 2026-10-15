@@ -238,3 +238,37 @@ Plans:
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
 | 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 5/5 | Complete   | 2026-10-15 |
+
+### Phase 37.1: Confirmation required before moving tickets between Linked and Not mine, never performed automatically (INSERTED)
+
+**Goal**: Moving a ticket between Linked and Not mine (Dismissed) always needs an explicit confirmation from the user and never happens automatically
+**Depends on:** Phase 37
+**Requirements**: CONF-01, CONF-02, CONF-03, CONF-04
+**Success Criteria** (what must be TRUE):
+
+  1. Deny on a Linked ticket (page, panel, group view) opens a confirmation dialog; nothing is written until Confirm, and Cancel or Esc leaves the ticket Linked
+  2. Restore link to KEY on a Not mine ticket opens a confirmation dialog before relinking; a never-linked ticket goes to the copy preview, which is its own confirmation
+  3. Undo after a deny restores only the true prior state, so a ticket that was never Linked can never become Linked through Undo
+  4. Fetch and poll never change Linked or Not mine rows, and a static guard ensures only the confirmed hook path calls the transition functions
+  5. Dialog strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist is written
+
+**Plans:** 5 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 37.1-01-PLAN.md — ConfirmTransitionDialog (alertdialog, Cancel focused), EN/SK triage.confirm.* strings, confirmLocale guard, CONF requirements
+- [ ] 37.1-02-PLAN.md — Undo restores true prior state, Rust fetch triage-sync extraction + regression tests, static transition guard
+
+**Wave 2** *(blocked on 37.1-01)*
+
+- [ ] 37.1-03-PLAN.md — useTriageDetailActions requestDeny/requestLink/confirmDialog with stale guard; shared confirm test helpers
+
+**Wave 3** *(blocked on 37.1-03)*
+
+- [ ] 37.1-04-PLAN.md — Page and Panel wiring, Esc isolation, keyboard/axe/group view regression tests
+
+**Wave 4** *(blocked on all above)*
+
+- [ ] 37.1-05-PLAN.md — 37.1-HUMAN-UAT.md WebView2 checklist, full suite gate, validation map
+**UI hint**: yes
