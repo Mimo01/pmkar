@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v0.5.1
 milestone_name: Re-triage
-status: verifying
-last_updated: "2026-10-15T08:56:43.065Z"
+status: ready_to_plan
+last_updated: 2026-10-15T08:58:47.233Z
 last_activity: 2026-10-15
 progress:
   total_phases: 4
@@ -11,6 +11,7 @@ progress:
   total_plans: 4
   completed_plans: 4
   percent: 50
+stopped_at: Phase 35 complete (2/2) — ready to discuss Phase 36
 ---
 
 # Project State
@@ -20,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-15)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** Phase 34 — link-integrity-backend
+**Current focus:** Phase 36 — detail and group ui
 
 ## Current Position
 
-Phase: 34 (link-integrity-backend) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 36
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-10-15
 
 ## Deferred Items
@@ -66,7 +67,7 @@ Items acknowledged and deferred at milestone close on 2026-10-15 (v0.5.0):
 
 **Velocity:**
 
-- Total plans completed: 15
+- Total plans completed: 17
 - Average duration: 7 min
 - Total execution time: 0.12 hours
 
@@ -77,6 +78,7 @@ Items acknowledged and deferred at milestone close on 2026-10-15 (v0.5.0):
 | 01-foundation | 1 | 7 min | 7 min |
 | 28 | 6 | - | - |
 | 30 | 8 | - | - |
+| 35 | 2 | - | - |
 
 **Recent Trend:**
 
