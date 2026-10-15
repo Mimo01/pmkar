@@ -801,23 +801,7 @@ pub async fn fetch_tickets(
         let tdb = triage_db
             .lock()
             .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
-        let existing = tdb.get_all_triage()?;
-        let mut done_keys: Vec<String> = Vec::new();
-        for issue in &all_issues {
-            if let Some(key) = issue["key"].as_str() {
-                let status_category = issue["fields"]["status"]["statusCategory"]["key"]
-                    .as_str()
-                    .unwrap_or("");
-                if status_category == "done" {
-                    done_keys.push(key.to_string());
-                } else if !existing.contains_key(key) {
-                    tdb.set_triage(key, "new")?;
-                }
-            }
-        }
-        if !done_keys.is_empty() {
-            tdb.delete_triage_entries(&done_keys)?;
-        }
+        sync_triage_after_fetch(&tdb, &all_issues)?;
         // Update last_fetched_at
         let now = chrono::Utc::now().to_rfc3339();
         tdb.update_last_fetched(&now)?;
@@ -2356,9 +2340,98 @@ pub fn trigger_manual_poll(
     Ok(())
 }
 
+/// Sync the triage table with a fetched issue set: unknown open issues become
+/// "new", done issues drop their rows (rows with a remembered Cloud key are kept
+/// by `delete_triage_entries`). Never rewrites an existing row (CONF-03).
+pub(crate) fn sync_triage_after_fetch(
+    tdb: &TriageDb,
+    issues: &[serde_json::Value],
+) -> Result<(), AppError> {
+    let existing = tdb.get_all_triage()?;
+    let mut done_keys: Vec<String> = Vec::new();
+    for issue in issues {
+        if let Some(key) = issue["key"].as_str() {
+            let status_category = issue["fields"]["status"]["statusCategory"]["key"]
+                .as_str()
+                .unwrap_or("");
+            if status_category == "done" {
+                done_keys.push(key.to_string());
+            } else if !existing.contains_key(key) {
+                tdb.set_triage(key, "new")?;
+            }
+        }
+    }
+    if !done_keys.is_empty() {
+        tdb.delete_triage_entries(&done_keys)?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn issue(key: &str, cat: &str) -> serde_json::Value {
+        serde_json::json!({"key": key, "fields": {"status": {"statusCategory": {"key": cat}}}})
+    }
+
+    fn seeded() -> TriageDb {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("A", "CLD-1").expect("a");
+        db.set_triage_copied("B", "CLD-2").expect("b");
+        db.set_triage("B", "ignored").expect("b ignored");
+        db.set_triage("C", "ignored").expect("c");
+        db.set_triage("D", "seen").expect("d");
+        db
+    }
+
+    #[test]
+    fn test_fetch_triage_sync_keeps_linked_and_dismissed() {
+        let db = seeded();
+        let before = db.get_all_triage().expect("before");
+        let issues: Vec<_> = ["A", "B", "C", "D"]
+            .iter()
+            .map(|k| issue(k, "indeterminate"))
+            .collect();
+        sync_triage_after_fetch(&db, &issues).expect("sync");
+        assert_eq!(db.get_all_triage().expect("after"), before);
+    }
+
+    #[test]
+    fn test_fetch_triage_sync_done_keeps_remembered_rows() {
+        let db = seeded();
+        let before = db.get_all_triage().expect("before");
+        let issues = vec![issue("A", "done"), issue("B", "done")];
+        sync_triage_after_fetch(&db, &issues).expect("sync");
+        let after = db.get_all_triage().expect("after");
+        assert_eq!(after.get("A"), before.get("A"));
+        assert_eq!(after.get("B"), before.get("B"));
+    }
+
+    #[test]
+    fn test_fetch_triage_sync_inserts_new_only_for_unknown() {
+        let db = seeded();
+        let before = db.get_all_triage().expect("before");
+        let issues = vec![issue("E", "indeterminate"), issue("D", "indeterminate")];
+        sync_triage_after_fetch(&db, &issues).expect("sync");
+        let after = db.get_all_triage().expect("after");
+        assert_eq!(after.get("E"), Some(&("new".to_string(), None)));
+        assert_eq!(after.get("D"), before.get("D"));
+        assert_eq!(after.get("A"), before.get("A"));
+    }
+
+    #[test]
+    fn test_fetch_triage_sync_poll_engine_never_writes_triage() {
+        let src = include_str!("poll_engine.rs");
+        for needle in [
+            "set_triage",
+            "relink",
+            "set_triage_copied",
+            "delete_triage_entries",
+        ] {
+            assert!(!src.contains(needle), "poll_engine.rs contains {needle}");
+        }
+    }
 
     #[test]
     fn test_validate_triage_state_accepts_non_copied() {

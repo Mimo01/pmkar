@@ -185,6 +185,80 @@ describe('Undo', () => {
   });
 });
 
+describe('Undo restores the true prior state (CONF-03)', () => {
+  const denyFrom = async (state: 'seen' | 'handled' | 'copied' | 'new', key: string | null) => {
+    seed(state, key);
+    invokeMock.mockResolvedValueOnce(undefined);
+    await denyTicket('T-1');
+    return toastFn.mock.calls[0]?.[1]?.action.onClick as (() => void) | undefined;
+  };
+
+  it('seen prior Undo restores seen and never relinks', async () => {
+    const undo = await denyFrom('seen', 'CLD-9');
+    invokeMock.mockResolvedValueOnce(undefined);
+    undo?.();
+    await flush();
+    expect(invokeMock).toHaveBeenLastCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'seen',
+    });
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    expect(entry()).toEqual({ state: 'seen', copiedKey: 'CLD-9' });
+    expect(useAnnouncerStore.getState().message).toBe(i18nRestored());
+  });
+
+  it('copied prior Undo still relinks', async () => {
+    const undo = await denyFrom('copied', 'CLD-9');
+    invokeMock.mockResolvedValueOnce('CLD-9');
+    undo?.();
+    await flush();
+    expect(invokeMock).toHaveBeenCalledWith('relink_ticket', { ticketKey: 'T-1' });
+    expect(entry()).toEqual({ state: 'copied', copiedKey: 'CLD-9' });
+  });
+
+  it('handled prior Undo restores handled, never copied', async () => {
+    const undo = await denyFrom('handled', 'CLD-9');
+    invokeMock.mockResolvedValueOnce(undefined);
+    undo?.();
+    await flush();
+    expect(invokeMock).toHaveBeenLastCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'handled',
+    });
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    expect(entry()).toEqual({ state: 'handled', copiedKey: 'CLD-9' });
+  });
+
+  it('stale toast performs no invoke', async () => {
+    const undo = await denyFrom('seen', 'CLD-9');
+    seed('seen', 'CLD-9');
+    invokeMock.mockClear();
+    undo?.();
+    await flush();
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it('non-copied Undo failure rolls back to ignored with restore-failed toast', async () => {
+    const undo = await denyFrom('seen', 'CLD-9');
+    invokeMock.mockRejectedValueOnce(new Error('x'));
+    undo?.();
+    await flush();
+    expect(entry()).toEqual({ state: 'ignored', copiedKey: 'CLD-9' });
+    expect(toastError).toHaveBeenCalledWith('Could not restore the ticket. Try again.');
+  });
+
+  it('shows no Undo toast for undefined or new prior', async () => {
+    useTicketStore.getState().hydrateTriageMap({});
+    invokeMock.mockResolvedValueOnce(undefined);
+    await denyTicket('T-1');
+    expect(toastFn).not.toHaveBeenCalled();
+    await denyFrom('new', null);
+    expect(toastFn).not.toHaveBeenCalled();
+  });
+});
+
+const i18nRestored = () => 'T-1 restored.';
+
 describe('markHandled', () => {
   it('carries the key', async () => {
     seed('copied', 'CLD-9');

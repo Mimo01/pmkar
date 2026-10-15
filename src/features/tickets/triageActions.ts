@@ -82,10 +82,19 @@ async function applyState(
   }
 }
 
-/** Undo a deny: relink using the DB-returned key only (D-02, D-03, T-35-03). */
-async function undoDeny(issueKey: string): Promise<void> {
+/**
+ * Undo a deny by restoring the captured prior state (CONF-03). Relinks (DB-returned
+ * key only, D-02, D-03, T-35-03) only when the prior state was Linked; any other prior
+ * state is restored via set_triage_state so Undo never makes a ticket Linked.
+ */
+async function undoDeny(issueKey: string, priorState: TriageState): Promise<void> {
   // Stale toast: the ticket was restored, handled or relinked since (35 WR-01).
   if (useTicketStore.getState().triageMap[issueKey]?.state !== 'ignored') return;
+  if (priorState !== 'copied') {
+    const { ok } = await applyState(issueKey, priorState, 'ignored.restoreFailed');
+    if (ok) announce(i18n.t('a11y.restored', { key: issueKey }));
+    return;
+  }
   try {
     const key = await invoke<string | null>('relink_ticket', { ticketKey: issueKey });
     if (typeof key === 'string' && key) {
@@ -101,19 +110,21 @@ async function undoDeny(issueKey: string): Promise<void> {
 
 /**
  * Move a ticket to Ignored without touching Jira (D-04, RTRI-02). On success with a
- * remembered key, shows an Undo toast lasting UNDO_TOAST_MS (D-01, RTRI-03).
+ * remembered key, shows an Undo toast lasting UNDO_TOAST_MS (D-01, RTRI-03); Undo
+ * restores the prior state and relinks only when it was Linked (CONF-03).
  */
 export async function denyTicket(issueKey: string): Promise<boolean> {
   const { ok, prev } = await applyState(issueKey, 'ignored', 'triage.denyFailed');
   if (ok) announce(i18n.t('a11y.denied', { key: issueKey }));
   if (ok && prev?.copiedKey) {
+    const priorState = prev.state;
     toast(i18n.t('triage.denied', { key: issueKey }), {
       id: `deny-${issueKey}`,
       duration: UNDO_TOAST_MS,
       action: {
         label: i18n.t('triage.undo'),
         onClick: () => {
-          void undoDeny(issueKey);
+          void undoDeny(issueKey, priorState);
         },
       },
     });
