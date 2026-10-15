@@ -211,12 +211,14 @@ Nothing deprecated. sonner 2.x `toast(message, { action, id, duration })` is cur
 | A3 | sonner 2.x `toast()` accepts `{id, duration, action:{label,onClick}}` | Pattern 2 | Toast API shape; verify in test |
 | A4 | i18next interpolation uses `{{key}}` in this project | Pitfall 5 | String shows literal braces |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What Undo does for a deny from non-Linked states.**
    - Recommendation: no Undo toast without a remembered key (A1).
+   - RESOLVED: 35-01 Task 2 shows the Undo toast only when a remembered key exists.
 2. **Where should `linkTicket` get `JiraTicketDetail` when called from a list?**
    - Recommendation: optional `detail` param; fall back to `fetch_ticket_detail`. Phase 36 call sites (detail) always have `detail`.
+   - RESOLVED: 35-01 Task 2 adds optional `detail` with `fetch_ticket_detail` fallback.
 
 ## Environment Availability
 
