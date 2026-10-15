@@ -371,10 +371,12 @@ None yet.
 | fast | Remove tooltips from group chips | 2026-10-13 | 0abf651 | Approved | — |
 | fast | Pointer chip click no longer focuses group tab (no stray nav tooltip) | 2026-10-13 | 41e4733 | Approved | — |
 | fast | Release v0.5.0 with curated changelog | 2026-10-13 | 8c936d5 | Done | — |
+| 261015-lwy | Address v0.5.1 tech debt (triage action robustness, detail UI, wording, already-linked message) | 2026-10-15 | 3f590f9 | Needs Review | [261015-lwy-address-the-tech-debt](./quick/261015-lwy-address-the-tech-debt/) |
 
 ## Session Continuity
 
-Last activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
+Last activity: 2026-10-15 - Completed quick task 261015-lwy: Address v0.5.1 tech debt
+Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
 Last session: 2026-10-15T10:29:01.657Z
 Stopped at: Phase 37 UI-SPEC approved
 Resume file: .planning/phases/37-consistency-accessibility-and-uat/37-UI-SPEC.md
