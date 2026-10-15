@@ -1,7 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TicketDetailPanel } from './TicketDetailPanel';
 import { useTicketStore } from './ticketStore';
+
+vi.mock('sonner', () => ({
+  toast: Object.assign(vi.fn(), { error: vi.fn(), dismiss: vi.fn() }),
+}));
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -208,13 +213,120 @@ describe('TicketDetailPanel', () => {
       render(
         <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
       );
-      fireEvent.click(await screen.findByRole('button', { name: /^ignored$/i }));
+      fireEvent.click(await screen.findByRole('button', { name: /^restore$/i }));
       await waitFor(() =>
         expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
           state: 'seen',
           copiedKey: 'CLD-9',
         }),
       );
+    });
+  });
+  describe('Phase 36 deny / link', () => {
+    type S = 'seen' | 'copied' | 'ignored';
+    const seed = (
+      state: S,
+      copiedKey: string | null,
+      overrides: Record<string, () => Promise<unknown>> = {},
+    ) => {
+      mockInvoke.mockImplementation(((cmd: string) => {
+        if (overrides[cmd]) return overrides[cmd]();
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(mockDetail);
+        return Promise.resolve(undefined);
+      }) as never);
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey } } });
+    };
+    const renderPanel = () =>
+      render(
+        <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+      );
+
+    it('focuses the close button on load', async () => {
+      seed('seen', null);
+      renderPanel();
+      const close = await screen.findByRole('button', { name: /close/i });
+      await waitFor(() => expect(document.activeElement).toBe(close));
+    });
+
+    it('Deny on a linked ticket sets ignored and focuses Restore link', async () => {
+      seed('copied', 'CLD-9');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: /^deny$/i }));
+      await waitFor(() =>
+        expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+          ticketKey: 'PROJ-1',
+          state: 'ignored',
+        }),
+      );
+      const cmds = mockInvoke.mock.calls.map((c) => c[0] as string);
+      expect(cmds).not.toContain('relink_ticket');
+      expect(cmds.some((c) => c.startsWith('copy_'))).toBe(false);
+      const primary = await screen.findByRole('button', { name: 'Restore link to CLD-9' });
+      await waitFor(() => expect(document.activeElement).toBe(primary));
+    });
+
+    it('failed Deny leaves focus on the Deny button', async () => {
+      seed('copied', 'CLD-9', {
+        set_triage_state: () => Promise.reject(new Error('fail')),
+      });
+      renderPanel();
+      const deny = await screen.findByRole('button', { name: /^deny$/i });
+      fireEvent.click(deny);
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: /^deny$/i })),
+      );
+    });
+
+    it('denied ticket with remembered key shows Restore link, Restore and hint', async () => {
+      seed('ignored', 'CLD-9');
+      renderPanel();
+      expect(await screen.findByRole('button', { name: 'Restore link to CLD-9' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /^restore$/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /^ignored$/i })).toBeNull();
+      expect(screen.getByText(/Previously linked to/)).toBeInTheDocument();
+    });
+
+    it('never-linked denied ticket shows Copy primary and no hint', async () => {
+      seed('ignored', null);
+      renderPanel();
+      expect(await screen.findByRole('button', { name: /^Copy to/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^restore$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/Previously linked to/)).toBeNull();
+    });
+
+    it('Restore link success renders and focuses the badge', async () => {
+      seed('ignored', 'CLD-9', { relink_ticket: () => Promise.resolve('CLD-9') });
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      const badge = await screen.findByText(/CLD-9/, { selector: 'span[tabindex="-1"]' });
+      await waitFor(() => expect(document.activeElement).toBe(badge));
+    });
+
+    it('Restore link failure toasts and refocuses the enabled button', async () => {
+      seed('ignored', 'CLD-9', { relink_ticket: () => Promise.reject(new Error('fail')) });
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith('Could not link the ticket. Try again.'),
+      );
+      const primary = await screen.findByRole('button', { name: 'Restore link to CLD-9' });
+      await waitFor(() => expect(primary).toBeEnabled());
+      await waitFor(() => expect(document.activeElement).toBe(primary));
+    });
+
+    it('Restore sets seen and focuses Dismiss', async () => {
+      seed('ignored', 'CLD-9');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: /^restore$/i }));
+      await waitFor(() =>
+        expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+          state: 'seen',
+          copiedKey: 'CLD-9',
+        }),
+      );
+      const dismiss = await screen.findByRole('button', { name: /^dismiss$/i });
+      await waitFor(() => expect(document.activeElement).toBe(dismiss));
     });
   });
 });
