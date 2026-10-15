@@ -1,7 +1,7 @@
 ---
 phase: 37
 slug: consistency-accessibility-and-uat
-status: draft
+status: approved
 shadcn_initialized: true
 preset: neutral base, cssVariables (aliased to brand tokens in src/index.css)
 created: 2026-10-15
