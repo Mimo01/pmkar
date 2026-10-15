@@ -120,6 +120,27 @@ describe('IgnoredTicketsPage', () => {
     expect(screen.queryByText('TEST-3')).not.toBeInTheDocument();
   });
 
+  it('shows the remembered-link hint before Restore for ignored + copiedKey', () => {
+    setupStore([ticket1], { 'TEST-1': { state: 'ignored', copiedKey: 'CLD-9' } });
+    render(<IgnoredTicketsPage />);
+    const hint = screen.getByText('CLD-9').parentElement as HTMLElement;
+    expect(hint).toHaveTextContent(/Previously linked to CLD-9/);
+    const restore = screen.getByRole('button', { name: 'Restore' });
+    expect(hint.compareDocumentPosition(restore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(1);
+  });
+
+  it('shows no hint without a remembered key', () => {
+    render(<IgnoredTicketsPage />);
+    expect(screen.queryByText(/Previously linked/)).toBeNull();
+  });
+
+  it('shows no hint for handled rows', () => {
+    setupStore([ticket1], { 'TEST-1': { state: 'handled', copiedKey: 'CLD-9' } });
+    render(<IgnoredTicketsPage />);
+    expect(screen.queryByText(/Previously linked/)).toBeNull();
+  });
+
   it('Restore still restores in select mode and does not toggle selection', () => {
     render(<IgnoredTicketsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'Select' }));

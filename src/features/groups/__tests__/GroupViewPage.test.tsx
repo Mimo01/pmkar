@@ -101,6 +101,30 @@ describe('GroupViewPage', () => {
     expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(2);
   });
 
+  it('shows the remembered-link hint before Restore on ignored members with a key', () => {
+    seed({ 1: ['T-1', 'T-2', 'T-3', 'T-4'] }, [T1, T2, T3, T4], {
+      'T-2': { state: 'ignored', copiedKey: 'CLD-9' },
+      'T-3': { state: 'handled', copiedKey: 'CLD-9' },
+      'T-4': { state: 'copied', copiedKey: 'DEST-9' },
+    });
+    render(<GroupViewPage groupId={1} />);
+    const card = cardFor('T-2');
+    expect(card).toHaveTextContent(/Previously linked to CLD-9/);
+    const hint = within(card).getByText('CLD-9').parentElement as HTMLElement;
+    const restore = within(card).getByRole('button', { name: 'Restore' });
+    expect(hint.compareDocumentPosition(restore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(cardFor('T-3')).not.toHaveTextContent(/Previously linked/);
+    expect(within(cardFor('T-4')).getByText('DEST-9')).toBeInTheDocument();
+    expect(cardFor('T-4')).not.toHaveTextContent(/Previously linked/);
+    expect(cardFor('T-1')).not.toHaveTextContent(/Previously linked/);
+  });
+
+  it('shows no hint for ignored members without a remembered key', () => {
+    seed({ 1: ['T-1', 'T-2'] });
+    render(<GroupViewPage groupId={1} />);
+    expect(cardFor('T-2')).not.toHaveTextContent(/Previously linked/);
+  });
+
   it('renders snapshot-only members as normal cards', async () => {
     seed({ 1: ['T-1', 'GONE-1'] }, [T1]);
     mockInvoke.mockResolvedValue([
