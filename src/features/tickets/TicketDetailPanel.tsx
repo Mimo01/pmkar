@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
+import { RememberedLinkHint } from './RememberedLinkHint';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { ChangesTab } from './tabs/ChangesTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -14,8 +15,9 @@ import { HistoryTab } from './tabs/HistoryTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { WorkLogTab } from './tabs/WorkLogTab';
 import { useTicketStore } from './ticketStore';
-import { denyTicket, markHandled, restoreTicket } from './triageActions';
+import { markHandled, restoreTicket } from './triageActions';
 import type { JiraTicketDetail } from './types';
+import { useTriageDetailActions } from './useTriageDetailActions';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history' | 'changes';
 
@@ -37,7 +39,8 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
   const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
   const targetProjectName = useConnectionStore((s) => s.targetProjectName);
-  const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
+  const tri = useTriageDetailActions(issueKey, detail, closeButtonRef);
+  const triageEntry = tri.triageEntry;
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
   const isHandled = triageEntry?.state === 'handled';
@@ -49,14 +52,6 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     if (detail) {
       useCopyStore.getState().startPreview(detail, baseUrl, cloudBaseUrl);
     }
-  };
-
-  const handleIgnore = () => {
-    void denyTicket(issueKey);
-  };
-
-  const handleUnignore = () => {
-    void restoreTicket(issueKey);
   };
 
   const handleMarkHandled = () => {
@@ -142,6 +137,39 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  const restorePrimary = (
+    <button
+      type="button"
+      ref={tri.primaryRef}
+      onClick={tri.handleLink}
+      disabled={tri.linking || copyPhase === 'loading_preview'}
+      className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+    >
+      {tri.linking || copyPhase === 'loading_preview' ? (
+        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            fill="none"
+          />
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+          />
+        </svg>
+      ) : tri.rememberedKey ? (
+        t('detail.restoreLink', { key: tri.rememberedKey })
+      ) : (
+        t('detail.copy', { name: targetProjectName || t('wizard.destination.subtitle') })
+      )}
+    </button>
+  );
+
   const tabs: { id: TabId; label: string }[] = detail
     ? [
         { id: 'overview', label: t('detail.tab.overview') },
@@ -218,7 +246,11 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                 {isCopied && triageEntry?.copiedKey ? (
                   <>
                     {/* Primary: linked status badge with copied key */}
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
+                    <span
+                      ref={tri.badgeRef}
+                      tabIndex={-1}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none outline-none"
+                    >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                       {t('detail.copied')} → {triageEntry.copiedKey}
                     </span>
@@ -242,6 +274,24 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       <ExternalLink className="w-3 h-3" aria-hidden="true" />
                       {triageEntry.copiedKey}
                     </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          ref={tri.denyRef}
+                          onClick={tri.handleDeny}
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                        >
+                          {t('detail.deny')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.deny.tooltip', {
+                          tab: t('nav.notMine'),
+                          key: triageEntry.copiedKey,
+                        })}
+                      </TooltipContent>
+                    </Tooltip>
                   </>
                 ) : (
                   <button
@@ -269,27 +319,33 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     </TooltipContent>
                   </Tooltip>
                 ) : isIgnored ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        onClick={handleUnignore}
-                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
-                      >
-                        {t('detail.ignored')}
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">
-                      {t('detail.ignored.tooltip')}
-                    </TooltipContent>
-                  </Tooltip>
+                  <>
+                    {tri.rememberedKey ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>{restorePrimary}</TooltipTrigger>
+                        <TooltipContent aria-hidden="true">
+                          {t('detail.restoreLink.tooltip', { key: tri.rememberedKey })}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      restorePrimary
+                    )}
+                    <button
+                      type="button"
+                      onClick={tri.handleRestore}
+                      className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                    >
+                      {t('ignored.restore')}
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <button
                           type="button"
-                          onClick={handleIgnore}
+                          ref={tri.dismissRef}
+                          onClick={tri.handleDismiss}
                           className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
                         >
                           {t('detail.ignore')}
@@ -348,6 +404,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                 )}
               </div>
             </TooltipProvider>
+            <RememberedLinkHint entry={tri.triageEntry} variant="detail" />
             {copyError && <p className="text-xs text-red-400 mt-1">{copyError}</p>}
           </>
         ) : (
