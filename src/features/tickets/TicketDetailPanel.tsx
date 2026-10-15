@@ -137,15 +137,19 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  const linkBusy = tri.linking || copyPhase === 'loading_preview';
   const restorePrimary = (
     <button
       type="button"
       ref={tri.primaryRef}
-      onClick={tri.handleLink}
-      disabled={tri.linking || copyPhase === 'loading_preview'}
-      className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+      onClick={() => {
+        if (linkBusy) return;
+        void tri.handleLink();
+      }}
+      aria-disabled={linkBusy}
+      className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
     >
-      {tri.linking || copyPhase === 'loading_preview' ? (
+      {linkBusy ? (
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
           <circle
             className="opacity-25"
@@ -280,7 +284,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           type="button"
                           ref={tri.denyRef}
                           onClick={tri.handleDeny}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                         >
                           {t('detail.deny')}
                         </button>
@@ -309,7 +313,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       <button
                         type="button"
                         onClick={handleUnhandle}
-                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                       >
                         {t('detail.handled')}
                       </button>
@@ -333,7 +337,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     <button
                       type="button"
                       onClick={tri.handleRestore}
-                      className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                      className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                     >
                       {t('ignored.restore')}
                     </button>
@@ -346,7 +350,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           type="button"
                           ref={tri.dismissRef}
                           onClick={tri.handleDismiss}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                         >
                           {t('detail.ignore')}
                         </button>
@@ -360,7 +364,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                         <button
                           type="button"
                           onClick={handleMarkHandled}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors"
+                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                         >
                           {t('detail.markHandled')}
                         </button>
@@ -376,7 +380,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     type="button"
                     onClick={handleStartCopy}
                     disabled={copyPhase === 'loading_preview'}
-                    className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                    className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                   >
                     {copyPhase === 'loading_preview' ? (
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
