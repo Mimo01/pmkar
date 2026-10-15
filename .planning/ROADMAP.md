@@ -135,7 +135,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 35-01-PLAN.md — Shared triageActions module (deny/restore/handled/link, Undo toast, key preservation) + tests + i18n
+- [x] 35-01-PLAN.md — Shared triageActions module (deny/restore/handled/link, Undo toast, key preservation) + tests + i18n
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -210,6 +210,6 @@ Plans:
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
-| 35. Shared Triage Actions | v0.5.1 | 0/? | Not started | - |
+| 35. Shared Triage Actions | v0.5.1 | 1/2 | In Progress|  |
 | 36. Detail and Group UI | v0.5.1 | 0/? | Not started | - |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |

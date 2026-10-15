@@ -8,20 +8,20 @@
 ### Deny linked
 
 - [ ] **RTRI-01**: User can deny an already-Linked ticket from an explicit labelled button in ticket detail (page and panel)
-- [ ] **RTRI-02**: Denying a Linked ticket moves it to Not mine and leaves the Cloud ticket untouched (no Jira call)
-- [ ] **RTRI-03**: After denying, user sees an Undo toast that returns the ticket to Linked with the same Cloud key
+- [x] **RTRI-02**: Denying a Linked ticket moves it to Not mine and leaves the Cloud ticket untouched (no Jira call)
+- [x] **RTRI-03**: After denying, user sees an Undo toast that returns the ticket to Linked with the same Cloud key
 - [ ] **RTRI-04**: Focus lands on a sensible element after Deny (the detail's focused button disappears)
 
 ### Re-link
 
-- [ ] **RLNK-01**: User can Link a denied ticket from detail; if it was linked before, it returns to Linked with the same Cloud key and no copy is performed
-- [ ] **RLNK-02**: If a denied ticket was never linked, Link opens the normal copy preview
+- [x] **RLNK-01**: User can Link a denied ticket from detail; if it was linked before, it returns to Linked with the same Cloud key and no copy is performed
+- [x] **RLNK-02**: If a denied ticket was never linked, Link opens the normal copy preview
 - [ ] **RLNK-03**: A denied ticket with a remembered link shows "previously linked to KEY" in detail and in Not mine, and its Link button states it restores that key
 - [ ] **RLNK-04**: Group view offers the same Deny / Link actions through the shared detail
 
 ### Link integrity
 
-- [ ] **LINT-01**: The remembered Cloud key survives every triage transition (deny, restore, handled) in both database and in-memory store
+- [x] **LINT-01**: The remembered Cloud key survives every triage transition (deny, restore, handled) in both database and in-memory store
 - [x] **LINT-02**: A Linked row can never exist without a Cloud key (`set_triage_state` rejects `copied`; re-link goes through a dedicated atomic command)
 - [x] **LINT-03**: Backend refuses to copy a ticket that already has a remembered link, so no duplicate Cloud issue is created
 - [x] **LINT-04**: A done ticket's remembered link is not erased by fetch cleanup
@@ -53,14 +53,14 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | RTRI-01 | Phase 36 | Pending |
-| RTRI-02 | Phase 35 | Pending |
-| RTRI-03 | Phase 35 | Pending |
+| RTRI-02 | Phase 35 | Complete |
+| RTRI-03 | Phase 35 | Complete |
 | RTRI-04 | Phase 36 | Pending |
-| RLNK-01 | Phase 35 | Pending |
-| RLNK-02 | Phase 35 | Pending |
+| RLNK-01 | Phase 35 | Complete |
+| RLNK-02 | Phase 35 | Complete |
 | RLNK-03 | Phase 36 | Pending |
 | RLNK-04 | Phase 36 | Pending |
-| LINT-01 | Phase 35 | Pending |
+| LINT-01 | Phase 35 | Complete |
 | LINT-02 | Phase 34 | Complete |
 | LINT-03 | Phase 34 | Complete |
 | LINT-04 | Phase 34 | Complete |
