@@ -252,7 +252,7 @@ Plans:
   4. Fetch and poll never change Linked or Not mine rows, and a static guard ensures only the confirmed hook path calls the transition functions
   5. Dialog strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist is written
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 **Wave 1**
@@ -266,7 +266,7 @@ Plans:
 
 **Wave 3** *(blocked on 37.1-03)*
 
-- [ ] 37.1-04-PLAN.md — Page and Panel wiring, Esc isolation, keyboard/axe/group view regression tests
+- [x] 37.1-04-PLAN.md — Page and Panel wiring, Esc isolation, keyboard/axe/group view regression tests
 
 **Wave 4** *(blocked on all above)*
 
