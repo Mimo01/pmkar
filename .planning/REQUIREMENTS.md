@@ -34,8 +34,8 @@
 
 ### Transition confirmation
 
-- [ ] **CONF-01**: Denying a Linked ticket requires explicit confirmation in a dialog; Cancel or Esc leaves it Linked with no backend call
-- [ ] **CONF-02**: Restoring the remembered link of a Not mine ticket requires explicit confirmation; a never-linked ticket goes to the copy preview, which is its own confirmation
+- [x] **CONF-01**: Denying a Linked ticket requires explicit confirmation in a dialog; Cancel or Esc leaves it Linked with no backend call
+- [x] **CONF-02**: Restoring the remembered link of a Not mine ticket requires explicit confirmation; a never-linked ticket goes to the copy preview, which is its own confirmation
 - [ ] **CONF-03**: No Linked ↔ Not mine transition happens automatically: Undo restores only the true prior state, fetch/poll never change Linked or Not mine rows, and a static guard locks the only callers
 - [ ] **CONF-04**: Confirmation strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist covers it
 
@@ -74,8 +74,8 @@
 | RQA-01 | Phase 37 | Pending |
 | RQA-02 | Phase 36 | Complete |
 | RQA-03 | Phase 37 | Pending |
-| CONF-01 | Phase 37.1 | Pending |
-| CONF-02 | Phase 37.1 | Pending |
+| CONF-01 | Phase 37.1 | Complete |
+| CONF-02 | Phase 37.1 | Complete |
 | CONF-03 | Phase 37.1 | Pending |
 | CONF-04 | Phase 37.1 | Pending |
 
