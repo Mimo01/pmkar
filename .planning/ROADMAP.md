@@ -180,7 +180,21 @@ Plans:
   3. Screen readers announce the result of deny, undo and link (WCAG AA)
   4. A WebView2 manual checklist (focus after deny, Undo toast) is written and run
 
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+**Wave 1**
+
+- [ ] 37-01-PLAN.md — LiveAnnouncer live region + announce() store, mounted beside every Toaster; a11y.* EN/SK strings and guard test
+- [ ] 37-02-PLAN.md — RQA-01 consistency invariant test over real derivation code, rollback, seeded random sequences, hydrate round-trip
+- [ ] 37-04-PLAN.md — Keyboard/focus audit test and fixes (aria-disabled in-flight Link, focus rings) in page, panel, group view
+
+**Wave 2** *(blocked on 37-01)*
+
+- [ ] 37-03-PLAN.md — Announce deny/undo/link/restore/handled and failures from triageActions.ts
+
+**Wave 3** *(blocked on all above)*
+
+- [ ] 37-05-PLAN.md — 37-HUMAN-UAT.md WebView2 checklist (supersedes 36-HUMAN-UAT), full suite gate, validation map
 **UI hint**: yes
 
 ## Progress
