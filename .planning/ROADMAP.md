@@ -96,55 +96,71 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 ## Phase Details
 
 ### Phase 34: Link Integrity Backend
+
 **Goal**: The backend guarantees a Linked ticket always has a Cloud key, a remembered link is never lost or duplicated, and re-link is a single atomic operation
 **Depends on**: Phase 33
 **Requirements**: LINT-02, LINT-03, LINT-04
 **Success Criteria** (what must be TRUE):
+
   1. Setting a ticket's triage state to Linked through the generic triage command is rejected, so no Linked row without a Cloud key can be created
   2. A dedicated re-link command returns the remembered Cloud key and marks the ticket Linked in one step, or reports that no link exists
   3. Attempting to copy a ticket that already has a remembered link is refused, so no duplicate Cloud issue is created
   4. A done ticket that has a remembered link keeps that link after a fetch; done tickets without a link are still cleaned up
   5. The mock server and Rust tests cover all of the above
-**Plans**: 2 plans
 
+**Plans**: 2 plans
 Plans:
+**Wave 1**
+
 - [ ] 34-01-PLAN.md — DB layer: set_triage rejects 'copied', atomic relink + get_copied_key, cleanup keeps linked rows, legacy-shape DB test
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 34-02-PLAN.md — Command layer: validate_triage_state, relink_ticket command + registration, duplicate-copy guard first in copy_ticket_v2, full suite
 
 ### Phase 35: Shared Triage Actions
+
 **Goal**: Deny, re-link and restore behave identically everywhere and never disagree with the database about the remembered Cloud key
 **Depends on**: Phase 34
 **Requirements**: LINT-01, RTRI-02, RTRI-03, RLNK-01, RLNK-02
 **Success Criteria** (what must be TRUE):
+
   1. Denying a Linked ticket moves it to Not mine, makes no Jira call, and the Cloud ticket is untouched
   2. After deny, an Undo toast returns the ticket to Linked with the same Cloud key
   3. Linking a previously linked denied ticket returns it to Linked with the same key and performs no copy
   4. Linking a never-linked denied ticket opens the normal copy preview
   5. The remembered key is still present after deny, restore and handled transitions, in both the database and the in-memory store (verified after app restart)
+
 **Plans**: TBD
 
 ### Phase 36: Detail and Group UI
+
 **Goal**: Users can deny and re-link tickets from an explicit labelled button in every ticket detail, with clear hints about the remembered link
 **Depends on**: Phase 35
 **Requirements**: RTRI-01, RTRI-04, RLNK-03, RLNK-04, RQA-02
 **Success Criteria** (what must be TRUE):
+
   1. A Linked ticket's detail (page and panel) shows a labelled Deny button
   2. A denied ticket with a remembered link shows "previously linked to KEY" in detail and in Not mine, and its Link button says it restores that key
   3. After Deny, keyboard focus lands on a sensible element rather than being lost
   4. The group view offers the same Deny / Link actions through the shared detail
   5. All new strings exist in EN and SK (Slovak uses "tiket") and pass the i18n guard tests
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 37: Consistency, Accessibility and UAT
+
 **Goal**: Re-triage leaves every list, count and badge correct, and is usable by keyboard and screen reader
 **Depends on**: Phase 36
 **Requirements**: RQA-01, RQA-03
 **Success Criteria** (what must be TRUE):
+
   1. After any Linked to Not mine transition, the ticket appears in exactly one tab, with matching tab counts and group badges
   2. Deny and Link buttons are reachable and operable by keyboard alone
   3. Screen readers announce the result of deny, undo and link (WCAG AA)
   4. A WebView2 manual checklist (focus after deny, Undo toast) is written and run
+
 **Plans**: TBD
 **UI hint**: yes
 
