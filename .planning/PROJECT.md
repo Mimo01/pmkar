@@ -8,18 +8,13 @@ Pmkar is a cross-platform desktop app (Tauri 2.10 / React 19 / Rust) that bridge
 
 Surface relevant tickets from the customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
 
-## Current Milestone: v0.5.0 Custom Groups
+## Current State
 
-**Goal:** Let users organise issues into their own named groups, layered on top of the core New / Not mine / Linked triage, with a polished, uncluttered UX.
+Shipped v0.5.0 Custom Groups (2026-10-15): user-defined groups as tabs next to the core New / Not mine / Linked tabs, tag-like membership from detail, cards and multi-select, durable snapshots so grouped issues never silently vanish, full EN/SK and WCAG AA polish. Phase 33 UAT and several human verifications remain open (see STATE.md Deferred Items).
 
-**Target features:**
-- Create, rename, delete, reorder and color user-defined groups (tabs after a divider next to the core tabs)
-- Tag-like membership — an issue can be in many groups, from any triage state, and still shows in its core tab
-- Add/remove issues via explicit detail-panel button and list multi-select (plus other natural entry points)
-- Group view: flat list with triage-state badge per card; normal card actions work
-- Never silently lose a grouped issue — unfetched issues stay with a "no longer in results" hint and one-click remove
-- Local persistence, EN+SK strings
-- CONI-01: CopyResultModal step label i18n
+## Next Milestone Goals
+
+Not yet defined — run `/gsd:new-milestone`. Candidates: close v0.5.0 UAT/verification debt, Excel export (EXPRT-01), dock/taskbar badge (BADGE-01), notification history (NHIST-01), ADF rich-text editor in copy preview.
 
 ## Requirements
 
@@ -65,17 +60,18 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 - ✓ Copy-step labels fully translated (EN/SK) via shared `copyStepLabel` helper with Rust↔i18n sync test — v0.5.0 Phase 28 (CONI-01)
 - ✓ Durable groups storage foundation: `groups.db`, scoped group CRUD/order/membership Tauri commands, `useGroupStore` hydration (no UI yet) — v0.5.0 Phase 28 (GRP-06)
 - ✓ Group management: rename, recolor (8-color palette, both themes), delete with confirmation and active-tab fallback, and Move left/right reorder from the tab `…`/context menu with screen-reader announcement — v0.5.0 Phase 30 (GRP-02, GRP-03, GRP-04, GRP-05)
+- ✓ User-defined groups: create from tab bar, flat filterable group view with triage badges — v0.5.0 Phase 29 (GRP-01, GVIEW-*)
+- ✓ Tag-like membership from detail picker, card chips and multi-select — v0.5.0 Phase 31 (GMEM-*)
+- ✓ Durability: snapshots keep grouped issues visible, gated "No longer in results" hint with explicit remove — v0.5.0 Phase 32 (GDUR-*)
+- ✓ Bilingual EN/SK group UI with Slovak plurals and WCAG AA verification — v0.5.0 Phase 33 (GQA-*; human UAT pending)
 
 ### Active
 
-- [ ] User-defined issue groups (create/rename/delete/reorder/color) — v0.5.0
-- [ ] Tag-like group membership independent of triage state — v0.5.0
-- [ ] Add/remove issues to groups from detail and via list multi-select — v0.5.0
-- [ ] Grouped issues never silently lost when absent from fetch — v0.5.0
 - [ ] Excel export capability (scope TBD) — tracked as EXPRT-01
 - [ ] Taskbar/dock badge count showing unread change count — tracked as BADGE-01
 - [ ] In-app notification history panel — tracked as NHIST-01
 - [ ] Phase 22 VERIFICATION.md — formal verification of PERS-01..04, OVRD-01..06 (code confirmed wired; human verification deferred)
+- [ ] v0.5.0 human UAT/verification: 33-UAT (27), 32/33 HUMAN-UAT, Phases 29-33 VERIFICATION human_needed
 - [ ] Phase 25 human UAT (3 scenarios: description prose rendering, picker pre-fill, E2E copy)
 - [ ] ADF rich-text editor for description in copy preview (currently read-only)
 
@@ -89,13 +85,13 @@ Surface relevant tickets from the customer's Jira and copy them with maximum fid
 
 ## Context
 
-Shipped v0.4.8 with ~47,800 LOC (29,427 TypeScript + 18,409 Rust); released incrementally v0.4.1 → v0.4.8 on top of v0.4.0.
-Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf, tauri-plugin-notification). Added: cmdk, @tanstack/react-virtual, sonner.
+Shipped v0.5.0 with ~65,700 LOC (45,236 TypeScript + 20,479 Rust); v0.4.1 → v0.4.8 released incrementally before it.
+Tech stack: Tauri 2.10, React 19, TypeScript 6, Vite 8, Zustand, shadcn/ui, i18next, Rust (axum, keyring, rusqlite, reqwest-middleware, htmltoadf, tauri-plugin-notification). Added: cmdk, @tanstack/react-virtual, sonner, Radix popover (GroupPicker).
 835 frontend tests (Vitest), 271 Rust tests.
 Local pre-commit hook replaces GitHub Actions CI (lint + type-check + test + clippy + fmt).
 Auto-update via Tauri updater plugin publishing to Mimo01/pmkar-releases.
 Mapping engine fully operational: field discovery → SQLite persistence → renderer registry → copy preview (with preview-time resolution) → copy_ticket_v2 pipeline, plus static value mappings.
-Known issues: several human-verification items deferred across v0.4.0 and v0.4.8.
+Groups persist in a separate `groups.db`. Known issues: human-verification items deferred across v0.4.0, v0.4.8 and v0.5.0.
 
 ## Constraints
 
@@ -155,4 +151,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-10-12 after Phase 30 (Group management & reorder)*
+*Last updated: 2026-10-15 after v0.5.0 milestone*

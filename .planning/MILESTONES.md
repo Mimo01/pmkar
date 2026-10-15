@@ -1,5 +1,34 @@
 # Milestones
 
+## v0.5.0 Custom Groups (Shipped: 2026-10-15)
+
+**Phases:** 6 (28-33) | **Plans:** 55
+**Timeline:** 2026-10-12 → 2026-10-15 (released as v0.5.0)
+**Codebase:** ~65,700 LOC (45,236 TypeScript + 20,479 Rust) | 391 commits since phase 28 start
+**Git range:** fec1e51 → 13cc659 (155 files, +20,823 / −956 excluding .planning)
+
+**Delivered:** User-defined issue groups layered on top of the core New / Not mine / Linked triage. Groups live in tabs after a divider, an issue can belong to many groups, and grouped issues never silently disappear when they drop out of a fetch.
+
+**Key accomplishments:**
+
+1. Durable groups storage — `groups.db`, scoped group CRUD/order/membership Tauri commands, `useGroupStore` hydration; copy-step labels fully translated EN/SK with a Rust↔i18n sync test (CONI-01)
+2. Tab strip & group view — create groups from the tab bar, flat filterable list per group with a triage badge on every card
+3. Group management — rename, recolor (8-hue palette, both themes), safe delete, reorder via explicit Move left/right menu actions (no drag & drop)
+4. Membership entry points — shared `GroupPicker` popover on detail panel, card chips and multi-select selection bar; add/remove toasts report real counts
+5. Durability — snapshots keep grouped issues visible; gated "No longer in results" hint with explicit one-click remove
+6. Polish — EN/SK parity incl. Slovak plurals ("tiket"), WCAG AA checks, group chip redesign (tinted app-native chips)
+
+### Known Gaps
+
+Known deferred items at close: 86 (see STATE.md Deferred Items)
+
+- Phases 29-33 VERIFICATION `human_needed`; 33-UAT (27 scenarios) and 32/33 HUMAN-UAT (7) still pending, WR-01 tooltip-on-handoff fix needs WebView2 check
+- Advisory review items WR-07..09 (Phase 32); snapshot refresh wired only in TicketListPage fetch callbacks (GDUR-05/06 on Not mine / Linked / poll paths unconfirmed)
+- Group view badge for snapshot-only members reads `useTicketStore.triageMap`, not confirmed (GVIEW-03)
+- REQUIREMENTS.md checkboxes were stale at close (6/30); all 30 marked complete from the audit (30/30 satisfied)
+
+---
+
 ## v0.4.8 Mapping Refinements & Static Values (Shipped: 2026-05-20)
 
 **Phases:** 4 (24-27) | **Plans:** 9 | **Quick tasks:** ~70
@@ -20,6 +49,7 @@
 ### Known Gaps
 
 Known deferred items at close: 3 (see STATE.md Deferred Items)
+
 - Phase 25: VERIFICATION human_needed; HUMAN-UAT 3 scenarios pending (description prose rendering, picker pre-fill, E2E copy)
 - Phase 24 VERIFICATION.md still reads gaps_found, but the gap was fixed in 5fb7594; it was never re-verified
 - Debug sessions `knowledge-base`, `user-mapping-not-resolved` left open
@@ -48,9 +78,11 @@ Known deferred items at close: 3 (see STATE.md Deferred Items)
 ### Known Gaps
 
 Phase 22 VERIFICATION.md deferred at milestone close (code confirmed wired by integration checker):
+
 - PERS-01..04, OVRD-01..06: 10 requirements — all code paths verified by integration checker; formal VERIFICATION.md not produced
 
 Tech debt items acknowledged:
+
 - DISC-04: 3 human verification items pending (probe banner visual, status pill, per-session dismiss/restart)
 - TRAN-05: wiki ADF links/blockquotes/hard-breaks coverage — human spot-check recommended
 - CTRL-08: VirtualizedCombobox 500+ item performance — human browser observation deferred

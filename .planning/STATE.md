@@ -2,34 +2,32 @@
 gsd_state_version: 1.0
 milestone: v0.5.0
 milestone_name: Custom Groups
-status: executing
-last_updated: "2026-10-13T06:30:28.788Z"
-last_activity: 2026-10-13 -- Phase 33 execution started
+status: Awaiting next milestone
+last_updated: "2026-10-15T07:22:09.192Z"
+last_activity: 2026-10-15 — Milestone v0.5.0 completed and archived
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 55
-  completed_plans: 54
-  percent: 83
+  completed_plans: 55
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-10-11)
+See: .planning/PROJECT.md (updated 2026-10-15)
 
 **Core value:** Surface relevant tickets from customer's Jira and copy them with maximum fidelity to my company's Jira — no manual re-entry, no lost detail.
-**Current focus:** Phase 33 — polish-verification
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 33 (polish-verification) — EXECUTING
-Plan: 1 of 13
-Status: Executing Phase 33
-Last activity: 2026-10-13 -- Phase 33 execution started
-
-Progress: [██████████] 100%
+Phase: Milestone v0.5.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-10-15 — Milestone v0.5.0 completed and archived
 
 ## Deferred Items
 
@@ -52,6 +50,17 @@ Items acknowledged and deferred at milestone close on 2026-10-11 (v0.4.8):
 | debug | knowledge-base | unknown |
 | debug | user-mapping-not-resolved | done (not moved to resolved/) |
 | quick_task | 72 quick task dirs with status `missing` (no status metadata) | informational |
+
+Items acknowledged and deferred at milestone close on 2026-10-15 (v0.5.0):
+
+| Category | Item | Status |
+|----------|------|--------|
+| verification | Phases 29-33 VERIFICATION | human_needed |
+| uat | 33-UAT (27 scenarios) | testing |
+| uat | 32-HUMAN-UAT (4), 33-HUMAN-UAT (3) | partial |
+| debug | knowledge-base, user-mapping-not-resolved | unknown / done |
+| quick_task | 75 quick task dirs without status metadata | informational |
+| tech-debt | WR-07..09 advisory (Phase 32); GDUR-05/06 snapshot refresh on Not mine/Linked/poll; GVIEW-03 triage badge for snapshot-only members | deferred |
 
 ## Performance Metrics
 
@@ -367,3 +376,7 @@ Last activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palett
 Last session: 2026-10-12T19:21:03.934Z
 Stopped at: Phase 33 UI-SPEC approved
 Resume file: .planning/phases/33-polish-verification/33-UI-SPEC.md
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

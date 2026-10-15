@@ -181,6 +181,43 @@
 - Sessions: many short sessions (quick tasks + debug)
 - Notable: quick-task-heavy cadence; 9 planned plans vs ~70 quick tasks
 
+## Milestone: v0.5.0 — Custom Groups
+
+**Shipped:** 2026-10-15
+**Phases:** 6 | **Plans:** 55
+
+### What Was Built
+- Durable `groups.db` store with scoped Tauri commands and `useGroupStore`
+- Group tabs after a divider, flat filterable group view with triage badges
+- Rename/recolor/delete/reorder (Move left/right) and a shared `GroupPicker` for detail, cards and multi-select
+- Snapshot-backed durability with a gated "No longer in results" hint and explicit remove
+- Full EN/SK parity (Slovak plurals) and WCAG AA pass; late chip redesign via quick tasks
+
+### What Worked
+- Milestone opened properly with REQUIREMENTS.md and a milestone audit before close
+- Strong user steering on UX (no DnD, explicit buttons, minimal tab strip) kept scope tight
+- Quick tasks handled visual iteration (chip restyle, tooltips, palette) without phase overhead
+
+### What Was Inefficient
+- Phase 32 needed 13 plans and Phase 33 13 plans; plan counts ballooned with review/fix waves
+- REQUIREMENTS.md checkboxes/traceability drifted again (6/30 at close)
+- Verification stayed `human_needed` for five phases; UAT left partial before tagging the release
+
+### Patterns Established
+- Shared popover component with checkbox and atomic plain-list modes
+- Guard tests enforcing copy terminology (SK "tiket")
+- Reorder via explicit menu actions with screen-reader announcements
+
+### Key Lessons
+1. Checkbox drift is systemic (now 4 milestones) — automate it at phase completion
+2. Run verify-work before tagging; releasing with open UAT leaves it open
+3. Keep group-related visual decisions in memory/feedback so later restyles stay consistent
+
+### Cost Observations
+- Model mix: not tracked
+- Sessions: many (phase execution + quick tasks)
+- Notable: 55 plans in ~4 days via wave-parallel execution
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -191,6 +228,7 @@
 | v0.3.0 | 5 | 10 | Parallel phase execution, milestone audit before completion, Rust-side background loops |
 | v0.4.0 | 7 | 28 | Quick tasks for post-phase bugs, debug sessions for systematic investigation, wave-based parallel within phases |
 | v0.4.8 | 4 | 9 | Incremental patch releases, quick-task-dominant cadence, milestone opened retroactively |
+| v0.5.0 | 6 | 55 | Wave-parallel execution at scale, milestone audit before close, UX-steered quick-task polish |
 
 ### Cumulative Quality
 
@@ -200,10 +238,11 @@
 | v0.3.0 | 528 + 75 Rust | — | 23,250 |
 | v0.4.0 | 682+ frontend + 221+ Rust | — | ~35,744 |
 | v0.4.8 | 835 frontend + 271 Rust | — | ~47,836 |
+| v0.5.0 | — | — | ~65,715 |
 
 ### Top Lessons (Verified Across Milestones)
 
-1. **Checkbox/traceability drift is systemic** — happened in all three milestones (v0.1.0, v0.3.0, v0.4.0). Manual updates are insufficient; needs automation at phase completion.
+1. **Checkbox/traceability drift is systemic** — happened in four milestones (v0.1.0, v0.3.0, v0.4.0, v0.5.0). Manual updates are insufficient; needs automation at phase completion.
 2. **Integration phases are the highest-risk phases** — v0.4.0 Phase 22 shipped two bugs (B-01, B-05) undetected. Integration phases need integration tests before marking complete.
 3. **VERIFICATION.md matters most for integration phases** — they wire subsystems; informal wiring confirmation is not enough.
 4. Mock-first development enables rapid parallel progress but requires discipline on parameterizing config values
