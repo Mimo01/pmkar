@@ -23,7 +23,7 @@
 
 - [ ] **LINT-01**: The remembered Cloud key survives every triage transition (deny, restore, handled) in both database and in-memory store
 - [x] **LINT-02**: A Linked row can never exist without a Cloud key (`set_triage_state` rejects `copied`; re-link goes through a dedicated atomic command)
-- [ ] **LINT-03**: Backend refuses to copy a ticket that already has a remembered link, so no duplicate Cloud issue is created
+- [x] **LINT-03**: Backend refuses to copy a ticket that already has a remembered link, so no duplicate Cloud issue is created
 - [x] **LINT-04**: A done ticket's remembered link is not erased by fetch cleanup
 
 ### Consistency and QA
@@ -62,7 +62,7 @@
 | RLNK-04 | Phase 36 | Pending |
 | LINT-01 | Phase 35 | Pending |
 | LINT-02 | Phase 34 | Complete |
-| LINT-03 | Phase 34 | Pending |
+| LINT-03 | Phase 34 | Complete |
 | LINT-04 | Phase 34 | Complete |
 | RQA-01 | Phase 37 | Pending |
 | RQA-02 | Phase 36 | Pending |
