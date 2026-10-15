@@ -30,17 +30,19 @@ export function ConfirmTransitionDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const resolvedRef = useRef(false);
   const submittedRef = useRef(false);
-  const lastTargetRef = useRef<ConfirmTransitionTarget | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  if (target) lastTargetRef.current = target;
-  const snapshot = target ?? lastTargetRef.current;
+  // Keep the last non-null target so content stays stable while the dialog animates out.
+  // Derived-state pattern (setState during render) instead of mutating a ref (WR-03).
+  const [snapshot, setSnapshot] = useState<ConfirmTransitionTarget | null>(target);
+  if (target && target !== snapshot) {
+    setSnapshot(target);
+    setSubmitting(false);
+  }
 
   useEffect(() => {
     if (target) {
       resolvedRef.current = false;
       submittedRef.current = false;
-      setSubmitting(false);
     }
   }, [target]);
 
