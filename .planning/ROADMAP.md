@@ -158,8 +158,8 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 36-01-PLAN.md — EN/SK strings + detailLocale guard test + RememberedLinkHint component
-- [ ] 36-02-PLAN.md — Shared useTriageDetailActions hook (handlers + focus rules) with harness tests
+- [x] 36-01-PLAN.md — EN/SK strings + detailLocale guard test + RememberedLinkHint component
+- [x] 36-02-PLAN.md — Shared useTriageDetailActions hook (handlers + focus rules) with harness tests
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -222,5 +222,5 @@ Plans:
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
-| 36. Detail and Group UI | v0.5.1 | 0/? | Not started | - |
+| 36. Detail and Group UI | v0.5.1 | 2/5 | In Progress|  |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
