@@ -57,7 +57,7 @@ steps:
 2. Repeat with NVDA.
 3. Note whether the live region ever takes focus.
 expected: Spoken text equals the EN `a11y.*` strings with the real keys, e.g. "KEY moved to Dismissed.", "Undo: KEY restored to Linked CLOUD-1.", "KEY linked to CLOUD-1.", "KEY restored.", "KEY marked as handled." Each is heard once (D-05); a brief repeat caused by the toast is recorded as an issue with notes, not a blocker. The region never takes focus.
-known mismatch: the deny toast says "Ignored" while the live-region announcement and the tab say "Dismissed". Tester notes whether this is confusing (follow-up, not a blocker).
+note: the deny toast, the live-region announcement and the tab now all say "Dismissed" / "Zamietnuté" (fixed in quick 261015-lwy). Tester confirms this reads naturally.
 result: [pending]
 
 ### 6. Slovak run of tests 3-5

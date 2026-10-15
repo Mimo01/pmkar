@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { FOCUS_RING } from '../../lib/focusRing';
 import { formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { useCopyStore } from './copyStore';
@@ -41,8 +42,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   const targetProjectName = useConnectionStore((s) => s.targetProjectName);
   const tri = useTriageDetailActions(issueKey, detail, closeButtonRef);
   const triageEntry = tri.triageEntry;
-  const isCopied = triageEntry?.state === 'copied';
-  const isIgnored = triageEntry?.state === 'ignored';
+  const linkedKey = tri.triageEntry?.copiedKey ?? '';
   const isHandled = triageEntry?.state === 'handled';
   const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
   const hasUnseenChanges = !!unseenFields;
@@ -67,8 +67,8 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   };
 
   const handleOpenInCloudJira = () => {
-    if (triageEntry?.copiedKey && cloudBaseUrl) {
-      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${triageEntry.copiedKey}` });
+    if (linkedKey && cloudBaseUrl) {
+      invoke('open_external_url', { url: `${cloudBaseUrl}/browse/${linkedKey}` });
     }
   };
 
@@ -125,7 +125,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
   // Escape key closes panel
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
         onClose();
       }
     },
@@ -147,7 +147,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
         void tri.handleLink();
       }}
       aria-disabled={linkBusy}
-      className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 aria-disabled:opacity-50 aria-disabled:cursor-not-allowed flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+      className={`px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 aria-disabled:hover:bg-brand aria-disabled:opacity-50 aria-disabled:cursor-not-allowed flex items-center gap-1.5 ${FOCUS_RING}`}
     >
       {linkBusy ? (
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -247,7 +247,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
             </div>
             <TooltipProvider delayDuration={300}>
               <div className="flex items-center gap-2 mt-2">
-                {isCopied && triageEntry?.copiedKey ? (
+                {tri.isLinked ? (
                   <>
                     {/* Primary: linked status badge with copied key */}
                     <span
@@ -256,7 +256,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none outline-none"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      {t('detail.copied')} → {triageEntry.copiedKey}
+                      {t('detail.copied')} → {linkedKey}
                     </span>
 
                     {/* Secondary: compact text links to open in each Jira */}
@@ -276,7 +276,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       className="text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 flex items-center gap-1"
                     >
                       <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                      {triageEntry.copiedKey}
+                      {linkedKey}
                     </button>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -284,7 +284,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           type="button"
                           ref={tri.denyRef}
                           onClick={tri.handleDeny}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                         >
                           {t('detail.deny')}
                         </button>
@@ -292,7 +292,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       <TooltipContent aria-hidden="true">
                         {t('detail.deny.tooltip', {
                           tab: t('nav.notMine'),
-                          key: triageEntry.copiedKey,
+                          key: linkedKey,
                         })}
                       </TooltipContent>
                     </Tooltip>
@@ -307,13 +307,13 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     {t('detail.openInJira')}
                   </button>
                 )}
-                {isCopied ? null : isHandled ? (
+                {tri.isLinked ? null : isHandled ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
                         onClick={handleUnhandle}
-                        className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                        className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                       >
                         {t('detail.handled')}
                       </button>
@@ -322,7 +322,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       {t('detail.handled.tooltip')}
                     </TooltipContent>
                   </Tooltip>
-                ) : isIgnored ? (
+                ) : tri.isDenied ? (
                   <>
                     {tri.rememberedKey ? (
                       <Tooltip>
@@ -337,7 +337,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     <button
                       type="button"
                       onClick={tri.handleRestore}
-                      className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                      className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                     >
                       {t('ignored.restore')}
                     </button>
@@ -350,7 +350,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                           type="button"
                           ref={tri.dismissRef}
                           onClick={tri.handleDismiss}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                         >
                           {t('detail.ignore')}
                         </button>
@@ -364,7 +364,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                         <button
                           type="button"
                           onClick={handleMarkHandled}
-                          className="px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                         >
                           {t('detail.markHandled')}
                         </button>
@@ -375,12 +375,12 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     </Tooltip>
                   </>
                 )}
-                {isCopied || isIgnored || isHandled ? null : (
+                {tri.isLinked || tri.isDenied || isHandled ? null : (
                   <button
                     type="button"
                     onClick={handleStartCopy}
                     disabled={copyPhase === 'loading_preview'}
-                    className="px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
+                    className={`px-3 py-1 rounded text-sm font-semibold text-white bg-brand hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 ${FOCUS_RING}`}
                   >
                     {copyPhase === 'loading_preview' ? (
                       <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">

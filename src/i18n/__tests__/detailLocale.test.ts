@@ -35,6 +35,10 @@ describe('detail.* Phase 36 strings', () => {
     expect(skMap['detail.restoreLink.tooltip']).toMatch(/tiket/i);
   });
 
+  it('SK Dismiss and Deny labels differ', () => {
+    expect(skMap['detail.deny']).not.toBe(skMap['detail.ignore']);
+  });
+
   it('placeholders and <k> tags match between EN and SK', () => {
     for (const k of NEW_KEYS) {
       expect(placeholders(skMap[k]), `placeholders of "${k}"`).toEqual(placeholders(enMap[k]));

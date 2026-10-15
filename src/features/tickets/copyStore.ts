@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { create } from 'zustand';
 import { schemaCacheKey, useSchemaCacheStore } from '@/stores/schemaCacheStore';
 import type { FieldSchema } from '@/types/fieldSchema';
+import i18n from '../../i18n/index';
 import { useConnectionStore } from '../connections/connectionStore';
 import type { FieldMappingRow } from '../field-mapping/types';
 import type { CloudMeta, CopyPhase, CopyTicketResult, JiraTicketDetail } from './types';
@@ -278,12 +279,18 @@ export const useCopyStore = create<CopyState>((set, get) => ({
 
       set({ phase: 'result', result, progressStep: '' });
     } catch (err) {
+      const msg = String(err);
+      // Backend refuses duplicate copies with "... is already linked to KEY. ..." (W-2).
+      const linked = msg.match(/already linked to ([A-Z][A-Z0-9_]*-\d+)/);
+      const detail = linked
+        ? i18n.t('copy.alreadyLinked', { key: state.sourceKey, cloudKey: linked[1] })
+        : msg;
       set({
         phase: 'result',
         result: {
           targetKey: null,
           targetUrl: null,
-          steps: [{ step: 'create_issue', success: false, detail: String(err) }],
+          steps: [{ step: 'create_issue', success: false, detail }],
         },
         progressStep: '',
       });

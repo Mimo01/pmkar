@@ -289,6 +289,29 @@ describe('copyStore', () => {
       expect(state.phase).toBe('result');
       expect(state.result?.targetKey).toBeNull();
       expect(state.result?.steps[0].success).toBe(false);
+      expect(state.result?.steps[0].detail).toBe('Error: Timeout');
+    });
+
+    it('shows a localized message for an already-linked refusal', async () => {
+      mockInvoke.mockRejectedValue(
+        'Ticket SRC-1 is already linked to CLOUD-9. Use Link to restore it instead of copying again.',
+      );
+      useCopyStore.setState({
+        sourceKey: 'SRC-1',
+        cloudMeta: makeCloudMeta(),
+        targetSummary: 'Test',
+        targetDescription: '',
+        targetStatus: 'To Do',
+        targetPriorityId: '3',
+        selectedLabels: [],
+        targetIssueTypeId: 'it-1',
+      });
+
+      await useCopyStore.getState().confirmCopy('http://server', 'https://cloud', null);
+
+      expect(useCopyStore.getState().result?.steps[0].detail).toBe(
+        'SRC-1 is already linked to CLOUD-9. Open the ticket and use Restore link to restore it instead of copying again.',
+      );
     });
   });
 

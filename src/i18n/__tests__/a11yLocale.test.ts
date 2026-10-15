@@ -39,4 +39,11 @@ describe('a11y.* Phase 37 announcement strings', () => {
     expect(enMap['a11y.denied']).toContain(enMap['nav.notMine']);
     expect(skMap['a11y.denied']).toContain(skMap['nav.notMine']);
   });
+
+  it('triage toast strings use the nav.notMine label too', () => {
+    for (const k of ['triage.denied', 'triage.denyFailed', 'triage.undoFailed']) {
+      expect(enMap[k], k).toContain(enMap['nav.notMine']);
+      expect(skMap[k], k).toContain(skMap['nav.notMine']);
+    }
+  });
 });
