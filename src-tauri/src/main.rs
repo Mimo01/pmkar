@@ -231,6 +231,7 @@ fn main() {
             commands::get_triage_state,
             commands::set_triage_state,
             commands::delete_done_triage,
+            commands::relink_ticket,
             commands::get_fetch_config,
             commands::set_fetch_config,
             commands::search_jira_users,

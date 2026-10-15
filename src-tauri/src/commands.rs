@@ -1037,21 +1037,27 @@ pub fn get_triage_state(
     Ok(result)
 }
 
+/// Whitelist of states settable via `set_triage_state`. `copied` is excluded:
+/// only the copy flow (`set_triage_copied`) or `relink_ticket` may produce it.
+pub(crate) fn validate_triage_state(state: &str) -> Result<(), AppError> {
+    match state {
+        "new" | "seen" | "ignored" | "handled" => Ok(()),
+        "copied" => Err(AppError::Internal(
+            "State 'copied' cannot be set through set_triage_state. Use relink_ticket to restore a remembered link, or copy the ticket.".into(),
+        )),
+        _ => Err(AppError::Internal(format!(
+            "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, handled"
+        ))),
+    }
+}
+
 #[tauri::command]
 pub fn set_triage_state(
     ticket_key: String,
     state: String,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<(), AppError> {
-    // Validate state value
-    match state.as_str() {
-        "new" | "seen" | "ignored" | "copied" | "handled" => {}
-        _ => {
-            return Err(AppError::Internal(format!(
-                "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, copied, handled"
-            )));
-        }
-    }
+    validate_triage_state(&state)?;
     let db = triage_db
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
@@ -1067,6 +1073,31 @@ pub fn delete_done_triage(
         .lock()
         .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
     db.delete_triage_entries(&ticket_keys)
+}
+
+/// Returns the remembered Cloud key and marks the ticket Linked atomically.
+/// `None` means no remembered link; the frontend opens the copy preview
+/// (RLNK-02, Phase 35).
+#[tauri::command]
+pub fn relink_ticket(
+    ticket_key: String,
+    triage_db: State<'_, Arc<Mutex<TriageDb>>>,
+) -> Result<Option<String>, AppError> {
+    let db = triage_db
+        .lock()
+        .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+    db.relink(&ticket_key)
+}
+
+/// Refuses a duplicate copy when the source has a remembered Cloud key.
+/// The phrase "already linked to {KEY}" is the stable contract Phase 35 parses.
+pub(crate) fn ensure_not_linked(db: &TriageDb, source_key: &str) -> Result<(), AppError> {
+    if let Some(existing) = db.get_copied_key(source_key)? {
+        return Err(AppError::Internal(format!(
+            "Ticket {source_key} is already linked to {existing}. Use Link to restore it instead of copying again."
+        )));
+    }
+    Ok(())
 }
 
 // --- Fetch config commands ---
@@ -1614,6 +1645,13 @@ pub async fn copy_ticket_v2(
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
     mapping_db: State<'_, Arc<Mutex<FieldMappingDb>>>,
 ) -> Result<CopyTicketResult, AppError> {
+    // LINT-03: refuse duplicate copy before any credential lookup, mapping load, Jira call or step/audit row
+    {
+        let g = triage_db
+            .lock()
+            .map_err(|_| AppError::Internal("Triage DB lock poisoned".into()))?;
+        ensure_not_linked(&g, &args.source_key)?;
+    }
     let arc_db = Arc::clone(db.inner());
     let client = build_audited_client(arc_db);
     let mut steps: Vec<CopyStepResult> = Vec::new();
@@ -2321,6 +2359,123 @@ pub fn trigger_manual_poll(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_validate_triage_state_accepts_non_copied() {
+        for s in ["new", "seen", "ignored", "handled"] {
+            assert!(validate_triage_state(s).is_ok(), "{s}");
+        }
+    }
+
+    #[test]
+    fn test_validate_triage_state_rejects_copied() {
+        let e = validate_triage_state("copied")
+            .expect_err("copied rejected")
+            .to_string();
+        assert!(e.contains("relink_ticket") && e.contains("copy"), "{e}");
+    }
+
+    #[test]
+    fn test_validate_triage_state_rejects_unknown() {
+        let e = validate_triage_state("bogus")
+            .expect_err("rejected")
+            .to_string();
+        assert!(
+            e.contains("Must be one of: new, seen, ignored, handled"),
+            "{e}"
+        );
+        assert!(!e.contains("copied"), "{e}");
+    }
+
+    #[test]
+    fn test_relink_via_db_hit_and_miss() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        db.set_triage("PROJ-1", "ignored").expect("ignored");
+        assert_eq!(
+            db.relink("PROJ-1").expect("relink"),
+            Some("CLOUD-1".to_string())
+        );
+        assert_eq!(
+            db.relink("PROJ-1").expect("idempotent"),
+            Some("CLOUD-1".to_string())
+        );
+        assert_eq!(db.relink("NOPE-1").expect("miss"), None);
+    }
+
+    fn assert_linked(db: &TriageDb, key: &str, cloud: &str) {
+        let e = ensure_not_linked(db, key)
+            .expect_err("should refuse")
+            .to_string();
+        assert!(
+            e.contains(&format!("already linked to {cloud}")) && e.contains(key),
+            "{e}"
+        );
+    }
+
+    #[test]
+    fn test_ensure_not_linked_linked_row() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        assert_linked(&db, "PROJ-1", "CLOUD-1");
+    }
+
+    #[test]
+    fn test_ensure_not_linked_ignored_with_key() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        db.set_triage("PROJ-1", "ignored").expect("ignored");
+        assert_linked(&db, "PROJ-1", "CLOUD-1");
+    }
+
+    #[test]
+    fn test_ensure_not_linked_new_with_key() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        db.set_triage("PROJ-1", "new").expect("new");
+        assert_linked(&db, "PROJ-1", "CLOUD-1");
+    }
+
+    #[test]
+    fn test_ensure_not_linked_keyless_and_unknown_ok() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage("PROJ-2", "new").expect("new");
+        assert!(ensure_not_linked(&db, "PROJ-2").is_ok());
+        assert!(ensure_not_linked(&db, "UNKNOWN-1").is_ok());
+    }
+
+    #[test]
+    fn test_ensure_not_linked_needs_no_credentials() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        let e = ensure_not_linked(&db, "PROJ-1")
+            .expect_err("refuse")
+            .to_string();
+        assert!(e.contains("already linked to"), "{e}");
+    }
+
+    #[test]
+    fn test_ensure_not_linked_legacy_shape() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let db = crate::triage_db::open_legacy_shape_for_test(dir.path());
+        assert_linked(&db, "LEG-1", "CLOUD-1");
+        assert_linked(&db, "LEG-2", "CLOUD-2");
+        assert!(ensure_not_linked(&db, "LEG-3").is_ok());
+    }
+
+    #[test]
+    fn test_done_cleanup_keeps_linked_row() {
+        let db = TriageDb::open_in_memory().expect("db");
+        db.set_triage_copied("PROJ-1", "CLOUD-1").expect("copied");
+        db.set_triage("PROJ-2", "new").expect("new");
+        let keys = vec!["PROJ-1".to_string(), "PROJ-2".to_string()];
+        let deleted = db.delete_triage_entries(&keys).expect("delete");
+        assert_eq!(deleted, 1);
+        assert_eq!(
+            db.get_copied_key("PROJ-1").expect("get"),
+            Some("CLOUD-1".to_string())
+        );
+    }
 
     // Debug session: copy-400-and-logs-crash — these tests pin the format of
     // the user-facing detail so the actual Jira error response is always
