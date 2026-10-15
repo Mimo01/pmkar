@@ -90,7 +90,7 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 
 - [x] **Phase 34: Link Integrity Backend** - Atomic re-link command, no Linked row without a key, duplicate-copy guard, link survives cleanup (completed 2026-10-15)
 - [x] **Phase 35: Shared Triage Actions** - Key-preserving deny / re-link / restore transitions in one shared frontend module (completed 2026-10-15)
-- [ ] **Phase 36: Detail and Group UI** - Explicit Deny / Link buttons in detail (page, panel, group view) with hints, focus handling and EN/SK strings
+- [x] **Phase 36: Detail and Group UI** - Explicit Deny / Link buttons in detail (page, panel, group view) with hints, focus handling and EN/SK strings (completed 2026-10-15)
 - [ ] **Phase 37: Consistency, Accessibility and UAT** - Each ticket in exactly one tab after any transition; keyboard and screen-reader verified
 
 ## Phase Details
@@ -163,9 +163,9 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 36-03-PLAN.md — TicketDetailPage wiring (Deny, Restore link, Restore, hint, focus) + group-view hand-off test
-- [ ] 36-04-PLAN.md — TicketDetailPanel wiring (same behavior, panel styling)
-- [ ] 36-05-PLAN.md — Remembered-link hint on Not mine rows (Not mine tab, group view)
+- [x] 36-03-PLAN.md — TicketDetailPage wiring (Deny, Restore link, Restore, hint, focus) + group-view hand-off test
+- [x] 36-04-PLAN.md — TicketDetailPanel wiring (same behavior, panel styling)
+- [x] 36-05-PLAN.md — Remembered-link hint on Not mine rows (Not mine tab, group view)
 **UI hint**: yes
 
 ### Phase 37: Consistency, Accessibility and UAT
@@ -222,5 +222,5 @@ Plans:
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
-| 36. Detail and Group UI | v0.5.1 | 2/5 | In Progress|  |
+| 36. Detail and Group UI | v0.5.1 | 5/5 | Complete   | 2026-10-15 |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
