@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v0.5.1
 milestone_name: Re-triage
-status: ready_to_plan
-last_updated: 2026-10-15T08:58:47.233Z
+status: planning
+last_updated: "2026-10-15T09:18:08.188Z"
 last_activity: 2026-10-15
 progress:
   total_phases: 4
@@ -11,7 +11,6 @@ progress:
   total_plans: 4
   completed_plans: 4
   percent: 50
-stopped_at: Phase 35 complete (2/2) — ready to discuss Phase 36
 ---
 
 # Project State
@@ -375,9 +374,9 @@ None yet.
 ## Session Continuity
 
 Last activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
-Last session: 2026-10-15T08:56:43.061Z
-Stopped at: Phase 35 UI-SPEC approved
-Resume file: None
+Last session: 2026-10-15T09:18:08.184Z
+Stopped at: Phase 36 context gathered
+Resume file: .planning/phases/36-detail-and-group-ui/36-CONTEXT.md
 
 ## Operator Next Steps
 
