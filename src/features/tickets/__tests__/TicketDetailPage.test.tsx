@@ -220,7 +220,7 @@ describe('TicketDetailPage', () => {
     });
   });
 
-  it('shows ignored state button when ticket is ignored', async () => {
+  it('shows Restore and Copy actions when ticket is denied', async () => {
     useTicketStore.setState({
       triageMap: { 'PROJ-1': { state: 'ignored', copiedKey: null } },
     } as unknown as Parameters<typeof useTicketStore.setState>[0]);
@@ -228,8 +228,8 @@ describe('TicketDetailPage', () => {
     render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
 
     await waitFor(() => {
-      // Shows 'Ignored' button with option to unignore
-      expect(screen.getByText(/ignored|detail\.ignored/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^restore$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Copy to/ })).toBeInTheDocument();
     });
   });
 
@@ -376,13 +376,115 @@ describe('TicketDetailPage', () => {
     it('Restoring from Ignored keeps CLD-9', async () => {
       seed('ignored');
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
-      fireEvent.click(await screen.findByRole('button', { name: /^ignored$/i }));
+      fireEvent.click(await screen.findByRole('button', { name: /^restore$/i }));
       await waitFor(() =>
         expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
           state: 'seen',
           copiedKey: 'CLD-9',
         }),
       );
+    });
+  });
+
+  describe('Phase 36 deny / link', () => {
+    const seed = (state: 'copied' | 'ignored', copiedKey: string | null) => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey } } });
+    };
+
+    it('Linked: Deny writes ignored and focuses Restore link', async () => {
+      seed('copied', 'CLD-9');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Deny' }));
+      const restoreLink = await screen.findByRole('button', { name: 'Restore link to CLD-9' });
+      await waitFor(() => expect(document.activeElement).toBe(restoreLink));
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'ignored',
+      });
+      const cmds = mockInvoke.mock.calls.map((c) => c[0] as string);
+      expect(cmds).not.toContain('relink_ticket');
+      expect(cmds.some((c) => c.startsWith('copy_'))).toBe(false);
+    });
+
+    it('Linked: failed Deny returns focus to Deny', async () => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        if (cmd === 'set_triage_state') return Promise.reject(new Error('boom'));
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state: 'copied', copiedKey: 'CLD-9' } } });
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      const deny = await screen.findByRole('button', { name: 'Deny' });
+      fireEvent.click(deny);
+      await waitFor(() =>
+        expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Deny' })),
+      );
+    });
+
+    it('Denied with remembered key shows Restore link, Restore and hint', async () => {
+      seed('ignored', 'CLD-9');
+      const { container } = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      expect(await screen.findByRole('button', { name: 'Restore link to CLD-9' })).toBeVisible();
+      expect(screen.getByRole('button', { name: /^restore$/i })).toBeVisible();
+      expect(screen.queryByRole('button', { name: /^ignored$/i })).toBeNull();
+      expect(container.textContent).toContain('Previously linked to CLD-9');
+    });
+
+    it('Denied never linked shows Copy to primary and no hint', async () => {
+      seed('ignored', null);
+      const { container } = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      expect(await screen.findByRole('button', { name: /^Copy to/ })).toBeVisible();
+      expect(screen.getByRole('button', { name: /^restore$/i })).toBeVisible();
+      expect(container.textContent).not.toContain('Previously linked');
+    });
+
+    it('Restore link relinks, shows Linked badge focused and Deny', async () => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        if (cmd === 'relink_ticket') return Promise.resolve('CLD-9' as never);
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({
+        triageMap: { 'PROJ-1': { state: 'ignored', copiedKey: 'CLD-9' } },
+      });
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      const badge = await screen.findByText(/→ CLD-9/);
+      await waitFor(() => expect(document.activeElement).toBe(badge));
+      expect(screen.getByRole('button', { name: 'Deny' })).toBeVisible();
+    });
+
+    it('Restore link with no key hands off to the copy preview', async () => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        if (cmd === 'relink_ticket') return Promise.resolve(null as never);
+        return Promise.resolve(undefined as never);
+      });
+      const startPreview = vi.fn();
+      useCopyStore.setState({ startPreview } as never);
+      useTicketStore.setState({
+        triageMap: { 'PROJ-1': { state: 'ignored', copiedKey: 'CLD-9' } },
+      });
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: 'Restore link to CLD-9' }));
+      await waitFor(() => expect(startPreview).toHaveBeenCalled());
+      expect(screen.queryByText(/→ CLD-9/)).toBeNull();
+    });
+
+    it('Restore from denied focuses Dismiss', async () => {
+      seed('ignored', 'CLD-9');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      fireEvent.click(await screen.findByRole('button', { name: /^restore$/i }));
+      const dismiss = await screen.findByRole('button', { name: /dismiss/i });
+      await waitFor(() => expect(document.activeElement).toBe(dismiss));
+      expect(useTicketStore.getState().triageMap['PROJ-1']).toEqual({
+        state: 'seen',
+        copiedKey: 'CLD-9',
+      });
     });
   });
 });

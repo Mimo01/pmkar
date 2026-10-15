@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { ArrowLeft, CheckCircle2, ExternalLink, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { formatDate, formatRelativeTime } from '../../lib/format';
 import { useConnectionStore } from '../connections/connectionStore';
 import { DetailGroupsRow } from '../groups/DetailGroupsRow';
 import { useCopyStore } from './copyStore';
+import { RememberedLinkHint } from './RememberedLinkHint';
 import { AttachmentsTab } from './tabs/AttachmentsTab';
 import { ChangesTab } from './tabs/ChangesTab';
 import { CommentsTab } from './tabs/CommentsTab';
@@ -16,8 +17,9 @@ import { HistoryTab } from './tabs/HistoryTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { WorkLogTab } from './tabs/WorkLogTab';
 import { useTicketStore } from './ticketStore';
-import { denyTicket, markHandled, restoreTicket } from './triageActions';
+import { markHandled, restoreTicket } from './triageActions';
 import type { JiraTicketDetail } from './types';
+import { useTriageDetailActions } from './useTriageDetailActions';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history' | 'changes';
 
@@ -31,6 +33,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const [detail, setDetail] = useState<JiraTicketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const backRef = useRef<HTMLButtonElement>(null);
+  const tri = useTriageDetailActions(issueKey, detail, backRef);
 
   const copyPhase = useCopyStore((s) => s.phase);
   const copyError = useCopyStore((s) => s.error);
@@ -38,7 +42,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const cloudBaseUrl = useConnectionStore((s) => s.cloudConnection?.baseUrl ?? '');
   const sourceProjectName = useConnectionStore((s) => s.sourceProjectName);
   const targetProjectName = useConnectionStore((s) => s.targetProjectName);
-  const triageEntry = useTicketStore((s) => s.triageMap[issueKey]);
+  const triageEntry = tri.triageEntry;
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
   const isHandled = triageEntry?.state === 'handled';
@@ -51,14 +55,6 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       useCopyStore.getState().startPreview(detail, baseUrl, cloudBaseUrl);
     }
   }, [detail, baseUrl, cloudBaseUrl]);
-
-  const handleIgnore = useCallback(() => {
-    void denyTicket(issueKey);
-  }, [issueKey]);
-
-  const handleUnignore = useCallback(() => {
-    void restoreTicket(issueKey);
-  }, [issueKey]);
 
   const handleMarkHandled = useCallback(() => {
     void markHandled(issueKey);
@@ -187,6 +183,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
       {/* Page header with back button */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-brand-border bg-brand-surface">
         <button
+          ref={backRef}
           type="button"
           onClick={onBack}
           className="flex items-center gap-1 text-sm text-brand-muted hover:text-brand-text transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded"
@@ -239,7 +236,11 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             {isCopied && triageEntry?.copiedKey ? (
               <>
                 {/* Linked status badge */}
-                <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none">
+                <span
+                  ref={tri.badgeRef}
+                  tabIndex={-1}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 cursor-default select-none outline-none"
+                >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   {t('detail.copied')} → {triageEntry.copiedKey}
                 </span>
@@ -251,6 +252,24 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                   <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                   {triageEntry.copiedKey}
                 </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      ref={tri.denyRef}
+                      onClick={() => void tri.handleDeny()}
+                    >
+                      {t('detail.deny')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">
+                    {t('detail.deny.tooltip', {
+                      tab: t('nav.notMine'),
+                      key: triageEntry.copiedKey,
+                    })}
+                  </TooltipContent>
+                </Tooltip>
               </>
             ) : (
               <>
@@ -266,21 +285,57 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                     </TooltipContent>
                   </Tooltip>
                 ) : isIgnored ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="secondary" size="lg" onClick={handleUnignore}>
-                        {t('detail.ignored')}
+                  <>
+                    {tri.rememberedKey ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="default"
+                            size="lg"
+                            ref={tri.primaryRef}
+                            onClick={() => void tri.handleLink()}
+                            disabled={tri.linking || copyPhase === 'loading_preview'}
+                          >
+                            {tri.linking || copyPhase === 'loading_preview' ? (
+                              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                            ) : null}
+                            {t('detail.restoreLink', { key: tri.rememberedKey })}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent aria-hidden="true">
+                          {t('detail.restoreLink.tooltip', { key: tri.rememberedKey })}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="lg"
+                        ref={tri.primaryRef}
+                        onClick={() => void tri.handleLink()}
+                        disabled={tri.linking || copyPhase === 'loading_preview'}
+                      >
+                        {tri.linking || copyPhase === 'loading_preview' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                        ) : null}
+                        {t('detail.copy', {
+                          name: targetProjectName || t('wizard.destination.subtitle'),
+                        })}
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent aria-hidden="true">
-                      {t('detail.ignored.tooltip')}
-                    </TooltipContent>
-                  </Tooltip>
+                    )}
+                    <Button variant="secondary" size="lg" onClick={() => void tri.handleRestore()}>
+                      {t('ignored.restore')}
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="secondary" size="lg" onClick={handleIgnore}>
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          ref={tri.dismissRef}
+                          onClick={() => void tri.handleDismiss()}
+                        >
                           {t('detail.ignore')}
                         </Button>
                       </TooltipTrigger>
@@ -308,6 +363,8 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
             )}
           </div>
         </TooltipProvider>
+
+        <RememberedLinkHint entry={tri.triageEntry} variant="detail" />
 
         {copyError && <p className="text-xs text-red-400 mb-4">{copyError}</p>}
 
