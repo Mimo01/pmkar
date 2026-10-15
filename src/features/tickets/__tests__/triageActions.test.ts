@@ -109,7 +109,7 @@ describe('denyTicket', () => {
     invokeMock.mockResolvedValue(undefined);
     await denyTicket('T-1');
     expect(toastFn).toHaveBeenCalledWith(
-      'Moved T-1 to Ignored.',
+      'Moved T-1 to Dismissed.',
       expect.objectContaining({
         id: 'deny-T-1',
         duration: 8000,
@@ -131,7 +131,7 @@ describe('denyTicket', () => {
     invokeMock.mockRejectedValue(new Error('db'));
     expect(await denyTicket('T-1')).toBe(false);
     expect(entry()).toEqual({ state: 'copied', copiedKey: 'CLD-9' });
-    expect(toastError).toHaveBeenCalledWith('Could not move the ticket to Ignored. Try again.');
+    expect(toastError).toHaveBeenCalledWith('Could not move the ticket to Dismissed. Try again.');
     expect(toastFn).not.toHaveBeenCalled();
   });
 
@@ -170,7 +170,7 @@ describe('Undo', () => {
     undo();
     await flush();
     expect(toastError).toHaveBeenCalledWith(
-      'Could not restore the link to T-1. The ticket stays in Ignored.',
+      'Could not restore the link to T-1. The ticket stays in Dismissed.',
     );
     expect(entry()).toEqual({ state: 'ignored', copiedKey: 'CLD-9' });
   });
@@ -434,7 +434,7 @@ describe('announcements (RQA-03)', () => {
     unsub();
     expect(msg()).toBe('T-1 moved to Dismissed.');
     expect(seen).toEqual(['ignored']);
-    expect(toastFn).toHaveBeenCalledWith('Moved T-1 to Ignored.', expect.anything());
+    expect(toastFn).toHaveBeenCalledWith('Moved T-1 to Dismissed.', expect.anything());
   });
 
   it('announces deny without a remembered key and shows no toast', async () => {
@@ -449,7 +449,7 @@ describe('announcements (RQA-03)', () => {
     seed('copied', 'CLD-9');
     invokeMock.mockRejectedValue(new Error('db'));
     await denyTicket('T-1');
-    expect(msg()).toBe('Could not move the ticket to Ignored. Try again.');
+    expect(msg()).toBe('Could not move the ticket to Dismissed. Try again.');
     expect(toastError).toHaveBeenCalledWith(msg());
   });
 
@@ -466,7 +466,7 @@ describe('announcements (RQA-03)', () => {
     invokeMock.mockResolvedValueOnce(null);
     undo();
     await flush();
-    expect(msg()).toBe('Could not restore the link to T-1. The ticket stays in Ignored.');
+    expect(msg()).toBe('Could not restore the link to T-1. The ticket stays in Dismissed.');
   });
 
   it('announces relink, relink failure, and not needs-copy', async () => {
