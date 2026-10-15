@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { SelectionBar } from '../groups/SelectionBar';
 import { useListSelection } from '../groups/useListSelection';
+import { RememberedLinkHint } from './RememberedLinkHint';
 import { TicketCard } from './TicketCard';
 import { TicketFilterBar } from './TicketFilterBar';
 import {
@@ -114,6 +115,7 @@ export function IgnoredTicketsPage() {
                         {t('tickets.card.handledBadge')}
                       </span>
                     )}
+                    <RememberedLinkHint variant="row" entry={triageMap[ticket.key]} />
                     <button
                       type="button"
                       onClick={(e) => {
