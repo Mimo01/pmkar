@@ -14,6 +14,7 @@ vi.mock('sonner', () => ({
   }),
 }));
 
+import { useAnnouncerStore } from '../../../components/LiveAnnouncer';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { useCopyStore } from '../copyStore';
 import { useTicketStore } from '../ticketStore';
@@ -32,6 +33,7 @@ beforeEach(() => {
   toastError.mockReset();
   toastFn.mockReset();
   toastDismiss.mockReset();
+  useAnnouncerStore.setState({ message: '', nonce: 0 });
   useConnectionStore.setState({
     serverConnection: { baseUrl: 'http://srv' },
     cloudConnection: { baseUrl: 'http://cld' },
@@ -290,5 +292,88 @@ describe('hydrate round-trip (restart)', () => {
     invokeMock.mockResolvedValueOnce('CLD-9');
     expect(await linkTicket('T-1')).toBe('relinked');
     expect(entry()).toEqual({ state: 'copied', copiedKey: 'CLD-9' });
+  });
+});
+
+describe('announcements (RQA-03)', () => {
+  const msg = () => useAnnouncerStore.getState().message;
+  const nonce = () => useAnnouncerStore.getState().nonce;
+
+  it('announces deny with a remembered key, after the store write', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    const seen: string[] = [];
+    const unsub = useAnnouncerStore.subscribe((st) => {
+      if (st.message) seen.push(entry().state);
+    });
+    await denyTicket('T-1');
+    unsub();
+    expect(msg()).toBe('T-1 moved to Dismissed.');
+    expect(seen).toEqual(['ignored']);
+    expect(toastFn).toHaveBeenCalledWith('Moved T-1 to Ignored.', expect.anything());
+  });
+
+  it('announces deny without a remembered key and shows no toast', async () => {
+    seed('new', null);
+    invokeMock.mockResolvedValue(undefined);
+    await denyTicket('T-1');
+    expect(msg()).toBe('T-1 moved to Dismissed.');
+    expect(toastFn).not.toHaveBeenCalled();
+  });
+
+  it('announces deny failure with the toast text', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockRejectedValue(new Error('db'));
+    await denyTicket('T-1');
+    expect(msg()).toBe('Could not move the ticket to Ignored. Try again.');
+    expect(toastError).toHaveBeenCalledWith(msg());
+  });
+
+  it('announces undo success and failure', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockResolvedValueOnce(undefined);
+    await denyTicket('T-1');
+    const undo = toastFn.mock.calls[0][1].action.onClick as () => void;
+    invokeMock.mockResolvedValueOnce('CLD-1');
+    undo();
+    await flush();
+    expect(msg()).toBe('Undo: T-1 restored to Linked CLD-1.');
+    invokeMock.mockResolvedValueOnce(null);
+    undo();
+    await flush();
+    expect(msg()).toBe('Could not restore the link to T-1. The ticket stays in Ignored.');
+  });
+
+  it('announces relink, relink failure, and not needs-copy', async () => {
+    seed('ignored', 'CLD-9');
+    invokeMock.mockResolvedValueOnce('CLD-1');
+    await linkTicket('T-1');
+    expect(msg()).toBe('T-1 linked to CLD-1.');
+    invokeMock.mockRejectedValueOnce(new Error('x'));
+    await linkTicket('T-1');
+    expect(msg()).toBe('Could not link the ticket. Try again.');
+    const n = nonce();
+    invokeMock.mockResolvedValueOnce(null);
+    await linkTicket('T-1', {
+      key: 'T-1',
+      fields: { summary: 's' },
+    } as unknown as JiraTicketDetail);
+    expect(nonce()).toBe(n);
+  });
+
+  it('announces restore and handled, success and failure', async () => {
+    seed('ignored', null);
+    invokeMock.mockResolvedValueOnce(undefined);
+    await restoreTicket('T-1');
+    expect(msg()).toBe('T-1 restored.');
+    invokeMock.mockResolvedValueOnce(undefined);
+    await markHandled('T-1');
+    expect(msg()).toBe('T-1 marked as handled.');
+    invokeMock.mockRejectedValueOnce(new Error('db'));
+    await markHandled('T-1');
+    expect(msg()).toBe('Could not mark the ticket as handled. Try again.');
+    invokeMock.mockRejectedValueOnce(new Error('db'));
+    await restoreTicket('T-1');
+    expect(msg()).toBe('Could not restore the ticket. Try again.');
   });
 });
