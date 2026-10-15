@@ -1,7 +1,8 @@
 ---
 phase: 36
 slug: detail-and-group-ui
-status: draft
+status: approved
+reviewed_at: 2026-10-15
 shadcn_initialized: true
 preset: neutral base, cssVariables (aliased to brand tokens in src/index.css)
 created: 2026-10-15
