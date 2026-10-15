@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { create } from 'zustand';
 
 interface AnnouncerState {
@@ -21,9 +21,12 @@ export function LiveAnnouncer() {
   const message = useAnnouncerStore((s) => s.message);
   const nonce = useAnnouncerStore((s) => s.nonce);
   const [text, setText] = useState('');
+  // Nonce already present at mount is stale (App remounts this across early-return branches).
+  const handled = useRef(useAnnouncerStore.getState().nonce);
 
   useEffect(() => {
-    if (nonce === 0) return;
+    if (nonce === handled.current) return;
+    handled.current = nonce;
     setText('');
     const id = setTimeout(() => setText(message), ANNOUNCE_DELAY_MS);
     return () => clearTimeout(id);
