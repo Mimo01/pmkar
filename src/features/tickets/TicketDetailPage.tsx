@@ -16,6 +16,7 @@ import { HistoryTab } from './tabs/HistoryTab';
 import { OverviewTab } from './tabs/OverviewTab';
 import { WorkLogTab } from './tabs/WorkLogTab';
 import { useTicketStore } from './ticketStore';
+import { denyTicket, markHandled, restoreTicket } from './triageActions';
 import type { JiraTicketDetail } from './types';
 
 type TabId = 'overview' | 'comments' | 'worklog' | 'attachments' | 'history' | 'changes';
@@ -52,35 +53,19 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   }, [detail, baseUrl, cloudBaseUrl]);
 
   const handleIgnore = useCallback(() => {
-    invoke('set_triage_state', { ticketKey: issueKey, state: 'ignored' }).catch(() => {});
-    useTicketStore.getState().hydrateTriageMap({
-      ...useTicketStore.getState().triageMap,
-      [issueKey]: { state: 'ignored', copiedKey: null },
-    });
+    void denyTicket(issueKey);
   }, [issueKey]);
 
   const handleUnignore = useCallback(() => {
-    invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
-    useTicketStore.getState().hydrateTriageMap({
-      ...useTicketStore.getState().triageMap,
-      [issueKey]: { state: 'seen', copiedKey: null },
-    });
+    void restoreTicket(issueKey);
   }, [issueKey]);
 
   const handleMarkHandled = useCallback(() => {
-    invoke('set_triage_state', { ticketKey: issueKey, state: 'handled' }).catch(() => {});
-    useTicketStore.getState().hydrateTriageMap({
-      ...useTicketStore.getState().triageMap,
-      [issueKey]: { state: 'handled', copiedKey: null },
-    });
+    void markHandled(issueKey);
   }, [issueKey]);
 
   const handleUnhandle = useCallback(() => {
-    invoke('set_triage_state', { ticketKey: issueKey, state: 'seen' }).catch(() => {});
-    useTicketStore.getState().hydrateTriageMap({
-      ...useTicketStore.getState().triageMap,
-      [issueKey]: { state: 'seen', copiedKey: null },
-    });
+    void restoreTicket(issueKey);
   }, [issueKey]);
 
   const handleOpenInJira = () => {
