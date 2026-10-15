@@ -38,11 +38,16 @@ created: 2026-10-15
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 36-XX-XX | TBD | TBD | RTRI-01 | — | Deny sets ignored only, no Jira call | component | `npx vitest run src/features/tickets/TicketDetailPanel.test.tsx src/features/tickets/__tests__/TicketDetailPage.test.tsx` | ✅ extend | ⬜ pending |
-| 36-XX-XX | TBD | TBD | RTRI-04 | — | N/A | component | same | ✅ extend | ⬜ pending |
-| 36-XX-XX | TBD | TBD | RLNK-03 | — | N/A | component | `npx vitest run src/features/tickets src/features/groups/__tests__/GroupViewPage.test.tsx` | ✅ extend / ❌ W0 RememberedLinkHint.test.tsx | ⬜ pending |
-| 36-XX-XX | TBD | TBD | RLNK-04 | — | N/A | component | `npx vitest run src/features/groups` | ✅ extend | ⬜ pending |
-| 36-XX-XX | TBD | TBD | RQA-02 | — | N/A | unit | `npx vitest run src/i18n` | ❌ W0 detailLocale.test.ts | ⬜ pending |
+| 36-01-01 | 01 | 1 | RQA-02 | — | N/A | unit | `npx vitest run src/i18n` | ❌ W0 detailLocale.test.ts | ⬜ pending |
+| 36-01-02 | 01 | 1 | RLNK-03 | T-36-01 | key rendered as text node only | component | `npx vitest run src/features/tickets/__tests__/RememberedLinkHint.test.tsx` | ❌ W0 | ⬜ pending |
+| 36-02-01 | 02 | 1 | RTRI-01, RTRI-04 | — | N/A | component (RED) | `npx vitest run src/features/tickets/__tests__/useTriageDetailActions.test.tsx` | ❌ W0 | ⬜ pending |
+| 36-02-02 | 02 | 1 | RTRI-01, RTRI-04 | T-36-03, T-36-04 | single relink in flight; no inline IPC | component | same | ✅ after 02-01 | ⬜ pending |
+| 36-03-01 | 03 | 2 | RTRI-01, RTRI-04, RLNK-03 | T-36-06 | Deny sets ignored only, no Jira call | component | `npx vitest run src/features/tickets/__tests__/TicketDetailPage.test.tsx` | ✅ extend | ⬜ pending |
+| 36-03-02 | 03 | 2 | RLNK-04 | — | N/A | integration | `npx vitest run src/features/groups/__tests__/groupDetailTriage.test.tsx` | ❌ new | ⬜ pending |
+| 36-04-01 | 04 | 2 | RTRI-01, RTRI-04, RLNK-03 | T-36-09 | Deny sets ignored only, no Jira call | component | `npx vitest run src/features/tickets/TicketDetailPanel.test.tsx` | ✅ extend | ⬜ pending |
+| 36-04-02 | 04 | 2 | RTRI-01 | — | N/A | regression | `npx vitest run src/features/tickets src/i18n` | ✅ | ⬜ pending |
+| 36-05-01 | 05 | 2 | RLNK-03 | T-36-12 | N/A | component | `npx vitest run src/features/tickets/IgnoredTicketsPage.test.tsx` | ✅ extend | ⬜ pending |
+| 36-05-02 | 05 | 2 | RLNK-03 | T-36-12 | N/A | component | `npx vitest run src/features/groups src/i18n` | ✅ extend | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

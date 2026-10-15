@@ -154,7 +154,18 @@ Plans:
   4. The group view offers the same Deny / Link actions through the shared detail
   5. All new strings exist in EN and SK (Slovak uses "tiket") and pass the i18n guard tests
 
-**Plans**: TBD
+**Plans**: 5 plans
+Plans:
+**Wave 1**
+
+- [ ] 36-01-PLAN.md — EN/SK strings + detailLocale guard test + RememberedLinkHint component
+- [ ] 36-02-PLAN.md — Shared useTriageDetailActions hook (handlers + focus rules) with harness tests
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 36-03-PLAN.md — TicketDetailPage wiring (Deny, Restore link, Restore, hint, focus) + group-view hand-off test
+- [ ] 36-04-PLAN.md — TicketDetailPanel wiring (same behavior, panel styling)
+- [ ] 36-05-PLAN.md — Remembered-link hint on Not mine rows (Not mine tab, group view)
 **UI hint**: yes
 
 ### Phase 37: Consistency, Accessibility and UAT
