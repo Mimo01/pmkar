@@ -184,9 +184,9 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 37-01-PLAN.md — LiveAnnouncer live region + announce() store, mounted beside every Toaster; a11y.* EN/SK strings and guard test
-- [ ] 37-02-PLAN.md — RQA-01 consistency invariant test over real derivation code, rollback, seeded random sequences, hydrate round-trip
-- [ ] 37-04-PLAN.md — Keyboard/focus audit test and fixes (aria-disabled in-flight Link, focus rings) in page, panel, group view
+- [x] 37-01-PLAN.md — LiveAnnouncer live region + announce() store, mounted beside every Toaster; a11y.* EN/SK strings and guard test
+- [x] 37-02-PLAN.md — RQA-01 consistency invariant test over real derivation code, rollback, seeded random sequences, hydrate round-trip
+- [x] 37-04-PLAN.md — Keyboard/focus audit test and fixes (aria-disabled in-flight Link, focus rings) in page, panel, group view
 
 **Wave 2** *(blocked on 37-01)*
 
@@ -237,4 +237,4 @@ Plans:
 | 34. Link Integrity Backend | v0.5.1 | 2/2 | Complete   | 2026-10-15 |
 | 35. Shared Triage Actions | v0.5.1 | 2/2 | Complete    | 2026-10-15 |
 | 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
-| 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |
+| 37. Consistency, Accessibility and UAT | v0.5.1 | 3/5 | In Progress|  |
