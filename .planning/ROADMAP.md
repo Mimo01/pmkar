@@ -252,13 +252,13 @@ Plans:
   4. Fetch and poll never change Linked or Not mine rows, and a static guard ensures only the confirmed hook path calls the transition functions
   5. Dialog strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist is written
 
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
 **Wave 1**
 
-- [ ] 37.1-01-PLAN.md — ConfirmTransitionDialog (alertdialog, Cancel focused), EN/SK triage.confirm.* strings, confirmLocale guard, CONF requirements
-- [ ] 37.1-02-PLAN.md — Undo restores true prior state, Rust fetch triage-sync extraction + regression tests, static transition guard
+- [x] 37.1-01-PLAN.md — ConfirmTransitionDialog (alertdialog, Cancel focused), EN/SK triage.confirm.* strings, confirmLocale guard, CONF requirements
+- [x] 37.1-02-PLAN.md — Undo restores true prior state, Rust fetch triage-sync extraction + regression tests, static transition guard
 
 **Wave 2** *(blocked on 37.1-01)*
 
