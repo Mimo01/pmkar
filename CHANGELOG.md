@@ -1,4 +1,24 @@
 
+## [0.5.1]
+
+### Features
+
+- keep the remembered link when denying a ticket, so Restore link brings back the original pairing
+- add Deny and Restore link to ticket detail page, side panel and group view
+- show a hint on Not mine rows when a ticket has a remembered link
+- ask for confirmation before moving a ticket between Linked and Not mine from the detail views
+- announce triage outcomes and failures to screen readers
+- add Slovak translations for the new triage strings
+
+### Bug Fixes
+
+- Undo restores the true prior triage state instead of always relinking
+- refuse to relink or deny tickets that were already copied, and guard against duplicate copies
+- keep focus on the in-flight Link button and add focus rings to triage buttons
+- use consistent Dismissed wording and a friendlier message when a ticket is already linked
+- tell the user when a confirmed triage move is discarded because the list changed
+- close the confirmation dialog correctly on Escape without triggering the detail page Escape handler
+
 ## [0.5.0]
 
 ### Features

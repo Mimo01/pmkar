@@ -85,8 +85,12 @@ try {
 
 // --- Regenerate CHANGELOG.md ---
 try {
+  if (readFileSync(resolve(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## [${newVersion}]`)) {
+    console.log('  CHANGELOG.md: entry for ' + newVersion + ' already present, keeping it');
+  } else {
   execSync(`npx git-cliff --config cliff.toml --tag v${newVersion} -o CHANGELOG.md`, { cwd: ROOT, stdio: 'inherit' });
   console.log('  CHANGELOG.md: regenerated');
+  }
 } catch (err) {
   console.error(`  CHANGELOG.md: ERROR — ${err.message}`);
   hasError = true;
