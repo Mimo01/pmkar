@@ -45,6 +45,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
   const triageEntry = tri.triageEntry;
   const isCopied = triageEntry?.state === 'copied';
   const isIgnored = triageEntry?.state === 'ignored';
+  const linkBusy = tri.linking || copyPhase === 'loading_preview';
   const isHandled = triageEntry?.state === 'handled';
   const unseenFields = useTicketStore((s) => s.unseenChanges[issueKey]);
   const hasUnseenChanges = !!unseenFields;
@@ -293,10 +294,14 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                             variant="default"
                             size="lg"
                             ref={tri.primaryRef}
-                            onClick={() => void tri.handleLink()}
-                            disabled={tri.linking || copyPhase === 'loading_preview'}
+                            onClick={() => {
+                              if (linkBusy) return;
+                              void tri.handleLink();
+                            }}
+                            aria-disabled={linkBusy}
+                            className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
                           >
-                            {tri.linking || copyPhase === 'loading_preview' ? (
+                            {linkBusy ? (
                               <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                             ) : null}
                             {t('detail.restoreLink', { key: tri.rememberedKey })}
@@ -311,10 +316,14 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                         variant="default"
                         size="lg"
                         ref={tri.primaryRef}
-                        onClick={() => void tri.handleLink()}
-                        disabled={tri.linking || copyPhase === 'loading_preview'}
+                        onClick={() => {
+                          if (linkBusy) return;
+                          void tri.handleLink();
+                        }}
+                        aria-disabled={linkBusy}
+                        className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed"
                       >
-                        {tri.linking || copyPhase === 'loading_preview' ? (
+                        {linkBusy ? (
                           <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                         ) : null}
                         {t('detail.copy', {

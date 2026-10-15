@@ -167,7 +167,7 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                     e.stopPropagation();
                     restoreTicket(ticket.key);
                   }}
-                  className="text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150"
+                  className="rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2"
                 >
                   {t('ignored.restore')}
                 </button>
