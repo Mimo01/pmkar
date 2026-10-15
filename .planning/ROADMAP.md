@@ -7,6 +7,7 @@
 - ✅ **v0.4.0 Configurable Field Mapping** — Phases 17-23 (shipped 2026-04-29)
 - ✅ **v0.4.8 Mapping Refinements & Static Values** — Phases 24-27 (shipped 2026-05-20)
 - ✅ **v0.5.0 Custom Groups** — Phases 28-33 (shipped 2026-10-15)
+- 🚧 **v0.5.1 Re-triage** — Phases 34-37 (in progress)
 
 ## Phases
 
@@ -83,6 +84,66 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 
 </details>
 
+### 🚧 v0.5.1 Re-triage (In Progress)
+
+**Milestone Goal:** Move tickets freely between Linked and Not mine without losing the Cloud link.
+
+- [ ] **Phase 34: Link Integrity Backend** - Atomic re-link command, no Linked row without a key, duplicate-copy guard, link survives cleanup
+- [ ] **Phase 35: Shared Triage Actions** - Key-preserving deny / re-link / restore transitions in one shared frontend module
+- [ ] **Phase 36: Detail and Group UI** - Explicit Deny / Link buttons in detail (page, panel, group view) with hints, focus handling and EN/SK strings
+- [ ] **Phase 37: Consistency, Accessibility and UAT** - Each ticket in exactly one tab after any transition; keyboard and screen-reader verified
+
+## Phase Details
+
+### Phase 34: Link Integrity Backend
+**Goal**: The backend guarantees a Linked ticket always has a Cloud key, a remembered link is never lost or duplicated, and re-link is a single atomic operation
+**Depends on**: Phase 33
+**Requirements**: LINT-02, LINT-03, LINT-04
+**Success Criteria** (what must be TRUE):
+  1. Setting a ticket's triage state to Linked through the generic triage command is rejected, so no Linked row without a Cloud key can be created
+  2. A dedicated re-link command returns the remembered Cloud key and marks the ticket Linked in one step, or reports that no link exists
+  3. Attempting to copy a ticket that already has a remembered link is refused, so no duplicate Cloud issue is created
+  4. A done ticket that has a remembered link keeps that link after a fetch; done tickets without a link are still cleaned up
+  5. The mock server and Rust tests cover all of the above
+**Plans**: TBD
+
+### Phase 35: Shared Triage Actions
+**Goal**: Deny, re-link and restore behave identically everywhere and never disagree with the database about the remembered Cloud key
+**Depends on**: Phase 34
+**Requirements**: LINT-01, RTRI-02, RTRI-03, RLNK-01, RLNK-02
+**Success Criteria** (what must be TRUE):
+  1. Denying a Linked ticket moves it to Not mine, makes no Jira call, and the Cloud ticket is untouched
+  2. After deny, an Undo toast returns the ticket to Linked with the same Cloud key
+  3. Linking a previously linked denied ticket returns it to Linked with the same key and performs no copy
+  4. Linking a never-linked denied ticket opens the normal copy preview
+  5. The remembered key is still present after deny, restore and handled transitions, in both the database and the in-memory store (verified after app restart)
+**Plans**: TBD
+
+### Phase 36: Detail and Group UI
+**Goal**: Users can deny and re-link tickets from an explicit labelled button in every ticket detail, with clear hints about the remembered link
+**Depends on**: Phase 35
+**Requirements**: RTRI-01, RTRI-04, RLNK-03, RLNK-04, RQA-02
+**Success Criteria** (what must be TRUE):
+  1. A Linked ticket's detail (page and panel) shows a labelled Deny button
+  2. A denied ticket with a remembered link shows "previously linked to KEY" in detail and in Not mine, and its Link button says it restores that key
+  3. After Deny, keyboard focus lands on a sensible element rather than being lost
+  4. The group view offers the same Deny / Link actions through the shared detail
+  5. All new strings exist in EN and SK (Slovak uses "tiket") and pass the i18n guard tests
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 37: Consistency, Accessibility and UAT
+**Goal**: Re-triage leaves every list, count and badge correct, and is usable by keyboard and screen reader
+**Depends on**: Phase 36
+**Requirements**: RQA-01, RQA-03
+**Success Criteria** (what must be TRUE):
+  1. After any Linked to Not mine transition, the ticket appears in exactly one tab, with matching tab counts and group badges
+  2. Deny and Link buttons are reachable and operable by keyboard alone
+  3. Screen readers announce the result of deny, undo and link (WCAG AA)
+  4. A WebView2 manual checklist (focus after deny, Undo toast) is written and run
+**Plans**: TBD
+**UI hint**: yes
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -120,3 +181,7 @@ Full details: [milestones/v0.5.0-ROADMAP.md](milestones/v0.5.0-ROADMAP.md)
 | 31. Membership Entry Points | v0.5.0 | 9/9 | Complete   | 2026-10-12 |
 | 32. Durability | v0.5.0 | 13/13 | Complete   | 2026-10-12 |
 | 33. Polish & Verification | v0.5.0 | 13/13 | Complete   | 2026-10-13 |
+| 34. Link Integrity Backend | v0.5.1 | 0/? | Not started | - |
+| 35. Shared Triage Actions | v0.5.1 | 0/? | Not started | - |
+| 36. Detail and Group UI | v0.5.1 | 0/? | Not started | - |
+| 37. Consistency, Accessibility and UAT | v0.5.1 | 0/? | Not started | - |

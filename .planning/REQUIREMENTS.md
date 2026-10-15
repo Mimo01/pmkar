@@ -52,11 +52,26 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| RTRI-01 | Phase 36 | Pending |
+| RTRI-02 | Phase 35 | Pending |
+| RTRI-03 | Phase 35 | Pending |
+| RTRI-04 | Phase 36 | Pending |
+| RLNK-01 | Phase 35 | Pending |
+| RLNK-02 | Phase 35 | Pending |
+| RLNK-03 | Phase 36 | Pending |
+| RLNK-04 | Phase 36 | Pending |
+| LINT-01 | Phase 35 | Pending |
+| LINT-02 | Phase 34 | Pending |
+| LINT-03 | Phase 34 | Pending |
+| LINT-04 | Phase 34 | Pending |
+| RQA-01 | Phase 37 | Pending |
+| RQA-02 | Phase 36 | Pending |
+| RQA-03 | Phase 37 | Pending |
 
 **Coverage:**
-- v0.5.1 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- v0.5.1 requirements: 15 total
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-15*
