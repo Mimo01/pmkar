@@ -11,9 +11,11 @@ vi.mock('sonner', () => ({
 }));
 
 import { useConnectionStore } from '../../connections/connectionStore';
+import { ConfirmTransitionDialog } from '../ConfirmTransitionDialog';
 import { useCopyStore } from '../copyStore';
 import { useTicketStore } from '../ticketStore';
 import { useTriageDetailActions } from '../useTriageDetailActions';
+import { cancelConfirm, confirmDeny, confirmLink, expectNoConfirmDialog } from './confirmHelpers';
 
 function Harness({ issueKey }: { issueKey: string }) {
   const fallbackRef = useRef<HTMLButtonElement | null>(null);
@@ -27,7 +29,7 @@ function Harness({ issueKey }: { issueKey: string }) {
           <span ref={a.badgeRef} tabIndex={-1}>
             badge
           </span>
-          <button type="button" ref={a.denyRef} onClick={() => void a.handleDeny()}>
+          <button type="button" ref={a.denyRef} onClick={() => void a.requestDeny()}>
             Deny
           </button>
         </>
@@ -38,7 +40,7 @@ function Harness({ issueKey }: { issueKey: string }) {
             type="button"
             ref={a.primaryRef}
             disabled={a.linking}
-            onClick={() => void a.handleLink()}
+            onClick={() => void a.requestLink()}
           >
             Primary
           </button>
@@ -55,6 +57,7 @@ function Harness({ issueKey }: { issueKey: string }) {
       <button type="button" ref={fallbackRef}>
         Fallback
       </button>
+      <ConfirmTransitionDialog {...a.confirmDialog} />
     </div>
   );
 }
@@ -84,6 +87,7 @@ describe('useTriageDetailActions', () => {
     invokeMock.mockResolvedValue(undefined);
     render(<Harness issueKey="PROJ-1" />);
     fireEvent.click(screen.getByText('Deny'));
+    await confirmDeny();
     await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Primary')));
     expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
       ticketKey: 'PROJ-1',
@@ -97,6 +101,7 @@ describe('useTriageDetailActions', () => {
     invokeMock.mockRejectedValue(new Error('db'));
     render(<Harness issueKey="PROJ-1" />);
     fireEvent.click(screen.getByText('Deny'));
+    await confirmDeny();
     await waitFor(() => expect(entry().state).toBe('copied'));
     await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Deny')));
   });
@@ -106,6 +111,7 @@ describe('useTriageDetailActions', () => {
     invokeMock.mockResolvedValue('CLD-9');
     render(<Harness issueKey="PROJ-1" />);
     fireEvent.click(screen.getByText('Primary'));
+    await confirmLink();
     await waitFor(() => expect(entry()).toEqual({ state: 'copied', copiedKey: 'CLD-9' }));
     await waitFor(() => expect(document.activeElement).toBe(screen.getByText('badge')));
   });
@@ -130,6 +136,7 @@ describe('useTriageDetailActions', () => {
     invokeMock.mockRejectedValue(new Error('net'));
     render(<Harness issueKey="PROJ-1" />);
     fireEvent.click(screen.getByText('Primary'));
+    await confirmLink();
     await waitFor(() => expect(screen.getByText('Primary')).not.toBeDisabled());
     await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Primary')));
   });
@@ -141,6 +148,7 @@ describe('useTriageDetailActions', () => {
     const primary = screen.getByText('Primary');
     fireEvent.click(primary);
     fireEvent.click(primary);
+    await confirmLink();
     await waitFor(() => expect(primary).toBeDisabled());
     const relinkCalls = invokeMock.mock.calls.filter((c) => c[0] === 'relink_ticket');
     expect(relinkCalls).toHaveLength(1);
@@ -172,5 +180,108 @@ describe('useTriageDetailActions', () => {
     seed('ignored', 'CLD-9');
     render(<Harness issueKey="PROJ-1" />);
     expect(screen.getByTestId('remembered').textContent).toBe('CLD-9');
+  });
+
+  it('deny opens dialog without invoking, then Confirm runs set_triage_state', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Deny'));
+    expect(await screen.findByRole('alertdialog')).toBeTruthy();
+    expect(invokeMock).not.toHaveBeenCalledWith('set_triage_state', expect.anything());
+    await confirmDeny();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'ignored',
+      }),
+    );
+  });
+
+  it('deny Cancel performs no invoke and refocuses Deny', async () => {
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Deny'));
+    await cancelConfirm();
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(entry().state).toBe('copied');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Deny')));
+  });
+
+  it('deny Escape behaves like Cancel', async () => {
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Deny'));
+    const dlg = await screen.findByRole('alertdialog');
+    fireEvent.keyDown(dlg, { key: 'Escape' });
+    await waitFor(() => expectNoConfirmDialog());
+    expect(invokeMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Deny')));
+  });
+
+  it('link with remembered key requires Confirm before relink_ticket', async () => {
+    seed('ignored', 'CLD-9');
+    invokeMock.mockResolvedValue('CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    expect(await screen.findByRole('alertdialog')).toBeTruthy();
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    await confirmLink();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('relink_ticket', expect.anything()),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('badge')));
+  });
+
+  it('link without remembered key skips the dialog', async () => {
+    seed('ignored', null);
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'relink_ticket') return null;
+      if (cmd === 'fetch_ticket_detail') return { key: 'PROJ-1' };
+      return undefined;
+    });
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    expectNoConfirmDialog();
+    await waitFor(() => expect(startPreview).toHaveBeenCalled());
+  });
+
+  it('stale deny: no invoke when entry changed before Confirm', async () => {
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Deny'));
+    await screen.findByRole('alertdialog');
+    act(() => seed('ignored', 'CLD-9'));
+    await confirmDeny();
+    expect(invokeMock).not.toHaveBeenCalledWith('set_triage_state', expect.anything());
+  });
+
+  it('stale link: no relink when remembered key changed before Confirm', async () => {
+    seed('ignored', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    await screen.findByRole('alertdialog');
+    act(() => seed('ignored', 'CLD-10'));
+    await confirmLink();
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+  });
+
+  it('closes silently without invoking when issueKey changes', async () => {
+    seed('copied', 'CLD-9');
+    const { rerender } = render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Deny'));
+    await screen.findByRole('alertdialog');
+    rerender(<Harness issueKey="PROJ-2" />);
+    await waitFor(() => expectNoConfirmDialog());
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it('dismiss from New runs without a dialog', async () => {
+    seed('seen', null);
+    invokeMock.mockResolvedValue(undefined);
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Dismiss'));
+    expectNoConfirmDialog();
+    await waitFor(() => expect(entry().state).toBe('ignored'));
   });
 });

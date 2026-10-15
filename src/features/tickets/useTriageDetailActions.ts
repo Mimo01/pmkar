@@ -1,4 +1,8 @@
-import { type RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type {
+  ConfirmTransitionDialogProps,
+  ConfirmTransitionTarget,
+} from './ConfirmTransitionDialog';
 import { useTicketStore } from './ticketStore';
 import { denyTicket, linkTicket, restoreTicket } from './triageActions';
 import type { JiraTicketDetail, TriageEntry } from './types';
@@ -24,6 +28,11 @@ export interface TriageDetailActions {
   handleDismiss: () => Promise<void>;
   handleLink: () => Promise<void>;
   handleRestore: () => Promise<void>;
+  /** Gated entry points (CONF-01/CONF-02): open the confirmation dialog instead of acting. */
+  requestDeny: () => void;
+  requestLink: () => void;
+  /** Spread onto <ConfirmTransitionDialog />. */
+  confirmDialog: ConfirmTransitionDialogProps;
 }
 
 type FocusTarget = 'primary' | 'badge' | 'dismiss' | 'deny';
@@ -31,6 +40,8 @@ type FocusTarget = 'primary' | 'badge' | 'dismiss' | 'deny';
 /**
  * Shared detail triage handlers + post-action focus (RTRI-01, RTRI-04). All writes go
  * through triageActions.ts. Focus only moves after an action this hook started.
+ * Linked -> Not mine (requestDeny) and Not mine -> Linked with a remembered key
+ * (requestLink) require dialog confirmation (CONF-01, CONF-02).
  */
 export function useTriageDetailActions(
   issueKey: string,
@@ -104,6 +115,70 @@ export function useTriageDetailActions(
     }
   }, [issueKey, detail, requestFocus]);
 
+  const [confirmTarget, setConfirmTarget] = useState<ConfirmTransitionTarget | null>(null);
+  const confirmTargetRef = useRef<ConfirmTransitionTarget | null>(null);
+  const resolvedTargetRef = useRef<ConfirmTransitionTarget | null>(null);
+
+  const openConfirm = useCallback((t: ConfirmTransitionTarget) => {
+    confirmTargetRef.current = t;
+    resolvedTargetRef.current = t;
+    setConfirmTarget(t);
+  }, []);
+
+  const requestDeny = useCallback(() => {
+    if (confirmTargetRef.current || !isLinked || !triageEntry?.copiedKey) return;
+    openConfirm({ kind: 'deny', ticketKey: issueKey, cloudKey: triageEntry.copiedKey });
+  }, [isLinked, triageEntry?.copiedKey, issueKey, openConfirm]);
+
+  const requestLink = useCallback(() => {
+    if (linkingRef.current || confirmTargetRef.current) return;
+    if (rememberedKey) {
+      openConfirm({ kind: 'link', ticketKey: issueKey, cloudKey: rememberedKey });
+      return;
+    }
+    // Never-linked: the copy preview is the confirmation.
+    void handleLink();
+  }, [rememberedKey, issueKey, openConfirm, handleLink]);
+
+  const onResolve = useCallback((_confirmed: boolean) => {
+    confirmTargetRef.current = null;
+    setConfirmTarget(null);
+  }, []);
+
+  const onClosed = useCallback(
+    (confirmed: boolean) => {
+      const target = resolvedTargetRef.current;
+      resolvedTargetRef.current = null;
+      if (!target || target.ticketKey !== issueKey) return;
+      if (!confirmed) {
+        const el = target.kind === 'deny' ? denyRef.current : primaryRef.current;
+        if (el?.isConnected) el.focus();
+        return;
+      }
+      const current = useTicketStore.getState().triageMap[issueKey];
+      if (target.kind === 'deny') {
+        if (current?.state !== 'copied') return;
+        void handleDeny();
+      } else {
+        if (current?.state !== 'ignored' || current.copiedKey !== target.cloudKey) return;
+        void handleLink();
+      }
+    },
+    [issueKey, handleDeny, handleLink],
+  );
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close silently when the ticket changes
+  useEffect(() => {
+    confirmTargetRef.current = null;
+    resolvedTargetRef.current = null;
+    setConfirmTarget(null);
+  }, [issueKey]);
+
+  const confirmDialog = useMemo<ConfirmTransitionDialogProps>(
+    () => ({ target: confirmTarget, onResolve, onClosed }),
+    [confirmTarget, onResolve, onClosed],
+  );
+
   const handleRestore = useCallback(async () => {
     pendingFocus.current = 'dismiss';
     const ok = await restoreTicket(issueKey);
@@ -124,5 +199,8 @@ export function useTriageDetailActions(
     handleDismiss,
     handleLink,
     handleRestore,
+    requestDeny,
+    requestLink,
+    confirmDialog,
   };
 }
