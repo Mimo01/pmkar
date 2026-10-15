@@ -140,24 +140,14 @@ export function useTriageDetailActions(
     void handleLink();
   }, [rememberedKey, issueKey, openConfirm, handleLink]);
 
-  const onResolve = useCallback((_confirmed: boolean) => {
-    confirmTargetRef.current = null;
-    setConfirmTarget(null);
-  }, []);
-
-  const onClosed = useCallback(
+  const onResolve = useCallback(
     (confirmed: boolean) => {
-      const target = resolvedTargetRef.current;
-      resolvedTargetRef.current = null;
-      if (!target || target.ticketKey !== issueKey) return;
-      if (!confirmed) {
-        const el = target.kind === 'deny' ? denyRef.current : primaryRef.current;
-        if (el?.isConnected) el.focus();
-        return;
-      }
-      // Keep focus on the trigger while the confirmed action is in flight.
-      const trigger = target.kind === 'deny' ? denyRef.current : primaryRef.current;
-      if (trigger?.isConnected) trigger.focus();
+      const target = confirmTargetRef.current;
+      confirmTargetRef.current = null;
+      setConfirmTarget(null);
+      // Run the confirmed action here, not in onClosed: it must not depend on the
+      // Radix close-autofocus callback firing (WR-01).
+      if (!confirmed || !target || target.ticketKey !== issueKey) return;
       const current = useTicketStore.getState().triageMap[issueKey];
       if (target.kind === 'deny') {
         if (current?.state !== 'copied') return;
@@ -168,6 +158,20 @@ export function useTriageDetailActions(
       }
     },
     [issueKey, handleDeny, handleLink],
+  );
+
+  // Focus return only; the confirmed action already ran in onResolve.
+  const onClosed = useCallback(
+    (confirmed: boolean) => {
+      const target = resolvedTargetRef.current;
+      resolvedTargetRef.current = null;
+      if (!target || target.ticketKey !== issueKey) return;
+      const trigger = target.kind === 'deny' ? denyRef.current : primaryRef.current;
+      if (trigger?.isConnected) trigger.focus();
+      // A post-action focus move may have been swallowed by the dialog's focus trap.
+      if (confirmed && pendingFocus.current !== null) setFocusTick((n) => n + 1);
+    },
+    [issueKey],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: close silently when the ticket changes
