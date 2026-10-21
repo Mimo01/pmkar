@@ -239,6 +239,36 @@ Plans:
 | 36. Detail and Group UI | v0.5.1 | 5/5 | Complete    | 2026-10-15 |
 | 37. Consistency, Accessibility and UAT | v0.5.1 | 5/5 | Complete   | 2026-10-15 |
 
+### Phase 37.2: Watched main category: a third non-linked state alongside Declined, with full transitions between Linked, Declined and Watched (restoring a remembered link instead of creating a copy) (INSERTED)
+
+**Goal:** Users can park tickets they may link later in a new Watched main category (alongside New, Declined, Linked); Watched links nothing, and any Linked or Declined ticket can become Watched, while Watched can become Declined or Linked (restoring the remembered Cloud link, never creating a copy), with the same confirmation, counts and accessibility as the existing transitions
+**Requirements**: WATCH-01, WATCH-02, WATCH-03, WATCH-04, WATCH-05, WATCH-06
+**Depends on:** Phase 37
+**Plans:** 7 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 37.2-01-PLAN.md — WATCH requirement IDs; SQLite CHECK + idempotent migration, validate_triage_state, fetch-sync Watched regression
+- [ ] 37.2-02-PLAN.md — EN/SK strings, TriageState 'watched', predicates, newCount exclusion, group badge, remembered-link hint, row indicator
+
+**Wave 2** *(blocked on 37.2-02)*
+
+- [ ] 37.2-03-PLAN.md — triageActions watchTicket/undoWatch, watched-aware deny/restore Undo; ConfirmTransitionDialog 'watch' variant
+- [ ] 37.2-04-PLAN.md — Watched page, Watched nav tab with count badges (Dismissed/Linked/Watched), App route, group view row slot
+
+**Wave 3** *(blocked on 37.2-03)*
+
+- [ ] 37.2-05-PLAN.md — useTriageDetailActions requestWatch/isWatched + confirmation and stale guards; transition guard
+
+**Wave 4** *(blocked on 37.2-04, 37.2-05)*
+
+- [ ] 37.2-06-PLAN.md — Per-state Watch/Deny/Link/Restore buttons in detail page, panel and group view
+
+**Wave 5** *(blocked on 37.2-01, 37.2-06)*
+
+- [ ] 37.2-07-PLAN.md — Keyboard/announcement/axe/one-tab consistency tests, WebView2 checklist, validation sign-off
+
 ### Phase 37.1: Confirmation required before moving tickets between Linked and Not mine, never performed automatically (INSERTED)
 
 **Goal**: Moving a ticket between Linked and Not mine (Dismissed) always needs an explicit confirmation from the user and never happens automatically
