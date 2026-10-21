@@ -625,11 +625,11 @@ describe('TicketDetailPage', () => {
       expect(container.textContent).not.toContain('Previously linked');
     });
 
-    it('New and Handled never show Watch', async () => {
+    it('New shows Watch; Handled does not', async () => {
       seed('seen', null);
       const first = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
       await screen.findByRole('button', { name: /dismiss/i });
-      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Watch' })).toBeVisible();
       first.unmount();
       seed('handled', null);
       render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);

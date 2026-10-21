@@ -492,11 +492,11 @@ describe('TicketDetailPanel', () => {
       expect(screen.queryByText(/Previously linked to/)).toBeNull();
     });
 
-    it('New and Handled never show Watch', async () => {
+    it('New shows Watch; Handled does not', async () => {
       seed('seen', null);
       const first = renderPanel();
       await screen.findByRole('button', { name: /^dismiss$/i });
-      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Watch' })).toBeVisible();
       first.unmount();
       seed('handled', null);
       renderPanel();

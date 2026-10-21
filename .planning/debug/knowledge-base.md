@@ -34,3 +34,11 @@ Resolved debug sessions. Used by `gsd-debugger` to surface known-pattern hypothe
 - **Fix:** (1) Hardened `AuditLogPage` with a `toDisplayString` coercion helper, widened `parseHeaders` to `Record<string, unknown>`, added a per-row try/catch in `renderExpandedRow`, defensively coerced non-array invoke results to `[]`, and added an `entry.id ?? row-${idx}` key fallback. (2) Added `format_create_failure_detail(status, body)` helper that compacts JSON or truncates raw text and embeds Jira's actual error message inline in `CopyStepResult.detail` — the user now sees the full Jira error in the result modal without opening the audit log.
 - **Files changed:** src/features/tickets/AuditLogPage.tsx, src/features/tickets/AuditLogPage.test.tsx, src-tauri/src/commands.rs
 ---
+
+## no-watch-button-new-ticket — No Watch button on new tickets
+- **Date:** 2026-10-21
+- **Error patterns:** cannot watch new ticket, no watch button, watched triage state, requestWatch, New ticket detail
+- **Root cause:** Phase 37.2 rendered the Watch button only for Linked and Dismissed tickets; the New branch had no button and `requestWatch` in `useTriageDetailActions.ts` ignored new tickets. An existing test asserted "New and Handled never show Watch".
+- **Fix:** Added a labelled Watch button (with tooltip) for New tickets in `TicketDetailPage` and `TicketDetailPanel`; `requestWatch` moves New to watched immediately with no confirmation (Linked still confirms).
+- **Files changed:** src/features/tickets/TicketDetailPage.tsx, TicketDetailPanel.tsx, useTriageDetailActions.ts, TicketDetailPanel.test.tsx, __tests__/TicketDetailPage.test.tsx
+---

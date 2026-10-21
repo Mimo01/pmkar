@@ -422,6 +422,21 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       <TooltipTrigger asChild>
                         <button
                           type="button"
+                          ref={tri.watchRef}
+                          onClick={tri.requestWatch}
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                        >
+                          {t('detail.watch')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.watch.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
                           onClick={handleMarkHandled}
                           className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
                         >

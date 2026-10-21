@@ -164,10 +164,11 @@ export function useTriageDetailActions(
     if (confirmTargetRef.current) return;
     if (isLinked && triageEntry?.copiedKey) {
       openConfirm({ kind: 'watch', ticketKey: issueKey, cloudKey: triageEntry.copiedKey });
-    } else if (isDenied) {
+    } else if (!isLinked && !isWatched) {
+      // Denied (Dismissed) or New -> Watched, instant
       void handleWatch();
     }
-  }, [isLinked, isDenied, triageEntry?.copiedKey, issueKey, openConfirm, handleWatch]);
+  }, [isLinked, isWatched, triageEntry?.copiedKey, issueKey, openConfirm, handleWatch]);
 
   const requestLink = useCallback(() => {
     if (linkingRef.current || confirmTargetRef.current) return;

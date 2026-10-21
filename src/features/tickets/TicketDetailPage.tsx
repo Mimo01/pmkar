@@ -414,6 +414,21 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          ref={tri.watchRef}
+                          onClick={() => tri.requestWatch()}
+                        >
+                          {t('detail.watch')}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.watch.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <Button variant="secondary" size="lg" onClick={handleMarkHandled}>
                           {t('detail.markHandled')}
                         </Button>
