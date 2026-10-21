@@ -39,21 +39,21 @@ pub struct TriageDb {
 
 const CREATE_TRIAGE_STATE_SQL: &str = "CREATE TABLE IF NOT EXISTS triage_state (
     ticket_key   TEXT PRIMARY KEY,
-    state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled')),
+    state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled','watched')),
     first_seen   TEXT NOT NULL,
     last_updated TEXT NOT NULL
 );";
 
 const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN copied_key TEXT;";
 
-/// Rebuilds the `triage_state` table to widen the `CHECK` constraint to include 'handled'.
+/// Rebuilds the `triage_state` table to widen the `CHECK` constraint to include 'watched'.
 /// Run after `CREATE TABLE IF NOT EXISTS` so that fresh DBs get the right constraint directly
-/// and existing DBs (which have the old 4-value CHECK) are migrated in-place.
-const MIGRATE_TRIAGE_CHECK_HANDLED: &str = "
+/// and existing DBs (which have the old 4- or 5-value CHECK) are migrated in-place.
+const MIGRATE_TRIAGE_CHECK_WATCHED: &str = "
     BEGIN TRANSACTION;
     CREATE TABLE IF NOT EXISTS triage_state_new (
         ticket_key   TEXT PRIMARY KEY,
-        state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled')),
+        state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled','watched')),
         first_seen   TEXT NOT NULL,
         last_updated TEXT NOT NULL,
         copied_key   TEXT
@@ -120,8 +120,8 @@ fn ignore_duplicate_column(result: rusqlite::Result<()>) -> rusqlite::Result<()>
 
 impl TriageDb {
     /// Detects whether the existing `triage_state` table's `CHECK` constraint already
-    /// includes 'handled'. If not, rebuilds the table to widen the constraint.
-    /// This is idempotent — running it on a DB that already has 'handled' is a no-op.
+    /// includes 'watched'. If not, rebuilds the table to widen the constraint.
+    /// This is idempotent — running it on a DB that already has 'watched' is a no-op.
     fn migrate_triage_check_constraint(conn: &Connection) -> AppResult<()> {
         let sql: Option<String> = conn
             .query_row(
@@ -132,8 +132,8 @@ impl TriageDb {
             .ok()
             .flatten();
         if let Some(existing_sql) = sql {
-            if !existing_sql.contains("'handled'") {
-                conn.execute_batch(MIGRATE_TRIAGE_CHECK_HANDLED)?;
+            if !existing_sql.contains("'watched'") {
+                conn.execute_batch(MIGRATE_TRIAGE_CHECK_WATCHED)?;
             }
         }
         Ok(())
@@ -545,6 +545,25 @@ pub(crate) fn open_legacy_shape_for_test(dir: &std::path::Path) -> TriageDb {
     TriageDb::open(&path).expect("legacy open failed")
 }
 
+/// Test-only: builds a DB file with the 5-value (`handled`, no `watched`) CHECK and
+/// `copied_key`, seeds rows (incl. a remembered key), then opens it through `TriageDb::open`.
+#[cfg(test)]
+pub(crate) fn open_handled_shape_for_test(dir: &std::path::Path) -> TriageDb {
+    let path = dir.join("handled_triage.db");
+    {
+        let conn = Connection::open(&path).expect("open handled conn");
+        conn.execute_batch(
+            "CREATE TABLE triage_state (ticket_key TEXT PRIMARY KEY, state TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled')), first_seen TEXT NOT NULL, last_updated TEXT NOT NULL, copied_key TEXT);
+             INSERT INTO triage_state (ticket_key, state, first_seen, last_updated, copied_key) VALUES
+             ('H-1','ignored','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00','CLOUD-9'),
+             ('H-2','handled','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00',NULL),
+             ('H-3','copied','2025-01-01T00:00:00+00:00','2025-01-01T00:00:00+00:00','CLOUD-3');",
+        )
+        .expect("seed handled rows");
+    }
+    TriageDb::open(&path).expect("handled open failed")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -652,6 +671,66 @@ mod tests {
             .expect("handled state should be accepted");
         let all = db.get_all_triage().expect("get_all_triage failed");
         assert_eq!(all["PROJ-1"].0, "handled");
+    }
+
+    #[test]
+    fn test_set_watched_state_accepted() {
+        let db = new_db();
+        db.set_triage("W-1", "watched")
+            .expect("watched state should be accepted");
+        let all = db.get_all_triage().expect("get_all_triage failed");
+        assert_eq!(all["W-1"], ("watched".to_string(), None));
+    }
+
+    #[test]
+    fn test_migrate_4_value_accepts_watched_keeps_copied_key() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let db = open_legacy_shape_for_test(dir.path());
+        db.set_triage("LEG-2", "watched").unwrap();
+        db.set_triage("LEG-9", "watched").unwrap();
+        let all = db.get_all_triage().unwrap();
+        assert_eq!(
+            all["LEG-1"],
+            ("copied".to_string(), Some("CLOUD-1".to_string()))
+        );
+        assert_eq!(
+            all["LEG-2"],
+            ("watched".to_string(), Some("CLOUD-2".to_string()))
+        );
+        assert_eq!(all["LEG-3"], ("new".to_string(), None));
+        assert_eq!(all["LEG-9"], ("watched".to_string(), None));
+    }
+
+    #[test]
+    fn test_migrate_5_value_accepts_watched_keeps_copied_key_and_idempotent() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let db = open_handled_shape_for_test(dir.path());
+        db.set_triage("H-1", "watched").unwrap();
+        assert_eq!(
+            db.get_all_triage().unwrap()["H-1"],
+            ("watched".to_string(), Some("CLOUD-9".to_string()))
+        );
+        let before = db.get_all_triage().unwrap();
+        drop(db);
+        let db2 = TriageDb::open(&dir.path().join("handled_triage.db")).expect("reopen");
+        assert_eq!(db2.get_all_triage().unwrap(), before);
+        assert_eq!(before["H-2"], ("handled".to_string(), None));
+        assert_eq!(
+            before["H-3"],
+            ("copied".to_string(), Some("CLOUD-3".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_relink_from_watched_returns_key_and_flips_to_copied() {
+        let db = new_db();
+        db.set_triage_copied("PROJ-1", "CLOUD-1").unwrap();
+        db.set_triage("PROJ-1", "watched").unwrap();
+        assert_eq!(db.relink("PROJ-1").unwrap(), Some("CLOUD-1".to_string()));
+        assert_eq!(
+            db.get_all_triage().unwrap()["PROJ-1"],
+            ("copied".to_string(), Some("CLOUD-1".to_string()))
+        );
     }
 
     #[test]
@@ -799,7 +878,7 @@ mod tests {
             all["PROJ-1"],
             ("copied".to_string(), Some("CLOUD-1".to_string()))
         );
-        for st in ["new", "seen", "ignored", "handled"] {
+        for st in ["new", "seen", "ignored", "handled", "watched"] {
             db.set_triage("PROJ-1", st).unwrap();
             let all = db.get_all_triage().unwrap();
             assert_eq!(all["PROJ-1"], (st.to_string(), Some("CLOUD-1".to_string())));
@@ -828,7 +907,7 @@ mod tests {
     fn test_relink_hit_idempotent_any_state() {
         let db = new_db();
         db.set_triage_copied("PROJ-1", "CLOUD-1").unwrap();
-        for st in ["new", "seen", "ignored", "handled"] {
+        for st in ["new", "seen", "ignored", "handled", "watched"] {
             db.set_triage("PROJ-1", st).unwrap();
             assert_eq!(db.relink("PROJ-1").unwrap(), Some("CLOUD-1".to_string()));
             let all = db.get_all_triage().unwrap();
