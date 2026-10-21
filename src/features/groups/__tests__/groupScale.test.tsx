@@ -115,7 +115,7 @@ describe('25-group scale', () => {
         .map((c, i) => (c.hasAttribute('data-tab-id') ? i : -1))
         .filter((i) => i >= 0);
     const before = coreIndexes();
-    expect(before).toEqual([0, 1, 2]);
+    expect(before).toEqual([0, 1, 2, 3]);
 
     fireEvent.scroll(setOverflowMetrics(4000, 600, 0));
     expect(arrow('right')).toBeInTheDocument();

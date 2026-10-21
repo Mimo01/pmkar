@@ -61,9 +61,9 @@ function setup() {
 }
 
 describe('AppShell tab strip arrow keys', () => {
-  it('marks 3 core and 3 group tabs', () => {
+  it('marks 4 core and 3 group tabs', () => {
     const { tabs } = setup();
-    expect(tabs).toHaveLength(6);
+    expect(tabs).toHaveLength(7);
   });
 
   it('ArrowRight moves through core tabs then into group tabs', async () => {
@@ -89,7 +89,7 @@ describe('AppShell tab strip arrow keys', () => {
     const { tabs } = setup();
     tabs[2].focus();
     await user.keyboard('{End}');
-    expect(tabs[5]).toHaveFocus();
+    expect(tabs[6]).toHaveFocus();
     await user.keyboard('{Home}');
     expect(tabs[0]).toHaveFocus();
   });
@@ -97,9 +97,9 @@ describe('AppShell tab strip arrow keys', () => {
   it('does not wrap at either end', async () => {
     const user = userEvent.setup();
     const { tabs } = setup();
-    tabs[5].focus();
+    tabs[6].focus();
     await user.keyboard('{ArrowRight}');
-    expect(tabs[5]).toHaveFocus();
+    expect(tabs[6]).toHaveFocus();
     tabs[0].focus();
     await user.keyboard('{ArrowLeft}');
     expect(tabs[0]).toHaveFocus();
@@ -125,5 +125,51 @@ describe('AppShell tab strip arrow keys', () => {
     const { tabs } = setup();
     for (const t of tabs) expect(t.hasAttribute('tabindex')).toBe(false);
     expect(screen.getAllByRole('navigation')).toHaveLength(1);
+  });
+});
+
+describe('AppShell core tabs and Watched count', () => {
+  function renderCore(tabCounts?: { watched?: number }) {
+    const onTabChange = vi.fn();
+    renderWithI18n(
+      <AppShell activeTab="new" onTabChange={onTabChange} tabCounts={tabCounts}>
+        <div />
+      </AppShell>,
+    );
+    return { onTabChange };
+  }
+
+  it('renders New, Dismissed, Already Linked, Watched in order', () => {
+    renderCore();
+    const ids = Array.from(document.querySelectorAll('[data-nav-tab]')).map((el) =>
+      el.getAttribute('data-tab-id'),
+    );
+    expect(ids).toEqual(['new', 'not-mine', 'linked', 'watched']);
+  });
+
+  it('clicking Watched calls onTabChange', async () => {
+    const user = userEvent.setup();
+    const { onTabChange } = renderCore();
+    await user.click(screen.getByRole('button', { name: 'Watched' }));
+    expect(onTabChange).toHaveBeenCalledWith('watched');
+  });
+
+  it('shows a pill and count in the accessible name only on Watched', () => {
+    renderCore({ watched: 3 });
+    const watched = screen.getByRole('button', { name: 'Watched, 3 tickets' });
+    expect(watched).toHaveTextContent('3');
+    for (const name of ['New', 'Dismissed', 'Already Linked']) {
+      const btn = screen.getByRole('button', { name });
+      expect(btn.querySelector('[aria-hidden="true"]')).toBeNull();
+      expect(btn).not.toHaveAttribute('aria-label');
+    }
+  });
+
+  it('End focuses the Watched tab', async () => {
+    const user = userEvent.setup();
+    renderCore({ watched: 1 });
+    screen.getByRole('button', { name: 'New' }).focus();
+    await user.keyboard('{End}');
+    expect(screen.getByRole('button', { name: 'Watched, 1 ticket' })).toHaveFocus();
   });
 });

@@ -174,6 +174,21 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                 </button>
               </>
             )}
+            {badge === 'nav.watched' && (
+              <>
+                <RememberedLinkHint variant="row" entry={entry} />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void restoreTicket(ticket.key);
+                  }}
+                  className={`rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
+                >
+                  {t('watched.restore')}
+                </button>
+              </>
+            )}
             {badge === 'nav.linked' && entry?.copiedKey && (
               <Badge variant="outline" className="text-xs font-mono">
                 {entry.copiedKey}

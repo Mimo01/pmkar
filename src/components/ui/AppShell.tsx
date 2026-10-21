@@ -1,6 +1,7 @@
 import { Settings, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CountPill } from '../../features/groups/CountPill';
 import type { CoreTab, TabId } from '../../features/groups/groupTabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
@@ -11,6 +12,7 @@ interface AppShellProps {
   onTabChange?: (tab: TabId) => void;
   onAuditClick?: () => void;
   navExtension?: ReactNode;
+  tabCounts?: Partial<Record<CoreTab, number>>;
 }
 
 export function AppShell({
@@ -20,6 +22,7 @@ export function AppShell({
   onTabChange,
   onAuditClick,
   navExtension,
+  tabCounts,
 }: AppShellProps) {
   const { t } = useTranslation();
 
@@ -27,6 +30,7 @@ export function AppShell({
     { id: 'new', label: t('nav.new') },
     { id: 'not-mine', label: t('nav.notMine') },
     { id: 'linked', label: t('nav.linked') },
+    { id: 'watched', label: t('nav.watched') },
   ];
 
   // Arrow keys are a focus accelerator only: every tab stays in the Tab order
@@ -103,23 +107,31 @@ export function AppShell({
           aria-label={t('nav.mainAria')}
           onKeyDown={handleNavKeyDown}
         >
-          {NAV_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              data-tab-id={tab.id}
-              data-nav-tab=""
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={`shrink-0 text-sm px-1.5 py-2 mr-3 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
-                activeTab === tab.id
-                  ? 'text-brand-text font-semibold border-brand'
-                  : 'text-brand-text-secondary font-normal hover:text-brand-text border-transparent'
-              }`}
-              aria-current={activeTab === tab.id ? 'page' : undefined}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {NAV_TABS.map((tab) => {
+            const count = tabCounts?.[tab.id];
+            const hasCount = typeof count === 'number';
+            return (
+              <button
+                key={tab.id}
+                data-tab-id={tab.id}
+                data-nav-tab=""
+                type="button"
+                onClick={() => onTabChange(tab.id)}
+                className={`shrink-0 text-sm px-1.5 py-2 mr-3 border-b-2 transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 ${
+                  hasCount ? 'inline-flex items-center gap-2 ' : ''
+                }${
+                  activeTab === tab.id
+                    ? 'text-brand-text font-semibold border-brand'
+                    : 'text-brand-text-secondary font-normal hover:text-brand-text border-transparent'
+                }`}
+                aria-current={activeTab === tab.id ? 'page' : undefined}
+                aria-label={hasCount ? t('nav.tabAria', { label: tab.label, count }) : undefined}
+              >
+                {tab.label}
+                {hasCount && <CountPill active={activeTab === tab.id}>{count}</CountPill>}
+              </button>
+            );
+          })}
           {navExtension}
         </nav>
       )}

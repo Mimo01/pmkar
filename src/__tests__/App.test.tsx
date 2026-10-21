@@ -402,6 +402,16 @@ describe('App', () => {
       unmount();
     });
 
+    it('Watched tab renders the Watched page empty state', async () => {
+      setupBothConnections();
+      seedIssue();
+      const { unmount } = await renderApp();
+      await screen.findByRole('button', { name: 'New' });
+      fireEvent.click(screen.getByRole('button', { name: /^Watched/ }));
+      await screen.findByText('No watched tickets');
+      unmount();
+    });
+
     it('detail chip name closes detail, activates and focuses the group tab (D-06)', async () => {
       setupBothConnections();
       const base = mockInvoke.getMockImplementation() as (cmd: string, args?: unknown) => unknown;

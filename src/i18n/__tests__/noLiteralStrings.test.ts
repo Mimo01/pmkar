@@ -21,6 +21,7 @@ const EXTRA_FILES = [
   'src/features/tickets/TicketListPage.tsx',
   'src/components/ui/AppShell.tsx',
   'src/features/tickets/ConfirmTransitionDialog.tsx',
+  'src/features/tickets/WatchedTicketsPage.tsx',
 ];
 
 /** Callees whose string arguments reach the user (toasts, live regions, inline errors). */

@@ -31,6 +31,8 @@ import { LinkedTicketsPage } from './features/tickets/LinkedTicketsPage';
 import { TicketDetailPage } from './features/tickets/TicketDetailPage';
 import { TicketListPage } from './features/tickets/TicketListPage';
 import { useTicketStore } from './features/tickets/ticketStore';
+import { useCoreTabCounts } from './features/tickets/useCoreTabCounts';
+import { WatchedTicketsPage } from './features/tickets/WatchedTicketsPage';
 import { AboutModal } from './features/update/AboutModal';
 import { UpdateModal } from './features/update/UpdateModal';
 import { useUpdateStore } from './features/update/updateStore';
@@ -117,6 +119,7 @@ function App() {
   // Derive the rendered tab only; never write the fallback back into currentTab, so a
   // transient absence of the selected group does not destroy the user's selection.
   const effectiveTab = resolveActiveTab(currentTab, groups, groupsHydrated);
+  const tabCounts = useCoreTabCounts();
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [detailTicketKey, setDetailTicketKey] = useState<string | null>(null);
@@ -295,6 +298,7 @@ function App() {
           }}
           activeTab={effectiveTab}
           onTabChange={setCurrentTab}
+          tabCounts={tabCounts}
           navExtension={
             <GroupTabStrip
               activeTab={effectiveTab}
@@ -314,6 +318,7 @@ function App() {
           {effectiveTab === 'new' && <TicketListPage />}
           {effectiveTab === 'not-mine' && <IgnoredTicketsPage />}
           {effectiveTab === 'linked' && <LinkedTicketsPage />}
+          {effectiveTab === 'watched' && <WatchedTicketsPage />}
           {activeGroupId !== null && groups.some((g) => g.id === activeGroupId) && (
             <GroupViewPage key={activeGroupId} groupId={activeGroupId} />
           )}
