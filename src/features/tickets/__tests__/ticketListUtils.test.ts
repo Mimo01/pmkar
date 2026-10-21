@@ -4,6 +4,7 @@ import {
   isLinkedCandidate,
   isNewCandidate,
   isNotMineCandidate,
+  isWatchedCandidate,
   sortTickets,
 } from '../ticketListUtils';
 import type { JiraTicket, TriageEntry, TriageState } from '../types';
@@ -73,6 +74,27 @@ describe('predicates', () => {
     expect(isLinkedCandidate(t, {})).toBe(false);
     expect(isLinkedCandidate(t, triage('ignored'))).toBe(false);
     expect(isLinkedCandidate(done, triage('copied'))).toBe(false);
+  });
+});
+
+describe('watched predicates', () => {
+  const t = makeTicket('A-1');
+  const done = makeTicket('A-1', { done: true });
+  it('isNewCandidate excludes watched', () => {
+    expect(isNewCandidate(t, triage('watched'))).toBe(false);
+    expect(isNewCandidate(t, triage('seen'))).toBe(true);
+    expect(isNewCandidate(t, triage('new'))).toBe(true);
+  });
+  it('isWatchedCandidate accepts only watched, not done', () => {
+    expect(isWatchedCandidate(t, triage('watched'))).toBe(true);
+    expect(isWatchedCandidate(done, triage('watched'))).toBe(false);
+    for (const s of ['ignored', 'copied', 'handled', 'seen'] as const) {
+      expect(isWatchedCandidate(t, triage(s))).toBe(false);
+    }
+  });
+  it('isNotMineCandidate and isLinkedCandidate reject watched', () => {
+    expect(isNotMineCandidate(t, triage('watched'))).toBe(false);
+    expect(isLinkedCandidate(t, triage('watched'))).toBe(false);
   });
 });
 

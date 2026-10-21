@@ -71,6 +71,7 @@ const GROUP_BADGE_KEYS = Object.keys({
   'nav.new': true,
   'nav.notMine': true,
   'nav.linked': true,
+  'nav.watched': true,
   'groups.badge.done': true,
 } satisfies Record<GroupBadgeKey, true>);
 
