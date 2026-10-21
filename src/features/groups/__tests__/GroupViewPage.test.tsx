@@ -127,6 +127,44 @@ describe('GroupViewPage', () => {
     expect(cardFor('T-2')).not.toHaveTextContent(/Previously linked/);
   });
 
+  it('shows Watched badge, hint and Restore for watched members with a key', () => {
+    seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
+      'T-2': { state: 'watched', copiedKey: 'C-1' },
+    });
+    render(<GroupViewPage groupId={1} />);
+    const card = cardFor('T-2');
+    expect(within(card).getByText('Watched')).toBeInTheDocument();
+    expect(card).toHaveTextContent(/Previously linked to C-1/);
+    expect(within(card).getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'Watch' })).toBeNull();
+  });
+
+  it('Restore on a watched member sets seen and never relinks', async () => {
+    seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
+      'T-2': { state: 'watched', copiedKey: 'C-1' },
+    });
+    render(<GroupViewPage groupId={1} />);
+    fireEvent.click(within(cardFor('T-2')).getByRole('button', { name: 'Restore' }));
+    await waitFor(() =>
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'T-2',
+        state: 'seen',
+      }),
+    );
+    expect(mockInvoke).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+  });
+
+  it('shows Watched badge and Restore without a hint when no remembered key', () => {
+    seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
+      'T-2': { state: 'watched', copiedKey: null },
+    });
+    render(<GroupViewPage groupId={1} />);
+    const card = cardFor('T-2');
+    expect(within(card).getByText('Watched')).toBeInTheDocument();
+    expect(card).not.toHaveTextContent(/Previously linked/);
+    expect(within(card).getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+  });
+
   it('renders snapshot-only members as normal cards', async () => {
     seed({ 1: ['T-1', 'GONE-1'] }, [T1]);
     mockInvoke.mockResolvedValue([
