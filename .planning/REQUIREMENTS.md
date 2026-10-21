@@ -39,6 +39,15 @@
 - [x] **CONF-03**: No Linked ↔ Not mine transition happens automatically: Undo restores only the true prior state, fetch/poll never change Linked or Not mine rows, and a static guard locks the only callers
 - [x] **CONF-04**: Confirmation strings exist in EN and SK (Slovak uses "tiket"), the dialog is keyboard and screen-reader accessible, and a WebView2 checklist covers it
 
+### Watched category
+
+- [ ] **WATCH-01**: A new triage state Watched is persisted (SQLite CHECK widened by an idempotent table-rebuild migration from older schemas, accepted by set_triage_state, `copied` still rejected) and the remembered Cloud key survives every transition into and out of Watched.
+- [ ] **WATCH-02**: A Watched nav tab with a count badge opens a Watched page that lists only Watched tickets with the remembered-link hint and a Restore button; Watched tickets are excluded from the New list and new count, and group views label them Watched.
+- [ ] **WATCH-03**: Detail page, panel and group view offer explicit labelled buttons per state (Linked: Deny, Watch; Dismissed: Link or Restore link to KEY, Watch, Restore; Watched: Link or Restore link to KEY, Deny, Restore). Linked to Watched and Watched to Linked require confirmation, Watched to Linked relinks the remembered key and never creates a copy, and a never-linked Watched ticket goes to the copy preview.
+- [ ] **WATCH-04**: Dismissed to Watched and Watched to Dismissed are instant with an 8 s Undo toast that restores the true prior state and can never make a ticket Linked.
+- [ ] **WATCH-05**: All Watched transitions go through triageActions behind the static transition guard, and fetch/poll never change a Watched row.
+- [ ] **WATCH-06**: All new strings exist in EN and SK (Slovak uses "tiket"), every transition is announced in the live region, focus never falls to body, axe passes, and the WebView2 checklist covers Watched.
+
 ## Future Requirements
 
 - Cloud existence check on re-link (404 falls back to copy preview) — deferred, adds Jira call
@@ -53,7 +62,7 @@
 | Clearing the remembered link on deny | Link must be restorable |
 | Bulk deny/link | Bulk copy is out of scope; review stays ticket-by-ticket |
 | Hover row icons / drag & drop | Explicit labelled buttons only |
-| New triage state or schema migration | Existing `ignored` + `copied_key` covers it |
+| New triage state or schema migration | Superseded by Phase 37.2 (Watched state, WATCH-01) |
 
 ## Traceability
 
@@ -78,12 +87,18 @@
 | CONF-02 | Phase 37.1 | Complete |
 | CONF-03 | Phase 37.1 | Complete |
 | CONF-04 | Phase 37.1 | Complete |
+| WATCH-01 | Phase 37.2 | Pending |
+| WATCH-02 | Phase 37.2 | Pending |
+| WATCH-03 | Phase 37.2 | Pending |
+| WATCH-04 | Phase 37.2 | Pending |
+| WATCH-05 | Phase 37.2 | Pending |
+| WATCH-06 | Phase 37.2 | Pending |
 
 **Coverage:**
-- v0.5.1 requirements: 19 total
-- Mapped to phases: 19
+- v0.5.1 requirements: 25 total
+- Mapped to phases: 25
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-15*
-*Last updated: 2026-10-15 after initial definition*
+*Last updated: 2026-10-21 (Phase 37.2 WATCH requirements added)*
