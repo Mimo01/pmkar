@@ -1,6 +1,6 @@
 import type { Group } from './types';
 
-export type CoreTab = 'new' | 'not-mine' | 'linked';
+export type CoreTab = 'new' | 'not-mine' | 'linked' | 'watched';
 export type TabId = CoreTab | `group:${number}`;
 
 export function groupTabId(id: number): TabId {
