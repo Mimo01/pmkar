@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
-export type ConfirmTransitionKind = 'deny' | 'link';
+export type ConfirmTransitionKind = 'deny' | 'link' | 'watch';
 
 export interface ConfirmTransitionTarget {
   kind: ConfirmTransitionKind;
@@ -61,12 +61,33 @@ export function ConfirmTransitionDialog({
   }
 
   const kind = snapshot?.kind ?? 'deny';
+  const tabLabels: Record<ConfirmTransitionKind, string> = {
+    deny: t('nav.notMine'),
+    watch: t('nav.watched'),
+    link: t('nav.linked'),
+  };
   const vars = {
     key: snapshot?.ticketKey ?? '',
     cloudKey: snapshot?.cloudKey ?? '',
-    tab: kind === 'deny' ? t('nav.notMine') : t('nav.linked'),
+    tab: tabLabels[kind],
   };
-  const isDeny = kind === 'deny';
+  const copy: Record<ConfirmTransitionKind, { title: string; body: string; action: string }> = {
+    deny: {
+      title: t('triage.confirm.deny.title', vars),
+      body: t('triage.confirm.deny.body', vars),
+      action: t('triage.confirm.deny.action', vars),
+    },
+    link: {
+      title: t('triage.confirm.link.title', vars),
+      body: t('triage.confirm.link.body', vars),
+      action: t('triage.confirm.link.action', vars),
+    },
+    watch: {
+      title: t('triage.confirm.watch.title', vars),
+      body: t('triage.confirm.watch.body', vars),
+      action: t('triage.confirm.watch.action', vars),
+    },
+  };
 
   return (
     <Dialog
@@ -91,10 +112,10 @@ export function ConfirmTransitionDialog({
         }}
       >
         <DialogTitle className="text-base font-semibold leading-tight text-brand-text">
-          {isDeny ? t('triage.confirm.deny.title', vars) : t('triage.confirm.link.title', vars)}
+          {copy[kind].title}
         </DialogTitle>
         <DialogDescription className="mt-4 text-sm text-brand-text-secondary">
-          {isDeny ? t('triage.confirm.deny.body', vars) : t('triage.confirm.link.body', vars)}
+          {copy[kind].body}
         </DialogDescription>
         <div className="mt-6 flex justify-end gap-2">
           <Button
@@ -114,7 +135,7 @@ export function ConfirmTransitionDialog({
             disabled={submitting}
             onClick={handleConfirm}
           >
-            {isDeny ? t('triage.confirm.deny.action', vars) : t('triage.confirm.link.action', vars)}
+            {copy[kind].action}
           </Button>
         </div>
       </DialogContent>

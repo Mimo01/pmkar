@@ -9,6 +9,7 @@ import { ConfirmTransitionDialog, type ConfirmTransitionTarget } from '../Confir
 
 const deny: ConfirmTransitionTarget = { kind: 'deny', ticketKey: 'SRV-1', cloudKey: 'CLD-9' };
 const link: ConfirmTransitionTarget = { kind: 'link', ticketKey: 'SRV-1', cloudKey: 'CLD-9' };
+const watch: ConfirmTransitionTarget = { kind: 'watch', ticketKey: 'ABC-1', cloudKey: 'CLOUD-7' };
 
 function Wrapper({
   initial,
@@ -122,6 +123,40 @@ describe('ConfirmTransitionDialog', () => {
 
   it('has no axe violations', async () => {
     setup(deny);
+    const dlg = await screen.findByRole('alertdialog');
+    expect(await axe(dlg)).toHaveNoViolations();
+  });
+
+  it('watch variant renders title, body, confirm and focuses Cancel', async () => {
+    setup(watch);
+    const dlg = await screen.findByRole('alertdialog', { name: 'Move ABC-1 to Watched?' });
+    expect(dlg.textContent).toContain('CLOUD-7');
+    expect(screen.getByRole('button', { name: 'Move to Watched' })).toBeTruthy();
+    await waitFor(() =>
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' })),
+    );
+  });
+
+  it('watch variant Confirm resolves true once', async () => {
+    const onResolve = vi.fn();
+    renderWithI18n(
+      <ConfirmTransitionDialog target={watch} onResolve={onResolve} onClosed={vi.fn()} />,
+    );
+    const btn = await screen.findByRole('button', { name: 'Move to Watched' });
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+    expect(onResolve).toHaveBeenCalledTimes(1);
+    expect(onResolve).toHaveBeenCalledWith(true);
+  });
+
+  it('watch variant Cancel resolves false', async () => {
+    const { user, onResolve } = setup(watch);
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(onResolve).toHaveBeenCalledWith(false);
+  });
+
+  it('watch variant has no axe violations', async () => {
+    setup(watch);
     const dlg = await screen.findByRole('alertdialog');
     expect(await axe(dlg)).toHaveNoViolations();
   });
