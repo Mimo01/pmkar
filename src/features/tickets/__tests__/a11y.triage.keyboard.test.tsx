@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toast } from 'sonner';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
@@ -35,6 +36,7 @@ vi.mock('@/stores/schemaCacheStore', () => ({
     `${side}|${pk ?? '__null__'}|${it ?? '__null__'}`,
 }));
 
+import { useAnnouncerStore } from '../../../components/LiveAnnouncer';
 import i18n from '../../../i18n/index';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { GroupViewPage } from '../../groups/GroupViewPage';
@@ -411,5 +413,139 @@ describe('Not mine row Restore buttons', () => {
     expect(within(view.container).getByRole('button', { name: i18n.t('ignored.restore') })).toBe(
       el,
     );
+  });
+});
+
+const WATCHED: TriageEntry = { state: 'watched', copiedKey: CLOUD };
+
+describe.each<Surface>(['page', 'panel'])('Watched keyboard operability: %s (D-12)', (surface) => {
+  const watch = () => i18n.t('detail.watch');
+  const deny = () => i18n.t('detail.deny');
+  const restoreLink = () => i18n.t('detail.restoreLink', { key: CLOUD });
+  const restoreWatched = () => i18n.t('watched.restore');
+  const dismiss = () => i18n.t('detail.ignore');
+  const announced = () => useAnnouncerStore.getState().message;
+  const notBody = () => expect(document.activeElement).not.toBe(document.body);
+
+  beforeEach(() => {
+    invokeMock.mockReset();
+    vi.mocked(toast).mockClear();
+    useAnnouncerStore.setState({ message: '', nonce: 0 });
+    invokeMock.mockImplementation((cmd: string, args?: unknown) => {
+      if (cmd === 'fetch_ticket_detail') {
+        return Promise.resolve(mkDetail((args as { issueKey: string }).issueKey));
+      }
+      if (cmd === 'set_triage_state') return Promise.resolve(undefined);
+      if (cmd === 'relink_ticket') return Promise.resolve(CLOUD);
+      return Promise.resolve([]);
+    });
+    useConnectionStore.setState({
+      serverConnection: {
+        baseUrl: BASE,
+        username: 'u',
+        serverVersion: '9.0.0',
+        lastTestedAt: '2024-01-01T00:00:00.000Z',
+        status: 'ok',
+      },
+      cloudConnection: {
+        baseUrl: 'https://company.atlassian.net',
+        username: 'c',
+        serverVersion: '1000.0.0',
+        lastTestedAt: '2024-01-01T00:00:00.000Z',
+        status: 'ok',
+      },
+    });
+  });
+
+  it('Linked -> Watched: Cancel focused, Escape returns to Watch, confirm announces and focuses Restore link', async () => {
+    seed(LINKED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    const watchBtn = await tabTo(user, watch());
+    await user.keyboard('{Enter}');
+    const dlg = await screen.findByRole('alertdialog');
+    const cancel = within(dlg).getByRole('button', { name: i18n.t('triage.confirm.cancel') });
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+    expect(callsOf('set_triage_state')).toHaveLength(0);
+    await waitFor(() => expect(document.activeElement).toBe(watchBtn));
+
+    await user.keyboard('{Enter}');
+    await keyboardConfirm(user);
+    await waitFor(() =>
+      expect(callsOf('set_triage_state')[0]?.[1]).toMatchObject({
+        ticketKey: KEY,
+        state: 'watched',
+      }),
+    );
+    await waitFor(() => expect(announced()).toBe(i18n.t('a11y.watched', { key: KEY })));
+    expect(announced()).toContain('moved to Watched');
+    const primary = await screen.findByRole('button', { name: restoreLink() });
+    await waitFor(() => expect(document.activeElement).toBe(primary));
+    notBody();
+  });
+
+  it('Dismissed -> Watched: instant, announced, focus on primary, Undo offered', async () => {
+    seed(DENIED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, watch());
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    await waitFor(() => expect(announced()).toBe(i18n.t('a11y.watched', { key: KEY })));
+    const primary = await screen.findByRole('button', { name: restoreLink() });
+    await waitFor(() => expect(document.activeElement).toBe(primary));
+    notBody();
+    const call = vi.mocked(toast).mock.calls.find((c) => c[1]?.id === `watch-${KEY}`);
+    expect((call?.[1] as { action?: { label: string } }).action?.label).toBe(i18n.t('triage.undo'));
+  });
+
+  it('Watched -> Dismissed: Deny is instant, announced, focus on primary', async () => {
+    seed(WATCHED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, deny());
+    await user.keyboard('{Enter}');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+    await waitFor(() => expect(announced()).toBe(i18n.t('a11y.denied', { key: KEY })));
+    expect(announced()).toContain('moved to Dismissed');
+    const primary = await screen.findByRole('button', { name: restoreLink() });
+    await waitFor(() => expect(document.activeElement).toBe(primary));
+    notBody();
+  });
+
+  it('Watched -> Linked: Restore link confirms, announces, focus on Linked badge', async () => {
+    seed(WATCHED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, restoreLink());
+    await user.keyboard('{Enter}');
+    await keyboardConfirm(user);
+    await waitFor(() => expect(callsOf('relink_ticket').length).toBe(1));
+    await waitFor(() =>
+      expect(announced()).toBe(i18n.t('a11y.linked', { key: KEY, cloudKey: CLOUD })),
+    );
+    await waitFor(() => {
+      const active = document.activeElement as HTMLElement;
+      expect(active.getAttribute('tabindex')).toBe('-1');
+      expect(active.textContent).toContain(CLOUD);
+    });
+    notBody();
+  });
+
+  it('Watched -> seen: Restore announces and focus lands on Dismiss', async () => {
+    seed(WATCHED);
+    await renderSurface(surface);
+    const user = userEvent.setup();
+    await tabTo(user, restoreWatched());
+    await user.keyboard('{Enter}');
+    await waitFor(() =>
+      expect(callsOf('set_triage_state')[0]?.[1]).toMatchObject({ state: 'seen' }),
+    );
+    await waitFor(() => expect(announced()).toBe(i18n.t('a11y.restored', { key: KEY })));
+    const dismissBtn = await screen.findByRole('button', { name: dismiss() });
+    await waitFor(() => expect(document.activeElement).toBe(dismissBtn));
+    notBody();
   });
 });

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TriageEntry, TriageState } from '../types';
 
@@ -23,10 +24,16 @@ vi.mock('sonner', () => ({
 import { useConnectionStore } from '../../connections/connectionStore';
 import { groupBadgeKey } from '../../groups/groupBadge';
 import { useCopyStore } from '../copyStore';
-import { isLinkedCandidate, isNewCandidate, isNotMineCandidate } from '../ticketListUtils';
+import {
+  isLinkedCandidate,
+  isNewCandidate,
+  isNotMineCandidate,
+  isWatchedCandidate,
+} from '../ticketListUtils';
 import { useTicketStore } from '../ticketStore';
-import { denyTicket, linkTicket, markHandled, restoreTicket } from '../triageActions';
+import { denyTicket, linkTicket, markHandled, restoreTicket, watchTicket } from '../triageActions';
 import type { JiraTicket } from '../types';
+import { useCoreTabCounts } from '../useCoreTabCounts';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -41,9 +48,9 @@ function mkTicket(key: string, done: boolean): JiraTicket {
   } as unknown as JiraTicket;
 }
 
-const DONE_KEYS = new Set(['D-1', 'D-2']);
-const KEYS = ['A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'A-6', 'A-7', 'D-1', 'D-2'];
-const NON_DONE_COUNT = 7;
+const DONE_KEYS = new Set(['D-1', 'D-2', 'D-3']);
+const KEYS = ['A-1', 'A-2', 'A-3', 'A-4', 'A-5', 'A-6', 'A-7', 'A-8', 'A-9', 'D-1', 'D-2', 'D-3'];
+const NON_DONE_COUNT = 9;
 
 function fixtureMap(): Record<string, TriageEntry> {
   const e = (state: TriageState, copiedKey: string | null = null): TriageEntry => ({
@@ -58,8 +65,11 @@ function fixtureMap(): Record<string, TriageEntry> {
     'A-5': e('ignored', 'CL-5'),
     'A-6': e('ignored'),
     'A-7': e('handled', 'CL-7'),
+    'A-8': e('watched', 'CL-8'),
+    'A-9': e('watched'),
     'D-1': e('copied', 'CL-9'),
     'D-2': e('new'),
+    'D-3': e('watched', 'CL-10'),
   };
 }
 
@@ -71,17 +81,19 @@ function lists() {
     newList: keysOf(isNewCandidate),
     notMine: keysOf(isNotMineCandidate),
     linked: keysOf(isLinkedCandidate),
+    watched: keysOf(isWatchedCandidate),
   };
 }
 
 function assertInvariant() {
   const { tickets, triageMap, newCount } = useTicketStore.getState();
-  const { newList, notMine, linked } = lists();
+  const { newList, notMine, linked, watched } = lists();
   for (const t of tickets) {
     const tabs = [
       isNewCandidate(t, triageMap) ? 'nav.new' : null,
       isNotMineCandidate(t, triageMap) ? 'nav.notMine' : null,
       isLinkedCandidate(t, triageMap) ? 'nav.linked' : null,
+      isWatchedCandidate(t, triageMap) ? 'nav.watched' : null,
     ].filter((x): x is string => x !== null);
     if (DONE_KEYS.has(t.key)) {
       expect(tabs, `${t.key} done`).toEqual([]);
@@ -91,12 +103,17 @@ function assertInvariant() {
       expect(groupBadgeKey(t, triageMap)).toBe(tabs[0]);
     }
   }
-  for (const l of [newList, notMine, linked]) expect(new Set(l).size).toBe(l.length);
-  expect(newList.length + notMine.length + linked.length).toBe(NON_DONE_COUNT);
+  for (const l of [newList, notMine, linked, watched]) expect(new Set(l).size).toBe(l.length);
+  expect(newList.length + notMine.length + linked.length + watched.length).toBe(NON_DONE_COUNT);
   const badge = (k: string) => tickets.filter((t) => groupBadgeKey(t, triageMap) === k).length;
   expect(badge('nav.new')).toBe(newList.length);
   expect(badge('nav.notMine')).toBe(notMine.length);
   expect(badge('nav.linked')).toBe(linked.length);
+  expect(badge('nav.watched')).toBe(watched.length);
+  // Only the Watched tab carries a count; it equals the Watched page list (D-01, D-02).
+  const counts = renderHook(() => useCoreTabCounts());
+  expect(counts.result.current).toEqual({ watched: watched.length });
+  counts.unmount();
   // newCount counts raw 'new' entries (including done tickets), not the New tab list.
   expect(newCount).toBe(Object.values(triageMap).filter((e) => e.state === 'new').length);
 }
@@ -179,6 +196,7 @@ describe('triage consistency invariant (RQA-01)', () => {
       newList: ['A-1', 'A-2'],
       notMine: ['A-5', 'A-6', 'A-7'],
       linked: ['A-3', 'A-4'],
+      watched: ['A-8', 'A-9'],
     });
   });
 
@@ -255,11 +273,55 @@ describe('triage consistency invariant (RQA-01)', () => {
     expect(lists().notMine).toContain('A-5');
   });
 
+  it('watch moves Linked and Dismissed to Watched and keeps the remembered key', async () => {
+    await watchTicket('A-3');
+    await check();
+    await watchTicket('A-5');
+    await check();
+    const l = lists();
+    expect(l.watched).toEqual(expect.arrayContaining(['A-3', 'A-5', 'A-8', 'A-9']));
+    expect(l.linked).not.toContain('A-3');
+    expect(l.notMine).not.toContain('A-5');
+    expect(useTicketStore.getState().triageMap['A-3'].copiedKey).toBe('CL-3');
+  });
+
+  it('Watched -> Dismissed -> Watched round trips with Undo and stays in exactly one tab', async () => {
+    await denyTicket('A-8');
+    await check();
+    expect(lists().notMine).toContain('A-8');
+    expect(lists().watched).not.toContain('A-8');
+    lastUndo()?.();
+    await check();
+    expect(lists().watched).toContain('A-8');
+    expect(useTicketStore.getState().triageMap['A-8']).toEqual({
+      state: 'watched',
+      copiedKey: 'CL-8',
+    });
+  });
+
+  it('Watched restore relinks nothing and returns to New; Watched -> Linked via link', async () => {
+    await restoreTicket('A-8');
+    await check();
+    expect(lists().newList).toContain('A-8');
+    expect(lists().watched).not.toContain('A-8');
+    expect(await linkTicket('A-9')).not.toBe('relinked');
+    await check();
+    await watchTicket('A-3');
+    await check();
+    expect(await linkTicket('A-3')).toBe('relinked');
+    await check();
+    expect(lists().linked).toContain('A-3');
+  });
+
   it('keeps done tickets out of every tab', async () => {
     await denyTicket('D-1');
     await check();
     await restoreTicket('D-2');
     await check();
+    await watchTicket('D-1');
+    await check();
+    expect(lists().watched).not.toContain('D-1');
+    expect(lists().watched).not.toContain('D-3');
     expect(lists().newList).not.toContain('D-2');
     expect(lists().notMine).not.toContain('D-1');
   });
@@ -274,12 +336,13 @@ describe('triage consistency invariant (RQA-01)', () => {
     };
     for (let i = 0; i < 200; i++) {
       const key = KEYS[Math.floor(rand() * KEYS.length)];
-      const action = Math.floor(rand() * 5);
+      const action = Math.floor(rand() * 6);
       if (action === 0) await denyTicket(key);
       else if (action === 1) lastUndo()?.();
       else if (action === 2) await linkTicket(key);
       else if (action === 3) await restoreTicket(key);
-      else await markHandled(key);
+      else if (action === 4) await markHandled(key);
+      else await watchTicket(key);
       await check();
     }
 
