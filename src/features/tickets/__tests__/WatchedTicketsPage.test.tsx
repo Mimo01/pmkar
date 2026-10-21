@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
@@ -65,32 +65,16 @@ describe('WatchedTicketsPage', () => {
     expect(screen.queryByText('Watched done')).toBeNull();
   });
 
-  it('shows hint and only a Restore button per row', () => {
+  it('shows hint and no row action buttons', () => {
     setup([makeTicket('W-1', 'Watched one')], {
       'W-1': { state: 'watched', copiedKey: 'C-1' },
     });
     render(<WatchedTicketsPage />);
     expect(screen.getByText(/Previously linked to/)).toHaveTextContent(/C-1/);
-    expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Restore' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Link' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Deny' })).toBeNull();
-  });
-
-  it('Restore sets seen without relinking', async () => {
-    setup([makeTicket('W-1', 'Watched one')], {
-      'W-1': { state: 'watched', copiedKey: 'C-1' },
-    });
-    render(<WatchedTicketsPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
-    await waitFor(() =>
-      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-        ticketKey: 'W-1',
-        state: 'seen',
-      }),
-    );
-    expect(mockInvoke).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
-    await waitFor(() => expect(screen.queryByText('Watched one')).toBeNull());
   });
 
   it('shows empty state', () => {

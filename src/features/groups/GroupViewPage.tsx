@@ -3,7 +3,6 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FOCUS_RING } from '@/lib/focusRing';
 import { cn } from '@/lib/utils';
 import { RememberedLinkHint } from '../tickets/RememberedLinkHint';
 import { SkeletonCards, TicketCard } from '../tickets/TicketCard';
@@ -15,7 +14,6 @@ import {
   type TicketSortField,
 } from '../tickets/ticketListUtils';
 import { useTicketStore } from '../tickets/ticketStore';
-import { restoreTicket } from '../tickets/triageActions';
 import type { JiraTicket } from '../tickets/types';
 import { useRemovalBlockedByFetch } from '../tickets/useHintsEligible';
 import { ConfirmRemovePopover } from './ConfirmRemovePopover';
@@ -162,33 +160,9 @@ export function GroupViewPage({ groupId }: { groupId: number }) {
                   </span>
                 )}
                 <RememberedLinkHint variant="row" entry={entry} />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void restoreTicket(ticket.key);
-                  }}
-                  className={`rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
-                >
-                  {t('ignored.restore')}
-                </button>
               </>
             )}
-            {badge === 'nav.watched' && (
-              <>
-                <RememberedLinkHint variant="row" entry={entry} />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    void restoreTicket(ticket.key);
-                  }}
-                  className={`rounded text-xs text-brand-text-secondary hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
-                >
-                  {t('watched.restore')}
-                </button>
-              </>
-            )}
+            {badge === 'nav.watched' && <RememberedLinkHint variant="row" entry={entry} />}
             {badge === 'nav.linked' && entry?.copiedKey && (
               <Badge variant="outline" className="text-xs font-mono">
                 {entry.copiedKey}

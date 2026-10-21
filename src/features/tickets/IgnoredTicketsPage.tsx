@@ -1,7 +1,6 @@
 import { Info, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FOCUS_RING } from '@/lib/focusRing';
 import { cn } from '@/lib/utils';
 import { SelectionBar } from '../groups/SelectionBar';
 import { useListSelection } from '../groups/useListSelection';
@@ -16,7 +15,6 @@ import {
   type TicketSortField,
 } from './ticketListUtils';
 import { useTicketStore } from './ticketStore';
-import { restoreTicket } from './triageActions';
 
 export function IgnoredTicketsPage() {
   const { t } = useTranslation();
@@ -117,16 +115,6 @@ export function IgnoredTicketsPage() {
                       </span>
                     )}
                     <RememberedLinkHint variant="row" entry={triageMap[ticket.key]} />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void restoreTicket(ticket.key);
-                      }}
-                      className={`rounded text-xs text-brand-muted hover:text-brand-text transition-colors duration-150 ${FOCUS_RING}`}
-                    >
-                      {t('ignored.restore')}
-                    </button>
                   </div>
                 }
               />

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IgnoredTicketsPage } from './IgnoredTicketsPage';
 import { useTicketStore } from './ticketStore';
@@ -81,30 +81,9 @@ describe('IgnoredTicketsPage', () => {
     expect(screen.queryByText('TEST-3')).not.toBeInTheDocument();
   });
 
-  it('each row has a Restore button', () => {
+  it('rows have no Restore button (restore lives in ticket detail)', () => {
     render(<IgnoredTicketsPage />);
-    const restoreButtons = screen.getAllByRole('button', { name: 'Restore' });
-    expect(restoreButtons).toHaveLength(2);
-  });
-
-  it('clicking Restore invokes set_triage_state with seen', async () => {
-    render(<IgnoredTicketsPage />);
-    // TEST-2 (Jan 11) sorts before TEST-1 (Jan 10) in DESC order — first button is TEST-2
-    const restoreButton = screen.getAllByRole('button', { name: 'Restore' })[0];
-    fireEvent.click(restoreButton);
-    expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-      ticketKey: 'TEST-2',
-      state: 'seen',
-    });
-  });
-
-  it('clicking Restore updates triageMap via hydrateTriageMap', () => {
-    render(<IgnoredTicketsPage />);
-    // TEST-2 (Jan 11) sorts first in DESC order — click first button
-    const restoreButton = screen.getAllByRole('button', { name: 'Restore' })[0];
-    fireEvent.click(restoreButton);
-    const updatedMap = useTicketStore.getState().triageMap;
-    expect(updatedMap['TEST-2'].state).toBe('seen');
+    expect(screen.queryByRole('button', { name: 'Restore' })).toBeNull();
   });
 
   it('shows empty state when no ignored tickets', () => {
@@ -120,14 +99,11 @@ describe('IgnoredTicketsPage', () => {
     expect(screen.queryByText('TEST-3')).not.toBeInTheDocument();
   });
 
-  it('shows the remembered-link hint before Restore for ignored + copiedKey', () => {
+  it('shows the remembered-link hint for ignored + copiedKey', () => {
     setupStore([ticket1], { 'TEST-1': { state: 'ignored', copiedKey: 'CLD-9' } });
     render(<IgnoredTicketsPage />);
     const hint = screen.getByText('CLD-9').parentElement as HTMLElement;
     expect(hint).toHaveTextContent(/Previously linked to CLD-9/);
-    const restore = screen.getByRole('button', { name: 'Restore' });
-    expect(hint.compareDocumentPosition(restore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(1);
   });
 
   it('shows no hint without a remembered key', () => {
@@ -139,14 +115,6 @@ describe('IgnoredTicketsPage', () => {
     setupStore([ticket1], { 'TEST-1': { state: 'handled', copiedKey: 'CLD-9' } });
     render(<IgnoredTicketsPage />);
     expect(screen.queryByText(/Previously linked/)).toBeNull();
-  });
-
-  it('Restore still restores in select mode and does not toggle selection', () => {
-    render(<IgnoredTicketsPage />);
-    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Restore' })[0]);
-    expect(useTicketStore.getState().triageMap['TEST-2'].state).toBe('seen');
-    expect(screen.queryByText('1 selected')).toBeNull();
   });
 });
 

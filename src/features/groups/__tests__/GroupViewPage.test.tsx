@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
-import { isNewCandidate } from '../../tickets/ticketListUtils';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, TriageEntry } from '../../tickets/types';
 import { GroupViewPage } from '../GroupViewPage';
@@ -100,10 +99,10 @@ describe('GroupViewPage', () => {
     expect(within(cardFor('T-4')).getByText('Already Linked')).toBeInTheDocument();
     expect(within(cardFor('T-4')).getByText('DEST-9')).toBeInTheDocument();
     expect(within(cardFor('T-5')).getAllByText('Done')).toHaveLength(2);
-    expect(screen.getAllByRole('button', { name: 'Restore' })).toHaveLength(2);
+    expect(screen.queryAllByRole('button', { name: 'Restore' })).toHaveLength(0);
   });
 
-  it('shows the remembered-link hint before Restore on ignored members with a key', () => {
+  it('shows the remembered-link hint on ignored members with a key', () => {
     seed({ 1: ['T-1', 'T-2', 'T-3', 'T-4'] }, [T1, T2, T3, T4], {
       'T-2': { state: 'ignored', copiedKey: 'CLD-9' },
       'T-3': { state: 'handled', copiedKey: 'CLD-9' },
@@ -112,9 +111,7 @@ describe('GroupViewPage', () => {
     render(<GroupViewPage groupId={1} />);
     const card = cardFor('T-2');
     expect(card).toHaveTextContent(/Previously linked to CLD-9/);
-    const hint = within(card).getByText('CLD-9').parentElement as HTMLElement;
-    const restore = within(card).getByRole('button', { name: 'Restore' });
-    expect(hint.compareDocumentPosition(restore) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(card).queryByRole('button', { name: 'Restore' })).toBeNull();
     expect(cardFor('T-3')).not.toHaveTextContent(/Previously linked/);
     expect(within(cardFor('T-4')).getByText('DEST-9')).toBeInTheDocument();
     expect(cardFor('T-4')).not.toHaveTextContent(/Previously linked/);
@@ -127,7 +124,7 @@ describe('GroupViewPage', () => {
     expect(cardFor('T-2')).not.toHaveTextContent(/Previously linked/);
   });
 
-  it('shows Watched badge, hint and Restore for watched members with a key', () => {
+  it('shows Watched badge and hint (no Restore) for watched members with a key', () => {
     seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
       'T-2': { state: 'watched', copiedKey: 'C-1' },
     });
@@ -135,26 +132,11 @@ describe('GroupViewPage', () => {
     const card = cardFor('T-2');
     expect(within(card).getByText('Watched')).toBeInTheDocument();
     expect(card).toHaveTextContent(/Previously linked to C-1/);
-    expect(within(card).getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'Restore' })).toBeNull();
     expect(within(card).queryByRole('button', { name: 'Watch' })).toBeNull();
   });
 
-  it('Restore on a watched member sets seen and never relinks', async () => {
-    seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
-      'T-2': { state: 'watched', copiedKey: 'C-1' },
-    });
-    render(<GroupViewPage groupId={1} />);
-    fireEvent.click(within(cardFor('T-2')).getByRole('button', { name: 'Restore' }));
-    await waitFor(() =>
-      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-        ticketKey: 'T-2',
-        state: 'seen',
-      }),
-    );
-    expect(mockInvoke).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
-  });
-
-  it('shows Watched badge and Restore without a hint when no remembered key', () => {
+  it('shows Watched badge without a hint or Restore when no remembered key', () => {
     seed({ 1: ['T-1', 'T-2'] }, [T1, T2], {
       'T-2': { state: 'watched', copiedKey: null },
     });
@@ -162,7 +144,7 @@ describe('GroupViewPage', () => {
     const card = cardFor('T-2');
     expect(within(card).getByText('Watched')).toBeInTheDocument();
     expect(card).not.toHaveTextContent(/Previously linked/);
-    expect(within(card).getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+    expect(within(card).queryByRole('button', { name: 'Restore' })).toBeNull();
   });
 
   it('renders snapshot-only members as normal cards', async () => {
@@ -178,21 +160,6 @@ describe('GroupViewPage', () => {
     await waitFor(() => expect(screen.getByText('GONE-1')).toBeInTheDocument());
     expect(screen.getByText('T-1')).toBeInTheDocument();
     expect(within(cardFor('GONE-1')).getByText('New')).toBeInTheDocument();
-  });
-
-  it('Restore sets state to seen without opening detail', () => {
-    seed({ 1: ['T-1', 'T-2'] });
-    render(<GroupViewPage groupId={1} />);
-    fireEvent.click(within(cardFor('T-2')).getByRole('button', { name: 'Restore' }));
-    expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-      ticketKey: 'T-2',
-      state: 'seen',
-    });
-    const st = useTicketStore.getState();
-    expect(st.triageMap['T-2'].state).toBe('seen');
-    expect(isNewCandidate(T2, st.triageMap)).toBe(true);
-    expect(st.selectedTicketKey).toBeNull();
-    expect(within(cardFor('T-2')).getByText('New')).toBeInTheDocument();
   });
 
   it('reflects external triage changes live', () => {
@@ -447,18 +414,6 @@ describe('GroupViewPage selection', () => {
     unmount();
     render(<GroupViewPage groupId={7} />);
     expect(selectBtn()).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
-  });
-
-  it('Restore in select mode does not toggle selection', async () => {
-    useTicketStore.setState({ triageMap: triage });
-    render(<GroupViewPage groupId={7} />);
-    await userEvent.click(selectBtn());
-    await userEvent.click(within(cardFor('T-2')).getByRole('button', { name: 'Restore' }));
-    expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
-      ticketKey: 'T-2',
-      state: 'seen',
-    });
     expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
   });
 });

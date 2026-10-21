@@ -39,9 +39,6 @@ vi.mock('@/stores/schemaCacheStore', () => ({
 import { useAnnouncerStore } from '../../../components/LiveAnnouncer';
 import i18n from '../../../i18n/index';
 import { useConnectionStore } from '../../connections/connectionStore';
-import { GroupViewPage } from '../../groups/GroupViewPage';
-import { useGroupStore } from '../../groups/groupStore';
-import { IgnoredTicketsPage } from '../IgnoredTicketsPage';
 import { TicketDetailPage } from '../TicketDetailPage';
 import { TicketDetailPanel } from '../TicketDetailPanel';
 import { useTicketStore } from '../ticketStore';
@@ -383,36 +380,6 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
     await renderSurface(surface);
     await screen.findByRole('button', { name: deny() });
     expect(await axe(document.body, AXE_OPTIONS)).toHaveNoViolations();
-  });
-});
-
-describe('Not mine row Restore buttons', () => {
-  beforeEach(() => {
-    invokeMock.mockReset();
-    invokeMock.mockImplementation(() => Promise.resolve([]));
-    seed(DENIED);
-    useGroupStore.setState({ memberKeysByGroup: { 1: [KEY] }, hydrated: true });
-  });
-
-  it('group view: Restore is Tab reachable, ringed, Enter restores', async () => {
-    render(<GroupViewPage groupId={1} />);
-    const user = userEvent.setup();
-    const el = await tabTo(user, i18n.t('ignored.restore'));
-    expect(el.className).toContain('focus-visible:ring-2');
-    await user.keyboard('{Enter}');
-    await waitFor(() =>
-      expect(callsOf('set_triage_state')[0]?.[1]).toMatchObject({ ticketKey: KEY, state: 'seen' }),
-    );
-  });
-
-  it('Not mine page: Restore is Tab reachable and ringed', async () => {
-    const view = render(<IgnoredTicketsPage />);
-    const user = userEvent.setup();
-    const el = await tabTo(user, i18n.t('ignored.restore'));
-    expect(el.className).toContain('focus-visible:ring-2');
-    expect(within(view.container).getByRole('button', { name: i18n.t('ignored.restore') })).toBe(
-      el,
-    );
   });
 });
 
