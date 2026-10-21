@@ -64,3 +64,40 @@ describe('triage.confirm.* Phase 37.1 strings', () => {
     expect(skMap['triage.confirm.cancel']).toBe('Zrušiť');
   });
 });
+
+describe('triage.confirm.watch.* Phase 37.2 strings', () => {
+  const WATCH_KEYS = [
+    'triage.confirm.watch.title',
+    'triage.confirm.watch.body',
+    'triage.confirm.watch.action',
+  ];
+
+  it('exist and are non-empty in EN and SK with equal placeholders', () => {
+    for (const k of WATCH_KEYS) {
+      expect(enMap[k]?.length, `en.json missing "${k}"`).toBeGreaterThan(0);
+      expect(skMap[k]?.length, `sk.json missing "${k}"`).toBeGreaterThan(0);
+      expect(placeholders(skMap[k]), `placeholders of "${k}"`).toEqual(placeholders(enMap[k]));
+    }
+  });
+
+  it('expected placeholders are present', () => {
+    expect(placeholders(enMap['triage.confirm.watch.body'])).toContain('key');
+    expect(placeholders(enMap['triage.confirm.watch.body'])).toContain('cloudKey');
+    expect(placeholders(enMap['triage.confirm.watch.title'])).toContain('key');
+  });
+
+  it('SK uses "tiket" and never "úloh"', () => {
+    for (const k of [
+      'triage.confirm.watch.title',
+      'triage.confirm.watch.body',
+      'triage.watched',
+      'triage.watchedDenied',
+      'a11y.watched',
+      'watched.empty.body',
+      'watched.empty.heading',
+    ]) {
+      expect(skMap[k], `sk.json key "${k}" missing tiket`).toMatch(/tiket/i);
+      expect(/úloh/i.test(skMap[k]), `sk.json key "${k}" uses úloh`).toBe(false);
+    }
+  });
+});
