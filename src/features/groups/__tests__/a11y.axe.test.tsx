@@ -14,9 +14,12 @@ vi.mock('sonner', () => ({
 
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
 import { useConnectionStore } from '../../connections/connectionStore';
+import { ConfirmTransitionDialog } from '../../tickets/ConfirmTransitionDialog';
 import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
+import { TicketDetailPanel } from '../../tickets/TicketDetailPanel';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, JiraTicketDetail } from '../../tickets/types';
+import { WatchedTicketsPage } from '../../tickets/WatchedTicketsPage';
 import { DetailGroupsRow } from '../DetailGroupsRow';
 import { GroupPicker } from '../GroupPicker';
 import { GroupTabStrip } from '../GroupTabStrip';
@@ -385,5 +388,50 @@ describe('group colour is never the only signal', () => {
     }
     expectNoDotsAndNamedColor();
     await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThan(0));
+  });
+});
+
+describe('Watched axe (D-12)', () => {
+  it('Watched page with one row', async () => {
+    useTicketStore.setState({
+      tickets: [mkTicket('W-1')],
+      triageMap: { 'W-1': { state: 'watched', copiedKey: 'C-1' } },
+    });
+    renderWithI18n(<WatchedTicketsPage />);
+    await screen.findByText('W-1');
+    await expectNoViolations();
+  });
+
+  it('Watched page empty state', async () => {
+    renderWithI18n(<WatchedTicketsPage />);
+    await screen.findByText('No watched tickets');
+    await expectNoViolations();
+  });
+
+  it('Watched detail panel with a remembered key', async () => {
+    useTicketStore.setState({
+      tickets: [mkTicket('W-1')],
+      triageMap: { 'W-1': { state: 'watched', copiedKey: 'C-1' } },
+    });
+    invokeMock.mockImplementation(async (cmd: string) =>
+      cmd === 'fetch_ticket_detail' ? { ...detail, key: 'W-1' } : [],
+    );
+    renderWithI18n(
+      <TicketDetailPanel issueKey="W-1" baseUrl="http://server.example.com" onClose={vi.fn()} />,
+    );
+    await screen.findByRole('button', { name: 'Restore link to C-1' });
+    await expectNoViolations();
+  });
+
+  it('watch confirmation dialog open', async () => {
+    renderWithI18n(
+      <ConfirmTransitionDialog
+        target={{ kind: 'watch', ticketKey: 'W-1', cloudKey: 'C-1' }}
+        onResolve={vi.fn()}
+        onClosed={vi.fn()}
+      />,
+    );
+    await screen.findByRole('alertdialog');
+    await expectNoViolations();
   });
 });
