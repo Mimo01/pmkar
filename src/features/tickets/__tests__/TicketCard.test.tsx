@@ -295,6 +295,25 @@ describe('TicketCard', () => {
       for (const k of ['P-2', 'P-3', 'P-4']) expect(screen.getByText(k)).toBeInTheDocument();
     });
 
+    it('shows priority and assignee name for a related ticket found in the list', () => {
+      useTicketStore.setState({
+        tickets: [
+          {
+            ...ticket,
+            key: 'P-2',
+            fields: {
+              ...ticket.fields,
+              priority: { name: 'Low', id: '4' },
+              assignee: { displayName: 'Jane Doe' } as JiraTicket['fields']['assignee'],
+            },
+          },
+        ],
+      });
+      setup({ ticket: withFields({ subtasks: [sub('P-2')] }) });
+      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+      expect(screen.getByText('Low')).toBeInTheDocument();
+    });
+
     it('renders no relations area without parent/subtasks', () => {
       setup();
       expect(screen.queryByText('Parent')).toBeNull();

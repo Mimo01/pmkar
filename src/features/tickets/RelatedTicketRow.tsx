@@ -1,6 +1,8 @@
+import { PriorityIcon } from './PriorityIcon';
 import { StatusBadge } from './StatusBadge';
 import { useTicketStore } from './ticketStore';
 import type { JiraRelatedIssue } from './types';
+import { UserAvatar } from './UserAvatar';
 
 interface RelatedTicketRowProps {
   issue: JiraRelatedIssue;
@@ -17,6 +19,10 @@ export function RelatedTicketRow({
   const base = `flex items-center ${layout} rounded-md`;
   const summarySize = compact ? 'text-xs' : 'text-sm';
   const statusName = issue.fields?.status?.name;
+  // Jira's embedded parent/sub-task data has no assignee, so take it (and a
+  // fallback priority) from the loaded list when that ticket is in it.
+  const listed = useTicketStore((s) => s.tickets.find((tk) => tk.key === issue.key) ?? null);
+  const priorityName = issue.fields?.priority?.name ?? listed?.fields.priority?.name;
 
   const content = (
     <>
@@ -24,6 +30,15 @@ export function RelatedTicketRow({
       <span className={`${summarySize} text-brand-text-secondary truncate flex-1`}>
         {issue.fields?.summary ?? ''}
       </span>
+      {compact && priorityName && <PriorityIcon priority={priorityName} size="sm" />}
+      {compact && listed?.fields.assignee && (
+        <span className="flex items-center gap-1 min-w-0">
+          <UserAvatar user={listed.fields.assignee} size="sm" />
+          <span className="text-xs text-brand-text-secondary truncate max-w-[8rem]">
+            {listed.fields.assignee.displayName}
+          </span>
+        </span>
+      )}
       {statusName && <StatusBadge status={statusName} />}
     </>
   );

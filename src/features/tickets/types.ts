@@ -57,7 +57,7 @@ export interface JiraIssueLink {
 // Sub-task
 export interface JiraSubTask {
   key: string;
-  fields: { summary: string; status: JiraStatus };
+  fields: { summary: string; status: JiraStatus; priority?: JiraPriority };
 }
 
 // Component
@@ -97,7 +97,7 @@ export interface ChangelogEntry {
 
 export interface JiraRelatedIssue {
   key: string;
-  fields?: { summary?: string; status?: JiraStatus };
+  fields?: { summary?: string; status?: JiraStatus; priority?: JiraPriority };
 }
 
 // Ticket as returned from search (lightweight — list view fields only)
