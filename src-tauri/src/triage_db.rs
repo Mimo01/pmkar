@@ -49,9 +49,11 @@ const ALTER_TRIAGE_ADD_COPIED_KEY: &str = "ALTER TABLE triage_state ADD COLUMN c
 /// Rebuilds the `triage_state` table to widen the `CHECK` constraint to include 'watched'.
 /// Run after `CREATE TABLE IF NOT EXISTS` so that fresh DBs get the right constraint directly
 /// and existing DBs (which have the old 4- or 5-value CHECK) are migrated in-place.
+// Executed inside a Rust-managed transaction (see `migrate_triage_check_constraint`) so a
+// failure rolls back on drop instead of leaving a dangling open transaction.
 const MIGRATE_TRIAGE_CHECK_WATCHED: &str = "
-    BEGIN TRANSACTION;
-    CREATE TABLE IF NOT EXISTS triage_state_new (
+    DROP TABLE IF EXISTS triage_state_new;
+    CREATE TABLE triage_state_new (
         ticket_key   TEXT PRIMARY KEY,
         state        TEXT NOT NULL CHECK(state IN ('new','seen','ignored','copied','handled','watched')),
         first_seen   TEXT NOT NULL,
@@ -62,7 +64,6 @@ const MIGRATE_TRIAGE_CHECK_WATCHED: &str = "
         SELECT ticket_key, state, first_seen, last_updated, copied_key FROM triage_state;
     DROP TABLE triage_state;
     ALTER TABLE triage_state_new RENAME TO triage_state;
-    COMMIT;
 ";
 
 const ALTER_APP_CONFIG_ADD_SOURCE_PROJECT: &str =
@@ -129,11 +130,13 @@ impl TriageDb {
                 [],
                 |row| row.get(0),
             )
-            .ok()
+            .optional()?
             .flatten();
         if let Some(existing_sql) = sql {
             if !existing_sql.contains("'watched'") {
-                conn.execute_batch(MIGRATE_TRIAGE_CHECK_WATCHED)?;
+                let tx = conn.unchecked_transaction()?;
+                tx.execute_batch(MIGRATE_TRIAGE_CHECK_WATCHED)?;
+                tx.commit()?;
             }
         }
         Ok(())
