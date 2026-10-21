@@ -128,11 +128,11 @@ describe('AppShell tab strip arrow keys', () => {
   });
 });
 
-describe('AppShell core tabs and Watched count', () => {
-  function renderCore(tabCounts?: { watched?: number }) {
+describe('AppShell core tabs', () => {
+  function renderCore() {
     const onTabChange = vi.fn();
     renderWithI18n(
-      <AppShell activeTab="new" onTabChange={onTabChange} tabCounts={tabCounts}>
+      <AppShell activeTab="new" onTabChange={onTabChange}>
         <div />
       </AppShell>,
     );
@@ -154,22 +154,11 @@ describe('AppShell core tabs and Watched count', () => {
     expect(onTabChange).toHaveBeenCalledWith('watched');
   });
 
-  it('shows a pill and count in the accessible name only on Watched', () => {
-    renderCore({ watched: 3 });
-    const watched = screen.getByRole('button', { name: 'Watched, 3 tickets' });
-    expect(watched).toHaveTextContent('3');
-    for (const name of ['New', 'Dismissed', 'Already Linked']) {
-      const btn = screen.getByRole('button', { name });
-      expect(btn.querySelector('[aria-hidden="true"]')).toBeNull();
-      expect(btn).not.toHaveAttribute('aria-label');
-    }
-  });
-
   it('End focuses the Watched tab', async () => {
     const user = userEvent.setup();
-    renderCore({ watched: 1 });
+    renderCore();
     screen.getByRole('button', { name: 'New' }).focus();
     await user.keyboard('{End}');
-    expect(screen.getByRole('button', { name: 'Watched, 1 ticket' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Watched' })).toHaveFocus();
   });
 });

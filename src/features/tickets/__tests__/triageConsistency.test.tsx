@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/core';
-import { renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TriageEntry, TriageState } from '../types';
 
@@ -33,7 +32,6 @@ import {
 import { useTicketStore } from '../ticketStore';
 import { denyTicket, linkTicket, markHandled, restoreTicket, watchTicket } from '../triageActions';
 import type { JiraTicket } from '../types';
-import { useCoreTabCounts } from '../useCoreTabCounts';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
@@ -110,10 +108,6 @@ function assertInvariant() {
   expect(badge('nav.notMine')).toBe(notMine.length);
   expect(badge('nav.linked')).toBe(linked.length);
   expect(badge('nav.watched')).toBe(watched.length);
-  // Only the Watched tab carries a count; it equals the Watched page list (D-01, D-02).
-  const counts = renderHook(() => useCoreTabCounts());
-  expect(counts.result.current).toEqual({ watched: watched.length });
-  counts.unmount();
   // newCount counts raw 'new' entries (including done tickets), not the New tab list.
   expect(newCount).toBe(Object.values(triageMap).filter((e) => e.state === 'new').length);
 }
