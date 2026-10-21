@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v0.5.1
 milestone_name: Re-triage
-status: milestone_complete
-last_updated: 2026-10-15T14:53:18.226Z
+status: completed
+last_updated: "2026-10-21T11:59:14.172Z"
 last_activity: 2026-10-15
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 19
-  completed_plans: 74
-  percent: 100
-stopped_at: Milestone complete (Phase 37.1 was final phase)
+  completed_plans: 19
+  percent: 83
 ---
 
 # Project State
@@ -276,6 +275,7 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - Phase 26 added: Batch Ticket Fetching per Watched User
 - Phase 27 added: Add static value mapping to configurable field mapping
 - Phase 37.1 inserted after Phase 37: Confirmation required before moving tickets between Linked and Not mine, never performed automatically (URGENT)
+- Phase 37.2 inserted after Phase 37: Watched main category (non-linked, like Declined) with Linked/Declined/Watched transitions; remembered link restored, no copy (URGENT)
 
 ### Pending Todos
 
@@ -380,9 +380,9 @@ None yet.
 
 Last activity: 2026-10-15 - Completed quick task 261015-lwy: Address v0.5.1 tech debt
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
-Last session: 2026-10-15T14:50:01.871Z
-Stopped at: Phase 37.1 UI-SPEC approved
-Resume file: None
+Last session: 2026-10-21T11:59:14.168Z
+Stopped at: Phase 37.2 context gathered
+Resume file: .planning/phases/37.2-watched-main-category-a-third-non-linked-state-alongside-dec/37.2-CONTEXT.md
 
 ## Operator Next Steps
 
