@@ -377,10 +377,11 @@ None yet.
 | 261015-lwy | Address v0.5.1 tech debt (triage action robustness, detail UI, wording, already-linked message) | 2026-10-15 | 3f590f9 | Needs Review | [261015-lwy-address-the-tech-debt](./quick/261015-lwy-address-the-tech-debt/) |
 | 261021-lci | Remove Watched count pill so core tabs are consistent (none; groups keep counts) | 2026-10-21 | b09cb12 | | [261021-lci-consistent-category-count-pill](./quick/261021-lci-consistent-category-count-pill/) |
 | 261021-lxa | Remove redundant row-level Restore (Obnoviť) buttons; detail keeps the labelled one | 2026-10-21 | ab168f3 | | [261021-lxa-remove-redundant-row-level-restore-obnov](./quick/261021-lxa-remove-redundant-row-level-restore-obnov/) |
+| 261021-m26 | Show sub-tasks / parent in ticket detail and list cards | 2026-10-21 | 492628a | Needs Review | [261021-m26-in-ticket-detail-show-all-subtasks-or-pa](./quick/261021-m26-in-ticket-detail-show-all-subtasks-or-pa/) |
 
 ## Session Continuity
 
-Last activity: 2026-10-15 - Completed quick task 261015-lwy: Address v0.5.1 tech debt
+Last activity: 2026-10-21 - Completed quick task 261021-m26: Show sub-tasks / parent in ticket detail and list cards
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
 Last session: 2026-10-21T12:03:12.382Z
 Stopped at: Phase 37.2 UI-SPEC approved
