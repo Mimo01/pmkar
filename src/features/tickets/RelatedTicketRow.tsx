@@ -30,8 +30,8 @@ export function RelatedTicketRow({
       <span className={`${summarySize} text-brand-text-secondary truncate flex-1`}>
         {issue.fields?.summary ?? ''}
       </span>
-      {compact && priorityName && <PriorityIcon priority={priorityName} size="sm" />}
-      {compact && listed?.fields.assignee && (
+      {priorityName && <PriorityIcon priority={priorityName} size="sm" />}
+      {listed?.fields.assignee && (
         <span className="flex items-center gap-1 min-w-0">
           <UserAvatar user={listed.fields.assignee} size="sm" />
           <span className="text-xs text-brand-text-secondary truncate max-w-[8rem]">
