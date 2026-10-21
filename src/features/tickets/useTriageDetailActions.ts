@@ -7,7 +7,7 @@ import type {
   ConfirmTransitionTarget,
 } from './ConfirmTransitionDialog';
 import { useTicketStore } from './ticketStore';
-import { denyTicket, linkTicket, restoreTicket } from './triageActions';
+import { denyTicket, linkTicket, restoreTicket, watchTicket } from './triageActions';
 import type { JiraTicketDetail, TriageEntry } from './types';
 
 export interface TriageDetailActions {
@@ -16,11 +16,15 @@ export interface TriageDetailActions {
   isLinked: boolean;
   /** state === 'ignored' */
   isDenied: boolean;
-  /** copiedKey only when state === 'ignored', else null */
+  /** state === 'watched' */
+  isWatched: boolean;
+  /** copiedKey only when state === 'ignored' or 'watched', else null */
   rememberedKey: string | null;
   /** true while linkTicket is in flight */
   linking: boolean;
   denyRef: RefObject<HTMLButtonElement | null>;
+  /** Linked-state Watch button */
+  watchRef: RefObject<HTMLButtonElement | null>;
   /** Denied-state primary (Restore link to KEY / Copy to ...) */
   primaryRef: RefObject<HTMLButtonElement | null>;
   /** Linked status badge (tabIndex -1) */
@@ -34,6 +38,8 @@ export interface TriageDetailActions {
   /** Gated entry points (CONF-01/CONF-02): open the confirmation dialog instead of acting. */
   requestDeny: () => void;
   requestLink: () => void;
+  /** Linked -> Watched (confirmed); Dismissed -> Watched (instant). */
+  requestWatch: () => void;
   /** Spread onto <ConfirmTransitionDialog />. */
   confirmDialog: ConfirmTransitionDialogProps;
 }
@@ -45,7 +51,7 @@ function notifyStale(issueKey: string): void {
   announce(text);
 }
 
-type FocusTarget = 'primary' | 'badge' | 'dismiss' | 'deny';
+type FocusTarget = 'primary' | 'badge' | 'dismiss' | 'deny' | 'watch';
 
 /**
  * Shared detail triage handlers + post-action focus (RTRI-01, RTRI-04). All writes go
@@ -62,9 +68,11 @@ export function useTriageDetailActions(
   const state = triageEntry?.state;
   const isLinked = state === 'copied' && !!triageEntry?.copiedKey;
   const isDenied = state === 'ignored';
-  const rememberedKey = isDenied ? (triageEntry?.copiedKey ?? null) : null;
+  const isWatched = state === 'watched';
+  const rememberedKey = isDenied || isWatched ? (triageEntry?.copiedKey ?? null) : null;
 
   const denyRef = useRef<HTMLButtonElement | null>(null);
+  const watchRef = useRef<HTMLButtonElement | null>(null);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
   const badgeRef = useRef<HTMLSpanElement | null>(null);
   const dismissRef = useRef<HTMLButtonElement | null>(null);
@@ -81,6 +89,7 @@ export function useTriageDetailActions(
     if (pending === 'primary') target = primaryRef.current;
     else if (pending === 'badge') target = badgeRef.current ?? denyRef.current;
     else if (pending === 'dismiss') target = dismissRef.current ?? fallbackRef?.current;
+    else if (pending === 'watch') target = watchRef.current;
     else target = denyRef.current;
     if (target?.isConnected) {
       target.focus();
@@ -102,6 +111,12 @@ export function useTriageDetailActions(
     pendingFocus.current = 'primary';
     const ok = await denyTicket(issueKey);
     if (!ok) requestFocus('deny');
+  }, [issueKey, requestFocus]);
+
+  const handleWatch = useCallback(async () => {
+    pendingFocus.current = 'primary';
+    const ok = await watchTicket(issueKey);
+    if (!ok) requestFocus('watch');
   }, [issueKey, requestFocus]);
 
   const handleDismiss = useCallback(async () => {
@@ -136,9 +151,23 @@ export function useTriageDetailActions(
   }, []);
 
   const requestDeny = useCallback(() => {
-    if (confirmTargetRef.current || !isLinked || !triageEntry?.copiedKey) return;
+    if (confirmTargetRef.current) return;
+    if (isWatched) {
+      void handleDeny();
+      return;
+    }
+    if (!isLinked || !triageEntry?.copiedKey) return;
     openConfirm({ kind: 'deny', ticketKey: issueKey, cloudKey: triageEntry.copiedKey });
-  }, [isLinked, triageEntry?.copiedKey, issueKey, openConfirm]);
+  }, [isLinked, isWatched, triageEntry?.copiedKey, issueKey, openConfirm, handleDeny]);
+
+  const requestWatch = useCallback(() => {
+    if (confirmTargetRef.current) return;
+    if (isLinked && triageEntry?.copiedKey) {
+      openConfirm({ kind: 'watch', ticketKey: issueKey, cloudKey: triageEntry.copiedKey });
+    } else if (isDenied) {
+      void handleWatch();
+    }
+  }, [isLinked, isDenied, triageEntry?.copiedKey, issueKey, openConfirm, handleWatch]);
 
   const requestLink = useCallback(() => {
     if (linkingRef.current || confirmTargetRef.current) return;
@@ -165,15 +194,24 @@ export function useTriageDetailActions(
           return;
         }
         void handleDeny();
+      } else if (target.kind === 'watch') {
+        if (current?.state !== 'copied' || current.copiedKey !== target.cloudKey) {
+          notifyStale(issueKey);
+          return;
+        }
+        void handleWatch();
       } else {
-        if (current?.state !== 'ignored' || current.copiedKey !== target.cloudKey) {
+        if (
+          (current?.state !== 'ignored' && current?.state !== 'watched') ||
+          current.copiedKey !== target.cloudKey
+        ) {
           notifyStale(issueKey);
           return;
         }
         void handleLink();
       }
     },
-    [issueKey, handleDeny, handleLink],
+    [issueKey, handleDeny, handleLink, handleWatch],
   );
 
   // Focus return only; the confirmed action already ran in onResolve.
@@ -182,7 +220,12 @@ export function useTriageDetailActions(
       const target = resolvedTargetRef.current;
       resolvedTargetRef.current = null;
       if (!target || target.ticketKey !== issueKey) return;
-      const trigger = target.kind === 'deny' ? denyRef.current : primaryRef.current;
+      const trigger =
+        target.kind === 'deny'
+          ? denyRef.current
+          : target.kind === 'watch'
+            ? watchRef.current
+            : primaryRef.current;
       if (trigger?.isConnected) trigger.focus();
       // A post-action focus move may have been swallowed by the dialog's focus trap.
       if (confirmed && pendingFocus.current !== null) setFocusTick((n) => n + 1);
@@ -216,9 +259,11 @@ export function useTriageDetailActions(
     triageEntry,
     isLinked,
     isDenied,
+    isWatched,
     rememberedKey,
     linking,
     denyRef,
+    watchRef,
     primaryRef,
     badgeRef,
     dismissRef,
@@ -228,6 +273,7 @@ export function useTriageDetailActions(
     handleRestore,
     requestDeny,
     requestLink,
+    requestWatch,
     confirmDialog,
   };
 }

@@ -15,7 +15,13 @@ import { ConfirmTransitionDialog } from '../ConfirmTransitionDialog';
 import { useCopyStore } from '../copyStore';
 import { useTicketStore } from '../ticketStore';
 import { useTriageDetailActions } from '../useTriageDetailActions';
-import { cancelConfirm, confirmDeny, confirmLink, expectNoConfirmDialog } from './confirmHelpers';
+import {
+  cancelConfirm,
+  confirmDeny,
+  confirmLink,
+  confirmWatch,
+  expectNoConfirmDialog,
+} from './confirmHelpers';
 
 function Harness({ issueKey }: { issueKey: string }) {
   const fallbackRef = useRef<HTMLButtonElement | null>(null);
@@ -32,10 +38,23 @@ function Harness({ issueKey }: { issueKey: string }) {
           <button type="button" ref={a.denyRef} onClick={() => void a.requestDeny()}>
             Deny
           </button>
+          <button type="button" ref={a.watchRef} onClick={() => void a.requestWatch()}>
+            Watch
+          </button>
         </>
       )}
-      {a.isDenied && (
+      {(a.isDenied || a.isWatched) && (
         <>
+          {a.isWatched && (
+            <button type="button" onClick={() => void a.requestDeny()}>
+              WDeny
+            </button>
+          )}
+          {a.isDenied && (
+            <button type="button" onClick={() => void a.requestWatch()}>
+              Watch
+            </button>
+          )}
           <button
             type="button"
             ref={a.primaryRef}
@@ -49,7 +68,7 @@ function Harness({ issueKey }: { issueKey: string }) {
           </button>
         </>
       )}
-      {!a.isLinked && !a.isDenied && (
+      {!a.isLinked && !a.isDenied && !a.isWatched && (
         <button type="button" ref={a.dismissRef} onClick={() => void a.handleDismiss()}>
           Dismiss
         </button>
@@ -62,7 +81,7 @@ function Harness({ issueKey }: { issueKey: string }) {
   );
 }
 
-const seed = (state: 'copied' | 'ignored' | 'seen', copiedKey: string | null) =>
+const seed = (state: 'copied' | 'ignored' | 'seen' | 'watched', copiedKey: string | null) =>
   useTicketStore.getState().hydrateTriageMap({ 'PROJ-1': { state, copiedKey } });
 const entry = () => useTicketStore.getState().triageMap['PROJ-1'];
 
@@ -283,5 +302,135 @@ describe('useTriageDetailActions', () => {
     fireEvent.click(screen.getByText('Dismiss'));
     expectNoConfirmDialog();
     await waitFor(() => expect(entry().state).toBe('ignored'));
+  });
+
+  it('watch from Linked requires Confirm, then writes watched and focuses primary', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Watch'));
+    expect(await screen.findByRole('alertdialog')).toBeTruthy();
+    expect(invokeMock).not.toHaveBeenCalledWith('set_triage_state', expect.anything());
+    await confirmWatch();
+    await waitFor(() => expect(entry()).toEqual({ state: 'watched', copiedKey: 'CLD-9' }));
+    const calls = invokeMock.mock.calls.filter(
+      (c) => c[0] === 'set_triage_state' && c[1].state === 'watched',
+    );
+    expect(calls).toHaveLength(1);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Primary')));
+  });
+
+  it('watch Cancel and Escape leave Linked and refocus Watch', async () => {
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Watch'));
+    await cancelConfirm();
+    expect(invokeMock).not.toHaveBeenCalled();
+    expect(entry().state).toBe('copied');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Watch')));
+    fireEvent.click(screen.getByText('Watch'));
+    const dlg = await screen.findByRole('alertdialog');
+    fireEvent.keyDown(dlg, { key: 'Escape' });
+    await waitFor(() => expectNoConfirmDialog());
+    expect(invokeMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Watch')));
+  });
+
+  it('watch from Dismissed is instant', async () => {
+    seed('ignored', null);
+    invokeMock.mockResolvedValue(undefined);
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Watch'));
+    expectNoConfirmDialog();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'watched',
+      }),
+    );
+    await waitFor(() => expect(entry().state).toBe('watched'));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Primary')));
+  });
+
+  it('link from Watched with key confirms and relinks', async () => {
+    seed('watched', 'CLD-9');
+    invokeMock.mockResolvedValue('CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    expect(await screen.findByRole('alertdialog')).toBeTruthy();
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    await confirmLink();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('relink_ticket', expect.anything()),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('badge')));
+  });
+
+  it('link from Watched without key goes to copy preview', async () => {
+    seed('watched', null);
+    invokeMock.mockImplementation(async (cmd: string) => {
+      if (cmd === 'relink_ticket') return null;
+      if (cmd === 'fetch_ticket_detail') return { key: 'PROJ-1' };
+      return undefined;
+    });
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    expectNoConfirmDialog();
+    await waitFor(() => expect(startPreview).toHaveBeenCalled());
+  });
+
+  it('deny from Watched is instant', async () => {
+    seed('watched', 'CLD-9');
+    invokeMock.mockResolvedValue(undefined);
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('WDeny'));
+    expectNoConfirmDialog();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'ignored',
+      }),
+    );
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Primary')));
+  });
+
+  it('stale watch: no write when entry changed before Confirm', async () => {
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Watch'));
+    await screen.findByRole('alertdialog');
+    act(() => seed('ignored', 'CLD-9'));
+    await confirmWatch();
+    expect(invokeMock).not.toHaveBeenCalledWith('set_triage_state', expect.anything());
+  });
+
+  it('stale link from Watched: no relink when entry changed before Confirm', async () => {
+    seed('watched', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Primary'));
+    await screen.findByRole('alertdialog');
+    act(() => seed('seen', 'CLD-9'));
+    await confirmLink();
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+  });
+
+  it('rememberedKey for watched, null for linked', () => {
+    seed('watched', 'CLD-9');
+    const { unmount } = render(<Harness issueKey="PROJ-1" />);
+    expect(screen.getByTestId('remembered').textContent).toBe('CLD-9');
+    unmount();
+    seed('copied', 'CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    expect(screen.getByTestId('remembered').textContent).toBe('null');
+  });
+
+  it('failed watch refocuses the Watch button', async () => {
+    seed('copied', 'CLD-9');
+    invokeMock.mockRejectedValue(new Error('db'));
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('Watch'));
+    await confirmWatch();
+    await waitFor(() => expect(entry().state).toBe('copied'));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('Watch')));
   });
 });
