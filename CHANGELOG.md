@@ -1,4 +1,22 @@
 
+
+## [0.5.2]
+
+### Features
+
+- add a Watched tab for tickets you follow without linking them, with Watch buttons in ticket detail and for new tickets
+- ask for confirmation before watching a ticket, and keep the remembered link hint on Watched rows
+- show sub-tasks and parent on ticket cards and in ticket detail, with priority and assignee on each relation row
+
+### Bug Fixes
+
+- restoring a denied ticket relinks it when a Cloud key is remembered
+- offer Link for new and seen tickets that have a remembered key
+- remove row-level Restore buttons from Ignored, Watched and group lists; restore from ticket detail
+- remove the Watched count pill so the core tabs look consistent
+- make the triage database migration transactional and report detection errors
+- correct Watch button tooltip wording
+
 ## [0.5.1]
 
 ### Features
