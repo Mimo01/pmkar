@@ -140,10 +140,12 @@ export async function denyTicket(issueKey: string): Promise<boolean> {
  * Undo a Dismissed -> Watched move (D-10). Restores the prior non-copied state via
  * set_triage_state only; never relinks (CONF-03, T-37.2-07).
  */
-async function undoWatch(issueKey: string, priorState: TriageState): Promise<void> {
+async function undoWatch(
+  issueKey: string,
+  priorState: Exclude<TriageState, 'copied'>,
+): Promise<void> {
   // Stale toast: the ticket left Watched since.
   if (useTicketStore.getState().triageMap[issueKey]?.state !== 'watched') return;
-  if (priorState === 'copied') return;
   const { ok } = await applyState(issueKey, priorState, 'triage.undoWatchFailed');
   if (ok) announce(i18n.t('a11y.restored', { key: issueKey }));
 }
