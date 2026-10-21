@@ -6,6 +6,7 @@ import {
   cancelConfirm,
   confirmDeny,
   confirmLink,
+  confirmWatch,
   expectNoConfirmDialog,
 } from './__tests__/confirmHelpers';
 import { useCopyStore } from './copyStore';
@@ -398,6 +399,109 @@ describe('TicketDetailPanel', () => {
       );
       const dismiss = await screen.findByRole('button', { name: /^dismiss$/i });
       await waitFor(() => expect(document.activeElement).toBe(dismiss));
+    });
+  });
+
+  describe('Phase 37.2 watch', () => {
+    const seed = (
+      state: 'seen' | 'copied' | 'ignored' | 'watched' | 'handled',
+      key: string | null,
+    ) => {
+      mockInvoke.mockImplementation(((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(mockDetail);
+        return Promise.resolve(undefined);
+      }) as never);
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey: key } } });
+    };
+    const renderPanel = () =>
+      render(
+        <TicketDetailPanel issueKey="PROJ-1" baseUrl="http://127.0.0.1:8080" onClose={onClose} />,
+      );
+    const names = () =>
+      screen
+        .getAllByRole('button')
+        .map((b) => b.textContent ?? '')
+        .filter((n) => /^(Deny|Watch|Restore|Restore link to .*)$/.test(n));
+
+    it('Linked shows Deny then Watch; Watch confirms and moves to Watched', async () => {
+      seed('copied', 'C-1');
+      renderPanel();
+      await screen.findByRole('button', { name: 'Watch' });
+      expect(names()).toEqual(['Deny', 'Watch']);
+      fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+      expect(await screen.findByRole('alertdialog')).toBeInTheDocument();
+      await confirmWatch();
+      const primary = await screen.findByRole('button', { name: 'Restore link to C-1' });
+      await waitFor(() => expect(document.activeElement).toBe(primary));
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'watched',
+      });
+      expect(names()).toEqual(['Restore link to C-1', 'Deny', 'Restore']);
+    });
+
+    it('Esc in the watch dialog closes only the dialog', async () => {
+      seed('copied', 'C-1');
+      renderPanel();
+      fireEvent.click(await screen.findByRole('button', { name: 'Watch' }));
+      const dlg = await screen.findByRole('alertdialog');
+      fireEvent.keyDown(dlg, { key: 'Escape' });
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
+    it('Dismissed shows Restore link, Watch, Restore; Watch is instant', async () => {
+      seed('ignored', 'C-1');
+      renderPanel();
+      await screen.findByRole('button', { name: 'Watch' });
+      expect(names()).toEqual(['Restore link to C-1', 'Watch', 'Restore']);
+      fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+      await waitFor(() =>
+        expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+          ticketKey: 'PROJ-1',
+          state: 'watched',
+        }),
+      );
+      expectNoConfirmDialog();
+    });
+
+    it('Watched with key: no Copy, no Watch, hint visible, Deny is instant', async () => {
+      seed('watched', 'C-1');
+      renderPanel();
+      await screen.findByRole('button', { name: 'Restore link to C-1' });
+      expect(names()).toEqual(['Restore link to C-1', 'Deny', 'Restore']);
+      expect(screen.queryByRole('button', { name: /^Copy to/ })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      expect(screen.getByText(/Previously linked to/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
+      await waitFor(() =>
+        expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+          ticketKey: 'PROJ-1',
+          state: 'ignored',
+        }),
+      );
+      expectNoConfirmDialog();
+    });
+
+    it('Watched without key: primary is Copy, no hint', async () => {
+      seed('watched', null);
+      renderPanel();
+      expect(await screen.findByRole('button', { name: /^Copy to/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Deny' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Restore' })).toBeInTheDocument();
+      expect(screen.queryByText(/Previously linked to/)).toBeNull();
+    });
+
+    it('New and Handled never show Watch', async () => {
+      seed('seen', null);
+      const first = renderPanel();
+      await screen.findByRole('button', { name: /^dismiss$/i });
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      first.unmount();
+      seed('handled', null);
+      renderPanel();
+      await screen.findByRole('button', { name: /handled/i });
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
     });
   });
 });
