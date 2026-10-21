@@ -61,6 +61,12 @@ describe('TriageIndicator', () => {
     expect(screen.getByText(/dismiss|detail\.ignore/i)).toBeInTheDocument();
   });
 
+  it('renders visible Watched text for watched state', () => {
+    const { container } = render(<TriageIndicator state="watched" />);
+    expect(screen.getByText('Watched')).toBeInTheDocument();
+    expect(container.querySelector('span[aria-hidden="true"]')).toBeNull();
+  });
+
   it('renders empty span for seen state', () => {
     const { container } = render(<TriageIndicator state="seen" />);
     // The fallback renders a w-4 h-4 span, not any text

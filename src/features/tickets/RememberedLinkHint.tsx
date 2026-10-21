@@ -7,11 +7,13 @@ interface RememberedLinkHintProps {
 }
 
 /**
- * Visible "Previously linked to KEY" hint. Shown only for dismissed tickets that
+ * Visible "Previously linked to KEY" hint. Shown only for dismissed or watched tickets that
  * remember a prior Jira link (seen/handled entries may keep a stale copiedKey).
  */
 export function RememberedLinkHint({ entry, variant }: RememberedLinkHintProps) {
-  if (!(entry?.state === 'ignored' && entry.copiedKey)) return null;
+  if (!((entry?.state === 'ignored' || entry?.state === 'watched') && entry.copiedKey)) {
+    return null;
+  }
 
   const text = (
     <Trans
