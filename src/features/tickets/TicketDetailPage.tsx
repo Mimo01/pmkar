@@ -225,21 +225,54 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
         {/* Action buttons */}
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
-            {!tri.isLinked && !tri.isDenied && !tri.isWatched && !isHandled && (
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleStartCopy}
-                disabled={copyPhase === 'loading_preview'}
-              >
-                {copyPhase === 'loading_preview' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                ) : null}
-                {t('detail.copy', {
-                  name: targetProjectName || t('wizard.destination.subtitle'),
-                })}
-              </Button>
-            )}
+            {!tri.isLinked &&
+              !tri.isDenied &&
+              !tri.isWatched &&
+              !isHandled &&
+              tri.rememberedKey && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="lg"
+                      ref={tri.primaryRef}
+                      onClick={() => {
+                        if (linkBusy) return;
+                        tri.requestLink();
+                      }}
+                      aria-disabled={linkBusy}
+                      className="aria-disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-primary"
+                    >
+                      {linkBusy ? (
+                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      ) : null}
+                      {t('detail.restoreLink', { key: tri.rememberedKey })}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">
+                    {t('detail.restoreLink.tooltip', { key: tri.rememberedKey })}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            {!tri.isLinked &&
+              !tri.isDenied &&
+              !tri.isWatched &&
+              !isHandled &&
+              !tri.rememberedKey && (
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={handleStartCopy}
+                  disabled={copyPhase === 'loading_preview'}
+                >
+                  {copyPhase === 'loading_preview' ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : null}
+                  {t('detail.copy', {
+                    name: targetProjectName || t('wizard.destination.subtitle'),
+                  })}
+                </Button>
+              )}
             {tri.isLinked ? (
               <>
                 {/* Linked status badge */}

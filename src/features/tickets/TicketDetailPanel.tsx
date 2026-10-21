@@ -449,7 +449,17 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     </Tooltip>
                   </>
                 )}
-                {tri.isLinked || tri.isDenied || tri.isWatched || isHandled ? null : (
+                {tri.isLinked ||
+                tri.isDenied ||
+                tri.isWatched ||
+                isHandled ? null : tri.rememberedKey ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>{restorePrimary}</TooltipTrigger>
+                    <TooltipContent aria-hidden="true">
+                      {t('detail.restoreLink.tooltip', { key: tri.rememberedKey })}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
                   <button
                     type="button"
                     onClick={handleStartCopy}

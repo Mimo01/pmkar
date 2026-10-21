@@ -18,7 +18,7 @@ export interface TriageDetailActions {
   isDenied: boolean;
   /** state === 'watched' */
   isWatched: boolean;
-  /** copiedKey only when state === 'ignored' or 'watched', else null */
+  /** copiedKey when not linked and not handled, else null */
   rememberedKey: string | null;
   /** true while linkTicket is in flight */
   linking: boolean;
@@ -69,7 +69,9 @@ export function useTriageDetailActions(
   const isLinked = state === 'copied' && !!triageEntry?.copiedKey;
   const isDenied = state === 'ignored';
   const isWatched = state === 'watched';
-  const rememberedKey = isDenied || isWatched ? (triageEntry?.copiedKey ?? null) : null;
+  // Any non-linked, non-handled entry that still remembers a Cloud key offers Link
+  // (denied, watched, and new/seen after a failed restore relink).
+  const rememberedKey = !isLinked && state !== 'handled' ? (triageEntry?.copiedKey ?? null) : null;
 
   const denyRef = useRef<HTMLButtonElement | null>(null);
   const watchRef = useRef<HTMLButtonElement | null>(null);
@@ -202,8 +204,12 @@ export function useTriageDetailActions(
         }
         void handleWatch();
       } else {
+        // Same eligibility as rememberedKey: any non-linked, non-handled entry
+        // (new/seen/ignored/watched) whose remembered key is unchanged.
         if (
-          (current?.state !== 'ignored' && current?.state !== 'watched') ||
+          !current ||
+          current.state === 'copied' ||
+          current.state === 'handled' ||
           current.copiedKey !== target.cloudKey
         ) {
           notifyStale(issueKey);

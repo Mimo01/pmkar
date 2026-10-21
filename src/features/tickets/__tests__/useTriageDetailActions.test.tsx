@@ -68,6 +68,11 @@ function Harness({ issueKey }: { issueKey: string }) {
           </button>
         </>
       )}
+      {!a.isLinked && !a.isDenied && !a.isWatched && a.rememberedKey && (
+        <button type="button" onClick={() => void a.requestLink()}>
+          NewLink
+        </button>
+      )}
       {!a.isLinked && !a.isDenied && !a.isWatched && (
         <button type="button" ref={a.dismissRef} onClick={() => void a.handleDismiss()}>
           Dismiss
@@ -191,11 +196,15 @@ describe('useTriageDetailActions', () => {
     expect(document.activeElement).toBe(document.body);
   });
 
-  it('rememberedKey only for ignored entries', () => {
-    seed('seen', 'CLD-9');
+  it('rememberedKey for any non-linked, non-handled entry with a key', () => {
+    seed('copied', 'CLD-9');
     const { unmount } = render(<Harness issueKey="PROJ-1" />);
     expect(screen.getByTestId('remembered').textContent).toBe('null');
     unmount();
+    seed('seen', 'CLD-9');
+    const second = render(<Harness issueKey="PROJ-1" />);
+    expect(screen.getByTestId('remembered').textContent).toBe('CLD-9');
+    second.unmount();
     seed('ignored', 'CLD-9');
     render(<Harness issueKey="PROJ-1" />);
     expect(screen.getByTestId('remembered').textContent).toBe('CLD-9');
@@ -250,6 +259,18 @@ describe('useTriageDetailActions', () => {
       expect(invokeMock).toHaveBeenCalledWith('relink_ticket', expect.anything()),
     );
     await waitFor(() => expect(document.activeElement).toBe(screen.getByText('badge')));
+  });
+
+  it('relink from seen (new) with remembered key confirms and relinks (no stale toast)', async () => {
+    seed('seen', 'CLD-9');
+    invokeMock.mockResolvedValue('CLD-9');
+    render(<Harness issueKey="PROJ-1" />);
+    fireEvent.click(screen.getByText('NewLink'));
+    await screen.findByRole('alertdialog');
+    await confirmLink();
+    await waitFor(() =>
+      expect(invokeMock).toHaveBeenCalledWith('relink_ticket', expect.anything()),
+    );
   });
 
   it('link without remembered key skips the dialog', async () => {
@@ -409,7 +430,7 @@ describe('useTriageDetailActions', () => {
     render(<Harness issueKey="PROJ-1" />);
     fireEvent.click(screen.getByText('Primary'));
     await screen.findByRole('alertdialog');
-    act(() => seed('seen', 'CLD-9'));
+    act(() => seed('copied', 'CLD-9'));
     await confirmLink();
     expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
   });

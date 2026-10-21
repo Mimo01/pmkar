@@ -42,3 +42,11 @@ Resolved debug sessions. Used by `gsd-debugger` to surface known-pattern hypothe
 - **Fix:** Added a labelled Watch button (with tooltip) for New tickets in `TicketDetailPage` and `TicketDetailPanel`; `requestWatch` moves New to watched immediately with no confirmation (Linked still confirms).
 - **Files changed:** src/features/tickets/TicketDetailPage.tsx, TicketDetailPanel.tsx, useTriageDetailActions.ts, TicketDetailPanel.test.tsx, __tests__/TicketDetailPage.test.tsx
 ---
+
+## no-relink-when-linked-story-new — No Relink button / stale toast for new/seen ticket with remembered link
+- **Date:** 2026-10-21
+- **Error patterns:** relink button missing, only Copy, copy preview cannot submit, ensure_not_linked, "sa zmenil počas potvrdzovania", rememberedKey, copied_key, seen, new
+- **Root cause:** `rememberedKey` in `useTriageDetailActions.ts` was set only for ignored/watched, so a new/seen entry with a `copied_key` showed only Copy (blocked by backend `ensure_not_linked`). After adding a Link button, the `onResolve` stale check still accepted only ignored/watched, so confirming reported "changed during confirmation".
+- **Fix:** `rememberedKey` set for any non-linked, non-handled entry with `copiedKey`; Panel/Page default branch shows Link button; link confirmation stale only if entry missing, state copied/handled, or `copiedKey` != dialog `cloudKey`.
+- **Files changed:** src/features/tickets/useTriageDetailActions.ts, TicketDetailPanel.tsx, TicketDetailPage.tsx, __tests__/useTriageDetailActions.test.tsx
+---
