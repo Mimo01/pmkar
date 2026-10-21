@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OverviewTab } from '../tabs/OverviewTab';
+import { useTicketStore } from '../ticketStore';
 import type { JiraTicketDetail } from '../types';
 
 // ---------------------------------------------------------------------------
@@ -95,6 +96,10 @@ const makeDetail = (overrides: Partial<JiraTicketDetail['fields']> = {}): JiraTi
 });
 
 describe('OverviewTab', () => {
+  beforeEach(() => {
+    useTicketStore.getState().selectTicket(null);
+  });
+
   it('renders assignee name', () => {
     render(<OverviewTab detail={makeDetail()} baseUrl="http://server" />);
     expect(screen.getByText('Alice')).toBeInTheDocument();
@@ -159,6 +164,61 @@ describe('OverviewTab', () => {
     render(<OverviewTab detail={detail} baseUrl="http://server" />);
     expect(screen.getByText('PROJ-2')).toBeInTheDocument();
     expect(screen.getByText('Sub task')).toBeInTheDocument();
+  });
+
+  describe('relations', () => {
+    const parent = {
+      key: 'PROJ-1',
+      fields: { summary: 'Parent summary', status: { name: 'Review' } },
+    };
+    const subs = [
+      { key: 'PROJ-7', fields: { summary: 'Sub seven', status: { name: 'Open' } } },
+      { key: 'PROJ-8', fields: { summary: 'Sub eight', status: { name: 'Open' } } },
+    ];
+
+    it('renders parent block with key, summary and status', () => {
+      render(<OverviewTab detail={makeDetail({ parent })} baseUrl="http://server" />);
+      expect(screen.getByText('Parent')).toBeInTheDocument();
+      expect(screen.getAllByText('PROJ-1')).toHaveLength(1);
+      expect(screen.getByText('Parent summary')).toBeInTheDocument();
+      expect(screen.getByText('Review')).toBeInTheDocument();
+    });
+
+    it('omits Parent heading when absent', () => {
+      render(<OverviewTab detail={makeDetail()} baseUrl="http://server" />);
+      expect(screen.queryByText('Parent')).toBeNull();
+    });
+
+    it('lists all sub-tasks', () => {
+      render(<OverviewTab detail={makeDetail({ subtasks: subs })} baseUrl="http://server" />);
+      expect(screen.getByText('Sub-tasks')).toBeInTheDocument();
+      expect(screen.getByText('PROJ-7')).toBeInTheDocument();
+      expect(screen.getByText('PROJ-8')).toBeInTheDocument();
+    });
+
+    it('places relations before Description', () => {
+      render(<OverviewTab detail={makeDetail({ subtasks: subs })} baseUrl="http://server" />);
+      const rel = screen.getByText('Sub-tasks');
+      const desc = screen.getByText('Description');
+      expect(rel.compareDocumentPosition(desc) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('clicking rows selects the related ticket', () => {
+      render(
+        <OverviewTab detail={makeDetail({ parent, subtasks: subs })} baseUrl="http://server" />,
+      );
+      fireEvent.click(screen.getByText('Sub eight'));
+      expect(useTicketStore.getState().selectedTicketKey).toBe('PROJ-8');
+      fireEvent.click(screen.getByText('Parent summary'));
+      expect(useTicketStore.getState().selectedTicketKey).toBe('PROJ-1');
+    });
+
+    it('handles a sparse parent', () => {
+      render(
+        <OverviewTab detail={makeDetail({ parent: { key: 'PROJ-1' } })} baseUrl="http://server" />,
+      );
+      expect(screen.getByText('PROJ-1')).toBeInTheDocument();
+    });
   });
 
   it('renders linked issues when present', () => {

@@ -1,6 +1,8 @@
 import { ArrowDownLeft, ArrowUpRight, Link2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { AllFieldsSection } from '../AllFieldsSection';
 import { DescriptionRenderer } from '../DescriptionRenderer';
+import { RelatedTicketRow } from '../RelatedTicketRow';
 import { StatusBadge } from '../StatusBadge';
 import type { JiraTicketDetail } from '../types';
 
@@ -13,7 +15,8 @@ interface OverviewTabProps {
 // shown in the page header (summary, created, updated).
 const OVERVIEW_BESPOKE_FIELDS = [
   'description', // rendered by DescriptionRenderer below
-  'subtasks', // rendered by Sub-tasks block below
+  'subtasks', // rendered by Relations block
+  'parent', // rendered by Relations block
   'issuelinks', // rendered by Linked Issues block below
   'comment', // shown in Comments tab; counts shown in tab label
   'attachment', // shown in Attachments tab; counts shown in tab label
@@ -24,7 +27,9 @@ const OVERVIEW_BESPOKE_FIELDS = [
 ];
 
 export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
+  const { t } = useTranslation();
   const { fields } = detail;
+  const subtasks = fields.subtasks ?? [];
 
   return (
     <div>
@@ -37,29 +42,39 @@ export function OverviewTab({ detail, baseUrl }: OverviewTabProps) {
         fieldNames={detail.names}
       />
 
+      {/* Relations: parent / sub-tasks */}
+      {(fields.parent || subtasks.length > 0) && (
+        <div className="px-5 py-4 border-t border-brand-border-subtle">
+          {fields.parent && (
+            <div>
+              <div className="text-xs font-semibold text-brand-muted mb-2">
+                {t('detail.relations.parent')}
+              </div>
+              <RelatedTicketRow issue={fields.parent} />
+            </div>
+          )}
+          {subtasks.length > 0 && (
+            <div className={fields.parent ? 'mt-3' : ''}>
+              <div className="text-xs font-semibold text-brand-muted mb-2">
+                {t('detail.relations.subtasks')}
+              </div>
+              {subtasks.map((subtask) => (
+                <RelatedTicketRow key={subtask.key} issue={subtask} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Description */}
       <div className="px-5 py-4 border-t border-brand-border-subtle">
-        <div className="text-xs font-semibold text-brand-muted mb-3">Description</div>
+        <div className="text-xs font-semibold text-brand-muted mb-3">{t('detail.description')}</div>
         <DescriptionRenderer
           description={fields.description}
           renderedHtml={detail.renderedFields?.description}
           baseUrl={baseUrl}
         />
       </div>
-
-      {/* Sub-tasks */}
-      {fields.subtasks.length > 0 && (
-        <div className="px-5 py-4 border-t border-brand-border-subtle">
-          <div className="text-xs font-semibold text-brand-muted mb-2">Sub-tasks</div>
-          {fields.subtasks.map((subtask) => (
-            <div key={subtask.key} className="flex items-center gap-2 py-1">
-              <span className="text-xs font-semibold text-brand-text-secondary">{subtask.key}</span>
-              <span className="text-sm text-brand-text-secondary">{subtask.fields.summary}</span>
-              <StatusBadge status={subtask.fields.status.name} />
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Linked Issues */}
       {fields.issuelinks.length > 0 &&
