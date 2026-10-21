@@ -244,7 +244,7 @@ Plans:
 **Goal:** Users can park tickets they may link later in a new Watched main category (alongside New, Declined, Linked); Watched links nothing, and any Linked or Declined ticket can become Watched, while Watched can become Declined or Linked (restoring the remembered Cloud link, never creating a copy), with the same confirmation, counts and accessibility as the existing transitions
 **Requirements**: WATCH-01, WATCH-02, WATCH-03, WATCH-04, WATCH-05, WATCH-06
 **Depends on:** Phase 37
-**Plans:** 2/7 plans executed
+**Plans:** 4/7 plans executed
 
 Plans:
 **Wave 1**
@@ -254,8 +254,8 @@ Plans:
 
 **Wave 2** *(blocked on 37.2-02)*
 
-- [ ] 37.2-03-PLAN.md — triageActions watchTicket/undoWatch, watched-aware deny/restore Undo; ConfirmTransitionDialog 'watch' variant
-- [ ] 37.2-04-PLAN.md — Watched page, Watched nav tab with count badges (Dismissed/Linked/Watched), App route, group view row slot
+- [x] 37.2-03-PLAN.md — triageActions watchTicket/undoWatch, watched-aware deny/restore Undo; ConfirmTransitionDialog 'watch' variant
+- [x] 37.2-04-PLAN.md — Watched page, Watched nav tab with count badges (Dismissed/Linked/Watched), App route, group view row slot
 
 **Wave 3** *(blocked on 37.2-03)*
 
