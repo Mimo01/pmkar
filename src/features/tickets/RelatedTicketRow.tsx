@@ -20,9 +20,7 @@ export function RelatedTicketRow({
 
   const content = (
     <>
-      <span className="text-xs font-semibold font-mono text-brand-text bg-brand-surface border border-brand-border px-1.5 py-0.5 rounded">
-        {issue.key}
-      </span>
+      <span className="text-xs font-mono text-brand-text-secondary">{issue.key}</span>
       <span className={`${summarySize} text-brand-text-secondary truncate flex-1`}>
         {issue.fields?.summary ?? ''}
       </span>

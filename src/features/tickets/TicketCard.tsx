@@ -155,14 +155,14 @@ export function TicketCard({
           // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: only stops click propagation; real controls are the relation row buttons
           <div
             className={cn(
-              'mt-2 flex flex-col gap-0.5 rounded-md border border-brand-border-subtle border-l-2 border-l-brand/60 bg-brand-border-subtle/40 px-2 py-1.5',
+              'mt-2 flex flex-col gap-0.5 ml-1 border-l-2 border-brand-border pl-3',
               !selectMode && 'pointer-events-auto relative z-10',
             )}
             onClick={selectMode ? undefined : (e) => e.stopPropagation()}
           >
             {ticket.fields.parent && (
               <>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-text-secondary">
+                <span className="text-[11px] font-medium text-brand-text-secondary">
                   {t('tickets.card.parentLabel')}
                 </span>
                 <RelatedTicketRow issue={ticket.fields.parent} compact interactive={!selectMode} />
@@ -170,7 +170,7 @@ export function TicketCard({
             )}
             {(ticket.fields.subtasks?.length ?? 0) > 0 && (
               <>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-brand-text-secondary">
+                <span className="text-[11px] font-medium text-brand-text-secondary">
                   {t('tickets.card.subtasksLabel', { count: ticket.fields.subtasks?.length })}
                 </span>
                 {ticket.fields.subtasks?.map((st) => (
