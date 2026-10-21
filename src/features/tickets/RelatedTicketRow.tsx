@@ -37,7 +37,7 @@ export function RelatedTicketRow({
   return (
     <button
       type="button"
-      className={`${base} w-full text-left hover:bg-brand-surface-hover transition-colors focus-visible:outline-2 focus-visible:outline-focus-ring`}
+      className={`${base} w-full text-left hover:bg-brand-accent/15 transition-colors focus-visible:outline-2 focus-visible:outline-focus-ring`}
       onClick={(e) => {
         e.stopPropagation();
         useTicketStore.getState().selectTicket(issue.key);
