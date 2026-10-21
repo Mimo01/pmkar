@@ -18,14 +18,23 @@ import { useAnnouncerStore } from '../../../components/LiveAnnouncer';
 import { useConnectionStore } from '../../connections/connectionStore';
 import { useCopyStore } from '../copyStore';
 import { useTicketStore } from '../ticketStore';
-import { denyTicket, linkTicket, markHandled, markSeen, restoreTicket } from '../triageActions';
+import {
+  denyTicket,
+  linkTicket,
+  markHandled,
+  markSeen,
+  restoreTicket,
+  watchTicket,
+} from '../triageActions';
 import type { JiraTicketDetail } from '../types';
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 const entry = () => useTicketStore.getState().triageMap['T-1'];
-const seed = (state: 'copied' | 'ignored' | 'new' | 'seen' | 'handled', copiedKey: string | null) =>
-  useTicketStore.getState().hydrateTriageMap({ 'T-1': { state, copiedKey } });
+const seed = (
+  state: 'copied' | 'ignored' | 'new' | 'seen' | 'handled' | 'watched',
+  copiedKey: string | null,
+) => useTicketStore.getState().hydrateTriageMap({ 'T-1': { state, copiedKey } });
 
 let startPreview: ReturnType<typeof vi.spyOn>;
 beforeEach(() => {
@@ -611,5 +620,134 @@ describe('announcements (RQA-03)', () => {
     invokeMock.mockRejectedValueOnce(new Error('db'));
     await restoreTicket('T-1');
     expect(msg()).toBe('Could not restore the ticket. Try again.');
+  });
+});
+
+describe('Watched transitions', () => {
+  const undoOf = () => toastFn.mock.calls[0][1].action.onClick as () => void;
+
+  it('Dismissed -> Watched keeps key, shows Undo toast, announces', async () => {
+    seed('ignored', 'C-1');
+    invokeMock.mockResolvedValue(undefined);
+    expect(await watchTicket('T-1')).toBe(true);
+    expect(entry()).toEqual({ state: 'watched', copiedKey: 'C-1' });
+    expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'watched',
+    });
+    expect(toastFn).toHaveBeenCalledWith(
+      'Moved T-1 to Watched.',
+      expect.objectContaining({
+        id: 'watch-T-1',
+        duration: 8000,
+        action: expect.objectContaining({ label: 'Undo' }),
+      }),
+    );
+    expect(useAnnouncerStore.getState().message).toBe('T-1 moved to Watched.');
+  });
+
+  it('shows the toast for a never-linked dismissed ticket', async () => {
+    seed('ignored', null);
+    invokeMock.mockResolvedValue(undefined);
+    await watchTicket('T-1');
+    expect(toastFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('Linked -> Watched shows no toast', async () => {
+    seed('copied', 'C-1');
+    invokeMock.mockResolvedValue(undefined);
+    await watchTicket('T-1');
+    expect(entry()).toEqual({ state: 'watched', copiedKey: 'C-1' });
+    expect(toastFn).not.toHaveBeenCalled();
+  });
+
+  it('failure rolls back with an error toast', async () => {
+    seed('ignored', 'C-1');
+    invokeMock.mockRejectedValue(new Error('db'));
+    expect(await watchTicket('T-1')).toBe(false);
+    expect(entry()).toEqual({ state: 'ignored', copiedKey: 'C-1' });
+    expect(toastError).toHaveBeenCalledWith('Could not move the ticket to Watched. Try again.');
+  });
+
+  it('Undo returns to Dismissed and never relinks', async () => {
+    seed('ignored', 'C-1');
+    invokeMock.mockResolvedValueOnce(undefined);
+    await watchTicket('T-1');
+    const undo = undoOf();
+    invokeMock.mockResolvedValueOnce(undefined);
+    undo();
+    await flush();
+    expect(invokeMock).toHaveBeenLastCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'ignored',
+    });
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    expect(entry()).toEqual({ state: 'ignored', copiedKey: 'C-1' });
+    expect(useAnnouncerStore.getState().message).toBe('T-1 restored.');
+  });
+
+  it('stale Undo performs no invoke', async () => {
+    seed('ignored', 'C-1');
+    invokeMock.mockResolvedValueOnce(undefined);
+    await watchTicket('T-1');
+    const undo = undoOf();
+    seed('seen', 'C-1');
+    invokeMock.mockClear();
+    undo();
+    await flush();
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it('Watched -> Dismissed (never linked) shows Undo that returns to Watched', async () => {
+    seed('watched', null);
+    invokeMock.mockResolvedValueOnce(undefined);
+    await denyTicket('T-1');
+    expect(toastFn).toHaveBeenCalledWith(
+      'Moved T-1 to Dismissed.',
+      expect.objectContaining({ id: 'deny-T-1' }),
+    );
+    const undo = undoOf();
+    invokeMock.mockResolvedValueOnce(undefined);
+    undo();
+    await flush();
+    expect(invokeMock).toHaveBeenLastCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'watched',
+    });
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    expect(entry()).toEqual({ state: 'watched', copiedKey: null });
+  });
+
+  it('Watched -> Dismissed with key: Undo returns to watched, not copied', async () => {
+    seed('watched', 'C-1');
+    invokeMock.mockResolvedValueOnce(undefined);
+    await denyTicket('T-1');
+    const undo = undoOf();
+    invokeMock.mockResolvedValueOnce(undefined);
+    undo();
+    await flush();
+    expect(entry()).toEqual({ state: 'watched', copiedKey: 'C-1' });
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+  });
+
+  it('restore from Watched goes to seen without relinking and dismisses toasts', async () => {
+    seed('watched', 'C-1');
+    invokeMock.mockResolvedValue(undefined);
+    expect(await restoreTicket('T-1')).toBe(true);
+    expect(invokeMock).not.toHaveBeenCalledWith('relink_ticket', expect.anything());
+    expect(entry()).toEqual({ state: 'seen', copiedKey: 'C-1' });
+    expect(toastDismiss).toHaveBeenCalledWith('watch-T-1');
+    expect(toastDismiss).toHaveBeenCalledWith('deny-T-1');
+  });
+
+  it('linkTicket relinked and markHandled dismiss the watch toast', async () => {
+    seed('watched', 'C-1');
+    invokeMock.mockResolvedValueOnce('C-1');
+    await linkTicket('T-1');
+    expect(toastDismiss).toHaveBeenCalledWith('watch-T-1');
+    toastDismiss.mockClear();
+    invokeMock.mockResolvedValueOnce(undefined);
+    await markHandled('T-1');
+    expect(toastDismiss).toHaveBeenCalledWith('watch-T-1');
   });
 });
