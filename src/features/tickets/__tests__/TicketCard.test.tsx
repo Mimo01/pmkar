@@ -263,4 +263,57 @@ describe('TicketCard', () => {
       expect(container.querySelector('[data-ticket-key="P-1"]')).not.toBeNull();
     });
   });
+
+  describe('relations', () => {
+    const sub = (k: string) => ({
+      key: k,
+      fields: { summary: `Sum ${k}`, status: { name: 'Open' } },
+    });
+    const withFields = (extra: Partial<JiraTicket['fields']>): JiraTicket => ({
+      ...ticket,
+      fields: { ...ticket.fields, ...extra },
+    });
+
+    beforeEach(() => {
+      useTicketStore.getState().selectTicket(null);
+    });
+
+    it('shows the parent row', () => {
+      setup({
+        ticket: withFields({
+          parent: { key: 'P-0', fields: { summary: 'Parent sum', status: { name: 'Open' } } },
+        }),
+      });
+      expect(screen.getByText('Parent')).toBeInTheDocument();
+      expect(screen.getByText('P-0')).toBeInTheDocument();
+      expect(screen.getByText('Parent sum')).toBeInTheDocument();
+    });
+
+    it('shows all sub-tasks immediately', () => {
+      setup({ ticket: withFields({ subtasks: [sub('P-2'), sub('P-3'), sub('P-4')] }) });
+      expect(screen.getByText('Sub-tasks (3)')).toBeInTheDocument();
+      for (const k of ['P-2', 'P-3', 'P-4']) expect(screen.getByText(k)).toBeInTheDocument();
+    });
+
+    it('renders no relations area without parent/subtasks', () => {
+      setup();
+      expect(screen.queryByText('Parent')).toBeNull();
+      expect(screen.queryByText(/Sub-tasks/)).toBeNull();
+    });
+
+    it('clicking a relation row selects it without triggering card onClick', async () => {
+      const { onClick, user } = setup({ ticket: withFields({ subtasks: [sub('P-2')] }) });
+      await user.click(screen.getByText('Sum P-2'));
+      expect(useTicketStore.getState().selectedTicketKey).toBe('P-2');
+      expect(onClick).not.toHaveBeenCalled();
+      await user.click(screen.getByRole('button', { name: 'Card summary' }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('relation rows are not buttons in select mode', () => {
+      setup({ selectMode: true, ticket: withFields({ subtasks: [sub('P-2')] }) });
+      expect(screen.queryByRole('button', { name: /P-2/ })).toBeNull();
+      expect(screen.getByText('P-2')).toBeInTheDocument();
+    });
+  });
 });

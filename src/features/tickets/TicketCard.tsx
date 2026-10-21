@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { formatRelativeTime } from '../../lib/format';
 import { GroupChips } from '../groups/GroupChips';
 import { PriorityIcon } from './PriorityIcon';
+import { RelatedTicketRow } from './RelatedTicketRow';
 import { StatusBadge } from './StatusBadge';
 import { useTicketStore } from './ticketStore';
 import type { JiraTicket, TriageEntry } from './types';
@@ -150,6 +151,35 @@ export function TicketCard({
             <GroupChips issueKey={ticket.key} hideGroupId={hideGroupId} />
           </span>
         </div>
+        {(ticket.fields.parent || (ticket.fields.subtasks?.length ?? 0) > 0) && (
+          // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: only stops click propagation; real controls are the relation row buttons
+          <div
+            className={cn(
+              'mt-2 flex flex-col gap-0.5',
+              !selectMode && 'pointer-events-auto relative z-10',
+            )}
+            onClick={selectMode ? undefined : (e) => e.stopPropagation()}
+          >
+            {ticket.fields.parent && (
+              <>
+                <span className="text-[11px] font-medium text-brand-text-secondary">
+                  {t('tickets.card.parentLabel')}
+                </span>
+                <RelatedTicketRow issue={ticket.fields.parent} compact interactive={!selectMode} />
+              </>
+            )}
+            {(ticket.fields.subtasks?.length ?? 0) > 0 && (
+              <>
+                <span className="text-[11px] font-medium text-brand-text-secondary">
+                  {t('tickets.card.subtasksLabel', { count: ticket.fields.subtasks?.length })}
+                </span>
+                {ticket.fields.subtasks?.map((st) => (
+                  <RelatedTicketRow key={st.key} issue={st} compact interactive={!selectMode} />
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </div>
       {footerSlot && (
         // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: only stops click propagation; real controls live inside footerSlot
