@@ -20,7 +20,7 @@ export function RelatedTicketRow({
 
   const content = (
     <>
-      <span className="text-xs font-semibold font-mono text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 rounded">
+      <span className="text-xs font-semibold font-mono text-brand-text bg-brand-surface border border-brand-border px-1.5 py-0.5 rounded">
         {issue.key}
       </span>
       <span className={`${summarySize} text-brand-text-secondary truncate flex-1`}>
@@ -37,7 +37,7 @@ export function RelatedTicketRow({
   return (
     <button
       type="button"
-      className={`${base} w-full text-left hover:bg-brand-border transition-colors focus-visible:outline-2 focus-visible:outline-focus-ring`}
+      className={`${base} w-full cursor-pointer text-left hover:bg-brand-border transition-colors focus-visible:outline-2 focus-visible:outline-focus-ring`}
       onClick={(e) => {
         e.stopPropagation();
         useTicketStore.getState().selectTicket(issue.key);
