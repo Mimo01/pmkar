@@ -375,6 +375,7 @@ None yet.
 | fast | Pointer chip click no longer focuses group tab (no stray nav tooltip) | 2026-10-13 | 41e4733 | Approved | — |
 | fast | Release v0.5.0 with curated changelog | 2026-10-13 | 8c936d5 | Done | — |
 | 261015-lwy | Address v0.5.1 tech debt (triage action robustness, detail UI, wording, already-linked message) | 2026-10-15 | 3f590f9 | Needs Review | [261015-lwy-address-the-tech-debt](./quick/261015-lwy-address-the-tech-debt/) |
+| 261021-lci | Remove Watched count pill so core tabs are consistent (none; groups keep counts) | 2026-10-21 | b09cb12 | | [261021-lci-consistent-category-count-pill](./quick/261021-lci-consistent-category-count-pill/) |
 
 ## Session Continuity
 
