@@ -47,3 +47,34 @@ describe('detail.* Phase 36 strings', () => {
     expect(tags(enMap['detail.previouslyLinked'])).toEqual(['</k>', '<k>']);
   });
 });
+
+describe('relations strings', () => {
+  const KEYS = [
+    'detail.description',
+    'detail.relations.parent',
+    'detail.relations.subtasks',
+    'tickets.card.parentLabel',
+    'tickets.card.subtasksLabel',
+  ];
+
+  it('exist and are non-empty in EN and SK without "úloh"', () => {
+    for (const k of KEYS) {
+      expect(enMap[k], `en ${k}`).toBeTruthy();
+      expect(skMap[k], `sk ${k}`).toBeTruthy();
+      expect(skMap[k]).not.toMatch(/úloh/i);
+    }
+  });
+
+  it('SK relation labels use "tiket"', () => {
+    expect(skMap['detail.relations.parent']).toMatch(/tiket/i);
+    expect(skMap['tickets.card.parentLabel']).toMatch(/tiket/i);
+    expect(skMap['detail.relations.subtasks']).toMatch(/tiket/i);
+    expect(skMap['tickets.card.subtasksLabel']).toMatch(/tiket/i);
+  });
+
+  it('count placeholder matches between EN and SK', () => {
+    expect(placeholders(skMap['tickets.card.subtasksLabel'])).toEqual(
+      placeholders(enMap['tickets.card.subtasksLabel']),
+    );
+  });
+});

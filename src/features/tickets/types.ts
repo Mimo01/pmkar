@@ -95,6 +95,11 @@ export interface ChangelogEntry {
   items: ChangelogItem[];
 }
 
+export interface JiraRelatedIssue {
+  key: string;
+  fields?: { summary?: string; status?: JiraStatus };
+}
+
 // Ticket as returned from search (lightweight — list view fields only)
 export interface JiraTicket {
   id: string;
@@ -106,6 +111,8 @@ export interface JiraTicket {
     assignee: JiraUser | null;
     created?: string; // ISO 8601 — may be absent for older cached tickets
     updated: string; // ISO 8601
+    subtasks?: JiraSubTask[];
+    parent?: JiraRelatedIssue;
   };
 }
 
@@ -126,6 +133,7 @@ export interface JiraTicketDetail {
     comment: { comments: JiraComment[] };
     attachment: JiraAttachment[];
     subtasks: JiraSubTask[];
+    parent?: JiraRelatedIssue;
     issuelinks: JiraIssueLink[];
     created?: string; // ISO 8601
     updated: string;

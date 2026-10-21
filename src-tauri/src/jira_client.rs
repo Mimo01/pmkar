@@ -54,7 +54,7 @@ pub async fn search_tickets(
 
     loop {
         let url = format!(
-            "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
+            "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions,subtasks,parent&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
         );
 
         let resp = client

@@ -1117,6 +1117,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 fields: json!({
                     "summary": summary,
                     "issuetype": issuetype("10002", "Task"),
+                    "parent": { "key": "PROJ-1", "fields": { "summary": "Customer reported login failure after recent update", "status": v2_status("In Progress", "3") } },
                     "status": v2_status("In Progress", "3"),
                     "priority": priority("High", "2"),
                     "assignee": v2_user("jdoe", "Jane Doe"),
@@ -1151,6 +1152,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 fields: json!({
                     "summary": summary,
                     "issuetype": issuetype("10002", "Task"),
+                    "parent": { "key": "PROJ-1", "fields": { "summary": "Customer reported login failure after recent update", "status": v3_status("In Progress", "indeterminate") } },
                     "status": v3_status("In Progress", "indeterminate"),
                     "priority": priority("High", "2"),
                     "assignee": v3_user("acc-jdoe", "Jane Doe"),
@@ -1194,6 +1196,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 fields: json!({
                     "summary": summary,
                     "issuetype": issuetype("10002", "Task"),
+                    "parent": { "key": "PROJ-1", "fields": { "summary": "Customer reported login failure after recent update", "status": v2_status("In Progress", "3") } },
                     "status": v2_status("Open", "1"),
                     "priority": priority("Medium", "3"),
                     "assignee": v2_user("csmith", "Chris Smith"),
@@ -1228,6 +1231,7 @@ pub fn build_fixtures() -> SharedFixtures {
                 fields: json!({
                     "summary": summary,
                     "issuetype": issuetype("10002", "Task"),
+                    "parent": { "key": "PROJ-1", "fields": { "summary": "Customer reported login failure after recent update", "status": v3_status("In Progress", "indeterminate") } },
                     "status": v3_status("Open", "new"),
                     "priority": priority("Medium", "3"),
                     "assignee": v3_user("acc-csmith", "Chris Smith"),
