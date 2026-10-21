@@ -44,7 +44,13 @@ function scan(): Call[] {
             ? e.name.text
             : '';
         const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1;
-        if (name === 'denyTicket' || name === 'linkTicket' || name === 'undoDeny') {
+        if (
+          name === 'denyTicket' ||
+          name === 'linkTicket' ||
+          name === 'undoDeny' ||
+          name === 'watchTicket' ||
+          name === 'undoWatch'
+        ) {
           calls.push({ file, line, callee: name });
         } else if (name === 'invoke') {
           const arg = node.arguments[0];
@@ -80,6 +86,14 @@ describe('transition guard (CONF-03)', () => {
     expect(offending(calls, ACTIONS, (c) => c === 'undoDeny')).toEqual([]);
   });
 
+  it('watchTicket is only called from useTriageDetailActions', () => {
+    expect(offending(calls, HOOK, (c) => c === 'watchTicket')).toEqual([]);
+  });
+
+  it('undoWatch is only called from triageActions', () => {
+    expect(offending(calls, ACTIONS, (c) => c === 'undoWatch')).toEqual([]);
+  });
+
   it('relink_ticket/set_triage_state are only invoked from triageActions', () => {
     expect(offending(calls, ACTIONS, (c) => c.startsWith('invoke:'))).toEqual([]);
   });
@@ -88,6 +102,8 @@ describe('transition guard (CONF-03)', () => {
     expect(calls.some((c) => c.file === HOOK && c.callee === 'denyTicket')).toBe(true);
     expect(calls.some((c) => c.file === HOOK && c.callee === 'linkTicket')).toBe(true);
     expect(calls.some((c) => c.file === ACTIONS && c.callee === 'undoDeny')).toBe(true);
+    expect(calls.some((c) => c.file === HOOK && c.callee === 'watchTicket')).toBe(true);
+    expect(calls.some((c) => c.file === ACTIONS && c.callee === 'undoWatch')).toBe(true);
     expect(calls.some((c) => c.file === ACTIONS && c.callee === 'invoke:relink_ticket')).toBe(true);
     expect(calls.some((c) => c.file === ACTIONS && c.callee === 'invoke:set_triage_state')).toBe(
       true,

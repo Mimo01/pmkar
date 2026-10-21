@@ -16,6 +16,10 @@ export async function confirmLink(): Promise<void> {
   await clickInDialog(i18n.t('triage.confirm.link.action'));
 }
 
+export async function confirmWatch(): Promise<void> {
+  await clickInDialog(i18n.t('triage.confirm.watch.action'));
+}
+
 export async function cancelConfirm(): Promise<void> {
   await clickInDialog(i18n.t('triage.confirm.cancel'));
 }
