@@ -32,7 +32,7 @@ vi.mock('@/stores/schemaCacheStore', () => ({
 
 import { invoke } from '@tauri-apps/api/core';
 import { useConnectionStore } from '../../connections/connectionStore';
-import { cancelConfirm } from '../../tickets/__tests__/confirmHelpers';
+import { cancelConfirm, confirmWatch } from '../../tickets/__tests__/confirmHelpers';
 import { TicketDetailPage } from '../../tickets/TicketDetailPage';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, JiraTicketDetail, TriageEntry } from '../../tickets/types';
@@ -156,5 +156,30 @@ describe('group view hands off to the shared detail triage actions (RLNK-04)', (
         (_, el) => el?.tagName === 'P' && el.textContent === 'Previously linked to CLD-7',
       ),
     ).toBeVisible();
+  });
+
+  it('Linked member detail shows Deny then Watch; Watch opens the dialog', async () => {
+    openFromGroup('PROJ-1');
+    expect(await screen.findByRole('button', { name: 'Watch' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+    expect(await screen.findByRole('alertdialog')).toBeVisible();
+    expect(mockInvoke.mock.calls.map((c) => c[0])).not.toContain('set_triage_state');
+    await confirmWatch();
+    expect(await screen.findByRole('button', { name: 'Restore link to CLD-9' })).toBeVisible();
+    expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'PROJ-1',
+      state: 'watched',
+    });
+  });
+
+  it('Watched member detail shows Restore link, Deny and Restore', async () => {
+    useTicketStore.setState({
+      triageMap: { ...triage, 'PROJ-2': { state: 'watched', copiedKey: 'CLD-7' } },
+    });
+    openFromGroup('PROJ-2');
+    expect(await screen.findByRole('button', { name: 'Restore link to CLD-7' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Deny' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Restore' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
   });
 });

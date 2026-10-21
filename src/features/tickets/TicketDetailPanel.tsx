@@ -303,6 +303,21 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                         })}
                       </TooltipContent>
                     </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          ref={tri.watchRef}
+                          onClick={tri.requestWatch}
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                        >
+                          {t('detail.watch')}
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent aria-hidden="true">
+                        {t('detail.watch.tooltip')}
+                      </TooltipContent>
+                    </Tooltip>
                   </>
                 ) : (
                   <button
@@ -329,7 +344,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                       {t('detail.handled.tooltip')}
                     </TooltipContent>
                   </Tooltip>
-                ) : tri.isDenied ? (
+                ) : tri.isDenied || tri.isWatched ? (
                   <>
                     {tri.rememberedKey ? (
                       <Tooltip>
@@ -341,13 +356,50 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     ) : (
                       restorePrimary
                     )}
-                    <button
-                      type="button"
-                      onClick={tri.handleRestore}
-                      className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
-                    >
-                      {t('ignored.restore')}
-                    </button>
+                    {tri.isWatched ? (
+                      <>
+                        <button
+                          type="button"
+                          ref={tri.denyRef}
+                          onClick={tri.requestDeny}
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                        >
+                          {t('detail.deny')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={tri.handleRestore}
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                        >
+                          {t('watched.restore')}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              ref={tri.watchRef}
+                              onClick={tri.requestWatch}
+                              className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                            >
+                              {t('detail.watch')}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent aria-hidden="true">
+                            {t('detail.watch.tooltip')}
+                          </TooltipContent>
+                        </Tooltip>
+                        <button
+                          type="button"
+                          onClick={tri.handleRestore}
+                          className={`px-3 py-1 rounded text-sm font-semibold text-brand-muted border border-brand-border hover:text-brand-text hover:border-brand-text transition-colors ${FOCUS_RING}`}
+                        >
+                          {t('ignored.restore')}
+                        </button>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -382,7 +434,7 @@ export function TicketDetailPanel({ issueKey, baseUrl, onClose }: TicketDetailPa
                     </Tooltip>
                   </>
                 )}
-                {tri.isLinked || tri.isDenied || isHandled ? null : (
+                {tri.isLinked || tri.isDenied || tri.isWatched || isHandled ? null : (
                   <button
                     type="button"
                     onClick={handleStartCopy}
