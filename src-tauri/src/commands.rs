@@ -1025,12 +1025,12 @@ pub fn get_triage_state(
 /// only the copy flow (`set_triage_copied`) or `relink_ticket` may produce it.
 pub(crate) fn validate_triage_state(state: &str) -> Result<(), AppError> {
     match state {
-        "new" | "seen" | "ignored" | "handled" => Ok(()),
+        "new" | "seen" | "ignored" | "handled" | "watched" => Ok(()),
         "copied" => Err(AppError::Internal(
             "State 'copied' cannot be set through set_triage_state. Use relink_ticket to restore a remembered link, or copy the ticket.".into(),
         )),
         _ => Err(AppError::Internal(format!(
-            "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, handled"
+            "Invalid triage state: '{state}'. Must be one of: new, seen, ignored, handled, watched"
         ))),
     }
 }
@@ -2398,6 +2398,26 @@ mod tests {
     }
 
     #[test]
+    fn test_fetch_triage_sync_keeps_watched() {
+        let db = seeded();
+        db.set_triage_copied("W1", "CLD-7").expect("w1");
+        db.set_triage("W1", "watched").expect("w1 watched");
+        db.set_triage("W2", "watched").expect("w2 watched");
+        let before = db.get_all_triage().expect("before");
+        let issues = vec![issue("W1", "indeterminate"), issue("W2", "indeterminate")];
+        sync_triage_after_fetch(&db, &issues).expect("sync");
+        assert_eq!(db.get_all_triage().expect("after"), before);
+        let issues = vec![issue("W1", "done")];
+        sync_triage_after_fetch(&db, &issues).expect("sync done");
+        let after = db.get_all_triage().expect("after done");
+        assert_eq!(after.get("W1"), before.get("W1"));
+        assert_eq!(
+            after.get("W1"),
+            Some(&("watched".to_string(), Some("CLD-7".to_string())))
+        );
+    }
+
+    #[test]
     fn test_fetch_triage_sync_done_keeps_remembered_rows() {
         let db = seeded();
         let before = db.get_all_triage().expect("before");
@@ -2435,7 +2455,7 @@ mod tests {
 
     #[test]
     fn test_validate_triage_state_accepts_non_copied() {
-        for s in ["new", "seen", "ignored", "handled"] {
+        for s in ["new", "seen", "ignored", "handled", "watched"] {
             assert!(validate_triage_state(s).is_ok(), "{s}");
         }
     }
@@ -2454,7 +2474,7 @@ mod tests {
             .expect_err("rejected")
             .to_string();
         assert!(
-            e.contains("Must be one of: new, seen, ignored, handled"),
+            e.contains("Must be one of: new, seen, ignored, handled, watched"),
             "{e}"
         );
         assert!(!e.contains("copied"), "{e}");
