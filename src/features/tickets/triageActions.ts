@@ -115,10 +115,14 @@ async function undoDeny(issueKey: string, priorState: TriageState): Promise<void
  */
 export async function denyTicket(issueKey: string): Promise<boolean> {
   const { ok, prev } = await applyState(issueKey, 'ignored', 'triage.denyFailed');
-  if (ok) announce(i18n.t('a11y.denied', { key: issueKey }));
-  if (ok && prev?.copiedKey) {
+  if (ok) {
+    announce(i18n.t('a11y.denied', { key: issueKey }));
+    toast.dismiss(`watch-${issueKey}`);
+  }
+  const fromWatched = prev?.state === 'watched';
+  if (ok && prev && (prev.copiedKey || fromWatched)) {
     const priorState = prev.state;
-    toast(i18n.t('triage.denied', { key: issueKey }), {
+    toast(i18n.t(fromWatched ? 'triage.watchedDenied' : 'triage.denied', { key: issueKey }), {
       id: `deny-${issueKey}`,
       duration: UNDO_TOAST_MS,
       action: {
@@ -130,6 +134,43 @@ export async function denyTicket(issueKey: string): Promise<boolean> {
     });
   }
   return ok;
+}
+
+/**
+ * Undo a Dismissed -> Watched move (D-10). Restores the prior non-copied state via
+ * set_triage_state only; never relinks (CONF-03, T-37.2-07).
+ */
+async function undoWatch(issueKey: string, priorState: TriageState): Promise<void> {
+  // Stale toast: the ticket left Watched since.
+  if (useTicketStore.getState().triageMap[issueKey]?.state !== 'watched') return;
+  if (priorState === 'copied') return;
+  const { ok } = await applyState(issueKey, priorState, 'triage.undoWatchFailed');
+  if (ok) announce(i18n.t('a11y.restored', { key: issueKey }));
+}
+
+/**
+ * Move a ticket to Watched, keeping any remembered Cloud key (D-03, D-05, D-11).
+ * Dismissed -> Watched shows an Undo toast; Linked -> Watched is a confirmed move
+ * and shows none (D-10).
+ */
+export async function watchTicket(issueKey: string): Promise<boolean> {
+  const { ok, prev } = await applyState(issueKey, 'watched', 'triage.watchFailed');
+  if (!ok) return false;
+  announce(i18n.t('a11y.watched', { key: issueKey }));
+  toast.dismiss(`deny-${issueKey}`);
+  if (prev?.state === 'ignored') {
+    toast(i18n.t('triage.watched', { key: issueKey }), {
+      id: `watch-${issueKey}`,
+      duration: UNDO_TOAST_MS,
+      action: {
+        label: i18n.t('triage.undo'),
+        onClick: () => {
+          void undoWatch(issueKey, 'ignored');
+        },
+      },
+    });
+  }
+  return true;
 }
 
 /**
@@ -145,6 +186,7 @@ export async function restoreTicket(issueKey: string): Promise<boolean> {
       if (typeof key === 'string' && key) {
         writeEntry(issueKey, { state: 'copied', copiedKey: key });
         toast.dismiss(`deny-${issueKey}`);
+        toast.dismiss(`watch-${issueKey}`);
         announce(i18n.t('a11y.restored', { key: issueKey }));
         return true;
       }
@@ -152,9 +194,11 @@ export async function restoreTicket(issueKey: string): Promise<boolean> {
       // fall back to plain restore below
     }
   }
-  const { ok } = await applyState(issueKey, 'seen', 'ignored.restoreFailed');
+  const failKey = current?.state === 'watched' ? 'watched.restoreFailed' : 'ignored.restoreFailed';
+  const { ok } = await applyState(issueKey, 'seen', failKey);
   if (ok) {
     toast.dismiss(`deny-${issueKey}`);
+    toast.dismiss(`watch-${issueKey}`);
     announce(i18n.t('a11y.restored', { key: issueKey }));
   }
   return ok;
@@ -165,6 +209,7 @@ export async function markHandled(issueKey: string): Promise<boolean> {
   const { ok } = await applyState(issueKey, 'handled', 'triage.handleFailed');
   if (ok) {
     toast.dismiss(`deny-${issueKey}`);
+    toast.dismiss(`watch-${issueKey}`);
     announce(i18n.t('a11y.handled', { key: issueKey }));
   }
   return ok;
@@ -187,6 +232,7 @@ export async function linkTicket(issueKey: string, detail?: JiraTicketDetail): P
   if (typeof key === 'string' && key) {
     writeEntry(issueKey, { state: 'copied', copiedKey: key });
     toast.dismiss(`deny-${issueKey}`);
+    toast.dismiss(`watch-${issueKey}`);
     announce(i18n.t('a11y.linked', { key: issueKey, cloudKey: key }));
     return 'relinked';
   }
