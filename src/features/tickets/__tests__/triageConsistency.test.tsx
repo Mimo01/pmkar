@@ -217,7 +217,7 @@ describe('triage consistency invariant (RQA-01)', () => {
     expect(lists().notMine.filter((k) => k === 'A-6')).toHaveLength(1);
   });
 
-  it('restore moves handled and ignored tickets to New', async () => {
+  it('restore moves handled to New and relinks denied tickets with a remembered key', async () => {
     await restoreTicket('A-7');
     await check();
     expect(lists().newList).toContain('A-7');
@@ -226,7 +226,15 @@ describe('triage consistency invariant (RQA-01)', () => {
     await check();
     await restoreTicket('A-5');
     await check();
-    expect(lists().newList).toContain('A-5');
+    expect(lists().linked).toContain('A-5');
+    expect(useTicketStore.getState().triageMap['A-5']).toEqual({
+      state: 'copied',
+      copiedKey: 'CL-5',
+    });
+    // No remembered key: plain restore to New/seen.
+    await restoreTicket('A-6');
+    await check();
+    expect(lists().newList).toContain('A-6');
   });
 
   it('markHandled moves Linked to Not mine', async () => {

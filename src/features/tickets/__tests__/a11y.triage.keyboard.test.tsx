@@ -222,8 +222,24 @@ describe.each<Surface>(['page', 'panel'])('triage keyboard operability: %s (D-06
       });
     });
 
-    it('Restore: sets seen, focus lands on Dismiss', async () => {
+    it('Restore: relinks a remembered key, focus lands on Linked badge', async () => {
       seed(DENIED);
+      await renderSurface(surface);
+      const user = userEvent.setup();
+      await tabTo(user, restore());
+      await user.keyboard(keys);
+      await waitFor(() => expect(callsOf('relink_ticket').length).toBe(1));
+      expect(callsOf('set_triage_state')).toHaveLength(0);
+      await waitFor(() => {
+        const active = document.activeElement as HTMLElement;
+        expect(active.getAttribute('tabindex')).toBe('-1');
+        expect(active.textContent).toContain(CLOUD);
+      });
+    });
+
+    it('Restore: falls back to seen when relink fails, focus lands on Dismiss', async () => {
+      seed(DENIED);
+      relinkImpl = () => Promise.reject(new Error('x'));
       await renderSurface(surface);
       const user = userEvent.setup();
       await tabTo(user, restore());

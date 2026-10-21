@@ -132,8 +132,26 @@ export async function denyTicket(issueKey: string): Promise<boolean> {
   return ok;
 }
 
-/** Restore a dismissed/handled ticket to 'seen', keeping its Cloud key (D-09). */
+/**
+ * Restore a dismissed/handled ticket. A denied (ignored) ticket that remembers a Cloud
+ * key is relinked (state 'copied'); if the relink fails it falls back to 'seen', keeping
+ * the key (reverses D-09 for denied tickets only).
+ */
 export async function restoreTicket(issueKey: string): Promise<boolean> {
+  const current = useTicketStore.getState().triageMap[issueKey];
+  if (current?.state === 'ignored' && current.copiedKey) {
+    try {
+      const key = await invoke<string | null>('relink_ticket', { ticketKey: issueKey });
+      if (typeof key === 'string' && key) {
+        writeEntry(issueKey, { state: 'copied', copiedKey: key });
+        toast.dismiss(`deny-${issueKey}`);
+        announce(i18n.t('a11y.restored', { key: issueKey }));
+        return true;
+      }
+    } catch {
+      // fall back to plain restore below
+    }
+  }
   const { ok } = await applyState(issueKey, 'seen', 'ignored.restoreFailed');
   if (ok) {
     toast.dismiss(`deny-${issueKey}`);

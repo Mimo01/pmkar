@@ -91,6 +91,43 @@ describe('restoreTicket', () => {
   });
 });
 
+describe('restoreTicket relink for denied tickets with a remembered key', () => {
+  beforeEach(() => {
+    useTicketStore.getState().hydrateTriageMap({
+      'T-1': { state: 'ignored', copiedKey: 'CL-1' },
+    });
+  });
+
+  it('relinks and never writes seen', async () => {
+    invokeMock.mockResolvedValue('CL-1');
+    expect(await restoreTicket('T-1')).toBe(true);
+    expect(invokeMock).toHaveBeenCalledWith('relink_ticket', { ticketKey: 'T-1' });
+    expect(invokeMock).not.toHaveBeenCalledWith('set_triage_state', expect.anything());
+    expect(useTicketStore.getState().triageMap['T-1']).toEqual({
+      state: 'copied',
+      copiedKey: 'CL-1',
+    });
+  });
+
+  it.each([
+    ['rejects', () => Promise.reject(new Error('db'))],
+    ['returns null', () => Promise.resolve(null)],
+  ])('falls back to seen keeping the key when relink %s', async (_n, relink) => {
+    invokeMock.mockImplementation((cmd: string) =>
+      cmd === 'relink_ticket' ? relink() : Promise.resolve(undefined),
+    );
+    expect(await restoreTicket('T-1')).toBe(true);
+    expect(invokeMock).toHaveBeenCalledWith('set_triage_state', {
+      ticketKey: 'T-1',
+      state: 'seen',
+    });
+    expect(useTicketStore.getState().triageMap['T-1']).toEqual({
+      state: 'seen',
+      copiedKey: 'CL-1',
+    });
+  });
+});
+
 describe('denyTicket', () => {
   it('carries the key and only invokes set_triage_state', async () => {
     seed('copied', 'CLD-9');

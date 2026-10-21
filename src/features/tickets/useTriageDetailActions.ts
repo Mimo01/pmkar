@@ -206,6 +206,10 @@ export function useTriageDetailActions(
     pendingFocus.current = 'dismiss';
     const ok = await restoreTicket(issueKey);
     if (!ok) requestFocus('primary');
+    // A remembered key relinks on restore: focus the Linked badge instead of Dismiss.
+    else if (useTicketStore.getState().triageMap[issueKey]?.state === 'copied') {
+      requestFocus('badge');
+    }
   }, [issueKey, requestFocus]);
 
   return {
