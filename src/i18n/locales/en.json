@@ -111,7 +111,7 @@
   "detail.ignore": "Dismiss",
   "detail.ignore.tooltip": "Move this ticket to the Dismissed tab — you can restore it anytime",
   "detail.watch": "Watch",
-  "detail.watch.tooltip": "Park this ticket in Watched. It is hidden from your inbox and the Jira link is remembered.",
+  "detail.watch.tooltip": "Move this ticket from New to Watched.",
   "detail.ignored": "Ignored",
   "detail.ignored.tooltip": "This ticket is dismissed — click to restore it to your inbox",
   "detail.deny": "Deny",

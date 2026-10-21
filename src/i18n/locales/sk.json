@@ -111,7 +111,7 @@
   "detail.ignore": "Zamietnuť",
   "detail.ignore.tooltip": "Presunúť tiket do karty Zamietnuté — kedykoľvek ho môžete obnoviť",
   "detail.watch": "Sledovať",
-  "detail.watch.tooltip": "Presunie tiket do Sledovaných. Skryje sa z doručených a prepojenie sa zapamätá.",
+  "detail.watch.tooltip": "Presunie tiket z Nových do Sledovaných.",
   "detail.ignored": "Ignorované",
   "detail.ignored.tooltip": "Tento tiket je zamietnutý — kliknite pre obnovenie",
   "detail.deny": "Odmietnuť",
