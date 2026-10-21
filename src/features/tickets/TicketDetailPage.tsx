@@ -225,7 +225,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
         {/* Action buttons */}
         <TooltipProvider delayDuration={300}>
           <div className="flex items-center gap-3 flex-wrap mb-6">
-            {!tri.isLinked && !tri.isDenied && !isHandled && (
+            {!tri.isLinked && !tri.isDenied && !tri.isWatched && !isHandled && (
               <Button
                 variant="default"
                 size="lg"
@@ -277,6 +277,19 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                     })}
                   </TooltipContent>
                 </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      ref={tri.watchRef}
+                      onClick={() => tri.requestWatch()}
+                    >
+                      {t('detail.watch')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent aria-hidden="true">{t('detail.watch.tooltip')}</TooltipContent>
+                </Tooltip>
               </>
             ) : (
               <>
@@ -291,7 +304,7 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                       {t('detail.handled.tooltip')}
                     </TooltipContent>
                   </Tooltip>
-                ) : tri.isDenied ? (
+                ) : tri.isDenied || tri.isWatched ? (
                   <>
                     {tri.rememberedKey ? (
                       <Tooltip>
@@ -337,9 +350,50 @@ export function TicketDetailPage({ issueKey, onBack }: TicketDetailPageProps) {
                         })}
                       </Button>
                     )}
-                    <Button variant="secondary" size="lg" onClick={() => void tri.handleRestore()}>
-                      {t('ignored.restore')}
-                    </Button>
+                    {tri.isWatched ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          ref={tri.denyRef}
+                          onClick={() => tri.requestDeny()}
+                        >
+                          {t('detail.deny')}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          onClick={() => void tri.handleRestore()}
+                        >
+                          {t('watched.restore')}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="secondary"
+                              size="lg"
+                              ref={tri.watchRef}
+                              onClick={() => tri.requestWatch()}
+                            >
+                              {t('detail.watch')}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent aria-hidden="true">
+                            {t('detail.watch.tooltip')}
+                          </TooltipContent>
+                        </Tooltip>
+                        <Button
+                          variant="secondary"
+                          size="lg"
+                          onClick={() => void tri.handleRestore()}
+                        >
+                          {t('ignored.restore')}
+                        </Button>
+                      </>
+                    )}
                   </>
                 ) : (
                   <>

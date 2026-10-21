@@ -51,7 +51,13 @@ import { useCopyStore } from '../copyStore';
 import { TicketDetailPage } from '../TicketDetailPage';
 import { useTicketStore } from '../ticketStore';
 import type { JiraTicketDetail } from '../types';
-import { cancelConfirm, confirmDeny, confirmLink, expectNoConfirmDialog } from './confirmHelpers';
+import {
+  cancelConfirm,
+  confirmDeny,
+  confirmLink,
+  confirmWatch,
+  expectNoConfirmDialog,
+} from './confirmHelpers';
 
 const mockInvoke = vi.mocked(invoke);
 
@@ -540,6 +546,95 @@ describe('TicketDetailPage', () => {
         state: 'seen',
         copiedKey: 'CLD-9',
       });
+    });
+  });
+
+  describe('Phase 37.2 watch', () => {
+    const seed = (
+      state: 'copied' | 'ignored' | 'watched' | 'seen' | 'handled',
+      key: string | null,
+    ) => {
+      mockInvoke.mockImplementation((cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') return Promise.resolve(makeDetail() as never);
+        return Promise.resolve(undefined as never);
+      });
+      useTicketStore.setState({ triageMap: { 'PROJ-1': { state, copiedKey: key } } });
+    };
+    const names = () =>
+      screen
+        .getAllByRole('button')
+        .map((b) => b.textContent ?? '')
+        .filter((n) => /^(Deny|Watch|Restore|Restore link to .*)$/.test(n));
+
+    it('Linked shows Deny then Watch; Watch confirms and moves to Watched', async () => {
+      seed('copied', 'C-1');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: 'Watch' });
+      expect(names()).toEqual(['Deny', 'Watch']);
+      fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+      expect(await screen.findByRole('alertdialog')).toBeVisible();
+      await confirmWatch();
+      const primary = await screen.findByRole('button', { name: 'Restore link to C-1' });
+      await waitFor(() => expect(document.activeElement).toBe(primary));
+      expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+        ticketKey: 'PROJ-1',
+        state: 'watched',
+      });
+      expect(names()).toEqual(['Restore link to C-1', 'Deny', 'Restore']);
+    });
+
+    it('Dismissed shows Restore link, Watch, Restore; Watch is instant', async () => {
+      seed('ignored', 'C-1');
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: 'Watch' });
+      expect(names()).toEqual(['Restore link to C-1', 'Watch', 'Restore']);
+      fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+      await waitFor(() =>
+        expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+          ticketKey: 'PROJ-1',
+          state: 'watched',
+        }),
+      );
+      expectNoConfirmDialog();
+    });
+
+    it('Watched with key: no Copy, no Watch, hint visible, Deny is instant', async () => {
+      seed('watched', 'C-1');
+      const { container } = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: 'Restore link to C-1' });
+      expect(names()).toEqual(['Restore link to C-1', 'Deny', 'Restore']);
+      expect(screen.queryByRole('button', { name: /^Copy to/ })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      expect(container.textContent).toContain('Previously linked to C-1');
+      fireEvent.click(screen.getByRole('button', { name: 'Deny' }));
+      await waitFor(() =>
+        expect(mockInvoke).toHaveBeenCalledWith('set_triage_state', {
+          ticketKey: 'PROJ-1',
+          state: 'ignored',
+        }),
+      );
+      expectNoConfirmDialog();
+    });
+
+    it('Watched without key: primary is Copy, no hint', async () => {
+      seed('watched', null);
+      const { container } = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      expect(await screen.findByRole('button', { name: /^Copy to/ })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Deny' })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Restore' })).toBeVisible();
+      expect(container.textContent).not.toContain('Previously linked');
+    });
+
+    it('New and Handled never show Watch', async () => {
+      seed('seen', null);
+      const first = render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: /dismiss/i });
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
+      first.unmount();
+      seed('handled', null);
+      render(<TicketDetailPage issueKey="PROJ-1" onBack={vi.fn()} />);
+      await screen.findByRole('button', { name: /handled/i });
+      expect(screen.queryByRole('button', { name: 'Watch' })).toBeNull();
     });
   });
 });
