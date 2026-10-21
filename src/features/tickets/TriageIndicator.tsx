@@ -63,6 +63,14 @@ export function TriageIndicator({ state, copiedKey, cloudBaseUrl }: TriageIndica
     );
   }
 
+  if (state === 'watched') {
+    return (
+      <span className="inline-flex items-center whitespace-nowrap px-1.5 py-0.5 rounded-full bg-brand-surface-hover">
+        <span className="text-[11px] font-medium text-brand-muted">{t('nav.watched')}</span>
+      </span>
+    );
+  }
+
   // 'seen' or undefined — no indicator, render empty space for alignment
   return <span className="inline-block w-4 h-4" aria-hidden="true" />;
 }

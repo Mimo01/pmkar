@@ -88,6 +88,17 @@ describe('ticketStore', () => {
       expect(useTicketStore.getState().newCount).toBe(2);
     });
 
+    it('excludes watched entries from newCount', () => {
+      const tickets = [makeTicket('PROJ-1'), makeTicket('PROJ-2')];
+      const triageMap: Record<string, TriageEntry> = {
+        'PROJ-1': { state: 'new', copiedKey: null },
+        'PROJ-2': { state: 'watched', copiedKey: 'CLOUD-2' },
+      };
+      useTicketStore.getState().setTickets(tickets, triageMap, 2);
+
+      expect(useTicketStore.getState().newCount).toBe(1);
+    });
+
     it('resets fetchStatus to idle and fetchError to null', () => {
       useTicketStore.setState({ fetchStatus: 'error', fetchError: 'previous error' });
       useTicketStore.getState().setTickets([], {}, 0);

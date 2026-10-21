@@ -8,14 +8,16 @@ export type TicketSortField = 'updated' | 'key' | 'created' | 'priority' | 'stat
 export type SortDirection = 'asc' | 'desc';
 
 /**
- * New tab predicate: not ignored / copied / handled, and not done.
+ * New tab predicate: not ignored / copied / handled / watched, and not done.
  */
 export function isNewCandidate(
   ticket: JiraTicket,
   triageMap: Record<string, TriageEntry>,
 ): boolean {
   const s = triageMap[ticket.key]?.state;
-  return s !== 'ignored' && s !== 'copied' && s !== 'handled' && !isDoneTicket(ticket);
+  return (
+    s !== 'ignored' && s !== 'copied' && s !== 'handled' && s !== 'watched' && !isDoneTicket(ticket)
+  );
 }
 
 /**
@@ -37,6 +39,16 @@ export function isLinkedCandidate(
   triageMap: Record<string, TriageEntry>,
 ): boolean {
   return triageMap[ticket.key]?.state === 'copied' && !isDoneTicket(ticket);
+}
+
+/**
+ * Watched tab predicate: watched, and not done.
+ */
+export function isWatchedCandidate(
+  ticket: JiraTicket,
+  triageMap: Record<string, TriageEntry>,
+): boolean {
+  return triageMap[ticket.key]?.state === 'watched' && !isDoneTicket(ticket);
 }
 
 /**

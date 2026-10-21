@@ -23,6 +23,22 @@ describe('RememberedLinkHint', () => {
     expect(span).toHaveTextContent('Previously linked to CLD-9');
   });
 
+  it('renders the hint for watched entries with a copiedKey in both variants', () => {
+    const watched: TriageEntry = { state: 'watched', copiedKey: 'CLOUD-1' };
+    const { container, unmount } = render(<RememberedLinkHint entry={watched} variant="detail" />);
+    expect(container).toHaveTextContent('Previously linked to CLOUD-1');
+    unmount();
+    const row = render(<RememberedLinkHint entry={watched} variant="row" />);
+    expect(row.container).toHaveTextContent('Previously linked to CLOUD-1');
+  });
+
+  it('renders nothing for watched without a copiedKey', () => {
+    const { container } = render(
+      <RememberedLinkHint entry={{ state: 'watched', copiedKey: null }} variant="detail" />,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it.each<[string, TriageEntry | undefined]>([
     ['undefined', undefined],
     ['ignored without key', { state: 'ignored', copiedKey: null }],

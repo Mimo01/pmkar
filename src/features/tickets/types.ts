@@ -1,5 +1,5 @@
 // Triage state values — matches SQLite CHECK constraint
-export type TriageState = 'new' | 'seen' | 'ignored' | 'copied' | 'handled';
+export type TriageState = 'new' | 'seen' | 'ignored' | 'copied' | 'handled' | 'watched';
 
 // JQL preset options — matches fetch_config.jql_preset column
 export type JqlPreset = 'mine' | 'all_watched' | 'custom';
