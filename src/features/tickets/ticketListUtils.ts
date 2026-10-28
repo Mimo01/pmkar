@@ -1,3 +1,4 @@
+import { foldText, parseQuery } from '../search/normalize';
 import type { JiraTicket, TriageEntry } from './types';
 import { isDoneTicket } from './utils';
 
@@ -52,8 +53,8 @@ export function isWatchedCandidate(
 }
 
 /**
- * Filters by key substring (case-insensitive) and by exact assignee display name
- * (case-insensitive). Empty strings disable the respective filter.
+ * Filters by key or summary (all words, case- and diacritic-insensitive) and by exact
+ * assignee display name (case-insensitive). Empty strings disable the respective filter.
  */
 export function filterTickets(
   tickets: readonly JiraTicket[],
@@ -61,9 +62,12 @@ export function filterTickets(
   assigneeFilter: string,
 ): JiraTicket[] {
   let filtered: readonly JiraTicket[] = tickets;
-  if (searchText.length > 0) {
-    const lower = searchText.toLowerCase();
-    filtered = filtered.filter((ticket) => ticket.key.toLowerCase().includes(lower));
+  const words = parseQuery(searchText);
+  if (words.length > 0) {
+    filtered = filtered.filter((ticket) => {
+      const haystack = foldText(`${ticket.key}\u0000${ticket.fields.summary}`);
+      return words.every((w) => haystack.includes(w));
+    });
   }
   if (assigneeFilter.length > 0) {
     const assigneeLower = assigneeFilter.toLowerCase();
