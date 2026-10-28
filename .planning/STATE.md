@@ -379,7 +379,7 @@ None yet.
 | 261021-lci | Remove Watched count pill so core tabs are consistent (none; groups keep counts) | 2026-10-21 | b09cb12 | | [261021-lci-consistent-category-count-pill](./quick/261021-lci-consistent-category-count-pill/) |
 | 261021-lxa | Remove redundant row-level Restore (Obnoviť) buttons; detail keeps the labelled one | 2026-10-21 | ab168f3 | | [261021-lxa-remove-redundant-row-level-restore-obnov](./quick/261021-lxa-remove-redundant-row-level-restore-obnov/) |
 | 261021-m26 | Show sub-tasks / parent in ticket detail and list cards | 2026-10-21 | b7af22a | Approved | [261021-m26-in-ticket-detail-show-all-subtasks-or-pa](./quick/261021-m26-in-ticket-detail-show-all-subtasks-or-pa/) |
-| 261028-hle | Redo global search: header search icon (first in toolbar) opens a ⌘K command-palette modal | 2026-10-28 | f5e8c9b | Needs Review | [261028-hle-redo-global-search-as-header-search-icon](./quick/261028-hle-redo-global-search-as-header-search-icon/) |
+| 261028-hle | Redo global search: header search icon (first in toolbar) opens a ⌘K command-palette modal | 2026-10-28 | 745776b | Approved | [261028-hle-redo-global-search-as-header-search-icon](./quick/261028-hle-redo-global-search-as-header-search-icon/) |
 
 ## Session Continuity
 
