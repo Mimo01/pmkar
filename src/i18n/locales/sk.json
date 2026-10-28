@@ -665,6 +665,8 @@
   "search.regionLabel": "Hľadanie tiketov",
   "search.listLabel": "Výsledky hľadania",
   "search.clear": "Vymazať hľadanie",
+  "search.open": "Hľadať tikety",
+  "search.hint.minChars": "Zadajte aspoň {{min}} znaky na hľadanie tiketov",
   "search.empty.title": "Žiadne tikety nevyhovujú",
   "search.empty.hint": "Hľadá sa v: kľúč, zhrnutie, popis, riešiteľ, štítky, komponenty, verzie opravy a prepojený kľúč. Skúste menej alebo iné slová.",
   "search.footer.truncated": "Zobrazuje sa {{shown}} z {{total}}, spresnite hľadanie",

@@ -665,6 +665,8 @@
   "search.regionLabel": "Ticket search",
   "search.listLabel": "Search results",
   "search.clear": "Clear search",
+  "search.open": "Search tickets",
+  "search.hint.minChars": "Type at least {{min}} characters to search tickets",
   "search.empty.title": "No tickets match",
   "search.empty.hint": "Searched: key, summary, description, assignee, labels, components, fix versions and linked key. Try fewer or different words.",
   "search.footer.truncated": "Showing {{shown}} of {{total}}, refine your search",

@@ -64,21 +64,25 @@ describe('GlobalSearch', () => {
     vi.useRealTimers();
   });
 
-  it('has combobox semantics and starts collapsed', () => {
+  it('has combobox semantics and starts with no results', () => {
     const { input } = setup();
     expect(input.getAttribute('aria-autocomplete')).toBe('list');
     expect(input.getAttribute('aria-label')).toBe('Search all tickets');
     expect(input.getAttribute('placeholder')).toBe('Search all tickets…');
-    expect(input.getAttribute('aria-keyshortcuts')).toBe('Control+K Meta+K Control+F Meta+F');
+    expect(input.hasAttribute('aria-keyshortcuts')).toBe(false);
     expect(input.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('opens only for 2+ chars after the debounce', () => {
+  it('shows the min-chars hint under 2 chars, listbox after the debounce', () => {
     const { input } = setup();
-    type(input, 'a');
+    expect(screen.getByText('Type at least 2 characters to search tickets')).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'a' } });
     flush();
     expect(input.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(screen.getByText('Type at least 2 characters to search tickets')).toBeTruthy();
     fireEvent.change(input, { target: { value: 'al' } });
+    expect(screen.queryByText('Type at least 2 characters to search tickets')).toBeNull();
     expect(input.getAttribute('aria-expanded')).toBe('false');
     flush();
     expect(input.getAttribute('aria-expanded')).toBe('true');
@@ -104,15 +108,15 @@ describe('GlobalSearch', () => {
     expect(input.getAttribute('aria-activedescendant')).toBe(opts[0].id);
   });
 
-  it('Enter opens first hit when none active, keeps text, closes', () => {
+  it('Enter opens first hit when none active and keeps text', () => {
     const onOpen = vi.fn(() => true);
     const { input } = setup(onOpen);
     type(input, 'alpha');
     flush();
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onOpen).toHaveBeenCalledWith('P-1');
-    expect(input.getAttribute('aria-expanded')).toBe('false');
     expect(input.value).toBe('alpha');
+    expect(useSearchStore.getState().query).toBe('alpha');
   });
 
   it('Enter opens the active option', () => {
@@ -144,58 +148,20 @@ describe('GlobalSearch', () => {
     expect(onOpen).toHaveBeenCalledWith('P-2');
   });
 
-  it('Escape closes, then clears, then propagates; handled Esc is prevented', () => {
+  it('Escape on the input does not clear the query (the dialog owns closing)', () => {
     const { input } = setup();
-    const onBack = vi.fn();
-    const docListener = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.defaultPrevented) onBack();
-    };
-    document.addEventListener('keydown', docListener);
     type(input, 'alpha');
     flush();
-
-    const mk = () =>
-      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    const e1 = mk();
-    act(() => {
-      input.dispatchEvent(e1);
-    });
-    expect(e1.defaultPrevented).toBe(true);
-    expect(input.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.keyDown(input, { key: 'Escape' });
     expect(input.value).toBe('alpha');
-
-    const e2 = mk();
-    act(() => {
-      input.dispatchEvent(e2);
-    });
-    expect(e2.defaultPrevented).toBe(true);
-    expect(input.value).toBe('');
-    expect(onBack).not.toHaveBeenCalled();
-
-    const e3 = mk();
-    act(() => {
-      input.dispatchEvent(e3);
-    });
-    expect(e3.defaultPrevented).toBe(false);
-    expect(onBack).toHaveBeenCalledTimes(1);
-    document.removeEventListener('keydown', docListener);
+    expect(useSearchStore.getState().query).toBe('alpha');
+    expect(screen.getAllByRole('option')).toHaveLength(3);
   });
 
-  it('Tab closes the listbox', () => {
-    const { input } = setup();
-    type(input, 'alpha');
-    flush();
-    fireEvent.keyDown(input, { key: 'Tab' });
-    expect(input.getAttribute('aria-expanded')).toBe('false');
-  });
-
-  it('mousedown outside closes without clearing', () => {
-    const { input } = setup();
-    type(input, 'alpha');
-    flush();
-    fireEvent.mouseDown(document.body);
-    expect(input.getAttribute('aria-expanded')).toBe('false');
-    expect(input.value).toBe('alpha');
+  it('points an external inputRef at the combobox input', () => {
+    const ref = { current: null as HTMLInputElement | null };
+    renderWithI18n(<GlobalSearch inputRef={ref} onOpenTicket={() => true} />);
+    expect(ref.current).toBe(screen.getByRole('combobox'));
   });
 
   it('caps at 20 rows with a truncation footer', () => {
@@ -238,26 +204,22 @@ describe('GlobalSearch', () => {
   });
 
   it('shows Clear only with text; clicking clears and refocuses', () => {
-    const { input, container } = setup();
+    const { input } = setup();
     expect(screen.queryByLabelText('Clear search')).toBeNull();
-    const kbd = container.querySelector('[aria-hidden="true"].border');
-    expect(kbd?.getAttribute('aria-hidden')).toBe('true');
     type(input, 'alpha');
-    expect(container.querySelector('[aria-hidden="true"].border')).toBeNull();
     fireEvent.click(screen.getByLabelText('Clear search'));
     expect(input.value).toBe('');
     expect(document.activeElement).toBe(input);
     expect(useSearchStore.getState().query).toBe('');
   });
 
-  it('does not auto-open on remount; focus re-opens with same results', () => {
+  it('mounting with a stored query shows the results immediately', () => {
     useSearchStore.setState({ query: 'alpha' });
     const { input } = setup();
     expect(input.value).toBe('alpha');
-    expect(input.getAttribute('aria-expanded')).toBe('false');
-    fireEvent.focus(input);
     expect(input.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getAllByRole('option')).toHaveLength(3);
+    expect(useAnnouncerStore.getState().nonce).toBe(0);
   });
 
   it('renders no panel before the corpus is ready', () => {

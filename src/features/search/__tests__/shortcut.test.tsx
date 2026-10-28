@@ -5,7 +5,10 @@ import { isModalOpen, shortcutHint, useSearchShortcut } from '../shortcut';
 
 function Probe() {
   const ref = useRef<HTMLInputElement>(null);
-  useSearchShortcut(ref);
+  useSearchShortcut(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  });
   return (
     <div>
       <input data-testid="search" ref={ref} defaultValue="hello" />
@@ -69,6 +72,42 @@ describe('useSearchShortcut', () => {
     document.body.insertAdjacentHTML('beforeend', html);
     expect(isModalOpen()).toBe(true);
     expect(press({ key: 'k', ctrlKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it.each([
+    '<div role="dialog" data-state="open" data-search-dialog=""></div>',
+    '<div data-search-dialog=""><div role="dialog" data-state="open"></div></div>',
+  ])('the search dialog itself does not block: %s', (html) => {
+    const { getByTestId } = render(<Probe />);
+    document.body.insertAdjacentHTML('beforeend', html);
+    expect(isModalOpen()).toBe(false);
+    const ev = press({ key: 'k', ctrlKey: true });
+    expect(ev.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(getByTestId('search'));
+  });
+
+  it('blocks when another dialog is open beside the search dialog', () => {
+    render(<Probe />);
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      '<div role="dialog" data-state="open" data-search-dialog=""></div><div role="dialog" data-state="open"></div>',
+    );
+    expect(isModalOpen()).toBe(true);
+    expect(press({ key: 'k', ctrlKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('always calls the latest callback', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    function CbProbe({ cb }: { cb: () => void }) {
+      useSearchShortcut(cb);
+      return null;
+    }
+    const { rerender } = render(<CbProbe cb={first} />);
+    rerender(<CbProbe cb={second} />);
+    press({ key: 'k', ctrlKey: true });
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledTimes(1);
   });
 
   it('removes the listener on unmount', () => {
