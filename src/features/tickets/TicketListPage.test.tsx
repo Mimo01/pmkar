@@ -366,7 +366,9 @@ describe('TicketListPage selection extras', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-1' }));
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select P-2' }));
     expect(screen.getAllByText('2 selected').length).toBeGreaterThan(0);
-    fireEvent.change(screen.getByPlaceholderText('Filter by key...'), { target: { value: 'P-2' } });
+    fireEvent.change(screen.getByPlaceholderText('Filter by key or summary...'), {
+      target: { value: 'P-2' },
+    });
     expect(screen.getAllByText('1 selected').length).toBeGreaterThan(0);
     expect(screen.queryByText('2 selected')).toBeNull();
   });

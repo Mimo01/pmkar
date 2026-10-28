@@ -418,7 +418,7 @@ describe('Escape and focus return: select mode', () => {
   it('Escape inside the key filter input does not exit select mode', async () => {
     const user = setupView({});
     await enterSelectMode(user);
-    const filter = screen.getByLabelText('Filter tickets by key');
+    const filter = screen.getByLabelText('Filter tickets by key or summary');
     filter.focus();
     await user.keyboard('{Escape}');
     expect(selectBtn()).toHaveAttribute('aria-pressed', 'true');

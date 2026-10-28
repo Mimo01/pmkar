@@ -330,7 +330,7 @@ describe('ticket list parity (characterization)', () => {
 
     it('filters by key search text (case-insensitive) keeping default order', () => {
       render(<Page />);
-      fireEvent.change(screen.getByLabelText('Filter tickets by key'), {
+      fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
         target: { value: expected.searchTerm },
       });
       expect(renderedKeys()).toEqual(expected.searchResult);
@@ -338,7 +338,7 @@ describe('ticket list parity (characterization)', () => {
 
     it('does not match search against summary text', () => {
       render(<Page />);
-      fireEvent.change(screen.getByLabelText('Filter tickets by key'), {
+      fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
         target: { value: 'summary' },
       });
       expect(renderedKeys()).toEqual([]);
