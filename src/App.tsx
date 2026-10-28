@@ -158,6 +158,27 @@ function App() {
     useTicketStore.getState().selectTicket(null);
   }, []);
 
+  const openTicketFromSearch = useCallback(
+    (key: string): boolean => {
+      if (
+        copyPhase === 'loading_preview' ||
+        copyPhase === 'previewing' ||
+        copyPhase === 'copying' ||
+        copyPhase === 'result'
+      ) {
+        return false;
+      }
+      setShowSettings(false);
+      setSettingsInitialSection(undefined);
+      setShowAuditLog(false);
+      setDetailTicketKey(key);
+      setShowDetail(true);
+      useTicketStore.getState().selectTicket(key);
+      return true;
+    },
+    [copyPhase],
+  );
+
   const [focusRequest, setFocusRequest] = useState<{
     id: number;
     seq: number;
@@ -219,7 +240,7 @@ function App() {
   if (showSettings) {
     return (
       <ErrorBoundary>
-        <AppShell>
+        <AppShell onOpenTicket={openTicketFromSearch}>
           <SettingsPage
             onClose={() => {
               setShowSettings(false);
@@ -244,7 +265,7 @@ function App() {
   if (showAuditLog) {
     return (
       <ErrorBoundary>
-        <AppShell>
+        <AppShell onOpenTicket={openTicketFromSearch}>
           <AuditLogPage onClose={() => setShowAuditLog(false)} />
         </AppShell>
         <UpdateModal open={showUpdateModal} />
@@ -259,7 +280,7 @@ function App() {
     return (
       <ErrorBoundary>
         <NavigationContext.Provider value={navValue}>
-          <AppShell>
+          <AppShell onOpenTicket={openTicketFromSearch}>
             {copyPhase === 'loading_preview' ||
             copyPhase === 'previewing' ||
             copyPhase === 'copying' ||
@@ -288,6 +309,7 @@ function App() {
     <ErrorBoundary>
       <NavigationContext.Provider value={navValue}>
         <AppShell
+          onOpenTicket={openTicketFromSearch}
           onGearClick={() => {
             setShowDetail(false);
             setDetailTicketKey(null);
