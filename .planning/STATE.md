@@ -379,10 +379,11 @@ None yet.
 | 261021-lci | Remove Watched count pill so core tabs are consistent (none; groups keep counts) | 2026-10-21 | b09cb12 | | [261021-lci-consistent-category-count-pill](./quick/261021-lci-consistent-category-count-pill/) |
 | 261021-lxa | Remove redundant row-level Restore (Obnoviť) buttons; detail keeps the labelled one | 2026-10-21 | ab168f3 | | [261021-lxa-remove-redundant-row-level-restore-obnov](./quick/261021-lxa-remove-redundant-row-level-restore-obnov/) |
 | 261021-m26 | Show sub-tasks / parent in ticket detail and list cards | 2026-10-21 | b7af22a | Approved | [261021-m26-in-ticket-detail-show-all-subtasks-or-pa](./quick/261021-m26-in-ticket-detail-show-all-subtasks-or-pa/) |
+| 261028-hle | Redo global search: header search icon (first in toolbar) opens a ⌘K command-palette modal | 2026-10-28 | f5e8c9b | Needs Review | [261028-hle-redo-global-search-as-header-search-icon](./quick/261028-hle-redo-global-search-as-header-search-icon/) |
 
 ## Session Continuity
 
-Last activity: 2026-10-21 - Completed quick task 261021-m26: Show sub-tasks / parent in ticket detail and list cards
+Last activity: 2026-10-28 - Completed quick task 261028-hle: Redo global search as header search icon opening a command-palette modal
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
 Last session: 2026-10-28T09:55:43.195Z
 Stopped at: Phase 37.3 UI-SPEC approved
