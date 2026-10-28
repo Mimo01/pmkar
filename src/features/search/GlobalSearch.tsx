@@ -22,7 +22,7 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
 
   const [debounced, setDebounced] = useState(query);
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activated, setActivated] = useState(false);
 
   const id = useId();
@@ -45,11 +45,13 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
   const panelVisible = open && ready && debounced.trim().length >= SEARCH_MIN_CHARS;
   const hasHits = panelVisible && result.hits.length > 0;
 
-  // Reset active option whenever the result set changes.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: result is the trigger
+  // The active option is tracked by ticket key so corpus rebuilds (polls, triage)
+  // do not move the highlight. It resets only when the debounced query changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: debounced is the trigger
   useEffect(() => {
-    setActive(-1);
-  }, [result]);
+    setActiveKey(null);
+  }, [debounced]);
+  const active = activeKey ? result.hits.findIndex((h) => h.item.ticket.key === activeKey) : -1;
 
   // Announce the count after each debounced search (not on mount, not on selection).
   const total = result.total;
@@ -83,7 +85,7 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
   function handleChange(value: string) {
     setQuery(value);
     setActivated(true);
-    setActive(-1);
+    setActiveKey(null);
     setOpen(value.trim().length >= SEARCH_MIN_CHARS);
   }
 
@@ -97,13 +99,16 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
     if (!hit) return;
     if (onOpenTicket(hit.item.ticket.key)) {
       setOpen(false);
-      setActive(-1);
+      setActiveKey(null);
     }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const count = result.hits.length;
     switch (e.key) {
+      // Arrows/Home/End while query !== debounced move through the stale result.
+      // This is a brief flicker only: the [debounced] effect clears activeKey and
+      // Enter on a pending query ignores activeKey (flushes against the live query).
       case 'ArrowDown':
       case 'ArrowUp': {
         if (!panelVisible) {
@@ -116,10 +121,16 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
         }
         e.preventDefault();
         if (count === 0) return;
-        if (e.key === 'ArrowDown') {
-          setActive((i) => (i + 1 >= count ? 0 : i + 1));
-        } else {
-          setActive((i) => (i <= 0 ? count - 1 : i - 1));
+        {
+          const next =
+            e.key === 'ArrowDown'
+              ? active + 1 >= count
+                ? 0
+                : active + 1
+              : active <= 0
+                ? count - 1
+                : active - 1;
+          setActiveKey(result.hits[next].item.ticket.key);
         }
         return;
       }
@@ -127,10 +138,22 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
       case 'End': {
         if (!hasHits) return;
         e.preventDefault();
-        setActive(e.key === 'Home' ? 0 : count - 1);
+        setActiveKey(result.hits[e.key === 'Home' ? 0 : count - 1].item.ticket.key);
         return;
       }
       case 'Enter': {
+        if (query !== debounced) {
+          e.preventDefault();
+          setDebounced(query);
+          if (open && ready && query.trim().length >= SEARCH_MIN_CHARS) {
+            const fresh = searchTickets(items, query).hits[0];
+            if (fresh && onOpenTicket(fresh.item.ticket.key)) {
+              setOpen(false);
+              setActiveKey(null);
+            }
+          }
+          return;
+        }
         if (!hasHits) return;
         e.preventDefault();
         openHit(active >= 0 ? active : 0);
@@ -140,7 +163,7 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
         if (open) {
           e.preventDefault();
           setOpen(false);
-          setActive(-1);
+          setActiveKey(null);
         } else if (query.length > 0) {
           e.preventDefault();
           clearQuery();
@@ -159,7 +182,7 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
     clearQuery();
     setDebounced('');
     setOpen(false);
-    setActive(-1);
+    setActiveKey(null);
     inputRef.current?.focus();
   }
 
@@ -211,7 +234,13 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
         <div className="absolute left-0 top-full mt-1 w-[560px] max-w-[calc(100vw-32px)] max-h-[480px] overflow-y-auto z-50 rounded-md border border-brand-border bg-brand-surface shadow-lg">
           {result.hits.length > 0 ? (
             <>
-              <div id={listboxId} role="listbox" aria-label={t('search.listLabel')}>
+              <ul
+                id={listboxId}
+                // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: ul role=listbox with li role=option children per ARIA combobox pattern
+                role="listbox"
+                aria-label={t('search.listLabel')}
+                className="list-none m-0 p-0"
+              >
                 {result.hits.map((hit, i) => (
                   <SearchResultRow
                     key={hit.item.ticket.key}
@@ -220,10 +249,10 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
                     id={optId(i)}
                     active={i === active}
                     onSelect={() => openHit(i)}
-                    onHover={() => setActive(i)}
+                    onHover={() => setActiveKey(hit.item.ticket.key)}
                   />
                 ))}
-              </div>
+              </ul>
               {result.total > result.hits.length && (
                 <div className="px-4 py-2 border-t border-brand-border text-xs text-brand-text-secondary">
                   {t('search.footer.truncated', {

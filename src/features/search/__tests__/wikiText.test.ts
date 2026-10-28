@@ -34,3 +34,29 @@ describe('stripWikiMarkup', () => {
     expect(stripWikiMarkup('{color:red}Chyba{color}')).toBe('Chyba');
   });
 });
+
+describe('stripWikiMarkup pathological input (37.3-08 WR-03)', () => {
+  const inputs: Record<string, string> = {
+    star: ' *a'.repeat(6_666),
+    bracket: ' [a'.repeat(6_666),
+    code: '{code:'.repeat(3_333),
+  };
+  for (const [name, input] of Object.entries(inputs)) {
+    it(`finishes quickly and shrinks: ${name}`, () => {
+      const t0 = performance.now();
+      const out = stripWikiMarkup(input);
+      expect(performance.now() - t0).toBeLessThan(1000);
+      expect(out.length).toBeLessThanOrEqual(input.length);
+      expect(out).not.toContain('\n');
+    });
+  }
+
+  it('still unwraps short spans', () => {
+    expect(stripWikiMarkup('*bold* and _it_ text')).toBe('bold and it text');
+  });
+
+  it('leaves wrapped spans longer than 200 chars with markers', () => {
+    const long = `*${'x'.repeat(300)}*`;
+    expect(stripWikiMarkup(long)).toBe(long);
+  });
+});

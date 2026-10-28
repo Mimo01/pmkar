@@ -176,3 +176,28 @@ describe('index cache and perf', () => {
     expect(performance.now() - t0).toBeLessThan(100);
   });
 });
+
+describe('raw description cap (37.3-08 WR-03)', () => {
+  it('drops text past 20000 raw chars even when markup strips away', () => {
+    const it = item('P-1', { description: `${'|'.repeat(20_001)} lateword` });
+    expect(searchTickets([it], 'lateword').hits).toHaveLength(0);
+  });
+
+  it('keeps text just inside the raw cap', () => {
+    const it = item('P-1', { description: `${'|'.repeat(19_990)} inside` });
+    expect(searchTickets([it], 'inside').hits).toHaveLength(1);
+  });
+
+  it('does not freeze on 60 kB pathological description', () => {
+    const it = item('P-1', { description: `${' *a'.repeat(20_000)} lateword` });
+    const t0 = performance.now();
+    const r = searchTickets([it], 'lateword');
+    expect(performance.now() - t0).toBeLessThan(1000);
+    expect(r.hits).toHaveLength(0);
+  });
+
+  it('still matches early words before a long pathological tail', () => {
+    const it = item('P-1', { description: `earlyword ${' *a'.repeat(10_000)}` });
+    expect(searchTickets([it], 'earlyword').hits).toHaveLength(1);
+  });
+});

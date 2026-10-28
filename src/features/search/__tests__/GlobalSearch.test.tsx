@@ -14,7 +14,7 @@ vi.mock('../useSearchCorpus', () => ({
   useSearchCorpus: () => corpus,
 }));
 
-function item(n: number, summary: string): CorpusItem {
+function item(n: number, summary: string, updated = '2026-01-01T00:00:00Z'): CorpusItem {
   const ticket = {
     id: String(n),
     key: `P-${n}`,
@@ -23,7 +23,7 @@ function item(n: number, summary: string): CorpusItem {
       status: { name: 'Open', statusCategory: { key: 'new' } },
       priority: { id: '2', name: 'High' },
       assignee: null,
-      updated: '2026-01-01T00:00:00Z',
+      updated,
     },
   } as unknown as JiraTicket;
   return { ticket, category: 'linked', copiedKey: null };
@@ -284,5 +284,141 @@ describe('GlobalSearch', () => {
     });
     expect(screen.getByText('No tickets match')).toBeTruthy();
     expect(await axe(container, AXE_OPTIONS)).toHaveNoViolations();
+  });
+});
+
+describe('gap closure 37.3-08', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    corpus = { items: many(12), ready: true };
+    useSearchStore.setState({ query: '' });
+    useAnnouncerStore.setState({ message: '', nonce: 0 });
+    useGroupStore.setState({ groups: [], groupIdsByIssue: {}, hydrated: true });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('CR-01a: Enter before debounce opens the typed key', () => {
+    const onOpen = vi.fn(() => true);
+    const { input } = setup(onOpen);
+    type(input, 'P-1');
+    flush();
+    fireEvent.change(input, { target: { value: 'P-12' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen).toHaveBeenCalledWith('P-12');
+  });
+
+  it('CR-01b: Enter immediately from empty opens the typed key', () => {
+    const onOpen = vi.fn(() => true);
+    const { input } = setup(onOpen);
+    type(input, 'P-12');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-12');
+    expect(input.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('CR-01c: Enter on a no-match pending query does nothing, then shows empty state', () => {
+    const onOpen = vi.fn(() => true);
+    const { input } = setup(onOpen);
+    type(input, 'zzzz');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).not.toHaveBeenCalled();
+    flush();
+    expect(screen.getByText('No tickets match')).toBeTruthy();
+  });
+
+  it('CR-01d: Enter below min chars does nothing', () => {
+    const onOpen = vi.fn(() => true);
+    const { input } = setup(onOpen);
+    type(input, 'P');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).not.toHaveBeenCalled();
+  });
+
+  it('CR-01e: host refusing on a pending query keeps dropdown open', () => {
+    const onOpen = vi.fn(() => false);
+    const { input } = setup(onOpen);
+    type(input, 'P-12');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-12');
+    flush();
+    expect(input.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  function optionFor(key: string) {
+    return screen.getAllByRole('option').find((o) => o.textContent?.includes(key));
+  }
+
+  it('WR-01a: highlight survives a corpus rebuild', () => {
+    corpus = { items: many(3), ready: true };
+    const onOpen = vi.fn(() => true);
+    const { input, rerender } = setup(onOpen);
+    type(input, 'alpha');
+    flush();
+    fireEvent.keyDown(input, { key: 'End' });
+    corpus = { items: many(3), ready: true };
+    rerender(<GlobalSearch onOpenTicket={onOpen} />);
+    expect(input.getAttribute('aria-activedescendant')).toBe(optionFor('P-3')?.id);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-3');
+  });
+
+  it('WR-01b: highlight follows the ticket when it moves', () => {
+    corpus = { items: many(3), ready: true };
+    const onOpen = vi.fn(() => true);
+    const { input, rerender } = setup(onOpen);
+    type(input, 'alpha');
+    flush();
+    fireEvent.keyDown(input, { key: 'End' });
+    corpus = {
+      items: [
+        item(1, 'Alpha item 1'),
+        item(2, 'Alpha item 2'),
+        item(3, 'Alpha item 3', '2026-06-01T00:00:00Z'),
+      ],
+      ready: true,
+    };
+    rerender(<GlobalSearch onOpenTicket={onOpen} />);
+    expect(screen.getAllByRole('option')[0].textContent).toContain('P-3');
+    expect(input.getAttribute('aria-activedescendant')).toBe(optionFor('P-3')?.id);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-3');
+  });
+
+  it('WR-01c: query change resets the highlight', () => {
+    corpus = { items: many(3), ready: true };
+    const { input } = setup();
+    type(input, 'alpha');
+    flush();
+    fireEvent.keyDown(input, { key: 'End' });
+    fireEvent.change(input, { target: { value: 'alph' } });
+    flush();
+    expect(input.hasAttribute('aria-activedescendant')).toBe(false);
+  });
+
+  it('WR-01d: highlighted ticket removed falls back to the top hit', () => {
+    corpus = { items: many(3), ready: true };
+    const onOpen = vi.fn(() => true);
+    const { input, rerender } = setup(onOpen);
+    type(input, 'alpha');
+    flush();
+    fireEvent.keyDown(input, { key: 'End' });
+    corpus = { items: many(2), ready: true };
+    rerender(<GlobalSearch onOpenTicket={onOpen} />);
+    expect(input.hasAttribute('aria-activedescendant')).toBe(false);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-1');
+  });
+
+  it('WR-02: listbox is a ul with li options as direct children', () => {
+    corpus = { items: many(3), ready: true };
+    const { input } = setup();
+    type(input, 'alpha');
+    flush();
+    const list = screen.getByRole('listbox');
+    expect(list.tagName).toBe('UL');
+    for (const o of screen.getAllByRole('option')) expect(o.parentElement).toBe(list);
   });
 });
