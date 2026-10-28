@@ -113,6 +113,11 @@ export interface JiraTicket {
     updated: string; // ISO 8601
     subtasks?: JiraSubTask[];
     parent?: JiraRelatedIssue;
+    // Searchable fields: the list fetch includes these since Phase 37.3; older snapshots may lack them.
+    description?: string | Record<string, unknown> | null; // string for Server v2; objects ignored by search
+    labels?: string[]; // included by the list fetch since Phase 37.3
+    components?: JiraComponent[]; // included by the list fetch since Phase 37.3
+    fixVersions?: JiraFixVersion[]; // included by the list fetch since Phase 37.3
   };
 }
 
