@@ -43,8 +43,9 @@ export function __indexBuildCount(): number {
 function buildEntry(ticket: JiraTicket): IndexEntry {
   buildCount++;
   const f = ticket.fields;
-  const rawDesc = typeof f.description === 'string' ? f.description : '';
-  const descDisplay = stripWikiMarkup(rawDesc).slice(0, DESCRIPTION_INDEX_CAP);
+  const rawDesc =
+    typeof f.description === 'string' ? f.description.slice(0, DESCRIPTION_INDEX_CAP) : '';
+  const descDisplay = stripWikiMarkup(rawDesc);
   const display = {
     description: descDisplay,
     assignee: f.assignee?.displayName ?? '',

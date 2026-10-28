@@ -1,4 +1,4 @@
-// Conservative Jira wiki-markup stripping. Constant regexes only (T-37.3-04);
+// Conservative Jira wiki-markup stripping. Constant, bounded regexes only (T-37.3-04);
 // output is plain text, never HTML (T-37.3-06).
 const MACRO_TAGS = /\{(?:code|noformat|quote|panel|color)(?::[^}]*)?\}/g;
 const IMAGE_EMBED = /![^\s!]*\.[^\s!]*!/g;
@@ -6,7 +6,7 @@ const LINK_WITH_TEXT = /\[([^\]|]+)\|([^\]]+)\]/g;
 const LINK_BARE = /\[([^\]]+)\]/g;
 const HEADING = /^[ \t]*(?:h[1-6]|bq)\.[ \t]*/gm;
 const TABLE_PIPES = /\|+/g;
-const WRAPPED = /(^|\s)([*_+\-^~])(?=\S)([^\n]*?\S)\2(?=\s|$|[.,;:!?)])/g;
+const WRAPPED = /(^|\s)([*_+\-^~])(?=\S)([^\n]{0,200}?\S)\2(?=\s|$|[.,;:!?)])/g;
 const SPACES = /\s+/g;
 
 export function stripWikiMarkup(s: string): string {
