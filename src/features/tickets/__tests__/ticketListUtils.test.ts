@@ -16,6 +16,7 @@ interface Opts {
   status?: string;
   assignee?: string | null;
   done?: boolean;
+  summary?: string;
 }
 
 function makeTicket(key: string, o: Opts = {}): JiraTicket {
@@ -23,7 +24,7 @@ function makeTicket(key: string, o: Opts = {}): JiraTicket {
     id: key,
     key,
     fields: {
-      summary: `Summary for ${key}`,
+      summary: o.summary ?? `Summary for ${key}`,
       status: {
         name: o.status ?? 'Open',
         statusCategory: { key: o.done ? 'done' : 'indeterminate' },
@@ -114,8 +115,20 @@ describe('filterTickets', () => {
     expect(keys(filterTickets(tickets, 'XyZ-3', ''))).toEqual(['XYZ-3']);
   });
 
-  it('does not match summary text', () => {
-    expect(filterTickets(tickets, 'summary', '')).toEqual([]);
+  it('matches summary text with all words in any order', () => {
+    expect(keys(filterTickets(tickets, 'summary for xyz', ''))).toEqual(['XYZ-3']);
+    expect(keys(filterTickets(tickets, 'xyz summary', ''))).toEqual(['XYZ-3']);
+    expect(filterTickets(tickets, 'summary nomatch', '')).toEqual([]);
+  });
+
+  it('ignores diacritics in summary', () => {
+    const t = [makeTicket('D-1', { summary: 'Chyba prihlásenia' })];
+    expect(keys(filterTickets(t, 'prihlasenia', ''))).toEqual(['D-1']);
+    expect(keys(filterTickets(t, 'chyba prihlasenia', ''))).toEqual(['D-1']);
+  });
+
+  it('treats whitespace-only search as no filter', () => {
+    expect(keys(filterTickets(tickets, '   ', ''))).toEqual(['ABC-1', 'ABC-2', 'XYZ-3']);
   });
 
   it('matches assignee display name exactly and case-insensitively', () => {

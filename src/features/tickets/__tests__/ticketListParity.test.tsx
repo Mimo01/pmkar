@@ -336,10 +336,14 @@ describe('ticket list parity (characterization)', () => {
       expect(renderedKeys()).toEqual(expected.searchResult);
     });
 
-    it('does not match search against summary text', () => {
+    it('matches search against summary text (key or summary)', () => {
       render(<Page />);
       fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
         target: { value: 'summary' },
+      });
+      expect(renderedKeys()).toEqual(expected.orders.updated.desc);
+      fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+        target: { value: 'no-such-word' },
       });
       expect(renderedKeys()).toEqual([]);
     });
