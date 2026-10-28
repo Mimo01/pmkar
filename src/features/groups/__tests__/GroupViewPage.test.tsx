@@ -193,19 +193,23 @@ describe('GroupViewPage', () => {
   it('search narrows the list and resets on remount', () => {
     seed({ 1: ['T-1', 'T-2', 'T-4'] });
     const { unmount } = render(<GroupViewPage groupId={1} />);
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'T-2' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'T-2' },
+    });
     expect(screen.queryByText('T-1')).not.toBeInTheDocument();
     expect(screen.getByText('T-2')).toBeInTheDocument();
     unmount();
     render(<GroupViewPage groupId={1} />);
-    expect(screen.getByLabelText('Filter tickets by key')).toHaveValue('');
+    expect(screen.getByLabelText('Filter tickets by key or summary')).toHaveValue('');
     expect(screen.getByText('T-1')).toBeInTheDocument();
   });
 
   it('shows a no-results state when the filter excludes every member', () => {
     seed({ 1: ['T-1', 'T-2'] });
     render(<GroupViewPage groupId={1} />);
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'ZZZ' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'ZZZ' },
+    });
     expect(screen.getByText('No issues match the current filter')).toBeInTheDocument();
     expect(screen.queryByText('No issues in this group yet')).not.toBeInTheDocument();
   });
@@ -380,7 +384,7 @@ describe('GroupViewPage selection', () => {
   it('drops selected issues hidden by a search', async () => {
     render(<GroupViewPage groupId={7} />);
     await selectT1toT3();
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), {
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
       target: { value: 'T-1' },
     });
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 selected'));
@@ -519,10 +523,14 @@ describe('GroupViewPage missing members', () => {
     setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
     render(<GroupViewPage groupId={7} />);
     await screen.findByText('AB-2');
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-2' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'AB-2' },
+    });
     expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('No longer in results (1)');
     expect(screen.queryByText('AB-4')).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-1' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'AB-1' },
+    });
     expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
   });
 
@@ -580,7 +588,9 @@ describe('GroupViewPage missing members', () => {
     setup({ eligible: true, keys: ['AB-1', 'AB-2', 'AB-4'], live: [A1] });
     render(<GroupViewPage groupId={7} />);
     await screen.findByText('AB-2');
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-2' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'AB-2' },
+    });
     await userEvent.click(screen.getByRole('button', { name: 'Remove all missing' }));
     expect(
       await screen.findByText('Remove 2 issues from “QA”? They are no longer in results.'),
@@ -663,9 +673,13 @@ describe('GroupViewPage missing members', () => {
     await screen.findByText('AB-2');
     await userEvent.click(screen.getByRole('button', { name: 'Remove AB-2 from QA' }));
     await screen.findByText('Remove “AB-2” from “QA”?');
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: 'AB-4' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: 'AB-4' },
+    });
     await waitFor(() => expect(screen.queryByText('AB-2')).not.toBeInTheDocument());
-    fireEvent.change(screen.getByLabelText('Filter tickets by key'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('Filter tickets by key or summary'), {
+      target: { value: '' },
+    });
     await screen.findByText('AB-2');
     expect(screen.queryByText('Remove “AB-2” from “QA”?')).not.toBeInTheDocument();
   });

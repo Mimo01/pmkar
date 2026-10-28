@@ -73,7 +73,7 @@ describe('TicketFilterBar', () => {
         resultCount={5}
       />,
     );
-    expect(screen.getByPlaceholderText('Filter by key...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Filter by key or summary...')).toBeInTheDocument();
   });
 
   it('renders assignee autocomplete input with placeholder text', () => {
@@ -102,7 +102,7 @@ describe('TicketFilterBar', () => {
         resultCount={5}
       />,
     );
-    const input = screen.getByPlaceholderText('Filter by key...');
+    const input = screen.getByPlaceholderText('Filter by key or summary...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
     expect(onSearchChange).toHaveBeenCalledWith('PROJ-1');
   });
@@ -626,7 +626,7 @@ describe('TicketListPage filter integration', () => {
 
   it('filters to matching ticket key when typing in key search', () => {
     render(<TicketListPage />);
-    const input = screen.getByPlaceholderText('Filter by key...');
+    const input = screen.getByPlaceholderText('Filter by key or summary...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
 
     expect(screen.getByText('Summary for PROJ-1')).toBeInTheDocument();
@@ -636,7 +636,7 @@ describe('TicketListPage filter integration', () => {
 
   it('shows all tickets again after clearing search', () => {
     render(<TicketListPage />);
-    const input = screen.getByPlaceholderText('Filter by key...');
+    const input = screen.getByPlaceholderText('Filter by key or summary...');
     fireEvent.change(input, { target: { value: 'PROJ-1' } });
     // Only PROJ-1 visible
     expect(screen.queryByText('Summary for PROJ-2')).toBeNull();
