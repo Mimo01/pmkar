@@ -6,6 +6,19 @@ use std::sync::{Arc, Mutex};
 /// we use 50 to match historical behaviour and to keep individual responses small.
 pub const SEARCH_PAGE_SIZE: u64 = 50;
 
+/// Fields requested by the list fetch. Includes `description` so local global
+/// search can match it. Change detection runs on the `fields=*all` detail
+/// fetch, so adding it here raises no new change dots (D-07).
+pub const LIST_SEARCH_FIELDS: &str = "summary,status,priority,assignee,created,updated,labels,components,fixVersions,subtasks,parent,description";
+
+/// Builds one page URL of the list search, shared by the user fetch and the
+/// poll loop so they cannot drift apart. `encoded_jql` must be pre-encoded.
+pub fn list_search_url(trimmed_url: &str, encoded_jql: &str, start_at: u64) -> String {
+    format!(
+        "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields={LIST_SEARCH_FIELDS}&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
+    )
+}
+
 /// Hard upper bound on the number of issues we will paginate through in a single
 /// `search`. Prevents a runaway loop on a hostile or buggy response. If the
 /// matching set exceeds this, the caller is informed via a `truncated` flag and
@@ -53,9 +66,7 @@ pub async fn search_tickets(
     let mut truncated = false;
 
     loop {
-        let url = format!(
-            "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions,subtasks,parent&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
-        );
+        let url = list_search_url(trimmed_url, &encoded_jql, start_at);
 
         let resp = client
             .get(&url)
@@ -137,4 +148,35 @@ pub async fn fetch_ticket_detail_raw(
         .map_err(|_| AppError::Http(format!("Poll: failed to parse detail for {issue_key}")))?;
 
     Ok(body)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn list_search_url_requests_description() {
+        let url = list_search_url("http://h", "project%3DX", 0);
+        assert!(url.contains(
+            "fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions,subtasks,parent,description&"
+        ));
+    }
+
+    #[test]
+    fn list_search_url_shape_and_paging() {
+        let url = list_search_url("http://h", "project%3DX", 50);
+        assert!(url.starts_with("http://h/rest/api/2/search?jql=project%3DX&"));
+        assert!(url.ends_with("&maxResults=50&startAt=50"));
+    }
+
+    #[test]
+    fn list_fields_contain_description_once() {
+        assert_eq!(
+            LIST_SEARCH_FIELDS
+                .split(',')
+                .filter(|f| *f == "description")
+                .count(),
+            1
+        );
+    }
 }

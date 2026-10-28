@@ -721,7 +721,7 @@ pub async fn fetch_tickets(
     db: State<'_, Arc<Mutex<AuditDb>>>,
     triage_db: State<'_, Arc<Mutex<TriageDb>>>,
 ) -> Result<FetchTicketsResult, AppError> {
-    use crate::jira_client::{MAX_PAGINATION_ITEMS, SEARCH_PAGE_SIZE};
+    use crate::jira_client::{list_search_url, MAX_PAGINATION_ITEMS, SEARCH_PAGE_SIZE};
 
     let pat = get_server_pat(triage_db.inner())?;
     let arc_db = Arc::clone(db.inner());
@@ -747,9 +747,7 @@ pub async fn fetch_tickets(
     let mut truncated = false;
 
     loop {
-        let url = format!(
-            "{trimmed_url}/rest/api/2/search?jql={encoded_jql}&fields=summary,status,priority,assignee,created,updated,labels,components,fixVersions,subtasks,parent&maxResults={SEARCH_PAGE_SIZE}&startAt={start_at}"
-        );
+        let url = list_search_url(trimmed_url, &encoded_jql, start_at);
 
         let resp = client
             .get(&url)
