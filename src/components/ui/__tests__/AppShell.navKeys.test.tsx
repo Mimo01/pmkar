@@ -162,3 +162,32 @@ describe('AppShell core tabs', () => {
     expect(screen.getByRole('button', { name: 'Watched' })).toHaveFocus();
   });
 });
+
+describe('AppShell header toolbar', () => {
+  function headerButtonLabels() {
+    return Array.from(document.querySelectorAll('header button')).map((b) =>
+      b.getAttribute('aria-label'),
+    );
+  }
+
+  it('orders Search, Audit, Settings and has no inline search field', () => {
+    renderWithI18n(
+      <AppShell onOpenTicket={() => true} onAuditClick={vi.fn()} onGearClick={vi.fn()}>
+        <div />
+      </AppShell>,
+    );
+    expect(headerButtonLabels()).toEqual(['Search tickets', 'Open audit log', 'Settings']);
+    expect(screen.queryByRole('search')).toBeNull();
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it('renders no search button without onOpenTicket', () => {
+    renderWithI18n(
+      <AppShell onAuditClick={vi.fn()} onGearClick={vi.fn()}>
+        <div />
+      </AppShell>,
+    );
+    expect(screen.queryByRole('button', { name: 'Search tickets' })).toBeNull();
+    expect(headerButtonLabels()).toEqual(['Open audit log', 'Settings']);
+  });
+});

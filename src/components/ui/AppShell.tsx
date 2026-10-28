@@ -2,7 +2,7 @@ import { Settings, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CoreTab, TabId } from '../../features/groups/groupTabs';
-import { GlobalSearch } from '../../features/search/GlobalSearch';
+import { SearchDialog } from '../../features/search/SearchDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 interface AppShellProps {
@@ -62,20 +62,10 @@ export function AppShell({
           <span className="text-brand">pm</span>kar
         </span>
 
-        {onOpenTicket && (
-          // biome-ignore lint/a11y/useSemanticElements: role=search on a div for webview/jsdom parity
-          <div
-            role="search"
-            aria-label={t('search.regionLabel')}
-            className="relative flex-1 min-w-[160px] max-w-[320px] mx-4"
-          >
-            <GlobalSearch onOpenTicket={onOpenTicket} />
-          </div>
-        )}
-
-        {/* Header icon toolbar */}
+        {/* Header icon toolbar: Search, Audit/Terminal, Settings */}
         <div className="flex items-center gap-1">
           <TooltipProvider delayDuration={300}>
+            {onOpenTicket && <SearchDialog onOpenTicket={onOpenTicket} />}
             {onAuditClick && (
               <Tooltip>
                 <TooltipTrigger asChild>
