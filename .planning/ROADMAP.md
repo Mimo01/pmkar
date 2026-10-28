@@ -244,7 +244,7 @@ Plans:
 **Goal:** Users can find any ticket the app knows about (New, Dismissed, Linked, Watched, Done, and snapshot-only group members) from an always-visible header search. It matches key, summary, description, assignee, labels, components, fix versions and the linked Cloud key locally, ignoring case and diacritics, with ranked and highlighted results. Selecting a hit opens the ticket detail, Back returns to the previous tab, and the per-tab filter now matches key or summary.
 **Requirements**: SRCH-01, SRCH-02, SRCH-03, SRCH-04, SRCH-05, SRCH-06, SRCH-07, SRCH-08
 **Depends on:** Phase 37
-**Plans:** 7/7 plans complete
+**Plans:** 7/8 plans complete
 
 Plans:
 **Wave 1**
@@ -265,6 +265,10 @@ Plans:
 **Wave 4** *(blocked on 37.3-01, 37.3-06)*
 
 - [x] 37.3-07-PLAN.md — AppShell header mount, App openTicketFromSearch wiring + App-level tests, WebView2 HUMAN-UAT, validation sign-off
+
+**Gap closure** *(from 37.3-VERIFICATION.md)*
+
+- [ ] 37.3-08-PLAN.md — CR-01 Enter flushes debounce, WR-01 key-tracked active option, WR-02 ul listbox, WR-03 cap before wiki strip + bounded regex
 
 ### Phase 37.2: Watched main category: a third non-linked state alongside Declined, with full transitions between Linked, Declined and Watched (restoring a remembered link instead of creating a copy) (INSERTED)
 
