@@ -15,6 +15,7 @@ import sk from '../locales/sk.json';
 
 const ROOT = process.cwd();
 const GROUPS_DIR = 'src/features/groups';
+const SEARCH_DIR = 'src/features/search';
 const EXTRA_FILES = [
   'src/features/tickets/TicketCard.tsx',
   'src/features/tickets/TicketFilterBar.tsx',
@@ -260,6 +261,7 @@ function walk(dir: string, out: string[]) {
 const FILES = (() => {
   const files: string[] = [];
   walk(GROUPS_DIR, files);
+  walk(SEARCH_DIR, files);
   return [...files, ...EXTRA_FILES];
 })();
 const SCANS = new Map(
