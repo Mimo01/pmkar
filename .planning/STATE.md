@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5.1
 milestone_name: Re-triage
 status: executing
-last_updated: "2026-10-21T12:37:07.993Z"
+last_updated: "2026-10-28T09:49:26.471Z"
 last_activity: 2026-10-21 -- Phase 37.2 execution started
 progress:
-  total_phases: 6
-  completed_phases: 5
+  total_phases: 7
+  completed_phases: 6
   total_plans: 26
-  completed_plans: 19
-  percent: 73
+  completed_plans: 26
+  percent: 86
 ---
 
 # Project State
@@ -276,6 +276,7 @@ Recent v0.3.0 / v0.1.0 decisions retained for reference:
 - Phase 27 added: Add static value mapping to configurable field mapping
 - Phase 37.1 inserted after Phase 37: Confirmation required before moving tickets between Linked and Not mine, never performed automatically (URGENT)
 - Phase 37.2 inserted after Phase 37: Watched main category (non-linked, like Declined) with Linked/Declined/Watched transitions; remembered link restored, no copy (URGENT)
+- Phase 37.3 inserted after Phase 37: Global ticket search across all categories by key, summary, description and other fields (URGENT)
 
 ### Pending Todos
 
@@ -383,9 +384,9 @@ None yet.
 
 Last activity: 2026-10-21 - Completed quick task 261021-m26: Show sub-tasks / parent in ticket detail and list cards
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
-Last session: 2026-10-21T12:03:12.382Z
-Stopped at: Phase 37.2 UI-SPEC approved
-Resume file: .planning/phases/37.2-watched-main-category-a-third-non-linked-state-alongside-dec/37.2-UI-SPEC.md
+Last session: 2026-10-28T09:49:26.466Z
+Stopped at: Phase 37.3 context gathered
+Resume file: .planning/phases/37.3-global-ticket-search-across-all-categories-by-key-summary-de/37.3-CONTEXT.md
 
 ## Operator Next Steps
 
