@@ -347,6 +347,17 @@ describe('gap closure 37.3-08', () => {
     expect(input.getAttribute('aria-expanded')).toBe('true');
   });
 
+  it('WR-01 (re-review): Enter that navigates does not announce a count afterwards', () => {
+    const onOpen = vi.fn(() => true);
+    const { input } = setup(onOpen);
+    type(input, 'P-12');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onOpen).toHaveBeenCalledWith('P-12');
+    flush();
+    expect(useAnnouncerStore.getState().nonce).toBe(0);
+    expect(useAnnouncerStore.getState().message).toBe('');
+  });
+
   function optionFor(key: string) {
     return screen.getAllByRole('option').find((o) => o.textContent?.includes(key));
   }

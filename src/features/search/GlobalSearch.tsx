@@ -54,14 +54,16 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
   const active = activeKey ? result.hits.findIndex((h) => h.item.ticket.key === activeKey) : -1;
 
   // Announce the count after each debounced search (not on mount, not on selection).
+  // Only while the panel is open: a debounce that settles after Enter navigated away
+  // must not overwrite the live region with a count for a closed panel (37.3 WR-01).
   const total = result.total;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: announce only when the debounced search settles
+  // biome-ignore lint/correctness/useExhaustiveDependencies: announce only when the debounced search settles; open is read but intentionally not a trigger
   useEffect(() => {
     if (!announcedOnce.current) {
       announcedOnce.current = true;
       return;
     }
-    if (!ready || debounced.trim().length < SEARCH_MIN_CHARS) return;
+    if (!open || !ready || debounced.trim().length < SEARCH_MIN_CHARS) return;
     announce(total === 0 ? t('search.live.none') : t('search.live.count', { count: total }));
   }, [debounced, ready, total]);
 
@@ -144,14 +146,17 @@ export function GlobalSearch({ onOpenTicket }: GlobalSearchProps) {
       case 'Enter': {
         if (query !== debounced) {
           e.preventDefault();
-          setDebounced(query);
           if (open && ready && query.trim().length >= SEARCH_MIN_CHARS) {
             const fresh = searchTickets(items, query).hits[0];
             if (fresh && onOpenTicket(fresh.item.ticket.key)) {
+              // Navigated: do not flush debounced, so no count is announced (WR-01).
               setOpen(false);
               setActiveKey(null);
+              return;
             }
           }
+          // Staying in the dropdown: flush so it shows the live result.
+          setDebounced(query);
           return;
         }
         if (!hasHits) return;
