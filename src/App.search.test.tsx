@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -71,9 +71,23 @@ function seedTickets(triageMap: Record<string, TriageEntry> = {}) {
   });
 }
 
+function searchDialog(): HTMLElement | null {
+  return document.querySelector('[role="dialog"][data-search-dialog]');
+}
+
+async function openSearch(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: 'Search tickets' }));
+  const dialog = await waitFor(() => {
+    const el = searchDialog();
+    expect(el).not.toBeNull();
+    return el as HTMLElement;
+  });
+  const box = within(dialog).getByRole('combobox', { name: 'Search all tickets' });
+  return box as HTMLInputElement;
+}
+
 async function searchFor(user: ReturnType<typeof userEvent.setup>, text: string) {
-  const box = await screen.findByRole('combobox', { name: 'Search all tickets' });
-  await user.click(box);
+  const box = await openSearch(user);
   await user.clear(box);
   await user.type(box, text);
   await screen.findByRole('listbox');
@@ -89,17 +103,22 @@ describe('App global search', () => {
     useTicketStore.setState({ tickets: [], triageMap: {}, selectedTicketKey: null });
   });
 
-  it('shows a search landmark with the combobox on the main view', async () => {
+  it('shows the search button and opens a dialog with the combobox', async () => {
     setupConnections();
+    const user = userEvent.setup();
     render(<App />);
     await screen.findByText('Fetch Tickets');
-    const region = screen.getByRole('search');
-    expect(region).toContainElement(screen.getByRole('combobox', { name: 'Search all tickets' }));
+    expect(screen.queryByRole('search')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Search all tickets' })).not.toBeInTheDocument();
+    const box = await openSearch(user);
+    expect(searchDialog()).toContainElement(box);
+    expect(document.activeElement).toBe(box);
   });
 
   it('shows no search in the setup wizard', async () => {
     render(<App />);
     await waitFor(() => expect(screen.queryByText('Fetch Tickets')).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Search tickets' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Search all tickets' })).not.toBeInTheDocument();
   });
 
@@ -179,11 +198,12 @@ describe('App global search', () => {
       return el as HTMLElement;
     });
     expect(tab.getAttribute('aria-current')).toBe('page');
-    const again = screen.getByRole('combobox', { name: 'Search all tickets' }) as HTMLInputElement;
+    const again = await openSearch(user);
     expect(again.value).toBe('login timeout');
+    expect(within(searchDialog() as HTMLElement).getByRole('listbox')).toBeInTheDocument();
   });
 
-  it('Esc with the dropdown open closes it and does not leave detail', async () => {
+  it('Esc closes the search dialog and does not leave detail', async () => {
     setupConnections();
     const user = userEvent.setup();
     render(<App />);
@@ -195,11 +215,14 @@ describe('App global search', () => {
     await waitFor(() => expect(screen.queryByText('Fetch Tickets')).not.toBeInTheDocument());
     await searchFor(user, 'login timeout');
     await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+    await waitFor(() => expect(searchDialog()).toBeNull());
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(useTicketStore.getState().selectedTicketKey).toBe('ABC-2');
+    expect(screen.getByRole('button', { name: /Back to tickets/ })).toBeInTheDocument();
+    expect(useSearchStore.getState().query).toBe('login timeout');
   });
 
-  it('does nothing while a copy flow is active and keeps the dropdown open', async () => {
+  it('does nothing while a copy flow is active and keeps the search dialog open', async () => {
     setupConnections();
     const user = userEvent.setup();
     render(<App />);
@@ -211,6 +234,7 @@ describe('App global search', () => {
     });
     await user.type(box, '{Enter}');
     expect(useTicketStore.getState().selectedTicketKey).toBeNull();
-    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(searchDialog()).not.toBeNull();
+    expect(within(searchDialog() as HTMLElement).getByRole('listbox')).toBeInTheDocument();
   });
 });
