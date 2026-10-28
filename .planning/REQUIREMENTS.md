@@ -48,6 +48,17 @@
 - [ ] **WATCH-05**: All Watched transitions go through triageActions behind the static transition guard, and fetch/poll never change a Watched row.
 - [ ] **WATCH-06**: All new strings exist in EN and SK (Slovak uses "tiket"), every transition is announced in the live region, focus never falls to body, axe passes, and the WebView2 checklist covers Watched.
 
+### Global search
+
+- [ ] **SRCH-01**: An always-visible header search field (ARIA combobox, results dropdown) is present on every post-setup screen. Ctrl/Cmd+K and Ctrl/Cmd+F focus it, but not while a modal dialog is open. Ctrl+F is best-effort and checked in WebView2 UAT (D-01, D-03, D-11).
+- [ ] **SRCH-02**: Matching is local. Every whitespace-separated word must appear as a case- and diacritic-insensitive substring of key, summary, description, assignee, labels, components, fix versions or the remembered linked Cloud key. Comments are not searched (D-05, D-13, D-14).
+- [ ] **SRCH-03**: Scope is every known ticket, deduplicated: live fetch results in all triage states including Done, plus group members that exist only as snapshots (D-06).
+- [ ] **SRCH-04**: Both list fetch paths request `description`. Real description edits keep triggering change dots and notifications as today, and the first fetch after the update raises nothing new (D-04, D-07 revised).
+- [ ] **SRCH-05**: Result rows show KEY, summary, priority, assignee, a neutral category badge (no badge for Done) and non-interactive tinted group chips. A one-line snippet appears when a match lies outside key and summary. Matches are highlighted, the top 20 are shown with a "Showing 20 of N" footer, and a no-results hint lists the searched fields (D-08, D-10, D-12, D-16).
+- [ ] **SRCH-06**: Ranking goes exact key or exact linked key, then key prefix, then key/summary hits, then other fields, with ties broken by most recently updated. Selecting a hit opens the full detail page from any screen. Back returns to the previous tab and the query is kept (D-09, D-15).
+- [ ] **SRCH-07**: The per-tab filter matches key or summary with the same normalization. Placeholder and aria strings are updated in EN and SK (D-02).
+- [ ] **SRCH-08**: Every new string exists in EN and SK, with SK using "tiket" and never "úloha". The i18n guards scan the search UI, and the WebView2 checklist covers the search box, shortcuts and dropdown (D-17).
+
 ## Future Requirements
 
 - Cloud existence check on re-link (404 falls back to copy preview) — deferred, adds Jira call
@@ -93,12 +104,20 @@
 | WATCH-04 | Phase 37.2 | Pending |
 | WATCH-05 | Phase 37.2 | Pending |
 | WATCH-06 | Phase 37.2 | Pending |
+| SRCH-01 | Phase 37.3 | Pending |
+| SRCH-02 | Phase 37.3 | Pending |
+| SRCH-03 | Phase 37.3 | Pending |
+| SRCH-04 | Phase 37.3 | Pending |
+| SRCH-05 | Phase 37.3 | Pending |
+| SRCH-06 | Phase 37.3 | Pending |
+| SRCH-07 | Phase 37.3 | Pending |
+| SRCH-08 | Phase 37.3 | Pending |
 
 **Coverage:**
-- v0.5.1 requirements: 25 total
-- Mapped to phases: 25
+- v0.5.1 requirements: 33 total
+- Mapped to phases: 33
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-15*
-*Last updated: 2026-10-21 (Phase 37.2 WATCH requirements added)*
+*Last updated: 2026-10-28 (Phase 37.3 SRCH requirements added)*
