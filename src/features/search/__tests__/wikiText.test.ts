@@ -51,6 +51,19 @@ describe('stripWikiMarkup pathological input (37.3-08 WR-03)', () => {
     });
   }
 
+  it('bounds link scanning on unmatched brackets (37.3 WR-02)', () => {
+    for (const input of ['['.repeat(20_000), '[a|'.repeat(6_666)]) {
+      const t0 = performance.now();
+      const out = stripWikiMarkup(input);
+      expect(performance.now() - t0).toBeLessThan(100);
+      expect(out.length).toBeLessThanOrEqual(input.length);
+    }
+  });
+
+  it('does not join link text across lines', () => {
+    expect(stripWikiMarkup('[a\nb]')).toBe('[a b]');
+  });
+
   it('still unwraps short spans', () => {
     expect(stripWikiMarkup('*bold* and _it_ text')).toBe('bold and it text');
   });
