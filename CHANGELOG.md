@@ -1,5 +1,20 @@
 
 
+## [0.5.3]
+
+### Features
+
+- add global ticket search: a search icon in the header (or Ctrl/⌘+K, Ctrl/⌘+F) opens a command palette that finds tickets across all tabs and groups
+- match tickets by key, linked ticket key, summary or description, ignoring diacritics, with matched words highlighted and a description snippet on each result
+- include group members that are no longer in the live lists
+- navigate results with the arrow keys and open a ticket with Enter; result count is announced to screen readers
+- add Slovak translations for search
+
+### Bug Fixes
+
+- size the search palette to the window so long result lists scroll instead of being cut off
+- keep search fast on tickets with very long or heavily formatted descriptions
+
 ## [0.5.2]
 
 ### Features
