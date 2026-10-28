@@ -2,6 +2,7 @@ import { Settings, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CoreTab, TabId } from '../../features/groups/groupTabs';
+import { GlobalSearch } from '../../features/search/GlobalSearch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip';
 
 interface AppShellProps {
@@ -11,6 +12,7 @@ interface AppShellProps {
   onTabChange?: (tab: TabId) => void;
   onAuditClick?: () => void;
   navExtension?: ReactNode;
+  onOpenTicket?: (key: string) => boolean;
 }
 
 export function AppShell({
@@ -20,6 +22,7 @@ export function AppShell({
   onTabChange,
   onAuditClick,
   navExtension,
+  onOpenTicket,
 }: AppShellProps) {
   const { t } = useTranslation();
 
@@ -58,6 +61,17 @@ export function AppShell({
         <span className="text-xs font-semibold tracking-tight text-brand-text">
           <span className="text-brand">pm</span>kar
         </span>
+
+        {onOpenTicket && (
+          // biome-ignore lint/a11y/useSemanticElements: role=search on a div for webview/jsdom parity
+          <div
+            role="search"
+            aria-label={t('search.regionLabel')}
+            className="relative flex-1 min-w-[160px] max-w-[320px] mx-4"
+          >
+            <GlobalSearch onOpenTicket={onOpenTicket} />
+          </div>
+        )}
 
         {/* Header icon toolbar */}
         <div className="flex items-center gap-1">
