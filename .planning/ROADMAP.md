@@ -244,7 +244,7 @@ Plans:
 **Goal:** Users can find any ticket the app knows about (New, Dismissed, Linked, Watched, Done, and snapshot-only group members) from an always-visible header search. It matches key, summary, description, assignee, labels, components, fix versions and the linked Cloud key locally, ignoring case and diacritics, with ranked and highlighted results. Selecting a hit opens the ticket detail, Back returns to the previous tab, and the per-tab filter now matches key or summary.
 **Requirements**: SRCH-01, SRCH-02, SRCH-03, SRCH-04, SRCH-05, SRCH-06, SRCH-07, SRCH-08
 **Depends on:** Phase 37
-**Plans:** 3/7 plans executed
+**Plans:** 5/7 plans executed
 
 Plans:
 **Wave 1**
@@ -255,8 +255,8 @@ Plans:
 
 **Wave 2** *(blocked on 37.3-02; 37.3-05 also on 37.3-03)*
 
-- [ ] 37.3-04-PLAN.md — filterTickets key-or-summary; useSearchCorpus (live + snapshot-only members, category, copiedKey, server-scoped)
-- [ ] 37.3-05-PLAN.md — Highlight and SearchResultRow (badge, non-interactive chips, snippet)
+- [x] 37.3-04-PLAN.md — filterTickets key-or-summary; useSearchCorpus (live + snapshot-only members, category, copiedKey, server-scoped)
+- [x] 37.3-05-PLAN.md — Highlight and SearchResultRow (badge, non-interactive chips, snippet)
 
 **Wave 3** *(blocked on 37.3-03, 37.3-04, 37.3-05)*
 
