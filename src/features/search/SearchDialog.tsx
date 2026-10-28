@@ -81,7 +81,9 @@ export function SearchDialog({ onOpenTicket }: SearchDialogProps) {
         data-search-dialog=""
         hideClose
         aria-describedby={undefined}
-        className="top-[15vh] translate-y-0 w-[600px] max-w-[calc(100vw-32px)] p-0 gap-0 bg-brand-surface border-brand-border rounded-lg overflow-hidden"
+        // Height is capped to the viewport (equal gap above and below) so the results
+        // list scrolls inside the palette instead of running off-screen.
+        className="top-[clamp(16px,12vh,120px)] translate-y-0 flex flex-col w-full max-w-[min(calc(100vw-32px),720px)] lg:max-w-[880px] max-h-[calc(100dvh-2*clamp(16px,12vh,120px))] p-0 gap-0 bg-brand-surface border-brand-border rounded-lg overflow-hidden"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           focusInput();

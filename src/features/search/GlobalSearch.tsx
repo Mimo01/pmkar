@@ -157,8 +157,8 @@ export function GlobalSearch({ onOpenTicket, inputRef: externalRef }: GlobalSear
   }
 
   return (
-    <div className="w-full">
-      <div className="relative border-b border-brand-border">
+    <div className="flex flex-col w-full min-h-0 flex-1">
+      <div className="relative shrink-0 border-b border-brand-border">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-muted pointer-events-none"
           aria-hidden="true"
@@ -199,7 +199,7 @@ export function GlobalSearch({ onOpenTicket, inputRef: externalRef }: GlobalSear
         </p>
       )}
       {panelVisible && (
-        <div className="max-h-[480px] overflow-y-auto">
+        <div className="flex flex-col flex-1 min-h-0">
           {result.hits.length > 0 ? (
             <>
               <ul
@@ -207,7 +207,7 @@ export function GlobalSearch({ onOpenTicket, inputRef: externalRef }: GlobalSear
                 // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: ul role=listbox with li role=option children per ARIA combobox pattern
                 role="listbox"
                 aria-label={t('search.listLabel')}
-                className="list-none m-0 p-0"
+                className="flex-1 min-h-0 overflow-y-auto list-none m-0 p-0"
               >
                 {result.hits.map((hit, i) => (
                   <SearchResultRow
@@ -222,7 +222,7 @@ export function GlobalSearch({ onOpenTicket, inputRef: externalRef }: GlobalSear
                 ))}
               </ul>
               {result.total > result.hits.length && (
-                <div className="px-4 py-2 border-t border-brand-border text-xs text-brand-text-secondary">
+                <div className="shrink-0 px-4 py-2 border-t border-brand-border text-xs text-brand-text-secondary">
                   {t('search.footer.truncated', {
                     shown: result.hits.length,
                     total: result.total,
