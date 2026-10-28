@@ -91,41 +91,47 @@ export function SearchResultRow({
         onSelect();
       }}
       onMouseEnter={onHover}
-      className={`px-4 py-2 min-h-12 flex flex-col gap-1 cursor-pointer transition-colors duration-100 motion-reduce:transition-none hover:bg-brand-surface-hover ${
+      className={`px-5 py-3 flex flex-col gap-1.5 cursor-pointer border-b border-brand-border-subtle last:border-b-0 transition-colors duration-100 motion-reduce:transition-none hover:bg-brand-surface-hover ${
         active ? 'bg-brand-surface-hover' : ''
       }`}
     >
-      <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold text-brand-text-secondary whitespace-nowrap">
-          <Highlight text={key} words={words} />
-        </span>
-        <span className="text-sm text-brand-text truncate flex-1 min-w-0">
+      {/* Title line: summary leads, category badge on the right. */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-brand-text truncate flex-1 min-w-0">
           <Highlight text={ticket.fields.summary} words={words} />
         </span>
-        <span title={t('search.priority', { name: priorityName })}>
-          <PriorityIcon priority={priorityName} showLabel={false} />
-          <span className="sr-only">{t('search.priority', { name: priorityName })}</span>
-        </span>
-        <UserAvatar user={assignee} size="sm" />
-        {assignee && (
-          <span className="text-xs text-brand-text-secondary hidden sm:inline">
-            {assignee.displayName}
-          </span>
-        )}
         {badge && (
-          <span className="border border-brand-border bg-brand-surface-raised text-brand-text-secondary text-xs font-semibold rounded px-2 py-1">
+          <span className="shrink-0 border border-brand-border bg-brand-surface-raised text-brand-text-secondary text-xs font-semibold rounded px-2 py-0.5">
             {badge}
           </span>
         )}
-        {chips.map((g) => (
-          <span
-            key={g.id}
-            style={groupColorStyle(g.color)}
-            className={`pl-1.5 pr-2 ${groupChipClass}`}
-          >
-            <GroupChipLabel group={g} />
+      </div>
+      {/* Meta line: key, priority, assignee, groups. */}
+      <div className="flex items-center gap-3 min-w-0 text-xs text-brand-text-secondary">
+        <span className="font-semibold whitespace-nowrap tabular-nums">
+          <Highlight text={key} words={words} />
+        </span>
+        <span className="flex items-center" title={t('search.priority', { name: priorityName })}>
+          <PriorityIcon priority={priorityName} showLabel={false} />
+          <span className="sr-only">{t('search.priority', { name: priorityName })}</span>
+        </span>
+        <span className="flex items-center gap-1.5 min-w-0">
+          <UserAvatar user={assignee} size="sm" />
+          {assignee && <span className="truncate hidden sm:inline">{assignee.displayName}</span>}
+        </span>
+        {chips.length > 0 && (
+          <span className="flex items-center gap-1 min-w-0 overflow-hidden">
+            {chips.map((g) => (
+              <span
+                key={g.id}
+                style={groupColorStyle(g.color)}
+                className={`shrink-0 pl-1.5 pr-2 ${groupChipClass}`}
+              >
+                <GroupChipLabel group={g} />
+              </span>
+            ))}
           </span>
-        ))}
+        )}
       </div>
       {hit.snippet && (
         <span className="text-xs text-brand-text-secondary truncate">
