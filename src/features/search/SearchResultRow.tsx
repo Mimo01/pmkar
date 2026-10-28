@@ -82,7 +82,7 @@ export function SearchResultRow({
   return (
     // biome-ignore lint/a11y/useFocusableInteractive: aria-activedescendant pattern, focus stays in the input
     <li
-      // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: listbox option inside ul per combobox pattern
+      // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: li is a direct child of ul role=listbox; role=option per ARIA combobox pattern
       role="option"
       id={id}
       aria-selected={active}
