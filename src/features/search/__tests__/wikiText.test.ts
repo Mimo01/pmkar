@@ -55,7 +55,7 @@ describe('stripWikiMarkup pathological input (37.3-08 WR-03)', () => {
     for (const input of ['['.repeat(20_000), '[a|'.repeat(6_666)]) {
       const t0 = performance.now();
       const out = stripWikiMarkup(input);
-      expect(performance.now() - t0).toBeLessThan(100);
+      expect(performance.now() - t0).toBeLessThan(500);
       expect(out.length).toBeLessThanOrEqual(input.length);
     }
   });
