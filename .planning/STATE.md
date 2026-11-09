@@ -381,11 +381,12 @@ None yet.
 | 261021-m26 | Show sub-tasks / parent in ticket detail and list cards | 2026-10-21 | b7af22a | Approved | [261021-m26-in-ticket-detail-show-all-subtasks-or-pa](./quick/261021-m26-in-ticket-detail-show-all-subtasks-or-pa/) |
 | 261028-hle | Redo global search: header search icon (first in toolbar) opens a ⌘K command-palette modal | 2026-10-28 | 745776b | Approved | [261028-hle-redo-global-search-as-header-search-icon](./quick/261028-hle-redo-global-search-as-header-search-icon/) |
 | 261109-e83 | Auto-remove grouped tickets Jira no longer returns; delete missing-members UI | 2026-11-09 | 7b9258a | Verified | [261109-e83-manually-grouped-tickets-disappear-when-](./quick/261109-e83-manually-grouped-tickets-disappear-when-/) |
+| 261109-f5i | Prefill copy target summary with source key (`PROJ-12 Fix login`) | 2026-11-09 | 3901b35 | Needs Review | [261109-f5i-when-copying-add-the-id-of-the-original-](./quick/261109-f5i-when-copying-add-the-id-of-the-original-/) |
 | fast | Release v0.5.3 with changelog | 2026-10-28 | 8c1a27d | ✅ | |
 
 ## Session Continuity
 
-Last activity: 2026-11-09 - Completed quick task 261109-e83: Manually grouped tickets disappear when Jira no longer returns them
+Last activity: 2026-11-09 - Completed quick task 261109-f5i: When copying, add the source key at the beginning of the target summary
 Previous activity: 2026-10-13 - Group chip redesign (fast tasks): vivid 8-hue palette, tinted chips with group-color tag, no chip tooltips, no tab focus on chip click — all approved
 Last session: 2026-10-28T09:55:43.195Z
 Stopped at: Phase 37.3 UI-SPEC approved
