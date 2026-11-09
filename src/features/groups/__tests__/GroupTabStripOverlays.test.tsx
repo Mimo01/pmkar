@@ -153,56 +153,11 @@ function seedMissing(eligible = true) {
   }
 }
 
-describe('GroupTabStrip remove all missing', () => {
-  beforeEach(() => {
-    toastSuccessMock.mockReset();
-  });
-
-  it('menu item opens the confirm; Cancel returns focus to the tab', async () => {
+describe('GroupTabStrip menu (no remove-missing item)', () => {
+  it('offers no remove-missing item even when a member is absent from results', async () => {
     seedMissing();
     const { user } = setup('group:1');
     await openMoreMenu(user, 'Sprint 12');
-    await user.click(await screen.findByRole('menuitem', { name: 'Remove all missing (1)' }));
-    expect(
-      await screen.findByText('Remove 1 issue from “Sprint 12”? It is no longer in results.'),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    await waitFor(() => expect(tabButton('Sprint 12')).toHaveFocus());
-    expect(invokeMock.mock.calls.some((c) => c[0] === 'remove_issues_from_group')).toBe(false);
-  });
-
-  it('Remove makes one call, toasts and returns focus to the tab', async () => {
-    seedMissing();
-    const { user } = setup('new');
-    fireEvent.contextMenu(tabButton('Sprint 12'));
-    await user.click(await screen.findByRole('menuitem', { name: 'Remove all missing (1)' }));
-    await screen.findByText(/Remove 1 issue/);
-    await user.click(screen.getByRole('button', { name: 'Remove' }));
-    await waitFor(() =>
-      expect(invokeMock).toHaveBeenCalledWith('remove_issues_from_group', {
-        groupId: 1,
-        issueKeys: ['AB-2'],
-      }),
-    );
-    expect(invokeMock.mock.calls.filter((c) => c[0] === 'remove_issues_from_group')).toHaveLength(
-      1,
-    );
-    await waitFor(() => expect(toastSuccessMock).toHaveBeenCalled());
-    await waitFor(() => expect(tabButton('Sprint 12')).toHaveFocus());
-  });
-
-  it('has no item when the gate is off', async () => {
-    seedMissing(false);
-    const { user } = setup('group:1');
-    await openMoreMenu(user, 'Sprint 12');
-    await screen.findByRole('menuitem', { name: 'Rename…' });
-    expect(screen.queryByRole('menuitem', { name: /Remove all missing/ })).toBeNull();
-  });
-
-  it('has no item when all members are present', async () => {
-    seedMissing();
-    const { user } = setup('group:2');
-    await openMoreMenu(user, 'QA');
     await screen.findByRole('menuitem', { name: 'Rename…' });
     expect(screen.queryByRole('menuitem', { name: /Remove all missing/ })).toBeNull();
   });

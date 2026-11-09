@@ -1,25 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { contrast, darkBlock, mix, readVar, themeBlock } from '../../../test-utils/contrast';
+import { contrast, darkBlock, readVar, themeBlock } from '../../../test-utils/contrast';
 
 /**
  * D-04: token-level contrast for every group-UI foreground/background pair in
  * both themes (jsdom cannot compute contrast via axe).
- *
- * Dimmed missing cards dim only the brand-text summary. Key, dates and
- * metadata stay undimmed text-secondary (covered by the >= 4.5 secondary
- * tests). Every dimmed text must meet 4.5:1 composited at the opacity that
- * TicketCard.tsx actually renders.
  */
-const ticketCardSource = readFileSync(
-  resolve(process.cwd(), 'src/features/tickets/TicketCard.tsx'),
-  'utf8',
-);
-const opacityMatch = /opacity-(\d+)/.exec(ticketCardSource);
-if (!opacityMatch) throw new Error('TicketCard.tsx has no opacity-NN dim class');
-const MISSING_DIM_OPACITY = Number(opacityMatch[1]) / 100;
-
 type Theme = 'light' | 'dark';
 const THEMES: Theme[] = ['light', 'dark'];
 
@@ -66,11 +51,6 @@ describe('token contrast', () => {
         expect(
           contrast(readThemed('--color-brand-text-secondary', theme), bg()),
         ).toBeGreaterThanOrEqual(3);
-      });
-
-      it(`${theme} dimmed summary (brand-text at ${MISSING_DIM_OPACITY}) on ${bgName} >= 4.5`, () => {
-        const dimmed = mix(readThemed('--color-brand-text', theme), bg(), MISSING_DIM_OPACITY);
-        expect(contrast(dimmed, bg())).toBeGreaterThanOrEqual(4.5);
       });
 
       if (theme === 'dark') {

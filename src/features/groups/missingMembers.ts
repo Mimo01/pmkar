@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { useTicketStore } from '../tickets/ticketStore';
-import { readHintsEligibleNow, useHintsEligible } from '../tickets/useHintsEligible';
+import { readHintsEligibleNow } from '../tickets/useHintsEligible';
 import { useGroupStore } from './groupStore';
 
 /** Shared empty set: returned whenever nothing is missing so references stay stable. */
@@ -23,26 +23,59 @@ export function computeMissingKeys(
   return missing.size === 0 ? EMPTY_MISSING : missing;
 }
 
-/** Map of groupId -> missing keys. Groups with nothing missing have no entry. */
-export function useMissingKeysByGroup(): ReadonlyMap<number, ReadonlySet<string>> {
-  const memberKeysByGroup = useGroupStore((s) => s.memberKeysByGroup);
-  const tickets = useTicketStore((s) => s.tickets);
-  const eligible = useHintsEligible();
-  return useMemo(() => {
-    const out = new Map<number, ReadonlySet<string>>();
-    if (!eligible) return out;
-    const liveKeys = new Set(tickets.map((t) => t.key));
-    for (const [id, keys] of Object.entries(memberKeysByGroup)) {
-      const missing = computeMissingKeys(keys, liveKeys, eligible);
-      if (missing.size > 0) out.set(Number(id), missing);
-    }
-    return out;
-  }, [memberKeysByGroup, tickets, eligible]);
-}
-
 /** Non-hook reader for confirm-time rechecks (a member that came back is never removed). */
 export function readMissingKeysNow(groupId: number): ReadonlySet<string> {
   const keys = useGroupStore.getState().memberKeysByGroup[groupId] ?? null;
   const liveKeys = new Set(useTicketStore.getState().tickets.map((t) => t.key));
   return computeMissingKeys(keys, liveKeys, readHintsEligibleNow());
+}
+
+let pruning = false;
+let rerunRequested = false;
+
+/**
+ * Auto-removal: drops group membership for tickets Jira no longer returns. Every group is
+ * gated by readMissingKeysNow at call time (after each await), which enforces the same
+ * eligibility rule as the former hints (complete, matching-signature, non-loading fetch).
+ * Failures are silent and never reject.
+ */
+export async function pruneMissingMembers(): Promise<void> {
+  if (pruning) {
+    rerunRequested = true;
+    return;
+  }
+  pruning = true;
+  try {
+    if (!useGroupStore.getState().hydrated) return;
+    const groupIds = Object.keys(useGroupStore.getState().memberKeysByGroup).map(Number);
+    for (const id of groupIds) {
+      const keys = readMissingKeysNow(id);
+      if (keys.size === 0) continue;
+      try {
+        const res = await useGroupStore.getState().removeFromGroup(id, [...keys]);
+        if (!res.ok) console.warn('auto-remove missing members failed', id, res.code);
+      } catch (err) {
+        console.warn('auto-remove missing members failed', id, err);
+      }
+    }
+  } finally {
+    pruning = false;
+    if (rerunRequested) {
+      rerunRequested = false;
+      void pruneMissingMembers();
+    }
+  }
+}
+
+/** Mount once at app level: prunes whenever tickets, fetch state or memberships change. */
+export function useAutoRemoveMissingMembers(): void {
+  const tickets = useTicketStore((s) => s.tickets);
+  const signature = useTicketStore((s) => s.lastCompleteFetchSignature);
+  const fetchStatus = useTicketStore((s) => s.fetchStatus);
+  const memberKeysByGroup = useGroupStore((s) => s.memberKeysByGroup);
+  const hydrated = useGroupStore((s) => s.hydrated);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: values are triggers; eligibility is re-read at call time
+  useEffect(() => {
+    void pruneMissingMembers();
+  }, [tickets, signature, fetchStatus, memberKeysByGroup, hydrated]);
 }

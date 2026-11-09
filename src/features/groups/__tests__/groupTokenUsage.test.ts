@@ -63,10 +63,4 @@ describe('group UI contrast token usage', () => {
       'text-brand-text-secondary font-normal',
     );
   });
-
-  it('dims missing cards with opacity-70', () => {
-    const card = read(TICKET_CARD);
-    expect(card).toContain('opacity-70');
-    expect(card).not.toContain('opacity-60');
-  });
 });

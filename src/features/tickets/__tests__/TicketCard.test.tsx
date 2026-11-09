@@ -205,65 +205,6 @@ describe('TicketCard', () => {
     });
   });
 
-  describe('dimmed and footerSlot', () => {
-    it('adds no opacity-70 without dimmed', () => {
-      const { container } = setup();
-      expect(container.innerHTML).not.toContain('opacity-70');
-    });
-
-    it('dims only the summary, not key, dates, assignee, chips, checkbox or footer', () => {
-      const withAssignee = {
-        ...ticket,
-        fields: {
-          ...ticket.fields,
-          assignee: { displayName: 'Jana Nováková' } as JiraTicket['fields']['assignee'],
-        },
-      };
-      const { container } = setup({
-        ticket: withAssignee,
-        dimmed: true,
-        selectMode: true,
-        onToggleSelect: vi.fn(),
-        footerSlot: <button type="button">Footer btn</button>,
-      });
-      expect(screen.getByText('Card summary').className).toContain('opacity-70');
-      const unDimmed = [
-        screen.getByText('P-1'),
-        screen.getByText(/^Created /),
-        screen.getByText(/^Updated /),
-        screen.getByText('Jana Nováková'),
-        screen.getByRole('button', { name: 'Go to group “Dev”' }),
-        screen.getByRole('checkbox', { name: 'Select P-1' }),
-        screen.getByRole('button', { name: 'Footer btn' }),
-      ];
-      for (const el of unDimmed) {
-        let node: HTMLElement | null = el;
-        while (node && node !== container) {
-          expect(node.className).not.toContain('opacity-70');
-          node = node.parentElement;
-        }
-      }
-      expect(screen.getByRole('button', { name: 'Footer btn' }).parentElement?.className).toContain(
-        'pl-14',
-      );
-    });
-
-    it('footer clicks do not trigger onClick and root has data-ticket-key', async () => {
-      const inner = vi.fn();
-      const { onClick, user, container } = setup({
-        footerSlot: (
-          <button type="button" onClick={inner}>
-            Footer btn
-          </button>
-        ),
-      });
-      await user.click(screen.getByRole('button', { name: 'Footer btn' }));
-      expect(inner).toHaveBeenCalled();
-      expect(onClick).not.toHaveBeenCalled();
-      expect(container.querySelector('[data-ticket-key="P-1"]')).not.toBeNull();
-    });
-  });
-
   describe('relations', () => {
     const sub = (k: string) => ({
       key: k,

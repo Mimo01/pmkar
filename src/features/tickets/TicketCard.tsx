@@ -24,13 +24,6 @@ interface TicketCardProps {
   selectMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (shift: boolean) => void;
-  /**
-   * Dims the summary only; key, dates and metadata stay at full secondary-text
-   * contrast (WCAG 1.4.3). Chips, checkbox and footer are never dimmed.
-   */
-  dimmed?: boolean;
-  /** Full-contrast control row rendered below the content. */
-  footerSlot?: React.ReactNode;
 }
 
 // --- TicketCard component ---
@@ -43,19 +36,12 @@ export function TicketCard({
   selectMode,
   selected,
   onToggleSelect,
-  dimmed,
-  footerSlot,
 }: TicketCardProps) {
   const { t } = useTranslation();
   const unseenFields = useTicketStore((s) => s.unseenChanges[ticket.key]);
   const hasUnseenChanges = !!unseenFields;
   const changeCount = unseenFields?.length ?? 0;
   const fieldList = unseenFields?.join(', ') ?? '';
-  // Opacity on a parent cannot be undone by a child, so dim individual elements only.
-  // Only the brand-text summary is dimmed: secondary-text elements cannot reach 4.5:1 at 70%.
-  const dimClass = dimmed
-    ? 'opacity-70 transition-opacity duration-150 motion-reduce:transition-none'
-    : '';
   return (
     <div
       data-testid="ticket-card"
@@ -127,12 +113,7 @@ export function TicketCard({
           </div>
         </div>
         {/* Line 2: summary */}
-        <p
-          className={cn(
-            'text-sm font-semibold text-brand-text leading-snug line-clamp-1 mb-1',
-            dimClass,
-          )}
-        >
+        <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-1 mb-1">
           {ticket.fields.summary}
         </p>
         {/* Line 4: metadata row */}
@@ -181,18 +162,6 @@ export function TicketCard({
           </div>
         )}
       </div>
-      {footerSlot && (
-        // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: only stops click propagation; real controls live inside footerSlot
-        <div
-          className={cn(
-            'pointer-events-auto relative z-10 px-4 pb-3 -mt-1 flex items-center justify-between gap-2',
-            selectMode && 'pl-14',
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {footerSlot}
-        </div>
-      )}
       {selectMode && (
         // biome-ignore lint/a11y/useSemanticElements: custom 24px hit area with styled box; shift-click needs the click event
         <button

@@ -20,6 +20,7 @@ import {
   resolveActiveTab,
   type TabId,
 } from './features/groups/groupTabs';
+import { useAutoRemoveMissingMembers } from './features/groups/missingMembers';
 import { NavigationContext } from './features/groups/NavigationContext';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
@@ -96,6 +97,9 @@ function App() {
       .hydrate()
       .catch(() => {});
   }, [hydrated]);
+
+  // Auto-remove group members that Jira no longer returns (eligible complete fetches only).
+  useAutoRemoveMissingMembers();
 
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<

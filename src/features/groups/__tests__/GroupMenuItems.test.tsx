@@ -12,7 +12,6 @@ function handlers() {
     onChangeColor: vi.fn(),
     onMoveLeft: vi.fn(),
     onMoveRight: vi.fn(),
-    onRemoveMissing: vi.fn(),
     onDelete: vi.fn(),
   };
 }
@@ -22,14 +21,7 @@ function renderDropdown(over: Partial<GroupMenuItemsProps> = {}) {
   renderWithI18n(
     <DropdownMenu open>
       <DropdownMenuContent>
-        <GroupMenuItems
-          variant="dropdown"
-          canMoveLeft
-          canMoveRight
-          missingCount={0}
-          {...h}
-          {...over}
-        />
+        <GroupMenuItems variant="dropdown" canMoveLeft canMoveRight {...h} {...over} />
       </DropdownMenuContent>
     </DropdownMenu>,
   );
@@ -100,7 +92,7 @@ describe('GroupMenuItems', () => {
           <div data-testid="t">target</div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <GroupMenuItems variant="context" canMoveLeft canMoveRight missingCount={0} {...h} />
+          <GroupMenuItems variant="context" canMoveLeft canMoveRight {...h} />
         </ContextMenuContent>
       </ContextMenu>,
     );
@@ -109,52 +101,8 @@ describe('GroupMenuItems', () => {
     expect(screen.getAllByRole('separator')).toHaveLength(2);
   });
 
-  it('hides Remove all missing when nothing is missing', () => {
-    renderDropdown({ missingCount: 0 });
+  it('has no remove-missing item', () => {
+    renderDropdown();
     expect(screen.queryByRole('menuitem', { name: /Remove all missing/ })).toBeNull();
-  });
-
-  it('shows Remove all missing (N) right before Delete and calls the handler', async () => {
-    const h = renderDropdown({ missingCount: 3 });
-    const items = screen.getAllByRole('menuitem');
-    expect(items.map((e) => e.textContent)).toEqual([
-      ...LABELS.slice(0, 4),
-      'Remove all missing (3)',
-      'Delete group…',
-    ]);
-    const seps = screen.getAllByRole('separator');
-    expect(seps[1].compareDocumentPosition(items[4]) & FOLLOWING).toBeTruthy();
-    await userEvent.setup().click(screen.getByRole('menuitem', { name: 'Remove all missing (3)' }));
-    expect(h.onRemoveMissing).toHaveBeenCalledTimes(1);
-  });
-
-  it('WR-08: disables Remove all missing with a hint while a fetch is loading', async () => {
-    const h = renderDropdown({ missingCount: 2, removeMissingDisabledReason: 'Refreshing' });
-    const item = screen.getByRole('menuitem', { name: 'Remove all missing (2)' });
-    expect(item).toHaveAttribute('aria-disabled', 'true');
-    expect(item).toHaveAttribute('title', 'Refreshing');
-    await userEvent.setup().click(item);
-    expect(h.onRemoveMissing).not.toHaveBeenCalled();
-  });
-
-  it('shows the item for exactly one missing member', () => {
-    renderDropdown({ missingCount: 1 });
-    expect(screen.getByRole('menuitem', { name: 'Remove all missing (1)' })).toBeInTheDocument();
-  });
-
-  it('context variant shows the item when missing', () => {
-    const h = handlers();
-    renderWithI18n(
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <div data-testid="t">target</div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <GroupMenuItems variant="context" canMoveLeft canMoveRight missingCount={2} {...h} />
-        </ContextMenuContent>
-      </ContextMenu>,
-    );
-    fireEvent.contextMenu(screen.getByTestId('t'));
-    expect(screen.getByRole('menuitem', { name: 'Remove all missing (2)' })).toBeInTheDocument();
   });
 });
