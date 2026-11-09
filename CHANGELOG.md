@@ -1,5 +1,16 @@
 
 
+## [0.5.4]
+
+### Features
+
+- prefill the copied ticket's summary with the source ticket key (e.g. "PROJ-1 Original summary"), still editable before copying
+- remove tickets from groups automatically once Jira no longer returns them
+
+### Bug Fixes
+
+- drop the "missing members" warnings, Remove missing action and dimmed missing cards from group views now that stale members are cleaned up automatically
+
 ## [0.5.3]
 
 ### Features
