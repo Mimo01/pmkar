@@ -83,6 +83,14 @@ const initialState = {
   resolvedTargetFields: [] as FieldSchema[],
 };
 
+// quick 261109-f5i: prefill the target summary with the source key (boundary-aware, no truncation).
+export function prefixSummaryWithKey(key: string, summary: string | null | undefined): string {
+  const trimmed = (summary ?? '').trim();
+  const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (new RegExp(`^${escaped}(?![0-9])`).test(trimmed)) return trimmed;
+  return `${key} ${trimmed}`.trim();
+}
+
 export const useCopyStore = create<CopyState>((set, get) => ({
   ...initialState,
 
@@ -92,7 +100,7 @@ export const useCopyStore = create<CopyState>((set, get) => ({
       phase: 'loading_preview',
       sourceTicket: ticket,
       sourceKey: ticket.key,
-      targetSummary: ticket.fields.summary,
+      targetSummary: prefixSummaryWithKey(ticket.key, ticket.fields.summary),
       targetDescription:
         typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
       targetProjectKey: savedTargetProjectKey,

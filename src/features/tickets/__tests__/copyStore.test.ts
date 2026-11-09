@@ -33,7 +33,7 @@ vi.mock('../../connections/connectionStore', () => ({
 }));
 
 import { invoke } from '@tauri-apps/api/core';
-import { useCopyStore } from '../copyStore';
+import { prefixSummaryWithKey, useCopyStore } from '../copyStore';
 import type { CloudMeta, JiraTicketDetail } from '../types';
 
 const mockInvoke = vi.mocked(invoke);
@@ -137,12 +137,12 @@ describe('copyStore', () => {
       expect(useCopyStore.getState().sourceKey).toBe('PROJ-1');
     });
 
-    it('prefills targetSummary from ticket summary', async () => {
+    it('prefills targetSummary with source key prefix', async () => {
       mockInvoke.mockResolvedValue(makeCloudMeta());
       const ticket = makeTicketDetail('PROJ-1');
       await useCopyStore.getState().startPreview(ticket, 'http://server', 'https://cloud');
 
-      expect(useCopyStore.getState().targetSummary).toBe('Summary for PROJ-1');
+      expect(useCopyStore.getState().targetSummary).toBe('PROJ-1 Summary for PROJ-1');
     });
 
     it('sets phase to previewing on success', async () => {
@@ -629,5 +629,29 @@ describe('copyStore — Phase 25 override values in confirmCopy', () => {
         }),
       }),
     );
+  });
+});
+
+describe('prefixSummaryWithKey', () => {
+  it('prefixes the key', () => {
+    expect(prefixSummaryWithKey('PROJ-12', 'Fix login')).toBe('PROJ-12 Fix login');
+  });
+  it('does not double prefix', () => {
+    expect(prefixSummaryWithKey('PROJ-12', 'PROJ-12 Fix login')).toBe('PROJ-12 Fix login');
+    expect(prefixSummaryWithKey('PROJ-12', 'PROJ-12: Fix login')).toBe('PROJ-12: Fix login');
+  });
+  it('is boundary-aware', () => {
+    expect(prefixSummaryWithKey('PROJ-1', 'PROJ-10 Foo')).toBe('PROJ-1 PROJ-10 Foo');
+  });
+  it('trims', () => {
+    expect(prefixSummaryWithKey('PROJ-12', '  Fix login  ')).toBe('PROJ-12 Fix login');
+  });
+  it('handles empty summaries', () => {
+    expect(prefixSummaryWithKey('PROJ-12', '')).toBe('PROJ-12');
+    expect(prefixSummaryWithKey('PROJ-12', '   ')).toBe('PROJ-12');
+    expect(prefixSummaryWithKey('PROJ-12', null)).toBe('PROJ-12');
+  });
+  it('does not truncate long summaries', () => {
+    expect(prefixSummaryWithKey('PROJ-12', 'x'.repeat(260))).toHaveLength('PROJ-12 '.length + 260);
   });
 });
