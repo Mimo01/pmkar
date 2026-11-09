@@ -8,7 +8,6 @@
  *  - GroupTabStrip.test.tsx L580            Escape on `…` menu -> `…` trigger
  *  - GroupTabStripOverlays.test.tsx L262    Escape on color popover -> `…` trigger
  *  - ChangeColorPopover.test.tsx L140       Escape closes without saving
- *  - ConfirmRemovePopover.test.tsx L78-83   Escape closes confirm
  *  - DeleteGroupDialog.test.tsx L116        Escape closes dialog
  *  - CreateGroupPopover.test.tsx L216/L231  Escape closes popover
  *  - GroupPicker.test.tsx L264              Escape closes picker -> trigger
@@ -349,21 +348,16 @@ describe('Escape and focus return: detail picker and chips', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Group view: select mode, range select, bar, missing members
+// Group view: select mode, range select, bar
 // ---------------------------------------------------------------------------
 
 const KEYS = ['T-1', 'T-2', 'T-3', 'T-4', 'T-5'];
 const LIVE = KEYS.map((k, i) => mkTicket(k, `2026-01-0${5 - i}T10:00:00.000Z`));
 
-function setupView(opts: {
-  keys?: string[];
-  live?: JiraTicket[];
-  missing?: JiraTicket[];
-  eligible?: boolean;
-}) {
+function setupView(opts: { keys?: string[]; live?: JiraTicket[]; eligible?: boolean }) {
   const keys = opts.keys ?? KEYS;
   memberships = keys.map((k) => ({ groupId: 2, issueKey: k }));
-  snapshots = opts.missing ?? [];
+  snapshots = [];
   useGroupStore.setState({
     memberKeysByGroup: { 2: keys },
     groupIdsByIssue: Object.fromEntries(keys.map((k) => [k, [2]])),
@@ -487,47 +481,5 @@ describe('Escape and focus return: selection bar', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull());
     await waitFor(() => expect(remove).toHaveFocus());
     expect(selectBtn()).toHaveAttribute('aria-pressed', 'true');
-  });
-});
-
-describe('Escape and focus return: missing members', () => {
-  const A1 = mkTicket('AB-1', '2026-01-01T10:00:00.000Z');
-  const M2 = mkTicket('AB-2', '2026-01-02T10:00:00.000Z', 'Gone two');
-
-  it('Escape closes the per-card missing Remove confirm and focuses that Remove button', async () => {
-    const user = setupView({
-      keys: ['AB-1', 'AB-2'],
-      live: [A1],
-      missing: [M2],
-      eligible: true,
-    });
-    await screen.findByText('AB-2');
-    const trigger = screen.getByRole('button', { name: 'Remove AB-2 from QA' });
-    trigger.focus();
-    await user.keyboard('{Enter}');
-    await screen.findByText('Remove “AB-2” from “QA”?');
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull());
-    await waitFor(() => expect(trigger).toHaveFocus());
-    expect(invokeMock.mock.calls.some((c) => c[0] === 'remove_issues_from_group')).toBe(false);
-  });
-
-  it('Escape closes the Remove all missing confirm and focuses that button', async () => {
-    const user = setupView({
-      keys: ['AB-1', 'AB-2'],
-      live: [A1],
-      missing: [M2],
-      eligible: true,
-    });
-    await screen.findByText('AB-2');
-    const all = screen.getByRole('button', { name: 'Remove all missing' });
-    all.focus();
-    await user.keyboard('{Enter}');
-    await screen.findByText(/It is no longer in results/);
-    await user.keyboard('{Escape}');
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull());
-    await waitFor(() => expect(all).toHaveFocus());
-    expect(invokeMock.mock.calls.some((c) => c[0] === 'remove_issues_from_group')).toBe(false);
   });
 });

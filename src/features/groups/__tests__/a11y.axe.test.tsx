@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -13,9 +13,7 @@ vi.mock('sonner', () => ({
 }));
 
 import { renderWithI18n } from '../../../test-utils/renderWithI18n';
-import { useConnectionStore } from '../../connections/connectionStore';
 import { ConfirmTransitionDialog } from '../../tickets/ConfirmTransitionDialog';
-import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
 import { TicketDetailPanel } from '../../tickets/TicketDetailPanel';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket, JiraTicketDetail } from '../../tickets/types';
@@ -276,29 +274,6 @@ describe('group UI axe (D-01 key states)', () => {
     useTicketStore.setState({ tickets: [mkTicket('T-1'), mkTicket('T-2')] });
     render(<GroupViewPage groupId={1} />);
     await screen.findByText('T-1');
-    await expectNoViolations();
-  });
-
-  it('12. group view with a missing block', async () => {
-    seedStore({ memberKeysByGroup: { 1: ['T-1', 'GONE-1'] } });
-    useTicketStore.setState({ tickets: [mkTicket('T-1')] });
-    useTicketStore.setState({
-      lastCompleteFetchSignature: computeFetchSignature(
-        currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
-      ),
-    });
-    snapshots = [
-      { issueKey: 'GONE-1', ticketJson: JSON.stringify(mkTicket('GONE-1')), addedAt: '' },
-    ];
-    invokeMock.mockImplementation(async (cmd: string) => {
-      if (cmd === 'list_groups') return groupsSeed;
-      if (cmd === 'list_group_memberships') return memberships;
-      return snapshots;
-    });
-    await act(async () => {
-      render(<GroupViewPage groupId={1} />);
-    });
-    await screen.findByText('GONE-1');
     await expectNoViolations();
   });
 

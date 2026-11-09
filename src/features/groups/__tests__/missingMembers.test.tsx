@@ -16,7 +16,6 @@ import {
   pruneMissingMembers,
   readMissingKeysNow,
   useAutoRemoveMissingMembers,
-  useMissingKeysByGroup,
 } from '../missingMembers';
 
 const tk = (key: string) => ({ id: key, key, fields: {} }) as unknown as JiraTicket;
@@ -51,22 +50,6 @@ describe('computeMissingKeys', () => {
     expect(computeMissingKeys(['A', 'B'], new Set(['A']), false)).toBe(EMPTY_MISSING);
     expect(computeMissingKeys(null, new Set(), true)).toBe(EMPTY_MISSING);
     expect(computeMissingKeys(['A'], new Set(['A']), true)).toBe(EMPTY_MISSING);
-  });
-});
-
-describe('useMissingKeysByGroup', () => {
-  it('is empty when not eligible', () => {
-    const { result } = renderHook(() => useMissingKeysByGroup());
-    expect(result.current.size).toBe(0);
-  });
-  it('maps groups with missing keys and is referentially stable', () => {
-    makeEligible();
-    const { result, rerender } = renderHook(() => useMissingKeysByGroup());
-    expect([...(result.current.get(1) ?? [])]).toEqual(['B']);
-    expect(result.current.has(2)).toBe(false);
-    const first = result.current;
-    rerender();
-    expect(result.current).toBe(first);
   });
 });
 

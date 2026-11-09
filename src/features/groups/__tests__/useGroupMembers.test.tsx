@@ -1,7 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useConnectionStore } from '../../connections/connectionStore';
-import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket } from '../../tickets/types';
 import { useGroupStore } from '../groupStore';
@@ -146,34 +144,17 @@ describe('useGroupMembers', () => {
   });
 });
 
-describe('useGroupMembers missingKeys', () => {
+describe('useGroupMembers snapshots', () => {
   beforeEach(() => {
     mockInvoke.mockReset();
     useGroupStore.setState({ memberKeysByGroup: { 1: ['AB-1', 'AB-2'] }, hydrated: true });
     useTicketStore.setState({ tickets: [mk('AB-1')], lastCompleteFetchSignature: null });
   });
-  const makeEligible = () =>
-    useTicketStore.setState({
-      lastCompleteFetchSignature: computeFetchSignature(
-        currentFetchSignatureInput(useTicketStore.getState(), useConnectionStore.getState()),
-      ),
-    });
 
-  it('not eligible: absent member renders from snapshot, missingKeys empty', async () => {
+  it('absent member renders from its snapshot', async () => {
     mockInvoke.mockResolvedValue([snap('AB-2', 'SNAP')]);
     const { result } = renderHook(() => useGroupMembers(1));
     await waitFor(() => expect(result.current.members).toHaveLength(2));
-    expect(result.current.missingKeys.size).toBe(0);
-  });
-
-  it('eligible: absent member is missing but still in members; markFetchIncomplete clears', async () => {
-    makeEligible();
-    mockInvoke.mockResolvedValue([snap('AB-2', 'SNAP')]);
-    const { result } = renderHook(() => useGroupMembers(1));
-    await waitFor(() => expect(result.current.members).toHaveLength(2));
-    expect([...result.current.missingKeys]).toEqual(['AB-2']);
-    act(() => useTicketStore.getState().markFetchIncomplete());
-    expect(result.current.missingKeys.size).toBe(0);
   });
 
   it('snapshotRevision bump reloads snapshots without a skeleton', async () => {

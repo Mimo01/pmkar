@@ -11,7 +11,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useRemovalBlockedByFetch } from '../tickets/useHintsEligible';
 import { ChangeColorPopover } from './ChangeColorPopover';
 import { CreateGroupPopover } from './CreateGroupPopover';
 import { DeleteGroupDialog, type DeleteGroupTarget } from './DeleteGroupDialog';
@@ -27,8 +26,6 @@ import {
   parseGroupTabId,
   type TabId,
 } from './groupTabs';
-import { useMissingKeysByGroup } from './missingMembers';
-import { RemoveMissingPopover } from './RemoveMissingPopover';
 import { RenameGroupPopover } from './RenameGroupPopover';
 
 const ARROW_CLASS =
@@ -36,12 +33,12 @@ const ARROW_CLASS =
 
 export type PendingAction = {
   groupId: number;
-  kind: 'rename' | 'color' | 'delete' | 'remove-missing';
+  kind: 'rename' | 'color' | 'delete';
 } | null;
 
 type MenuIntent = {
   groupId: number;
-  kind: 'rename' | 'color' | 'delete' | 'remove-missing' | 'move-left' | 'move-right';
+  kind: 'rename' | 'color' | 'delete' | 'move-left' | 'move-right';
 } | null;
 
 type PendingFocus = {
@@ -64,8 +61,6 @@ export function GroupTabStrip({
 }) {
   const { t } = useTranslation();
   const groups = useGroupStore((s) => s.groups);
-  const missingByGroup = useMissingKeysByGroup();
-  const fetching = useRemovalBlockedByFetch();
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const tabRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
   const leftArrowRef = useRef<HTMLButtonElement | null>(null);
@@ -392,9 +387,6 @@ export function GroupTabStrip({
                     onChangeColor={() => recordIntent(g.id, 'color')}
                     onMoveLeft={() => recordIntent(g.id, 'move-left')}
                     onMoveRight={() => recordIntent(g.id, 'move-right')}
-                    missingCount={missingByGroup.get(g.id)?.size ?? 0}
-                    onRemoveMissing={() => recordIntent(g.id, 'remove-missing')}
-                    removeMissingDisabledReason={fetching ? t('groups.missing.refreshing') : null}
                     onDelete={() => recordIntent(g.id, 'delete')}
                   />
                 )}
@@ -461,15 +453,6 @@ export function GroupTabStrip({
         <ChangeColorPopover
           group={pending?.kind === 'color' ? pendingGroup : null}
           open={pending?.kind === 'color'}
-          anchorRef={anchorRef}
-          onOpenChange={(o) => {
-            if (!o) setPending(null);
-          }}
-          onReturnFocus={() => focusGroupTrigger(returnFocusIdRef.current)}
-        />
-        <RemoveMissingPopover
-          group={pending?.kind === 'remove-missing' ? pendingGroup : null}
-          open={pending?.kind === 'remove-missing'}
           anchorRef={anchorRef}
           onOpenChange={(o) => {
             if (!o) setPending(null);
