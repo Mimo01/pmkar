@@ -1294,7 +1294,7 @@ pub async fn resolve_users_preview(
             if let Some(domain) = email.split('@').nth(1) {
                 if !domain.is_empty() {
                     by_domain
-                        .entry(domain.to_string())
+                        .entry(domain.trim().to_ascii_lowercase())
                         .or_default()
                         .push((i, entry.username.clone()));
                     continue;
@@ -1354,7 +1354,11 @@ fn find_best_match(
     if let Some(em) = email {
         let exact: Vec<&serde_json::Value> = results
             .iter()
-            .filter(|u| u.get("emailAddress").and_then(|x| x.as_str()) == Some(em))
+            .filter(|u| {
+                u.get("emailAddress")
+                    .and_then(|x| x.as_str())
+                    .is_some_and(|e| crate::field_transform::user::emails_eq(e, em))
+            })
             .collect();
         if exact.len() == 1 {
             return Some(exact[0].clone());

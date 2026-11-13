@@ -79,7 +79,7 @@ impl UserResolver {
                 if let Some(domain) = e.split('@').nth(1) {
                     if !domain.is_empty() {
                         by_domain
-                            .entry(domain.to_string())
+                            .entry(domain.trim().to_ascii_lowercase())
                             .or_default()
                             .push(username.clone());
                         continue;
@@ -338,6 +338,13 @@ fn extract_email_for_username(field_val: &serde_json::Value, username: &str) -> 
     None
 }
 
+/// Email addresses are compared case-insensitively (and ignoring surrounding
+/// whitespace): Jira Server often stores mixed-case emails (`John.Doe@Acme.com`)
+/// while Cloud returns them lowercased.
+pub(crate) fn emails_eq(a: &str, b: &str) -> bool {
+    a.trim().eq_ignore_ascii_case(b.trim())
+}
+
 /// Privacy-mode-aware matching (Pitfall 2):
 ///   1. If `email` is Some and exactly one user in `results` has `emailAddress == email` → that's the match.
 ///   2. If `email` is Some and ZERO users have `emailAddress` (privacy mode) AND there's exactly ONE result → high-confidence implicit match.
@@ -358,7 +365,11 @@ fn match_user_in_results(
         // 1. Exact email match.
         let exact: Vec<&serde_json::Value> = results
             .iter()
-            .filter(|u| u.get("emailAddress").and_then(|x| x.as_str()) == Some(em))
+            .filter(|u| {
+                u.get("emailAddress")
+                    .and_then(|x| x.as_str())
+                    .is_some_and(|e| emails_eq(e, em))
+            })
             .collect();
         if exact.len() == 1 {
             return read_account_id(exact[0]);
@@ -390,6 +401,18 @@ mod tests {
     use serde_json::json;
 
     // ── helper-layer tests (Task 1) ─────────────────────────────────────────
+
+    #[test]
+    fn match_user_email_is_case_insensitive() {
+        let results = vec![
+            json!({"accountId":"AID-A","displayName":"Alice","emailAddress":"john.doe@acme.com"}),
+            json!({"accountId":"AID-B","displayName":"Bob","emailAddress":"bob@acme.com"}),
+        ];
+        assert_eq!(
+            match_user_in_results(&results, Some(" John.Doe@ACME.com "), "jdoe").as_deref(),
+            Some("AID-A")
+        );
+    }
 
     #[test]
     fn scan_mention_extracts_simple_pattern() {
