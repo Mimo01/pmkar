@@ -1,5 +1,11 @@
 
 
+## [0.5.5]
+
+### Bug Fixes
+
+- match Jira Server and Cloud user emails regardless of letter case, so users on shared email domains are mapped correctly when copying tickets
+
 ## [0.5.4]
 
 ### Features
