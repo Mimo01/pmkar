@@ -117,6 +117,30 @@ describe('copyStore', () => {
   });
 
   describe('startPreview (fetch_cloud_meta)', () => {
+    it('refreshes the source ticket so the preview matches the copy-time fetch', async () => {
+      const stale = makeTicketDetail('PROJ-1');
+      const fresh = makeTicketDetail('PROJ-1');
+      (fresh.fields as Record<string, unknown>).assignee = {
+        name: 'user-a',
+        displayName: 'User A',
+      };
+      mockInvoke.mockImplementation(async (cmd: string) =>
+        cmd === 'fetch_ticket_detail' ? fresh : makeCloudMeta(),
+      );
+      await useCopyStore.getState().startPreview(stale, 'http://server', 'https://cloud');
+      expect(useCopyStore.getState().sourceTicket).toBe(fresh);
+    });
+
+    it('falls back to the caller ticket when the refresh fails', async () => {
+      const ticket = makeTicketDetail('PROJ-1');
+      mockInvoke.mockImplementation(async (cmd: string) => {
+        if (cmd === 'fetch_ticket_detail') throw new Error('boom');
+        return makeCloudMeta();
+      });
+      await useCopyStore.getState().startPreview(ticket, 'http://server', 'https://cloud');
+      expect(useCopyStore.getState().sourceTicket).toBe(ticket);
+    });
+
     it('transitions to loading_preview immediately', async () => {
       mockInvoke.mockResolvedValue(makeCloudMeta());
       const ticket = makeTicketDetail('PROJ-1');

@@ -94,18 +94,46 @@ export function prefixSummaryWithKey(key: string, summary: string | null | undef
 export const useCopyStore = create<CopyState>((set, get) => ({
   ...initialState,
 
-  startPreview: async (ticket, _sourceBaseUrl, _cloudBaseUrl) => {
+  startPreview: async (initialTicket, sourceBaseUrl, _cloudBaseUrl) => {
     const savedTargetProjectKey = useConnectionStore.getState().targetProjectKey ?? '';
     set({
       phase: 'loading_preview',
-      sourceTicket: ticket,
-      sourceKey: ticket.key,
-      targetSummary: prefixSummaryWithKey(ticket.key, ticket.fields.summary),
+      sourceTicket: initialTicket,
+      sourceKey: initialTicket.key,
+      targetSummary: prefixSummaryWithKey(initialTicket.key, initialTicket.fields.summary),
       targetDescription:
-        typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
+        typeof initialTicket.fields.description === 'string'
+          ? initialTicket.fields.description
+          : '',
       targetProjectKey: savedTargetProjectKey,
       error: null,
     });
+
+    // The caller's detail may be stale (panel left open, or Jira changed the
+    // assignee since it was fetched). copy_ticket_v2 re-fetches the source at
+    // confirm time, so refresh here too -- otherwise the preview can show a
+    // different assignee than the one actually copied. Falls back to the
+    // caller's ticket if the refresh fails.
+    let ticket = initialTicket;
+    if (sourceBaseUrl) {
+      try {
+        const fresh = await invoke<JiraTicketDetail>('fetch_ticket_detail', {
+          baseUrl: sourceBaseUrl,
+          issueKey: initialTicket.key,
+        });
+        if (fresh?.fields) ticket = fresh;
+      } catch {
+        // keep initialTicket
+      }
+    }
+    if (ticket !== initialTicket) {
+      set({
+        sourceTicket: ticket,
+        targetSummary: prefixSummaryWithKey(ticket.key, ticket.fields.summary),
+        targetDescription:
+          typeof ticket.fields.description === 'string' ? ticket.fields.description : '',
+      });
+    }
 
     try {
       const meta = await invoke<CloudMeta>('fetch_cloud_meta');
