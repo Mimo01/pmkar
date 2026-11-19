@@ -382,7 +382,7 @@ None yet.
 | 261028-hle | Redo global search: header search icon (first in toolbar) opens a ⌘K command-palette modal | 2026-10-28 | 745776b | Approved | [261028-hle-redo-global-search-as-header-search-icon](./quick/261028-hle-redo-global-search-as-header-search-icon/) |
 | 261109-e83 | Auto-remove grouped tickets Jira no longer returns; delete missing-members UI | 2026-11-09 | 7b9258a | Verified | [261109-e83-manually-grouped-tickets-disappear-when-](./quick/261109-e83-manually-grouped-tickets-disappear-when-/) |
 | 261109-f5i | Prefill copy target summary with source key (`PROJ-12 Fix login`) | 2026-11-09 | 3901b35 | Needs Review | [261109-f5i-when-copying-add-the-id-of-the-original-](./quick/261109-f5i-when-copying-add-the-id-of-the-original-/) |
-| 261119-iym | Auto-remove closed tickets and children of closed parents from all groups | 2026-11-19 | 9f2e60b | Needs Review | [261119-iym-auto-remove-closed-issues-and-children-o](./quick/261119-iym-auto-remove-closed-issues-and-children-o/) |
+| 261119-iym | Auto-remove closed tickets and children of closed parents from all groups | 2026-11-19 | 9f2e60b | Approved | [261119-iym-auto-remove-closed-issues-and-children-o](./quick/261119-iym-auto-remove-closed-issues-and-children-o/) |
 | fast | Release v0.5.3 with changelog | 2026-10-28 | 8c1a27d | ✅ | |
 
 ## Session Continuity
