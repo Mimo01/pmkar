@@ -11,6 +11,7 @@ import ProbeStatusBanner from './features/connections/ProbeStatusBanner';
 import { SettingsPage } from './features/connections/SettingsPage';
 import { SetupWizard } from './features/connections/SetupWizard';
 import type { ConnectionMeta, ConnectionType } from './features/connections/types';
+import { useAutoPruneGroupMembers } from './features/groups/autoPrune';
 import { GroupTabStrip } from './features/groups/GroupTabStrip';
 import { GroupViewPage } from './features/groups/GroupViewPage';
 import { useGroupStore } from './features/groups/groupStore';
@@ -20,7 +21,6 @@ import {
   resolveActiveTab,
   type TabId,
 } from './features/groups/groupTabs';
-import { useAutoRemoveMissingMembers } from './features/groups/missingMembers';
 import { NavigationContext } from './features/groups/NavigationContext';
 import { useApplyTheme } from './features/theme/useApplyTheme';
 import { AuditLogPage } from './features/tickets/AuditLogPage';
@@ -99,7 +99,7 @@ function App() {
   }, [hydrated]);
 
   // Auto-remove group members that Jira no longer returns (eligible complete fetches only).
-  useAutoRemoveMissingMembers();
+  useAutoPruneGroupMembers();
 
   const [showSettings, setShowSettings] = useState(false);
   const [settingsInitialSection, setSettingsInitialSection] = useState<
