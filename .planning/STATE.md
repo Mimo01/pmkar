@@ -398,3 +398,4 @@ Resume file: .planning/phases/37.3-global-ticket-search-across-all-categories-by
 - Start the next milestone with /gsd-new-milestone
 | 2026-11-09 | fast | release 0.5.4 with changelog | ✅ |
 | 2026-11-13 | fast | release 0.5.5 with changelog | ✅ |
+| 2026-11-19 | fast | release 0.5.6 with changelog | ✅ |
