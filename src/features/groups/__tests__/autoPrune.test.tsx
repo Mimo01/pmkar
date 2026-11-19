@@ -9,14 +9,14 @@ import { useConnectionStore } from '../../connections/connectionStore';
 import { computeFetchSignature, currentFetchSignatureInput } from '../../tickets/fetchSignature';
 import { useTicketStore } from '../../tickets/ticketStore';
 import type { JiraTicket } from '../../tickets/types';
-import { useGroupStore } from '../groupStore';
 import {
-  computeMissingKeys,
-  EMPTY_MISSING,
-  pruneMissingMembers,
-  readMissingKeysNow,
-  useAutoRemoveMissingMembers,
-} from '../missingMembers';
+  computePrunableKeys,
+  EMPTY_PRUNABLE,
+  pruneGroupMembers,
+  readPrunableKeysNow,
+  useAutoPruneGroupMembers,
+} from '../autoPrune';
+import { useGroupStore } from '../groupStore';
 
 const tk = (key: string) => ({ id: key, key, fields: {} }) as unknown as JiraTicket;
 
@@ -42,83 +42,120 @@ beforeEach(() => {
   });
 });
 
-describe('computeMissingKeys', () => {
+const closed = { name: 'Closed', statusCategory: { key: 'done' } };
+const open = { name: 'Open', statusCategory: { key: 'indeterminate' } };
+const tkDone = (key: string) =>
+  ({ id: key, key, fields: { status: closed } }) as unknown as JiraTicket;
+const tkChild = (key: string, parentKey: string, parentStatus?: unknown) =>
+  ({
+    id: key,
+    key,
+    fields: { status: open, parent: { key: parentKey, fields: { status: parentStatus } } },
+  }) as unknown as JiraTicket;
+const live = (...ts: JiraTicket[]) => new Map(ts.map((t) => [t.key, t] as const));
+
+describe('computePrunableKeys', () => {
   it('returns absent keys when eligible', () => {
-    expect([...computeMissingKeys(['A', 'B'], new Set(['A']), true)]).toEqual(['B']);
+    expect([...computePrunableKeys(['A', 'B'], live(tk('A')), true)]).toEqual(['B']);
   });
-  it('returns EMPTY_MISSING when not eligible, null keys or nothing missing', () => {
-    expect(computeMissingKeys(['A', 'B'], new Set(['A']), false)).toBe(EMPTY_MISSING);
-    expect(computeMissingKeys(null, new Set(), true)).toBe(EMPTY_MISSING);
-    expect(computeMissingKeys(['A'], new Set(['A']), true)).toBe(EMPTY_MISSING);
+  it('returns EMPTY_PRUNABLE when not eligible, null keys or nothing prunable', () => {
+    expect(computePrunableKeys(['A', 'B'], live(tk('A')), false)).toBe(EMPTY_PRUNABLE);
+    expect(computePrunableKeys(null, live(), true)).toBe(EMPTY_PRUNABLE);
+    expect(computePrunableKeys(['A'], live(tk('A')), true)).toBe(EMPTY_PRUNABLE);
+  });
+  it('prunes a done live member', () => {
+    expect([...computePrunableKeys(['A', 'B'], live(tk('A'), tkDone('B')), true)]).toEqual(['B']);
+  });
+  it('prunes a child whose live parent is done, even if embedded parent status is open', () => {
+    const map = live(tkDone('P'), tkChild('C', 'P', open));
+    expect([...computePrunableKeys(['C'], map, true)]).toEqual(['C']);
+  });
+  it('prunes a child by embedded parent status when the parent is not live', () => {
+    const map = live(tkChild('C', 'P', closed));
+    expect([...computePrunableKeys(['C'], map, true)]).toEqual(['C']);
+  });
+  it('keeps open members with an open parent or no parent', () => {
+    const noParent = { id: 'D', key: 'D', fields: { status: open } } as unknown as JiraTicket;
+    const map = live(tkChild('C', 'P', open), tk('A'), noParent);
+    expect(computePrunableKeys(['C', 'A', 'D'], map, true)).toBe(EMPTY_PRUNABLE);
   });
 });
 
-describe('readMissingKeysNow', () => {
+describe('readPrunableKeysNow', () => {
   it('matches the computed state', () => {
-    expect(readMissingKeysNow(1)).toBe(EMPTY_MISSING);
+    expect(readPrunableKeysNow(1)).toBe(EMPTY_PRUNABLE);
     makeEligible();
-    expect([...readMissingKeysNow(1)]).toEqual(['B']);
-    expect(readMissingKeysNow(99)).toBe(EMPTY_MISSING);
+    expect([...readPrunableKeysNow(1)]).toEqual(['B']);
+    expect(readPrunableKeysNow(99)).toBe(EMPTY_PRUNABLE);
   });
   it('is empty while loading and recovers once idle', () => {
     makeEligible();
-    expect([...readMissingKeysNow(1)]).toEqual(['B']);
+    expect([...readPrunableKeysNow(1)]).toEqual(['B']);
     useTicketStore.getState().setFetchStatus('loading');
-    expect(readMissingKeysNow(1)).toBe(EMPTY_MISSING);
+    expect(readPrunableKeysNow(1)).toBe(EMPTY_PRUNABLE);
     useTicketStore.getState().setFetchStatus('idle');
-    expect([...readMissingKeysNow(1)]).toEqual(['B']);
+    expect([...readPrunableKeysNow(1)]).toEqual(['B']);
   });
 });
 
 const removeCalls = () => mockInvoke.mock.calls.filter((c) => c[0] === 'remove_issues_from_group');
 
-describe('pruneMissingMembers', () => {
+describe('pruneGroupMembers', () => {
+  it('removes done members and children of a done parent in one call', async () => {
+    useGroupStore.setState({ memberKeysByGroup: { 1: ['A', 'B', 'C'] } });
+    useTicketStore.setState({ tickets: [tk('A'), tkDone('B'), tkChild('C', 'P', closed)] });
+    makeEligible();
+    await pruneGroupMembers();
+    expect(removeCalls()).toHaveLength(1);
+    expect(removeCalls()[0][1]).toEqual({ groupId: 1, issueKeys: ['B', 'C'] });
+  });
+
   it('removes exactly the absent keys of the affected group', async () => {
     makeEligible();
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(1);
     expect(removeCalls()[0][1]).toEqual({ groupId: 1, issueKeys: ['B'] });
   });
 
   it('does nothing without a complete signature', async () => {
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
   });
 
   it('does nothing while loading, then prunes once idle', async () => {
     makeEligible();
     useTicketStore.setState({ fetchStatus: 'loading' });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
     useTicketStore.setState({ fetchStatus: 'idle' });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(1);
   });
 
   it('does nothing on signature mismatch', async () => {
     makeEligible();
     useTicketStore.setState({ lastCompleteFetchSignature: 'stale-signature' });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
   });
 
   it('does nothing after a partial fetch', async () => {
     useTicketStore.getState().setTickets([tk('A')], {}, 5, true, null);
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
   });
 
   it('does nothing when groups are not hydrated', async () => {
     makeEligible();
     useGroupStore.setState({ hydrated: false });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
   });
 
   it('does nothing when all members are present', async () => {
     makeEligible();
     useTicketStore.setState({ tickets: [tk('A'), tk('B')] });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(0);
   });
 
@@ -129,7 +166,7 @@ describe('pruneMissingMembers', () => {
       useTicketStore.getState().beginFetch();
       return 1;
     });
-    await pruneMissingMembers();
+    await pruneGroupMembers();
     expect(removeCalls()).toHaveLength(1);
     expect(removeCalls()[0][1]).toEqual({ groupId: 1, issueKeys: ['B'] });
   });
@@ -149,21 +186,21 @@ describe('pruneMissingMembers', () => {
       });
       return 1;
     });
-    await Promise.all([pruneMissingMembers(), pruneMissingMembers()]);
+    await Promise.all([pruneGroupMembers(), pruneGroupMembers()]);
     expect(removeCalls()).toHaveLength(2);
   });
 
   it('swallows removal failures without throwing or looping', async () => {
     makeEligible();
     mockInvoke.mockRejectedValue('boom');
-    await expect(pruneMissingMembers()).resolves.toBeUndefined();
+    await expect(pruneGroupMembers()).resolves.toBeUndefined();
     expect(removeCalls()).toHaveLength(1);
   });
 });
 
-describe('useAutoRemoveMissingMembers', () => {
+describe('useAutoPruneGroupMembers', () => {
   it('prunes after a complete matching fetch lands', async () => {
-    renderHook(() => useAutoRemoveMissingMembers());
+    renderHook(() => useAutoPruneGroupMembers());
     await act(async () => {
       const state = useTicketStore.getState();
       const sig = computeFetchSignature(
