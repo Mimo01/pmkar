@@ -1,5 +1,15 @@
 
 
+## [0.5.6]
+
+### Features
+
+- remove closed tickets from groups automatically, along with sub-tasks whose parent is closed
+
+### Bug Fixes
+
+- show the same assignee in the copy preview as on the copied ticket by reloading the source ticket before previewing
+
 ## [0.5.5]
 
 ### Bug Fixes
